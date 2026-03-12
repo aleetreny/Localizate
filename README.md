@@ -1,13 +1,15 @@
 # Localizate
 
+Nota: la fuente canonica y actualizada del contexto es `STATUS.md`. Este README se mantiene pero puede quedar desactualizado.
+
 Base de datos analitica para construir una macro DB historica de locales comerciales de Madrid, enriquecerla con variables geoespaciales y socioeconomicas, y servir predicciones de supervivencia para un mapa interactivo.
 
 ## Estado actual
 
 - Auditoria inicial del repo completada.
 - Datos brutos disponibles localmente en `DB/`.
-- Contexto funcional revisado en `Context/`.
-- Documentacion original de fuentes revisada en `Documentación DB/`.
+- Contexto funcional legado consolidado dentro de `STATUS.md`.
+- Documentacion original de fuentes revisada en `docs/documentacion_db/`.
 - Inventario canonico raw, manifest del censo y cobertura de `section_key` ya implementados.
 - Metadata geografica de secciones materializada desde el shapefile y validada contra censo, padron y renta.
 - Capa socioeconomica (`padron` + `renta` + metadata de secciones) implementada en codigo, pendiente de optimizacion para materializar toda la serie historica de forma eficiente.
@@ -25,8 +27,8 @@ Base de datos analitica para construir una macro DB historica de locales comerci
 - `apps/streamlit/`: frontend inicial y exploracion visual.
 - `tests/`: pruebas.
 - `docs/`: auditoria, bitacora y decisiones.
-- `Context/`: contexto funcional legado.
-- `Documentación DB/`: PDFs originales de diccionario/metodologia.
+- `STATUS.md`: fuente canonica con contexto legado embebido.
+- `docs/documentacion_db/`: PDFs originales de diccionario/metodologia.
 - `DB/`: data lake bruto legacy ya descargado en local.
 
 ## Hallazgos tecnicos importantes

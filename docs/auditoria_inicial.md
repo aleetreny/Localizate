@@ -68,7 +68,7 @@ El repo tenia ya la materia prima principal, pero aun no estaba preparado para e
 
 ## Estructura decidida en este arranque
 
-- Mantener `DB/`, `Context/` y `Documentación DB/` como carpetas legacy de referencia.
+- Mantener `DB/` y `docs/documentacion_db/` como carpetas legacy de referencia; el contexto legado esta consolidado en `STATUS.md`.
 - Empezar el trabajo nuevo en `src/`, `scripts/`, `configs/`, `data/`, `models/`, `apps/streamlit/`, `tests/` y `docs/`.
 - No mover aun los datos brutos para evitar roturas y copia innecesaria de decenas de GB.
 

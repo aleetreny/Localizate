@@ -26,3 +26,13 @@
 - Añadido `scripts/build_section_socioeconomic_panel.py` y tests especificos para edades top-coded, fallbacks de renta y merges con geometria multipartes.
 - Validado el estado del shapefile frente a los universos actuales: la geometria se queda en `2461` secciones unicas tras colapsar multipartes, por debajo del censo `2026-03`.
 - Detectado que la primera materializacion completa del panel socioeconomico funciona en codigo pero es demasiado lenta para una pasada operativa limpia; queda como siguiente bloque inmediato optimizarla y rematerializar.
+
+## 2026-03-12
+
+- Creado `STATUS.md` en la raiz con un resumen operativo para continuidad por terceros.
+- Actualizados los documentos de `Context/` para reflejar el estado real del repo y dejar claro que la descarga ya no aplica.
+- Anotada la observacion de CSV antiguos de `DB/actividades` posiblemente vacios (pendiente de confirmacion automatica).
+- Consolidado README y `Context/` dentro de `STATUS.md` con snapshots verbatim y un enfoque unificado actualizado.
+- Eliminada la carpeta `Context/` tras consolidacion en `STATUS.md` para simplificar la estructura del repo.
+- Movida `Documentación DB/` a `docs/documentacion_db/` para estandarizar nombres y reducir ruido en la raiz.
+- Eliminados `ingesta_datos.py` e `ingestion_log.txt` (legacy de descarga).
