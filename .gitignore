@@ -14,18 +14,9 @@ __pycache__/
 .streamlit/secrets.toml
 
 DB/
+data/
+models/
 ingestion_log.txt
-
-data/intermediate/*
-!data/intermediate/.gitkeep
-data/features/*
-!data/features/.gitkeep
-data/processed/*
-!data/processed/.gitkeep
-data/exports/*
-!data/exports/.gitkeep
-models/*
-!models/.gitkeep
 
 *.parquet
 *.feather

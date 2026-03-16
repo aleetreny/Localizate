@@ -10,6 +10,8 @@ from localizate.socioeconomics import (
     attach_renta_features,
     attach_section_geography_features,
     normalize_padron_snapshot,
+    plan_padron_period_cache,
+    select_padron_periods,
 )
 
 
@@ -46,6 +48,49 @@ def _build_minimal_dbf(path: Path) -> None:
 
 
 class SectionPanelTests(unittest.TestCase):
+    def test_select_padron_periods_respects_start_and_filter(self) -> None:
+        manifest = pd.DataFrame(
+            [
+                {"source_name": "padron", "status": "selected", "period": "2014-12"},
+                {"source_name": "padron", "status": "selected", "period": "2015-01"},
+                {"source_name": "padron", "status": "selected", "period": "2015-02"},
+                {"source_name": "padron", "status": "manual_review", "period": "2015-03"},
+                {"source_name": "locales", "status": "selected", "period": "2015-01"},
+            ]
+        )
+
+        periods = select_padron_periods(manifest, start_period="2015-01")
+        self.assertEqual(periods, ["2015-01", "2015-02"])
+
+        only_one = select_padron_periods(manifest, periods=["2015-02"], start_period="2015-01")
+        self.assertEqual(only_one, ["2015-02"])
+
+    def test_plan_padron_period_cache_detects_pending_periods(self) -> None:
+        manifest = pd.DataFrame(
+            [
+                {"source_name": "padron", "status": "selected", "period": "2015-01"},
+                {"source_name": "padron", "status": "selected", "period": "2015-02"},
+            ]
+        )
+
+        with TemporaryDirectory() as tmp_dir:
+            cache_dir = Path(tmp_dir)
+            (cache_dir / "2015-01.csv.gz").write_text("padron_period,section_key\n2015-01,01001\n", encoding="utf-8")
+
+            plan = plan_padron_period_cache(manifest, start_period="2015-01", cache_dir=cache_dir)
+            self.assertEqual(plan["target_periods"], ["2015-01", "2015-02"])
+            self.assertEqual(plan["cached_periods"], ["2015-01"])
+            self.assertEqual(plan["pending_periods"], ["2015-02"])
+
+            rebuild_plan = plan_padron_period_cache(
+                manifest,
+                start_period="2015-01",
+                cache_dir=cache_dir,
+                rebuild_cache=True,
+            )
+            self.assertEqual(rebuild_plan["cached_periods"], [])
+            self.assertEqual(rebuild_plan["pending_periods"], ["2015-01", "2015-02"])
+
     def test_read_dbf_table_parses_char_and_float_fields(self) -> None:
         with TemporaryDirectory() as tmp_dir:
             path = Path(tmp_dir) / "sample.dbf"

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -153,6 +154,96 @@ def materialize_normalized_censo_period(
         written_paths.append(target_path)
 
     return written_paths
+
+
+def materialize_and_profile_censo_period(
+    period: str,
+    snapshot_manifest: pd.DataFrame,
+    *,
+    output_root: Path | None = None,
+    compression: str = "gzip",
+    skip_existing: bool = True,
+) -> list[dict[str, Any]]:
+    resolved_root = output_root or (DATA_DIR / "intermediate" / "censo_snapshots")
+    manifest_row = snapshot_manifest[snapshot_manifest["period"] == period]
+    if manifest_row.empty:
+        raise KeyError(f"Unknown period: {period}")
+
+    row = manifest_row.iloc[0]
+    period_results: list[dict[str, Any]] = []
+
+    for dataset_name in ("locales", "actividades"):
+        dataset_available = dataset_name == "locales" or bool(row["has_actividades"])
+        target_dir = resolved_root / dataset_name
+        target_dir.mkdir(parents=True, exist_ok=True)
+        suffix = ".csv.gz" if compression == "gzip" else ".csv"
+        target_path = target_dir / f"{period}{suffix}"
+
+        base_result: dict[str, Any] = {
+            "period": period,
+            "dataset": dataset_name,
+            "dataset_available": dataset_available,
+            "coverage_status": row["coverage_status"],
+            "coord_crs_status": row["coord_crs_status"],
+            "output_path": str(target_path),
+            "status": "pending",
+            "rows": pd.NA,
+            "raw_encoding": pd.NA,
+            "raw_delimiter": pd.NA,
+            "raw_reader_mode": pd.NA,
+            "locales_with_best_coords": pd.NA,
+            "locales_without_best_coords": pd.NA,
+            "locales_coordinate_missing": pd.NA,
+            "actividades_unique_local_ids": pd.NA,
+            "actividades_unique_epigrafes": pd.NA,
+        }
+
+        if not dataset_available:
+            base_result["status"] = "missing_in_manifest"
+            period_results.append(base_result)
+            continue
+
+        if skip_existing and target_path.exists():
+            base_result["status"] = "skipped_existing"
+            period_results.append(base_result)
+            continue
+
+        frame, read_metadata = load_and_normalize_censo_snapshot(
+            dataset_name=dataset_name,
+            period=period,
+            snapshot_manifest=snapshot_manifest,
+        )
+        frame.to_csv(target_path, index=False, compression=compression if compression == "gzip" else None)
+
+        base_result.update(
+            {
+                "status": "materialized",
+                "rows": len(frame),
+                "raw_encoding": read_metadata.encoding,
+                "raw_delimiter": read_metadata.delimiter,
+                "raw_reader_mode": read_metadata.reader_mode,
+            }
+        )
+
+        if dataset_name == "locales":
+            base_result.update(
+                {
+                    "locales_with_best_coords": int(frame["x_utm_best"].notna().sum()),
+                    "locales_without_best_coords": int(frame["x_utm_best"].isna().sum()),
+                    "locales_coordinate_missing": int((frame["coordinate_source_best"] == "missing").sum()),
+                }
+            )
+        else:
+            base_result.update(
+                {
+                    "actividades_unique_local_ids": int(frame["id_local"].nunique(dropna=True)),
+                    "actividades_unique_epigrafes": int(frame["id_epigrafe"].nunique(dropna=True)),
+                }
+            )
+
+        period_results.append(base_result)
+
+    return period_results
 
 
 def render_censo_profile_markdown(profile: pd.DataFrame) -> str:

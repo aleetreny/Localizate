@@ -1,81 +1,114 @@
 # Localizate
 
-Nota: la fuente canonica y actualizada del contexto es `STATUS.md`. Este README se mantiene pero puede quedar desactualizado.
+Proyecto para construir un mapa inteligente de locales comerciales de Madrid, con contexto social y geográfico, para estimar riesgo de cierre y apoyar decisiones públicas y privadas.
 
-Base de datos analitica para construir una macro DB historica de locales comerciales de Madrid, enriquecerla con variables geoespaciales y socioeconomicas, y servir predicciones de supervivencia para un mapa interactivo.
+## Qué problema queremos resolver
 
-## Estado actual
+Madrid tiene mucha información abierta, pero está repartida en muchos ficheros, formatos y periodos. Si queremos explicar **qué zonas son más estables**, **dónde hay más riesgo de cierre** o **qué patrones cambian en el tiempo**, primero hay que unir y limpiar todo.
 
-- Auditoria inicial del repo completada.
-- Datos brutos disponibles localmente en `DB/`.
-- Contexto funcional legado consolidado dentro de `STATUS.md`.
-- Documentacion original de fuentes revisada en `docs/documentacion_db/`.
-- Inventario canonico raw, manifest del censo y cobertura de `section_key` ya implementados.
-- Metadata geografica de secciones materializada desde el shapefile y validada contra censo, padron y renta.
-- Capa socioeconomica (`padron` + `renta` + metadata de secciones) implementada en codigo, pendiente de optimizacion para materializar toda la serie historica de forma eficiente.
+Este proyecto hace justo eso: convertir datos complejos en una base clara, trazable y útil para un producto final (mapa + métricas de riesgo).
+
+## Cómo estamos trabajando (en lenguaje sencillo)
+
+### 1) Ordenar y entender los datos
+Primero revisamos todas las fuentes y dejamos un inventario único para no mezclar versiones ni archivos dudosos.
+
+**Por qué:** sin una base ordenada, cualquier análisis posterior puede salir mal aunque el modelo sea bueno.
+
+### 2) Construir el histórico mensual
+Después montamos una serie histórica consistente de locales y actividades, mes a mes.
+
+**Por qué:** el proyecto es temporal; no basta una foto actual, necesitamos ver evolución y cambios.
+
+### 3) Añadir la parte geográfica
+Transformamos coordenadas y generamos una capa geográfica homogénea para comparar zonas de forma estable.
+
+**Por qué:** la localización es una pieza central del problema, pero había cambios históricos de referencia espacial que podían introducir errores.
+
+### 4) Añadir contexto social y económico
+Integramos padrón, renta y datos de secciones censales para que cada local tenga contexto del entorno.
+
+**Por qué:** el riesgo no depende solo del local; también depende del barrio y la dinámica socioeconómica.
+
+### 5) Crear la base para modelar
+Construimos la ABT (tabla de entrenamiento) y un baseline de riesgo con controles de calidad automáticos.
+
+**Por qué:** antes de usar modelos avanzados, necesitamos una línea base robusta y auditable.
+
+## Decisiones importantes tomadas (y motivo)
+
+- **Transición geográfica de 2017-09:** se excluye en entrenamiento cuando hay ambigüedad.
+	- Motivo: priorizar calidad y evitar ruido por mezcla de referencias espaciales.
+- **Renta después de 2023:** usamos carry-forward controlado con imputación jerárquica (distrito → ciudad).
+	- Motivo: mantener cobertura sin romper la lógica temporal del proyecto.
+
+## Estado actual (resumen público)
+
+- Extracción y procesamiento histórico: completados.
+- Capa geográfica e integración socioeconómica: completadas.
+- ABT de supervivencia: generada.
+- Baseline de riesgo con quality gate: ejecutado.
+- Próximo bloque: modelos de supervivencia canónicos (Cox/GBSA/RSF) con validación temporal estricta.
+
+## Bitácora pública de avance (versión explicativa)
+
+### Iteración 1 — Poner orden y base sólida
+- Inventariamos fuentes, unificamos formatos y construimos histórico mensual.
+- Motivo: sin una base limpia y consistente, los resultados del modelo no serían fiables.
+
+### Iteración 2 — Contexto real del entorno
+- Añadimos geografía (H3) y variables sociales/económicas por zona.
+- Motivo: el riesgo de cierre depende del entorno, no solo del local.
+
+### Iteración 3 — Preparar modelado con reglas de seguridad
+- Definimos reglas temporales para evitar usar “información del futuro”.
+- Cerramos dos políticas clave:
+	- transición geográfica dudosa (2017-09) fuera de entrenamiento,
+	- renta post-2023 con estrategia controlada de continuidad.
+- Motivo: priorizar robustez y trazabilidad antes de complejidad.
+
+### Iteración 4 — Baseline + control continuo
+- Entrenamos un baseline de riesgo y añadimos chequeos automáticos de calidad.
+- Incorporamos validaciones por horizonte temporal (6/12/24 meses) y reporte continuo de preparación a modelado.
+- Motivo: detectar temprano si el sistema está listo para subir a modelos más avanzados.
+
+### Iteración 5 — Modelos canónicos + export final para mapa
+- Instalamos y activamos el stack completo de supervivencia.
+- Entrenamos tres modelos estándar del estado del arte para este tipo de problema (Cox, RSF y GBSA), y además un score combinado.
+- Generamos una exportación final lista para mapa con score y banderas de calidad por local.
+- Motivo: pasar de una base “de seguridad” a una predicción más sólida sin perder trazabilidad.
+
+### Situación en este momento
+- El proyecto está **listo con cautelas** para pasar al siguiente nivel de modelado.
+- Ya existe una primera versión de modelado canónico y una salida final para visualización en mapa.
+- Cautela principal: pocos eventos observados en parte de validación/test, algo normal en problemas de cierre de negocio (evento raro).
+- Cautela operativa: seguimos con régimen de evento raro, por lo que mantenemos validación temporal estricta y quality gates en cada iteración.
+
+## Dónde ver el progreso
+
+- **`README.md` (este archivo):** versión explicativa y pública (qué hacemos y por qué).
+- **`STATUS.md`:** versión operativa interna (checkpoints, incidencias, métricas técnicas y roadmap de ejecución).
 
 ## Estructura del repo
 
-- `src/localizate/`: paquete Python principal.
-- `scripts/`: scripts operativos y CLI.
-- `configs/`: configuracion declarativa.
-- `data/intermediate/`: tablas normalizadas temporales.
-- `data/features/`: features listas para ensamblar la ABT.
-- `data/processed/`: datasets maestros y tablas consolidadas.
-- `data/exports/`: salidas para mapa, API o app.
-- `models/`: artefactos entrenados.
-- `apps/streamlit/`: frontend inicial y exploracion visual.
-- `tests/`: pruebas.
-- `docs/`: auditoria, bitacora y decisiones.
-- `STATUS.md`: fuente canonica con contexto legado embebido.
-- `docs/documentacion_db/`: PDFs originales de diccionario/metodologia.
-- `DB/`: data lake bruto legacy ya descargado en local.
+- `src/localizate/`: lógica principal.
+- `scripts/`: pasos ejecutables del pipeline.
+- `data/processed/`: tablas consolidadas.
+- `data/features/`: base lista para modelar.
+- `data/exports/`: salidas para mapa/app.
+- `models/`: métricas y artefactos de modelado.
+- `docs/`: documentación de avance y decisiones.
+- `tests/`: pruebas automáticas.
 
-## Hallazgos tecnicos importantes
+## Documentos clave
 
-- El censo de locales cambia de sistema de referencia a mitad de septiembre de 2017; antes de calcular H3, distancias o joins espaciales hay que normalizar CRS.
-- `padron` viene duplicado en muchos meses (`csv` y `txt`) y necesita una version canonica por mes.
-- `actividades` no cubre todos los meses presentes en `locales`; faltan al menos `2017_12` y `2022_04`.
-- La renta disponible llega hasta 2023, asi que para escenarios actuales habra que congelar o imputar con criterio explicito.
-- Los datos brutos mezclan encodings, sufijos de fichero y variantes funcionales del mismo dataset.
-- El shapefile de secciones censales no cubre todo el universo actual del censo: tras colapsar multipartes quedan `2461` secciones unicas frente a `2499` en el censo `2026-03`.
-- La primera version del build socioeconomico completo es correcta pero demasiado lenta; hay que pasarla a una estrategia incremental o con DuckDB antes de usarla como paso operativo frecuente.
+- `STATUS.md` → seguimiento interno detallado.
+- `docs/abt_pit_contract.md` → reglas para evitar leakage temporal.
+- `docs/survival_baseline.md` → resultados del baseline actual.
 
-## Entorno
+## Próximos pasos
 
-El proyecto se fija de momento en Python `3.12` por compatibilidad con el stack geoespacial y `scikit-survival`.
-
-```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-## Proximos pasos inmediatos
-
-1. Definir una capa de lectura canonica para cada fuente: encoding, separador, CRS y esquema final.
-2. Normalizar `locales` y `actividades` en una tabla historica mensual consistente.
-3. Resolver la estrategia de seccion censal: join robusto entre `locales`, `padron`, `renta` y shapefile.
-4. Crear la capa geoespacial base: reproyeccion a ETRS89, conversion a lat/lon y asignacion H3.
-5. Optimizar y materializar el panel socioeconomico historico por seccion.
-6. Diseñar la ABT de entrenamiento y las salidas batch para mapa y locales vacios.
-
-## Documentacion viva
-
-- Auditoria inicial: `docs/auditoria_inicial.md`
-- Inventario canonico de fuentes raw: `docs/raw_data_inventory.md`
-- Manifest canonico del censo historico: `docs/censo_snapshot_manifest.md`
-- Perfil operativo de snapshots del censo: `docs/censo_snapshot_profile.md`
-- Cobertura de claves de seccion: `docs/section_key_coverage.md`
-- Geografia de secciones y cobertura: `docs/section_geography.md`
-- Hoja de ruta operativa: `docs/roadmap.md`
-- Bitacora resumida del proyecto: `docs/project_log.md`
-
-## Scripts utiles
-
-- `scripts/build_raw_inventory.py`: escanea `DB/`, infiere encoding/delimitador, construye inventario canonico y selecciona el fichero valido por periodo.
-- `scripts/build_censo_snapshot_manifest.py`: construye el manifest historico de snapshots `locales + actividades` desde 2015-01 y etiqueta el estado CRS por periodo.
-- `scripts/profile_censo_snapshots.py`: perfila calidad de snapshots del censo y puede materializar periodos normalizados bajo `data/intermediate/censo_snapshots/`.
-- `scripts/profile_section_keys.py`: compara el solape de claves de seccion entre censo, padron y renta.
-- `scripts/build_section_geography.py`: extrae metadata canonica del shapefile de secciones y mide cobertura frente a censo, padron y renta.
-- `scripts/build_section_socioeconomic_panel.py`: construye el panel por seccion a partir de `padron`, `renta` y metadata geografica; actualmente funciona pero necesita optimizacion para series completas.
+1. Entrenar modelos de supervivencia canónicos sobre la misma base.
+2. Mantener validación temporal y quality gates en cada iteración.
+3. Publicar export final para mapa con score y banderas de calidad.
+4. Preparar narrativa final de resultados para presentación pública.

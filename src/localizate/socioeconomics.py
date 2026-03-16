@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from bisect import bisect_right
 from pathlib import Path
+from typing import Callable
 
 import pandas as pd
 
@@ -13,6 +14,7 @@ from .section_keys import get_selected_source_row, extract_renta_section_key_ser
 
 
 PADRON_PURITY_START = "2015-01"
+PADRON_SECTION_CACHE_DIR = DATA_DIR / "intermediate" / "padron_section_panel"
 
 PADRON_BASE_COLUMNS: tuple[str, ...] = (
     "COD_DISTRITO",
@@ -261,22 +263,137 @@ def build_padron_section_panel(
     *,
     periods: list[str] | None = None,
     start_period: str = PADRON_PURITY_START,
+    incremental: bool = False,
+    cache_dir: Path | None = None,
+    rebuild_cache: bool = False,
+    progress_callback: Callable[[str, int, int], None] | None = None,
 ) -> pd.DataFrame:
+    manifest = raw_manifest if raw_manifest is not None else load_raw_manifest()
+    target_periods = select_padron_periods(manifest, periods=periods, start_period=start_period)
+    if not target_periods:
+        return pd.DataFrame()
+
+    if not incremental:
+        frames: list[pd.DataFrame] = []
+        total = len(target_periods)
+        for index, period in enumerate(target_periods, start=1):
+            normalized, _ = load_and_normalize_padron_snapshot(period=period, raw_manifest=manifest)
+            frames.append(aggregate_padron_section_snapshot(normalized))
+            if progress_callback is not None:
+                progress_callback(period, index, total)
+        if not frames:
+            return pd.DataFrame()
+        return pd.concat(frames, ignore_index=True).sort_values(["padron_period", "section_key"]).reset_index(drop=True)
+
+    cache_plan = plan_padron_period_cache(
+        raw_manifest=manifest,
+        periods=periods,
+        start_period=start_period,
+        cache_dir=cache_dir,
+        rebuild_cache=rebuild_cache,
+    )
+    resolved_cache_dir = cache_plan["cache_dir"]
+    pending_periods = cache_plan["pending_periods"]
+    total = len(target_periods)
+
+    for period in pending_periods:
+        normalized, _ = load_and_normalize_padron_snapshot(period=period, raw_manifest=manifest)
+        aggregated = aggregate_padron_section_snapshot(normalized)
+        _write_period_cache_frame(aggregated, _period_cache_path(resolved_cache_dir, period))
+
+    frames = []
+    for index, period in enumerate(target_periods, start=1):
+        path = _period_cache_path(resolved_cache_dir, period)
+        if not path.exists():
+            normalized, _ = load_and_normalize_padron_snapshot(period=period, raw_manifest=manifest)
+            aggregated = aggregate_padron_section_snapshot(normalized)
+            _write_period_cache_frame(aggregated, path)
+            frames.append(aggregated)
+        else:
+            frames.append(_read_period_cache_frame(path))
+        if progress_callback is not None:
+            progress_callback(period, index, total)
+
+    if not frames:
+        return pd.DataFrame()
+
+    panel = pd.concat(frames, ignore_index=True).sort_values(["padron_period", "section_key"]).reset_index(drop=True)
+    for column in ("padron_fx_carga", "padron_fx_datos_ini", "padron_fx_datos_fin"):
+        if column in panel.columns:
+            panel[column] = pd.to_datetime(panel[column], errors="coerce")
+    return panel
+
+
+def select_padron_periods(
+    raw_manifest: pd.DataFrame | None = None,
+    *,
+    periods: list[str] | None = None,
+    start_period: str = PADRON_PURITY_START,
+) -> list[str]:
     manifest = raw_manifest if raw_manifest is not None else load_raw_manifest()
     selected = manifest[(manifest["source_name"] == "padron") & (manifest["status"] == "selected")].copy()
     selected = selected[selected["period"] >= start_period].sort_values("period")
     if periods is not None:
         selected = selected[selected["period"].isin(periods)]
+    return selected["period"].dropna().astype(str).tolist()
 
-    frames: list[pd.DataFrame] = []
-    for _, row in selected.iterrows():
-        normalized, _ = load_and_normalize_padron_snapshot(period=row["period"], raw_manifest=manifest)
-        frames.append(aggregate_padron_section_snapshot(normalized))
 
-    if not frames:
-        return pd.DataFrame()
+def plan_padron_period_cache(
+    raw_manifest: pd.DataFrame | None = None,
+    *,
+    periods: list[str] | None = None,
+    start_period: str = PADRON_PURITY_START,
+    cache_dir: Path | None = None,
+    rebuild_cache: bool = False,
+) -> dict[str, object]:
+    target_periods = select_padron_periods(raw_manifest, periods=periods, start_period=start_period)
+    resolved_cache_dir = cache_dir or PADRON_SECTION_CACHE_DIR
+    resolved_cache_dir.mkdir(parents=True, exist_ok=True)
 
-    return pd.concat(frames, ignore_index=True).sort_values(["padron_period", "section_key"]).reset_index(drop=True)
+    cached_periods: list[str] = []
+    pending_periods: list[str] = []
+    for period in target_periods:
+        path = _period_cache_path(resolved_cache_dir, period)
+        if path.exists() and not rebuild_cache:
+            cached_periods.append(period)
+        else:
+            pending_periods.append(period)
+
+    return {
+        "cache_dir": resolved_cache_dir,
+        "target_periods": target_periods,
+        "cached_periods": cached_periods,
+        "pending_periods": pending_periods,
+    }
+
+
+def _period_cache_path(cache_dir: Path, period: str) -> Path:
+    return cache_dir / f"{period}.csv.gz"
+
+
+def _write_period_cache_frame(frame: pd.DataFrame, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    frame.to_csv(tmp_path, index=False, compression="gzip")
+    tmp_path.replace(path)
+
+
+def _read_period_cache_frame(path: Path) -> pd.DataFrame:
+    frame = pd.read_csv(
+        path,
+        dtype={
+            "padron_period": "string",
+            "section_key": "string",
+            "district_code": "string",
+            "barrio_code": "string",
+            "section_code": "string",
+        },
+    )
+
+    for column, width in (("district_code", 2), ("barrio_code", 3), ("section_code", 3), ("section_key", 5)):
+        if column in frame.columns:
+            frame[column] = frame[column].astype("string").str.extract(r"(\d+)", expand=False).astype("string").str.zfill(width)
+    return frame
 
 
 def load_and_normalize_renta_madrid(

@@ -2,7 +2,7 @@
 
 Este archivo es la fuente unica y viva de contexto del proyecto. Se actualiza en cada avance y reemplaza al resto de documentos como referencia primaria.
 
-Ultima actualizacion: 2026-03-12
+Ultima actualizacion: 2026-03-13
 
 ## Identidad del proyecto
 
@@ -29,6 +29,52 @@ Ultima actualizacion: 2026-03-12
 - Cobertura de claves de seccion entre censo/padron/renta calculada.
 - Metadata geografica de secciones materializada desde shapefile (colapsando multipartes).
 - Capa socioeconomica en codigo: normaliza padron, agrega demografia, integra renta y geografia.
+- Contrato operativo ABT + Point-in-Time definido en `docs/abt_pit_contract.md` para evitar leakage temporal y fijar reglas de join/fallback.
+- Fase 1 completada: paneles `padron_section_panel` y `section_socioeconomic_panel` materializados en `data/processed/`.
+- Build de `padron` optimizado con cache incremental mensual en `data/intermediate/padron_section_panel/` (un fichero agregado por periodo).
+- Fase 2 arrancada: creado pipeline de materializacion historica normalizada del censo en `scripts/build_censo_historical_normalized.py`.
+- Plan historico de ejecucion generado en `data/processed/censo_historical_materialization_manifest.csv` y `docs/censo_historical_materialization.md`.
+- Plan actual fase 2: `264` tareas (`132` periodos x `locales/actividades`), con `257` pendientes de materializar, `5` ya cacheadas y `2` sin `actividades` por huecos historicos (`2017-12`, `2022-04`).
+- Fase 2 cerrada: manifest historico sin pendientes (`planned_materialize = 0`), con `257` materializados, `5` cacheados y `2` ausentes en manifest de `actividades`.
+- Fase 3 cerrada: pipeline geoespacial implementado y materializado en historico completo (`132` periodos del manifest).
+- Salida geoespacial consolidada en `data/processed/censo_geospatial/` con manifest en `data/processed/censo_geospatial_manifest.csv`.
+- Resultado fase 3: `131` periodos materializados + `1` cacheado, `20,212,017` filas procesadas, `18,873,903` filas con coordenadas WGS84 + H3.
+- En `2017-09` se aplica politica conservadora por defecto (`transition_policy=skip`), quedando `142,878` filas marcadas para revision de transicion CRS.
+- Robustez operativa añadida: si un snapshot normalizado `locales` esta corrupto, se rematerializa automaticamente y se reintenta lectura.
+- Fase ABT iniciada: generado baseline de supervivencia por local en `data/features/local_survival_abt.csv` (`203,870` filas, censura global `2026-03`).
+- Reporte ABT disponible en `docs/abt_survival.md` con metricas iniciales de evento/duracion y cobertura de features.
+- Verificacion automatica de `DB/actividades`: `134` ficheros detectados y `0` vacios fisicos (`size_0`/cabecera en blanco).
+- Politicas cerradas para modelado:
+	- CRS transicion `2017-09`: `exclude_transition` en entrenamiento.
+	- Renta post-2023: `renta_max_year=2023` + imputacion jerarquica (`district_median` -> `city_median`).
+- Siguiente bloque ejecutado: baseline de scoring survival en `scripts/train_survival_baseline.py`.
+- Artefactos baseline generados:
+	- `data/exports/local_survival_scores.csv`
+	- `models/survival_baseline_metrics.json`
+	- `docs/survival_baseline.md`
+- Resultado baseline heuristico:
+	- Filas modeladas: `203,828` (42 bloqueadas por transicion CRS)
+	- Split temporal adaptativo (event-aware): train `149,684`, valid `2,242`, test `51,902`
+	- Eventos por split: train `779`, valid `4`, test `6`
+	- C-index sampled: train `0.5252`, valid `0.5078`, test `0.5690`
+	- Quality gate baseline: `pass` (sin `NaN` en C-index)
+- README publico actualizado con narrativa no tecnica del proyecto (que hacemos, por que y estado para presentacion externa).
+- Nuevo gate continuo de preparacion a modelado: `scripts/run_modeling_readiness.py` -> `docs/modeling_readiness.md` + `models/modeling_readiness.json`.
+- Estado readiness actual: `ready_with_caveats` (pipeline util, pero con eventos escasos en valid/test para evaluacion robusta).
+- Intento de habilitar stack canonico (`scipy`, `scikit-learn`, `scikit-survival`) bloqueado por entorno (fallo de instalacion de paquetes en la venv).
+- Baseline enriquecido con evaluacion por horizontes (`6/12/24` meses) y resumen de calibracion por buckets de riesgo.
+- README publico reforzado con bitacora narrativa por iteraciones (enfoque explicativo para presentacion externa).
+- Stack survival canonico desbloqueado en venv: `scipy`, `scikit-learn`, `scikit-survival` instalados.
+- Nuevo bloque completado: entrenamiento canonico `Cox + RSF + GBSA` en `scripts/train_survival_canonical.py`.
+- Artefactos canonicos generados:
+	- `models/survival_canonical_metrics.json`
+	- `docs/survival_canonical.md`
+	- `data/exports/local_survival_map_export.csv`
+- Export final para mapa consolidada con score y banderas de calidad:
+	- scores: `risk_cox`, `risk_rsf`, `risk_gbsa`, `risk_ensemble`
+	- calidad: `quality_flag_transition`, `quality_flag_missing_h3`, `quality_flag_renta_imputed`, `quality_tier`
+- Resultado canonical (C-index ensemble): train `0.5246`, valid `0.6637`, test `0.5050`.
+- Suite actual de pruebas: `31/31` OK.
 - Contexto legado consolidado en este archivo; carpeta `Context/` eliminada para simplificar el repo.
 - Documentacion DB movida a `docs/documentacion_db/` para estandarizar nombres.
 
@@ -38,25 +84,23 @@ Ultima actualizacion: 2026-03-12
 - Observacion manual: algunos CSV antiguos en `DB/actividades` parecen vacios. Falta confirmacion automatica.
 - Shapefile de secciones no cubre todo el universo actual del censo (2461 vs 2499 en 2026-03).
 - `renta` llega solo hasta 2023; hay que definir carry-forward.
-- Build historico completo de `padron` es lento; requiere optimizacion (DuckDB o cache mensual).
-- Stack geoespacial pesado aun no instalado en la venv (pyarrow/geopandas).
+- Build historico completo de `padron` sigue siendo costoso si se reconstruye sin cache (se recomienda modo incremental).
+- Pendiente definir politica final para `2017-09` (asuncion CRS vs exclusion en modelado).
 
 ## Punto exacto en el que estamos
 
 1. Infraestructura canonica y auditoria inicial completadas.
 2. Geografia de secciones materializada y comparada contra censo/padron/renta.
-3. Panel socioeconomico listo en codigo, pendiente de materializacion historica eficiente.
-4. ABT, H3, modelo y frontend aun no implementados.
+3. Panel socioeconomico historico materializado y reutilizable por cache.
+4. Geoespacial `lat/lon + H3` historico cerrado; ABT baseline ya materializada para iniciar modelado.
 
 ## Siguientes pasos inmediatos
 
-1. Confirmar programaticamente CSV vacios en `DB/actividades` y documentar el impacto.
-2. Optimizar el build historico de `padron` y materializar:
-   - `data/processed/padron_section_panel.csv`
-   - `data/processed/section_socioeconomic_panel.csv`
-3. Materializar historico completo de `locales` y `actividades` normalizados.
-4. Normalizar CRS y generar `lat/lon` + H3.
-5. Disenar ABT de supervivencia y comenzar modelado.
+1. Endurecer auditoria PiT (lags/fallbacks/cobertura) como gate formal de entrenamiento canonical.
+2. Revisar sensibilidad del split temporal y calibracion por evento raro (valid/test con bajo numero de eventos).
+3. Preparar primera iteracion de frontend sobre `data/exports/local_survival_map_export.csv`.
+4. Definir protocolo de recalibracion mensual (drift y estabilidad de score).
+5. Preparar narrativa final de validacion para entrega del concurso.
 
 ## Comandos utiles
 
@@ -66,6 +110,12 @@ PYTHONPATH=src .venv/bin/python -u scripts/build_raw_inventory.py
 PYTHONPATH=src .venv/bin/python -u scripts/build_censo_snapshot_manifest.py
 PYTHONPATH=src .venv/bin/python -u scripts/build_section_geography.py
 PYTHONPATH=src .venv/bin/python -u scripts/build_section_socioeconomic_panel.py
+PYTHONPATH=src .venv/bin/python -u scripts/build_censo_historical_normalized.py
+PYTHONPATH=src .venv/bin/python -u scripts/build_censo_geospatial.py
+PYTHONPATH=src .venv/bin/python -u scripts/build_local_survival_abt.py
+PYTHONPATH=src .venv/bin/python -u scripts/train_survival_baseline.py
+PYTHONPATH=src .venv/bin/python -u scripts/run_modeling_readiness.py
+PYTHONPATH=src .venv/bin/python -u scripts/train_survival_canonical.py
 ```
 
 ## Apéndices (verbatim, preservados)
