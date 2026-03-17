@@ -2,7 +2,7 @@
 
 Este archivo es la fuente unica y viva de contexto del proyecto. Se actualiza en cada avance y reemplaza al resto de documentos como referencia primaria.
 
-Ultima actualizacion: 2026-03-13
+Ultima actualizacion: 2026-03-17
 
 ## Identidad del proyecto
 
@@ -75,6 +75,7 @@ Ultima actualizacion: 2026-03-13
 	- calidad: `quality_flag_transition`, `quality_flag_missing_h3`, `quality_flag_renta_imputed`, `quality_tier`
 - Resultado canonical (C-index ensemble): train `0.5246`, valid `0.6637`, test `0.5050`.
 - Suite actual de pruebas: `31/31` OK.
+- Prompt de continuidad para trabajar sin contexto disponible en `docs/next_session_prompt.md`.
 - Contexto legado consolidado en este archivo; carpeta `Context/` eliminada para simplificar el repo.
 - Documentacion DB movida a `docs/documentacion_db/` para estandarizar nombres.
 

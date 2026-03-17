@@ -103,6 +103,7 @@ Construimos la ABT (tabla de entrenamiento) y un baseline de riesgo con controle
 ## Documentos clave
 
 - `STATUS.md` → seguimiento interno detallado.
+- `docs/next_session_prompt.md` → prompt listo para retomar trabajo desde otro ordenador sin contexto previo.
 - `docs/abt_pit_contract.md` → reglas para evitar leakage temporal.
 - `docs/survival_baseline.md` → resultados del baseline actual.
 
