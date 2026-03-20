@@ -74,7 +74,16 @@ Ultima actualizacion: 2026-03-17
 	- scores: `risk_cox`, `risk_rsf`, `risk_gbsa`, `risk_ensemble`
 	- calidad: `quality_flag_transition`, `quality_flag_missing_h3`, `quality_flag_renta_imputed`, `quality_tier`
 - Resultado canonical (C-index ensemble): train `0.5246`, valid `0.6637`, test `0.5050`.
-- Suite actual de pruebas: `31/31` OK.
+- Evaluacion survival robusta integrada en pipeline canonico:
+	- `Uno / IPCW C-index` para `ensemble`
+	- `Cumulative Dynamic AUC` en `6/12/24` meses para `ensemble`
+	- `Integrated Brier Score (IBS)` para `cox`, `rsf`, `gbsa`
+	- `quality gate` canonico actualizado a `pass/pass_with_caveats/review_required`
+- `modeling_readiness` ya gobierna sobre metricas canonicas en lugar de depender solo del baseline.
+- CLI `train_survival_canonical.py --quick` aligerado para validacion local trazable (submuestreo de fit + progreso tambien en `GBSA`).
+- Ultima validacion rapida canonical regenerada con metadata de ejecucion (`quick_mode=true`, `fit_max_rows=10000`).
+- Estado readiness actual tras metricas robustas: `ready_with_caveats`.
+- Suite actual de pruebas: `37/37` OK.
 - Prompt de continuidad para trabajar sin contexto disponible en `docs/next_session_prompt.md`.
 - Contexto legado consolidado en este archivo; carpeta `Context/` eliminada para simplificar el repo.
 - Documentacion DB movida a `docs/documentacion_db/` para estandarizar nombres.
@@ -99,9 +108,10 @@ Ultima actualizacion: 2026-03-17
 
 1. Endurecer auditoria PiT (lags/fallbacks/cobertura) como gate formal de entrenamiento canonical.
 2. Revisar sensibilidad del split temporal y calibracion por evento raro (valid/test con bajo numero de eventos).
-3. Preparar primera iteracion de frontend sobre `data/exports/local_survival_map_export.csv`.
-4. Definir protocolo de recalibracion mensual (drift y estabilidad de score).
-5. Preparar narrativa final de validacion para entrega del concurso.
+3. Definir si el siguiente ciclo de validacion sera quick-only o requiere rerun full canonical para cerrar metricas finales.
+4. Preparar primera iteracion de frontend sobre `data/exports/local_survival_map_export.csv`.
+5. Definir protocolo de recalibracion mensual (drift y estabilidad de score).
+6. Preparar narrativa final de validacion para entrega del concurso.
 
 ## Comandos utiles
 

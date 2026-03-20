@@ -19,6 +19,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--rsf-estimators", type=int, default=300)
     parser.add_argument("--gbsa-estimators", type=int, default=300)
     parser.add_argument("--rsf-chunk-size", type=int, default=25)
+    parser.add_argument("--gbsa-chunk-size", type=int, default=25)
     parser.add_argument(
         "--progress-file",
         type=Path,
@@ -28,7 +29,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--quick",
         action="store_true",
-        help="Use lighter settings for quick iteration/debug (faster, less stable metrics).",
+        help="Use very light settings for quick iteration/debug on local machines (faster, less stable metrics).",
     )
     return parser.parse_args()
 
@@ -60,14 +61,17 @@ def main() -> int:
     from localizate.survival_canonical import train_canonical_survival_models
 
     args = parse_args()
-    rsf_estimators = 80 if args.quick else args.rsf_estimators
-    gbsa_estimators = 80 if args.quick else args.gbsa_estimators
+    rsf_estimators = 40 if args.quick else args.rsf_estimators
+    gbsa_estimators = 5 if args.quick else args.gbsa_estimators
+    fit_max_rows = 10000 if args.quick else None
+    rsf_chunk_size = min(args.rsf_chunk_size, rsf_estimators) if args.quick else args.rsf_chunk_size
+    gbsa_chunk_size = min(args.gbsa_chunk_size, gbsa_estimators) if args.quick else args.gbsa_chunk_size
 
     print("Warning: canonical survival training can be long on large datasets.")
     print(f"Progress file: {args.progress_file}")
     print(
         "Run config: "
-        f"rsf_estimators={rsf_estimators}, gbsa_estimators={gbsa_estimators}, rsf_chunk_size={args.rsf_chunk_size}, quick={args.quick}"
+        f"rsf_estimators={rsf_estimators}, gbsa_estimators={gbsa_estimators}, rsf_chunk_size={rsf_chunk_size}, gbsa_chunk_size={gbsa_chunk_size}, fit_max_rows={fit_max_rows}, quick={args.quick}"
     )
 
     tracker = ProgressTracker(args.progress_file)
@@ -77,7 +81,9 @@ def main() -> int:
         renta_max_year=2023,
         rsf_n_estimators=rsf_estimators,
         gbsa_n_estimators=gbsa_estimators,
-        rsf_chunk_size=args.rsf_chunk_size,
+        rsf_chunk_size=rsf_chunk_size,
+        gbsa_chunk_size=gbsa_chunk_size,
+        fit_max_rows=fit_max_rows,
         progress_callback=tracker,
     )
     print(f"Wrote canonical metrics: {result.metrics_json}")

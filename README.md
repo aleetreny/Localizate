@@ -48,7 +48,8 @@ Construimos la ABT (tabla de entrenamiento) y un baseline de riesgo con controle
 - Capa geográfica e integración socioeconómica: completadas.
 - ABT de supervivencia: generada.
 - Baseline de riesgo con quality gate: ejecutado.
-- Próximo bloque: modelos de supervivencia canónicos (Cox/GBSA/RSF) con validación temporal estricta.
+- Modelos de supervivencia canónicos (Cox/GBSA/RSF + ensemble): ya entrenados en una primera iteración.
+- Bloque inmediato: robustecer evaluación survival bajo censura alta y evento raro.
 
 ## Bitácora pública de avance (versión explicativa)
 
@@ -109,7 +110,7 @@ Construimos la ABT (tabla de entrenamiento) y un baseline de riesgo con controle
 
 ## Próximos pasos
 
-1. Entrenar modelos de supervivencia canónicos sobre la misma base.
+1. Robustecer evaluación survival con Uno/IPCW C-index, Dynamic AUC e IBS.
 2. Mantener validación temporal y quality gates en cada iteración.
-3. Publicar export final para mapa con score y banderas de calidad.
+3. Preparar frontend y validación visual sobre la export final para mapa.
 4. Preparar narrativa final de resultados para presentación pública.

@@ -131,7 +131,9 @@ No permitido:
 Metricas objetivo:
 
 - Concordance index (C-index)
-- Brier score dependiente de tiempo
+- Uno / IPCW C-index
+- Cumulative Dynamic AUC (6/12/24 meses)
+- Brier score dependiente de tiempo / IBS
 - Calibracion por horizonte (6/12/24 meses)
 
 ## 9) Versionado y reproducibilidad
