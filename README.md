@@ -46,10 +46,10 @@ Construimos la ABT (tabla de entrenamiento) y un baseline de riesgo con controle
 
 - Extracción y procesamiento histórico: completados.
 - Capa geográfica e integración socioeconómica: completadas.
-- ABT de supervivencia: generada.
-- Baseline de riesgo con quality gate: ejecutado.
-- Modelos de supervivencia canónicos (Cox/GBSA/RSF + ensemble): ya entrenados en una primera iteración.
-- Bloque inmediato: robustecer evaluación survival bajo censura alta y evento raro.
+- ABT de supervivencia: regenerada con limpieza masiva de actividad y nuevo criterio de cierre estructural.
+- Baseline de riesgo con quality gate: reentrenado sobre el nuevo target.
+- Modelos de supervivencia canónicos (Cox/GBSA/RSF + ensemble): reentrenados con quality gate en `pass`.
+- Bloque inmediato: ampliar variables de negocio/entorno antes del siguiente ciclo de entrenamiento.
 
 ## Bitácora pública de avance (versión explicativa)
 
@@ -79,11 +79,17 @@ Construimos la ABT (tabla de entrenamiento) y un baseline de riesgo con controle
 - Generamos una exportación final lista para mapa con score y banderas de calidad por local.
 - Motivo: pasar de una base “de seguridad” a una predicción más sólida sin perder trazabilidad.
 
+### Iteración 6 — Redefinir cierre con limpieza masiva de actividad
+- Limpiamos codificación y duplicidades de `actividades` para unificar categorías realmente equivalentes.
+- Redefinimos cierre para incluir cambios `single-single` de división plausibles como cierre estructural del negocio previo.
+- Reentrenamos baseline, modelos canónicos y readiness sobre la nueva ABT.
+- Motivo: acercar el target a la realidad operativa del local y reducir falsos no-eventos.
+
 ### Situación en este momento
-- El proyecto está **listo con cautelas** para pasar al siguiente nivel de modelado.
-- Ya existe una primera versión de modelado canónico y una salida final para visualización en mapa.
-- Cautela principal: pocos eventos observados en parte de validación/test, algo normal en problemas de cierre de negocio (evento raro).
-- Cautela operativa: seguimos con régimen de evento raro, por lo que mantenemos validación temporal estricta y quality gates en cada iteración.
+- El proyecto está **listo** para una nueva fase de ingeniería de variables.
+- Ya existe una ABT depurada con cierre por desaparición o cambio estructural de división, y un ciclo completo de modelado rehecho sobre ese target.
+- La validación temporal sigue siendo estricta, pero ahora la densidad de eventos es suficiente para evaluar con mucha más estabilidad.
+- El siguiente cuello de botella ya no es la definición del cierre, sino enriquecer mejor la base antes del siguiente reentrenamiento.
 
 ## Dónde ver el progreso
 
@@ -110,7 +116,7 @@ Construimos la ABT (tabla de entrenamiento) y un baseline de riesgo con controle
 
 ## Próximos pasos
 
-1. Robustecer evaluación survival con Uno/IPCW C-index, Dynamic AUC e IBS.
+1. Crear nuevas variables de actividad, zona y dinámica comercial sobre la ABT depurada.
 2. Mantener validación temporal y quality gates en cada iteración.
-3. Preparar frontend y validación visual sobre la export final para mapa.
-4. Preparar narrativa final de resultados para presentación pública.
+3. Reentrenar con el nuevo set de variables y comparar contra la versión actual.
+4. Preparar frontend y validación visual sobre la export final para mapa.

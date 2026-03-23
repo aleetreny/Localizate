@@ -2,10 +2,26 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import re
+import unicodedata
 
 import pandas as pd
 
 from .paths import DATA_DIR, DOCS_DIR
+
+
+PLACEHOLDER_ACTIVITY_CODES = frozenset({"", "0", "-1", "PT", "NA", "N/A", "NULL"})
+PLACEHOLDER_ACTIVITY_DESC_KEYS = frozenset(
+    {
+        "SIN ACTIVIDAD",
+        "SIN ACTIVIDAD PTE DE CODIFICAR",
+        "SIN ACTIVIDAD PENDIENTE DE CODIFICAR",
+        "PENDIENTE DE CODIFICAR",
+        "SIN CODIFICAR",
+        "SIN INFORMACION",
+        "SIN INFORMACIÓN",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -16,6 +32,8 @@ class SurvivalAbtBuildResult:
     report_md: Path
     rows: int
     max_period: str
+    change_candidates_csv: Path
+    normalization_audit_csv: Path
 
 
 def next_period(period: str) -> str:
@@ -26,6 +44,79 @@ def next_period(period: str) -> str:
     return f"{year}-{month + 1:02d}"
 
 
+def months_between_inclusive(start_period: str, end_period: str) -> int:
+    start_year = int(start_period[:4])
+    start_month = int(start_period[5:7])
+    end_year = int(end_period[:4])
+    end_month = int(end_period[5:7])
+    return (end_year - start_year) * 12 + (end_month - start_month) + 1
+
+
+def normalize_activity_description(value: object) -> str | None:
+    text = _clean_display_text(value)
+    if not text:
+        return None
+    text = text.upper().replace("0", "O")
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(char for char in text if not unicodedata.combining(char))
+    text = re.sub(r"[^A-Z0-9]+", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text or None
+
+
+def normalize_activity_code(
+    value: object,
+    *,
+    min_numeric: int | None = None,
+    max_numeric: int | None = None,
+    placeholders: frozenset[str] = PLACEHOLDER_ACTIVITY_CODES,
+) -> str | None:
+    raw = _clean_raw_code(value)
+    if raw is None:
+        return None
+    if raw in placeholders:
+        return raw
+    numeric_value = _parse_integer_like(raw)
+    if numeric_value is None:
+        return raw
+    if min_numeric is not None and numeric_value < min_numeric:
+        return None
+    if max_numeric is not None and numeric_value > max_numeric:
+        return None
+    return str(numeric_value)
+
+
+def resolve_survival_target(
+    *,
+    first_seen_period: str,
+    last_observed_period: str,
+    max_period: str,
+    change_event_period: str | None,
+) -> dict[str, object]:
+    disappearance_event_period = last_observed_period if last_observed_period < max_period else None
+    if change_event_period is not None and (
+        disappearance_event_period is None or change_event_period <= disappearance_event_period
+    ):
+        event_period = change_event_period
+        event_source = "division_change_single_single"
+    elif disappearance_event_period is not None:
+        event_period = disappearance_event_period
+        event_source = "disappearance"
+    else:
+        event_period = None
+        event_source = "censored"
+
+    duration_end_period = event_period or last_observed_period
+    return {
+        "event_period": event_period,
+        "disappearance_event_period": disappearance_event_period,
+        "event_source": event_source,
+        "event_observed": int(event_period is not None),
+        "target_end_period": duration_end_period,
+        "duration_months": months_between_inclusive(first_seen_period, duration_end_period),
+    }
+
+
 def build_local_survival_abt(
     *,
     geospatial_manifest_csv: Path | None = None,
@@ -33,17 +124,25 @@ def build_local_survival_abt(
     output_csv: Path | None = None,
     output_parquet: Path | None = None,
     report_md: Path | None = None,
+    change_candidates_csv: Path | None = None,
+    normalization_audit_csv: Path | None = None,
 ) -> SurvivalAbtBuildResult:
     try:
         import duckdb  # type: ignore
-    except ModuleNotFoundError:
-        duckdb = None
+    except ModuleNotFoundError as exc:  # pragma: no cover
+        raise RuntimeError("duckdb is required to build the survival ABT") from exc
 
     resolved_manifest = geospatial_manifest_csv or (DATA_DIR / "processed" / "censo_geospatial_manifest.csv")
     resolved_section_panel = section_panel_csv or (DATA_DIR / "processed" / "section_socioeconomic_panel.csv")
     resolved_output_csv = output_csv or (DATA_DIR / "features" / "local_survival_abt.csv")
     resolved_output_parquet = output_parquet or (DATA_DIR / "features" / "local_survival_abt.parquet")
     resolved_report_md = report_md or (DOCS_DIR / "abt_survival.md")
+    resolved_change_candidates_csv = change_candidates_csv or (
+        DATA_DIR / "processed" / "local_activity_change_candidates.csv"
+    )
+    resolved_normalization_audit_csv = normalization_audit_csv or (
+        DATA_DIR / "processed" / "activity_code_normalization_audit.csv"
+    )
 
     manifest = pd.read_csv(resolved_manifest)
     usable = manifest[manifest["status"].isin(["materialized", "skipped_existing"])].copy()
@@ -57,107 +156,357 @@ def build_local_survival_abt(
     resolved_output_csv.parent.mkdir(parents=True, exist_ok=True)
     resolved_output_parquet.parent.mkdir(parents=True, exist_ok=True)
     resolved_report_md.parent.mkdir(parents=True, exist_ok=True)
+    resolved_change_candidates_csv.parent.mkdir(parents=True, exist_ok=True)
+    resolved_normalization_audit_csv.parent.mkdir(parents=True, exist_ok=True)
 
-    if duckdb is not None:
-        con = duckdb.connect(database=":memory:")
-        try:
-            con.execute("PRAGMA threads=4")
-            con.execute("CREATE TEMP TABLE section_panel AS SELECT * FROM read_csv_auto(?, union_by_name=true)", [str(resolved_section_panel)])
+    con = duckdb.connect(database=":memory:")
+    try:
+        con.execute("PRAGMA threads=4")
+        con.execute(
+            "CREATE TEMP TABLE section_panel AS SELECT * FROM read_csv_auto(?, union_by_name=true)",
+            [str(resolved_section_panel)],
+        )
 
-            sql = """
-            WITH base AS (
+        activities_glob = str(DATA_DIR / "intermediate" / "censo_snapshots" / "actividades" / "*.csv.gz")
+        division_summary = con.execute(
+            """
+            SELECT
+                COALESCE(TRIM(CAST(id_division AS VARCHAR)), '') AS raw_code,
+                COALESCE(TRIM(CAST(desc_division AS VARCHAR)), '') AS raw_desc,
+                COUNT(*) AS n
+            FROM read_csv_auto(?, union_by_name=true)
+            WHERE id_division IS NOT NULL
+            GROUP BY 1, 2
+            """,
+            [activities_glob],
+        ).df()
+        epigrafe_summary = con.execute(
+            """
+            SELECT
+                COALESCE(TRIM(CAST(id_epigrafe AS VARCHAR)), '') AS raw_code,
+                COALESCE(TRIM(CAST(desc_epigrafe AS VARCHAR)), '') AS raw_desc,
+                COUNT(*) AS n
+            FROM read_csv_auto(?, union_by_name=true)
+            WHERE id_epigrafe IS NOT NULL
+            GROUP BY 1, 2
+            """,
+            [activities_glob],
+        ).df()
+
+        division_lookup = _build_activity_lookup(
+            division_summary,
+            taxonomy="division",
+            min_numeric=1,
+            max_numeric=99,
+            placeholder_codes=PLACEHOLDER_ACTIVITY_CODES,
+        )
+        epigrafe_lookup = _build_activity_lookup(
+            epigrafe_summary,
+            taxonomy="epigrafe",
+            min_numeric=1,
+            max_numeric=None,
+            placeholder_codes=PLACEHOLDER_ACTIVITY_CODES,
+        )
+
+        normalization_audit = pd.concat([division_lookup, epigrafe_lookup], ignore_index=True)
+        normalization_audit.to_csv(resolved_normalization_audit_csv, index=False)
+
+        con.register("division_lookup_df", division_lookup)
+        con.register("epigrafe_lookup_df", epigrafe_lookup)
+
+        locales_glob = str(DATA_DIR / "processed" / "censo_geospatial" / "locales" / "*.csv.gz")
+        con.execute(
+            """
+            CREATE TEMP TABLE local_base AS
+            SELECT
+                CAST(id_local AS BIGINT) AS id_local,
+                CAST(snapshot_period AS VARCHAR) AS period,
+                CASE
+                    WHEN id_distrito_local IS NULL OR id_seccion_censal_local IS NULL THEN NULL
+                    WHEN LENGTH(REGEXP_REPLACE(CAST(id_seccion_censal_local AS VARCHAR), '[^0-9]', '', 'g')) >= 5
+                        THEN RIGHT(REGEXP_REPLACE(CAST(id_seccion_censal_local AS VARCHAR), '[^0-9]', '', 'g'), 5)
+                    WHEN LENGTH(REGEXP_REPLACE(CAST(id_seccion_censal_local AS VARCHAR), '[^0-9]', '', 'g')) = 4
+                        THEN LPAD(REGEXP_REPLACE(CAST(id_seccion_censal_local AS VARCHAR), '[^0-9]', '', 'g'), 5, '0')
+                    ELSE LPAD(REGEXP_REPLACE(CAST(id_distrito_local AS VARCHAR), '[^0-9]', '', 'g'), 2, '0')
+                        || LPAD(REGEXP_REPLACE(CAST(id_seccion_censal_local AS VARCHAR), '[^0-9]', '', 'g'), 3, '0')
+                END AS section_key,
+                h3_cell,
+                lat_wgs84,
+                lon_wgs84,
+                coord_transform_status
+            FROM read_csv_auto(?, union_by_name=true)
+            WHERE id_local IS NOT NULL AND snapshot_period IS NOT NULL
+            """,
+            [locales_glob],
+        )
+        con.execute(
+            """
+            CREATE TEMP TABLE local_enriched AS
+            SELECT
+                b.*,
+                s.padron_lag_months,
+                s.renta_best_eur,
+                s.share_foreign,
+                s.share_age_15_29,
+                s.share_age_30_44,
+                s.share_age_45_64,
+                s.share_age_65_plus,
+                s.population_density_km2,
+                s.geometry_available
+            FROM local_base b
+            LEFT JOIN section_panel s
+                ON b.period = s.target_period
+               AND b.section_key = s.section_key
+            """
+        )
+
+        con.execute(
+            """
+            CREATE TEMP TABLE activity_rows AS
+            SELECT
+                CAST(id_local AS BIGINT) AS id_local,
+                CAST(snapshot_period AS VARCHAR) AS period,
+                COALESCE(TRIM(CAST(id_division AS VARCHAR)), '') AS division_raw_code,
+                COALESCE(TRIM(CAST(desc_division AS VARCHAR)), '') AS division_raw_desc,
+                COALESCE(TRIM(CAST(id_epigrafe AS VARCHAR)), '') AS epigrafe_raw_code,
+                COALESCE(TRIM(CAST(desc_epigrafe AS VARCHAR)), '') AS epigrafe_raw_desc
+            FROM read_csv_auto(?, union_by_name=true)
+            WHERE id_local IS NOT NULL AND snapshot_period IS NOT NULL
+            """,
+            [activities_glob],
+        )
+        con.execute(
+            """
+            CREATE TEMP TABLE activities_clean AS
+            SELECT
+                r.id_local,
+                r.period,
+                d.clean_code AS division_code,
+                d.clean_desc AS division_desc,
+                CAST(COALESCE(d.code_valid, FALSE) AS BOOLEAN) AS division_valid,
+                CAST(COALESCE(d.is_placeholder, FALSE) AS BOOLEAN) AS division_is_placeholder,
+                COALESCE(d.mapping_reason, 'invalid') AS division_mapping_reason,
+                e.clean_code AS epigrafe_code,
+                e.clean_desc AS epigrafe_desc,
+                CAST(COALESCE(e.code_valid, FALSE) AS BOOLEAN) AS epigrafe_valid,
+                COALESCE(e.mapping_reason, 'invalid') AS epigrafe_mapping_reason
+            FROM activity_rows r
+            LEFT JOIN division_lookup_df d
+                ON r.division_raw_code = d.raw_code
+               AND r.division_raw_desc = d.raw_desc
+            LEFT JOIN epigrafe_lookup_df e
+                ON r.epigrafe_raw_code = e.raw_code
+               AND r.epigrafe_raw_desc = e.raw_desc
+            """
+        )
+        con.execute(
+            """
+            CREATE TEMP TABLE activity_periods AS
+            SELECT
+                id_local,
+                period,
+                string_agg(DISTINCT division_code, '|' ORDER BY division_code) AS division_sig,
+                string_agg(DISTINCT division_desc, ' | ' ORDER BY division_desc) AS division_desc_sig,
+                COUNT(DISTINCT division_code) AS n_divisions,
+                string_agg(DISTINCT CASE WHEN epigrafe_valid THEN epigrafe_code END, '|' ORDER BY CASE WHEN epigrafe_valid THEN epigrafe_code END) AS epigrafe_sig,
+                string_agg(DISTINCT CASE WHEN epigrafe_valid THEN epigrafe_desc END, ' | ' ORDER BY CASE WHEN epigrafe_valid THEN epigrafe_desc END) AS epigrafe_desc_sig,
+                COUNT(DISTINCT CASE WHEN epigrafe_valid THEN epigrafe_code END) AS n_epigrafes
+            FROM activities_clean
+            WHERE division_valid
+            GROUP BY 1, 2
+            """
+        )
+        con.execute(
+            """
+            CREATE TEMP TABLE change_candidates AS
+            WITH ordered AS (
                 SELECT
-                    CAST(id_local AS BIGINT) AS id_local,
-                    snapshot_period AS period,
-                    CASE
-                        WHEN id_distrito_local IS NULL OR id_seccion_censal_local IS NULL THEN NULL
-                        WHEN LENGTH(REGEXP_REPLACE(CAST(id_seccion_censal_local AS VARCHAR), '[^0-9]', '', 'g')) >= 5
-                            THEN RIGHT(REGEXP_REPLACE(CAST(id_seccion_censal_local AS VARCHAR), '[^0-9]', '', 'g'), 5)
-                        WHEN LENGTH(REGEXP_REPLACE(CAST(id_seccion_censal_local AS VARCHAR), '[^0-9]', '', 'g')) = 4
-                            THEN LPAD(REGEXP_REPLACE(CAST(id_seccion_censal_local AS VARCHAR), '[^0-9]', '', 'g'), 5, '0')
-                        ELSE LPAD(REGEXP_REPLACE(CAST(id_distrito_local AS VARCHAR), '[^0-9]', '', 'g'), 2, '0')
-                            || LPAD(REGEXP_REPLACE(CAST(id_seccion_censal_local AS VARCHAR), '[^0-9]', '', 'g'), 3, '0')
-                    END AS section_key,
-                    h3_cell,
-                    lat_wgs84,
-                    lon_wgs84,
-                    coord_transform_status
-                FROM read_csv_auto(?, union_by_name=true)
-                WHERE id_local IS NOT NULL
-            ),
-            enriched AS (
-                SELECT
-                    b.*,
-                    s.padron_lag_months,
-                    s.renta_best_eur,
-                    s.share_foreign,
-                    s.share_age_15_29,
-                    s.share_age_30_44,
-                    s.share_age_45_64,
-                    s.share_age_65_plus,
-                    s.population_density_km2,
-                    s.geometry_available
-                FROM base b
-                LEFT JOIN section_panel s
-                    ON b.period = s.target_period
-                    AND b.section_key = s.section_key
+                    id_local,
+                    period AS successor_period,
+                    division_sig AS successor_division_code,
+                    division_desc_sig AS successor_division_desc,
+                    epigrafe_sig AS successor_epigrafe_code,
+                    epigrafe_desc_sig AS successor_epigrafe_desc,
+                    n_divisions AS successor_n_divisions,
+                    n_epigrafes AS successor_n_epigrafes,
+                    LAG(period) OVER (PARTITION BY id_local ORDER BY period) AS previous_period,
+                    LAG(division_sig) OVER (PARTITION BY id_local ORDER BY period) AS previous_division_code,
+                    LAG(division_desc_sig) OVER (PARTITION BY id_local ORDER BY period) AS previous_division_desc,
+                    LAG(epigrafe_sig) OVER (PARTITION BY id_local ORDER BY period) AS previous_epigrafe_code,
+                    LAG(epigrafe_desc_sig) OVER (PARTITION BY id_local ORDER BY period) AS previous_epigrafe_desc,
+                    LAG(n_divisions) OVER (PARTITION BY id_local ORDER BY period) AS previous_n_divisions,
+                    LAG(n_epigrafes) OVER (PARTITION BY id_local ORDER BY period) AS previous_n_epigrafes,
+                    (
+                        (CAST(SUBSTR(period, 1, 4) AS INTEGER) * 12 + CAST(SUBSTR(period, 6, 2) AS INTEGER))
+                        - (
+                            CAST(SUBSTR(LAG(period) OVER (PARTITION BY id_local ORDER BY period), 1, 4) AS INTEGER) * 12
+                            + CAST(SUBSTR(LAG(period) OVER (PARTITION BY id_local ORDER BY period), 6, 2) AS INTEGER)
+                        )
+                    ) AS month_gap
+                FROM activity_periods
             )
             SELECT
                 id_local,
-                MIN(period) AS first_seen_period,
-                MAX(period) AS last_seen_period,
-                COUNT(DISTINCT period) AS active_months,
-                ((CAST(SUBSTR(MAX(period), 1, 4) AS INTEGER) - CAST(SUBSTR(MIN(period), 1, 4) AS INTEGER)) * 12
-                  + (CAST(SUBSTR(MAX(period), 6, 2) AS INTEGER) - CAST(SUBSTR(MIN(period), 6, 2) AS INTEGER)) + 1) AS duration_months,
-                CASE WHEN MAX(period) < ? THEN 1 ELSE 0 END AS event_observed,
-                ? AS censor_reference_period,
-                ARG_MIN(section_key, period) AS section_key_start,
-                ARG_MIN(h3_cell, period) AS h3_cell_start,
-                ARG_MIN(lat_wgs84, period) AS lat_wgs84_start,
-                ARG_MIN(lon_wgs84, period) AS lon_wgs84_start,
-                ARG_MIN(coord_transform_status, period) AS coord_transform_status_start,
-                ARG_MIN(padron_lag_months, period) AS padron_lag_months_start,
-                ARG_MIN(renta_best_eur, period) AS renta_best_eur_start,
-                ARG_MIN(share_foreign, period) AS share_foreign_start,
-                ARG_MIN(share_age_15_29, period) AS share_age_15_29_start,
-                ARG_MIN(share_age_30_44, period) AS share_age_30_44_start,
-                ARG_MIN(share_age_45_64, period) AS share_age_45_64_start,
-                ARG_MIN(share_age_65_plus, period) AS share_age_65_plus_start,
-                ARG_MIN(population_density_km2, period) AS population_density_km2_start,
-                ARG_MIN(geometry_available, period) AS geometry_available_start
-            FROM enriched
-            GROUP BY id_local
-            ORDER BY first_seen_period, id_local
+                previous_period AS event_period,
+                successor_period,
+                previous_division_code,
+                previous_division_desc,
+                successor_division_code,
+                successor_division_desc,
+                previous_epigrafe_code,
+                previous_epigrafe_desc,
+                successor_epigrafe_code,
+                successor_epigrafe_desc,
+                previous_n_divisions,
+                successor_n_divisions,
+                previous_n_epigrafes,
+                successor_n_epigrafes,
+                month_gap
+            FROM ordered
+            WHERE previous_period IS NOT NULL
+              AND month_gap = 1
+              AND previous_n_divisions = 1
+              AND successor_n_divisions = 1
+              AND previous_division_code <> successor_division_code
             """
-
-            abt = con.execute(
-                sql,
-                [str(DATA_DIR / "processed" / "censo_geospatial" / "locales" / "*.csv.gz"), max_period, max_period],
-            ).df()
-        finally:
-            con.close()
-    else:
-        abt = _build_local_survival_abt_with_pandas(
-            usable,
-            pd.read_csv(
-                resolved_section_panel,
-                low_memory=False,
-                dtype={
-                    "target_period": "string",
-                    "section_key": "string",
-                },
-            ),
-            max_period=max_period,
         )
+
+        change_candidates = con.execute(
+            "SELECT * FROM change_candidates ORDER BY event_period, successor_period, id_local"
+        ).df()
+        change_candidates.to_csv(resolved_change_candidates_csv, index=False)
+
+        abt = con.execute(
+            """
+            WITH local_summary AS (
+                SELECT
+                    id_local,
+                    MIN(period) AS first_seen_period,
+                    MAX(period) AS last_seen_period,
+                    COUNT(DISTINCT period) AS active_months,
+                    ARG_MIN(section_key, period) AS section_key_start,
+                    ARG_MIN(h3_cell, period) AS h3_cell_start,
+                    ARG_MIN(lat_wgs84, period) AS lat_wgs84_start,
+                    ARG_MIN(lon_wgs84, period) AS lon_wgs84_start,
+                    ARG_MIN(coord_transform_status, period) AS coord_transform_status_start,
+                    ARG_MIN(padron_lag_months, period) AS padron_lag_months_start,
+                    ARG_MIN(renta_best_eur, period) AS renta_best_eur_start,
+                    ARG_MIN(share_foreign, period) AS share_foreign_start,
+                    ARG_MIN(share_age_15_29, period) AS share_age_15_29_start,
+                    ARG_MIN(share_age_30_44, period) AS share_age_30_44_start,
+                    ARG_MIN(share_age_45_64, period) AS share_age_45_64_start,
+                    ARG_MIN(share_age_65_plus, period) AS share_age_65_plus_start,
+                    ARG_MIN(population_density_km2, period) AS population_density_km2_start,
+                    ARG_MIN(geometry_available, period) AS geometry_available_start
+                FROM local_enriched
+                GROUP BY id_local
+            ), first_change AS (
+                SELECT *
+                FROM (
+                    SELECT
+                        *,
+                        ROW_NUMBER() OVER (PARTITION BY id_local ORDER BY event_period, successor_period) AS rn
+                    FROM change_candidates
+                ) ranked
+                WHERE rn = 1
+            ), event_base AS (
+                SELECT
+                    l.*,
+                    CASE WHEN l.last_seen_period < ? THEN l.last_seen_period ELSE NULL END AS disappearance_event_period,
+                    c.event_period AS change_event_period,
+                    c.successor_period AS change_successor_period,
+                    c.previous_division_code,
+                    c.previous_division_desc,
+                    c.successor_division_code,
+                    c.successor_division_desc,
+                    c.previous_epigrafe_code,
+                    c.previous_epigrafe_desc,
+                    c.successor_epigrafe_code,
+                    c.successor_epigrafe_desc
+                FROM local_summary l
+                LEFT JOIN first_change c USING (id_local)
+            ), resolved AS (
+                SELECT
+                    *,
+                    CASE
+                        WHEN change_event_period IS NOT NULL
+                             AND (disappearance_event_period IS NULL OR change_event_period <= disappearance_event_period)
+                            THEN change_event_period
+                        WHEN disappearance_event_period IS NOT NULL
+                            THEN disappearance_event_period
+                        ELSE NULL
+                    END AS event_period,
+                    CASE
+                        WHEN change_event_period IS NOT NULL
+                             AND (disappearance_event_period IS NULL OR change_event_period <= disappearance_event_period)
+                            THEN 'division_change_single_single'
+                        WHEN disappearance_event_period IS NOT NULL
+                            THEN 'disappearance'
+                        ELSE 'censored'
+                    END AS event_source
+                FROM event_base
+            )
+            SELECT
+                id_local,
+                first_seen_period,
+                last_seen_period,
+                active_months,
+                event_period,
+                event_source,
+                CASE WHEN event_period IS NOT NULL THEN 1 ELSE 0 END AS event_observed,
+                COALESCE(event_period, last_seen_period) AS target_end_period,
+                ((CAST(SUBSTR(COALESCE(event_period, last_seen_period), 1, 4) AS INTEGER) - CAST(SUBSTR(first_seen_period, 1, 4) AS INTEGER)) * 12
+                  + (CAST(SUBSTR(COALESCE(event_period, last_seen_period), 6, 2) AS INTEGER) - CAST(SUBSTR(first_seen_period, 6, 2) AS INTEGER)) + 1) AS duration_months,
+                ? AS censor_reference_period,
+                disappearance_event_period,
+                change_event_period,
+                change_successor_period,
+                CASE WHEN change_event_period IS NOT NULL THEN 1 ELSE 0 END AS division_change_candidate_observed,
+                previous_division_code,
+                previous_division_desc,
+                successor_division_code,
+                successor_division_desc,
+                previous_epigrafe_code,
+                previous_epigrafe_desc,
+                successor_epigrafe_code,
+                successor_epigrafe_desc,
+                section_key_start,
+                h3_cell_start,
+                lat_wgs84_start,
+                lon_wgs84_start,
+                coord_transform_status_start,
+                padron_lag_months_start,
+                renta_best_eur_start,
+                share_foreign_start,
+                share_age_15_29_start,
+                share_age_30_44_start,
+                share_age_45_64_start,
+                share_age_65_plus_start,
+                population_density_km2_start,
+                geometry_available_start
+            FROM resolved
+            ORDER BY first_seen_period, id_local
+            """,
+            [max_period, max_period],
+        ).df()
+    finally:
+        con.close()
 
     abt.to_csv(resolved_output_csv, index=False)
     parquet_written = True
     try:
         abt.to_parquet(resolved_output_parquet, index=False)
-    except ImportError:
+    except ImportError:  # pragma: no cover
         parquet_written = False
 
-    report = _render_abt_report(abt, max_period=max_period, max_year=max_year, max_month=max_month)
+    report = _render_abt_report(
+        abt,
+        max_period=max_period,
+        max_year=max_year,
+        max_month=max_month,
+        normalization_audit=normalization_audit,
+        change_candidates=change_candidates,
+    )
     resolved_report_md.write_text(report, encoding="utf-8")
 
     return SurvivalAbtBuildResult(
@@ -167,10 +516,20 @@ def build_local_survival_abt(
         report_md=resolved_report_md,
         rows=len(abt),
         max_period=max_period,
+        change_candidates_csv=resolved_change_candidates_csv,
+        normalization_audit_csv=resolved_normalization_audit_csv,
     )
 
 
-def _render_abt_report(abt: pd.DataFrame, *, max_period: str, max_year: int, max_month: int) -> str:
+def _render_abt_report(
+    abt: pd.DataFrame,
+    *,
+    max_period: str,
+    max_year: int,
+    max_month: int,
+    normalization_audit: pd.DataFrame,
+    change_candidates: pd.DataFrame,
+) -> str:
     if abt.empty:
         return "# ABT Survival\n\nNo se genero ninguna fila en la ABT.\n"
 
@@ -178,11 +537,42 @@ def _render_abt_report(abt: pd.DataFrame, *, max_period: str, max_year: int, max
     duration_median = float(pd.to_numeric(abt["duration_months"], errors="coerce").median())
     with_h3 = int(abt["h3_cell_start"].notna().sum())
     with_renta = int(pd.to_numeric(abt["renta_best_eur_start"], errors="coerce").notna().sum())
+    event_source_counts = abt["event_source"].astype("string").value_counts(dropna=False).to_dict()
+
+    division_audit = normalization_audit[normalization_audit["taxonomy"] == "division"].copy()
+    epigrafe_audit = normalization_audit[normalization_audit["taxonomy"] == "epigrafe"].copy()
+
+    def _sum_rows(frame: pd.DataFrame, mask: pd.Series) -> int:
+        if frame.empty:
+            return 0
+        return int(pd.to_numeric(frame.loc[mask, "n"], errors="coerce").fillna(0).sum())
+
+    division_raw_codes = int(division_audit["raw_code"].nunique(dropna=True))
+    division_clean_codes = int(division_audit.loc[division_audit["code_valid"], "clean_code"].nunique(dropna=True))
+    division_numeric_normalized = _sum_rows(division_audit, division_audit["mapping_reason"].eq("numeric_normalized"))
+    division_description_remapped = _sum_rows(division_audit, division_audit["mapping_reason"].eq("description_remap"))
+    division_placeholders = _sum_rows(division_audit, division_audit["is_placeholder"].fillna(False))
+    division_invalid = _sum_rows(division_audit, division_audit["mapping_reason"].eq("invalid"))
+
+    epigrafe_raw_codes = int(epigrafe_audit["raw_code"].nunique(dropna=True))
+    epigrafe_clean_codes = int(epigrafe_audit.loc[epigrafe_audit["code_valid"], "clean_code"].nunique(dropna=True))
+
+    top_changes = pd.DataFrame()
+    if not change_candidates.empty:
+        top_changes = (
+            change_candidates.groupby(["previous_division_desc", "successor_division_desc"], dropna=False)
+            .size()
+            .reset_index(name="transitions")
+            .sort_values(["transitions", "previous_division_desc", "successor_division_desc"], ascending=[False, True, True])
+            .head(10)
+        )
 
     lines: list[str] = []
     lines.append("# ABT Survival")
     lines.append("")
-    lines.append("ABT baseline por local (una fila por `id_local`) con target de supervivencia censurado.")
+    lines.append(
+        "ABT por local con cierre observado tanto por desaparicion del `id_local` como por primer cambio robusto `single-single` de division, tratado como cierre estructural."
+    )
     lines.append("")
     lines.append("## Resumen")
     lines.append("")
@@ -193,180 +583,256 @@ def _render_abt_report(abt: pd.DataFrame, *, max_period: str, max_year: int, max
     lines.append(f"- Filas con H3 inicial: {with_h3:,}")
     lines.append(f"- Filas con renta inicial: {with_renta:,}")
     lines.append("")
+    lines.append("## Desglose de eventos")
+    lines.append("")
+    lines.append(f"- Cierre por cambio `single-single` de division: {int(event_source_counts.get('division_change_single_single', 0)):,}")
+    lines.append(f"- Cierre por desaparicion del local: {int(event_source_counts.get('disappearance', 0)):,}")
+    lines.append(f"- Censurados: {int(event_source_counts.get('censored', 0)):,}")
+    lines.append(f"- Candidatos de cambio `single-single` auditados: {len(change_candidates):,}")
+    lines.append("")
+    lines.append("## Limpieza masiva de actividad")
+    lines.append("")
+    lines.append(f"- Codigos raw de division detectados: {division_raw_codes:,}")
+    lines.append(f"- Codigos limpios y validos de division: {division_clean_codes:,}")
+    lines.append(f"- Filas de division corregidas por formato numerico (`47.0 -> 47`): {division_numeric_normalized:,}")
+    lines.append(f"- Filas de division remapeadas por descripcion canonica: {division_description_remapped:,}")
+    lines.append(f"- Filas de division marcadas como placeholder/no codificadas: {division_placeholders:,}")
+    lines.append(f"- Filas de division descartadas por codigo no valido: {division_invalid:,}")
+    lines.append(f"- Codigos raw de epigrafe detectados: {epigrafe_raw_codes:,}")
+    lines.append(f"- Codigos limpios y validos de epigrafe: {epigrafe_clean_codes:,}")
+    lines.append("")
     lines.append("## Columnas clave")
     lines.append("")
-    lines.append("- `first_seen_period`, `last_seen_period`, `duration_months`, `event_observed`")
+    lines.append("- `first_seen_period`, `last_seen_period`, `target_end_period`, `duration_months`, `event_observed`")
+    lines.append("- `event_source`, `event_period`, `change_event_period`, `change_successor_period`")
+    lines.append("- Auditoria de cambio: `previous_division_*`, `successor_division_*`, `previous_epigrafe_*`, `successor_epigrafe_*`")
     lines.append("- Features iniciales PiT: `renta_best_eur_start`, `share_*_start`, `population_density_km2_start`")
     lines.append("- Geoespacial inicial: `h3_cell_start`, `lat_wgs84_start`, `lon_wgs84_start`")
-    lines.append("")
+
+    if not top_changes.empty:
+        lines.append("")
+        lines.append("## Cambios de division mas frecuentes tratados como cierre")
+        lines.append("")
+        for row in top_changes.itertuples(index=False):
+            prev_desc = getattr(row, "previous_division_desc") or "(sin descripcion)"
+            next_desc = getattr(row, "successor_division_desc") or "(sin descripcion)"
+            lines.append(f"- {prev_desc} -> {next_desc}: {int(getattr(row, 'transitions')):,}")
+
     return "\n".join(lines) + "\n"
 
 
-def _build_local_survival_abt_with_pandas(
-    usable_manifest: pd.DataFrame,
-    section_panel: pd.DataFrame,
+def _build_activity_lookup(
+    summary: pd.DataFrame,
     *,
-    max_period: str,
+    taxonomy: str,
+    min_numeric: int | None,
+    max_numeric: int | None,
+    placeholder_codes: frozenset[str],
 ) -> pd.DataFrame:
-    section_cols = [
-        "section_key",
-        "padron_lag_months",
-        "renta_best_eur",
-        "share_foreign",
-        "share_age_15_29",
-        "share_age_30_44",
-        "share_age_45_64",
-        "share_age_65_plus",
-        "population_density_km2",
-        "geometry_available",
-    ]
-
-    panel_by_period: dict[str, pd.DataFrame] = {}
-    for period, frame in section_panel.groupby("target_period"):
-        available_cols = [column for column in section_cols if column in frame.columns]
-        period_frame = frame[available_cols].copy()
-        if "section_key" in period_frame.columns:
-            period_frame["section_key"] = (
-                period_frame["section_key"].astype("string").str.extract(r"(\d+)", expand=False).astype("string").str.zfill(5)
-            )
-        panel_by_period[str(period)] = period_frame
-
-    abt = pd.DataFrame()
-    usable_sorted = usable_manifest.sort_values("period").reset_index(drop=True)
-    for period, output_path in usable_sorted[["period", "output_path"]].itertuples(index=False):
-        path = Path(str(output_path))
-        if not path.exists():
-            continue
-
-        frame = pd.read_csv(
-            path,
-            usecols=[
-                "id_local",
-                "id_distrito_local",
-                "id_seccion_censal_local",
-                "h3_cell",
-                "lat_wgs84",
-                "lon_wgs84",
-                "coord_transform_status",
-            ],
-            low_memory=False,
+    if summary.empty:
+        return pd.DataFrame(
+            columns=[
+                "taxonomy",
+                "raw_code",
+                "raw_desc",
+                "desc_key",
+                "n",
+                "clean_code",
+                "clean_desc",
+                "code_valid",
+                "is_placeholder",
+                "mapping_reason",
+            ]
         )
-        frame["id_local"] = pd.to_numeric(frame["id_local"], errors="coerce").astype("Int64")
-        frame = frame.dropna(subset=["id_local"]).copy()
-        frame["id_local"] = frame["id_local"].astype("int64")
 
-        district = pd.to_numeric(frame["id_distrito_local"], errors="coerce").astype("Int64").astype("string").str.zfill(2)
-        section_raw = pd.to_numeric(frame["id_seccion_censal_local"], errors="coerce").astype("Int64").astype("string")
+    frame = summary.copy()
+    frame["taxonomy"] = taxonomy
+    frame["raw_code"] = frame["raw_code"].map(_clean_raw_code).fillna("")
+    frame["raw_desc"] = frame["raw_desc"].map(_clean_display_text).fillna("")
+    frame["desc_key"] = frame["raw_desc"].map(normalize_activity_description)
+    frame["n"] = pd.to_numeric(frame["n"], errors="coerce").fillna(0).astype(int)
+    frame["numeric_code"] = frame["raw_code"].map(_parse_integer_like)
+    frame["candidate_code"] = frame["numeric_code"].map(
+        lambda value: _candidate_code_from_numeric(value, min_numeric=min_numeric, max_numeric=max_numeric)
+    )
 
-        section_key = pd.Series(pd.NA, index=frame.index, dtype="string")
-        section_len = section_raw.str.len()
-        mask_len_ge_5 = section_len >= 5
-        mask_len_4 = section_len == 4
-        mask_other = ~(mask_len_ge_5 | mask_len_4)
-
-        section_key.loc[mask_len_ge_5] = section_raw.loc[mask_len_ge_5].str[-5:]
-        section_key.loc[mask_len_4] = section_raw.loc[mask_len_4].str.zfill(5)
-        section_key.loc[mask_other] = district.loc[mask_other] + section_raw.loc[mask_other].str.zfill(3)
-        frame["section_key"] = section_key
-
-        period_panel = panel_by_period.get(str(period))
-        if period_panel is not None and not period_panel.empty:
-            frame = frame.merge(period_panel, on="section_key", how="left")
-
-        frame["first_seen_period"] = str(period)
-        frame["last_seen_period"] = str(period)
-        frame["active_months"] = 1
-
-        rename_map = {
-            "section_key": "section_key_start",
-            "h3_cell": "h3_cell_start",
-            "lat_wgs84": "lat_wgs84_start",
-            "lon_wgs84": "lon_wgs84_start",
-            "coord_transform_status": "coord_transform_status_start",
-            "padron_lag_months": "padron_lag_months_start",
-            "renta_best_eur": "renta_best_eur_start",
-            "share_foreign": "share_foreign_start",
-            "share_age_15_29": "share_age_15_29_start",
-            "share_age_30_44": "share_age_30_44_start",
-            "share_age_45_64": "share_age_45_64_start",
-            "share_age_65_plus": "share_age_65_plus_start",
-            "population_density_km2": "population_density_km2_start",
-            "geometry_available": "geometry_available_start",
+    valid_rows = frame[frame["candidate_code"].notna()].copy()
+    canonical_desc_by_code: dict[str, str] = {}
+    if not valid_rows.empty:
+        canonical_desc_rows = (
+            valid_rows.groupby(["candidate_code", "raw_desc"], dropna=False)["n"].sum().reset_index()
+            .sort_values(["candidate_code", "n", "raw_desc"], ascending=[True, False, True])
+            .drop_duplicates(subset=["candidate_code"], keep="first")
+        )
+        canonical_desc_by_code = {
+            str(
+                normalize_activity_code(
+                    row.candidate_code,
+                    min_numeric=min_numeric,
+                    max_numeric=max_numeric,
+                    placeholders=placeholder_codes,
+                )
+            ): row.raw_desc or str(row.candidate_code)
+            for row in canonical_desc_rows.itertuples(index=False)
         }
-        frame = frame.rename(columns=rename_map)
-        frame = frame.drop_duplicates(subset=["id_local"], keep="first")
 
-        selected_columns = [
-            "id_local",
-            "first_seen_period",
-            "last_seen_period",
-            "active_months",
-            "section_key_start",
-            "h3_cell_start",
-            "lat_wgs84_start",
-            "lon_wgs84_start",
-            "coord_transform_status_start",
-            "padron_lag_months_start",
-            "renta_best_eur_start",
-            "share_foreign_start",
-            "share_age_15_29_start",
-            "share_age_30_44_start",
-            "share_age_45_64_start",
-            "share_age_65_plus_start",
-            "population_density_km2_start",
-            "geometry_available_start",
+    desc_to_code: dict[str, str] = {}
+    if not valid_rows.empty:
+        desc_code = (
+            valid_rows.dropna(subset=["desc_key"])
+            .groupby(["desc_key", "candidate_code"], dropna=False)["n"]
+            .sum()
+            .reset_index()
+        )
+        if not desc_code.empty:
+            desc_unique = desc_code.groupby("desc_key")["candidate_code"].nunique().reset_index(name="n_codes")
+            desc_code = desc_code.merge(desc_unique, on="desc_key", how="left")
+            unique_desc_code = desc_code[desc_code["n_codes"] == 1].copy()
+            desc_to_code = {
+                str(row.desc_key): str(
+                    normalize_activity_code(
+                        row.candidate_code,
+                        min_numeric=min_numeric,
+                        max_numeric=max_numeric,
+                        placeholders=placeholder_codes,
+                    )
+                )
+                for row in unique_desc_code.itertuples(index=False)
+                if pd.notna(row.desc_key) and pd.notna(row.candidate_code)
+            }
+
+    clean_code: list[str | None] = []
+    clean_desc: list[str | None] = []
+    code_valid: list[bool] = []
+    is_placeholder: list[bool] = []
+    mapping_reason: list[str] = []
+
+    for row in frame.itertuples(index=False):
+        raw_code = str(row.raw_code)
+        raw_desc = str(row.raw_desc)
+        desc_key = row.desc_key if pd.notna(row.desc_key) else None
+        raw_numeric_code = _parse_integer_like(raw_code)
+        candidate_code_raw = row.candidate_code
+        candidate_code = None
+        if not pd.isna(candidate_code_raw) and str(candidate_code_raw).strip().lower() != "nan":
+            candidate_code = normalize_activity_code(
+                candidate_code_raw,
+                min_numeric=min_numeric,
+                max_numeric=max_numeric,
+                placeholders=placeholder_codes,
+            )
+
+        placeholder = (
+            raw_code in placeholder_codes
+            or (raw_numeric_code is not None and str(raw_numeric_code) in placeholder_codes)
+            or desc_key in PLACEHOLDER_ACTIVITY_DESC_KEYS
+        )
+        if placeholder:
+            reason = "placeholder"
+            final_code = normalize_activity_code(raw_code, placeholders=placeholder_codes) or raw_code or None
+        elif candidate_code is not None:
+            reason = "exact_valid" if raw_code == str(candidate_code) else "numeric_normalized"
+            final_code = str(candidate_code)
+        elif desc_key is not None and desc_key in desc_to_code:
+            reason = "description_remap"
+            final_code = desc_to_code[desc_key]
+        else:
+            reason = "invalid"
+            final_code = None
+
+        canonical_final_code = None if final_code is None else normalize_activity_code(
+            final_code,
+            min_numeric=min_numeric,
+            max_numeric=max_numeric,
+            placeholders=placeholder_codes,
+        )
+        if canonical_final_code is not None and canonical_final_code not in placeholder_codes:
+            final_code = canonical_final_code
+        final_valid = (
+            canonical_final_code is not None
+            and canonical_final_code not in placeholder_codes
+            and _parse_integer_like(canonical_final_code) is not None
+        )
+        final_desc = canonical_desc_by_code.get(str(final_code), raw_desc or final_code) if final_code is not None else raw_desc or None
+
+        clean_code.append(final_code)
+        clean_desc.append(final_desc)
+        code_valid.append(bool(final_valid))
+        is_placeholder.append(bool(placeholder))
+        mapping_reason.append(reason)
+
+    frame["clean_code"] = clean_code
+    frame["clean_desc"] = clean_desc
+    frame["code_valid"] = code_valid
+    frame["is_placeholder"] = is_placeholder
+    frame["mapping_reason"] = mapping_reason
+
+    return frame[
+        [
+            "taxonomy",
+            "raw_code",
+            "raw_desc",
+            "desc_key",
+            "n",
+            "clean_code",
+            "clean_desc",
+            "code_valid",
+            "is_placeholder",
+            "mapping_reason",
         ]
-        frame = frame[[column for column in selected_columns if column in frame.columns]].set_index("id_local")
+    ].copy()
 
-        if abt.empty:
-            abt = frame.copy()
-            continue
 
-        existing_mask = frame.index.isin(abt.index)
-        updates = frame[existing_mask]
-        additions = frame[~existing_mask]
+def _candidate_code_from_numeric(
+    value: int | None,
+    *,
+    min_numeric: int | None,
+    max_numeric: int | None,
+) -> str | None:
+    if value is None:
+        return None
+    if min_numeric is not None and value < min_numeric:
+        return None
+    if max_numeric is not None and value > max_numeric:
+        return None
+    return str(value)
 
-        if not updates.empty:
-            abt.loc[updates.index, "last_seen_period"] = str(period)
-            abt.loc[updates.index, "active_months"] = pd.to_numeric(abt.loc[updates.index, "active_months"], errors="coerce").fillna(0) + 1
 
-        if not additions.empty:
-            abt = pd.concat([abt, additions], axis=0)
+def _clean_raw_code(value: object) -> str | None:
+    if value is None or pd.isna(value):
+        return None
+    text = str(value).strip().upper()
+    if not text:
+        return None
+    return text
 
-    if abt.empty:
-        return pd.DataFrame()
 
-    abt = abt.reset_index().rename(columns={"index": "id_local"})
-    first_year = pd.to_numeric(abt["first_seen_period"].astype(str).str[:4], errors="coerce")
-    first_month = pd.to_numeric(abt["first_seen_period"].astype(str).str[5:7], errors="coerce")
-    last_year = pd.to_numeric(abt["last_seen_period"].astype(str).str[:4], errors="coerce")
-    last_month = pd.to_numeric(abt["last_seen_period"].astype(str).str[5:7], errors="coerce")
+def _clean_display_text(value: object) -> str | None:
+    if value is None or pd.isna(value):
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    if "Ã" in text or "Â" in text:
+        try:
+            repaired = text.encode("latin1", errors="ignore").decode("utf-8", errors="ignore")
+            if repaired:
+                text = repaired
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            pass
+    text = re.sub(r"(?<=[A-Za-zÁÉÍÓÚÜÑáéíóúüñ])0(?=[A-Za-zÁÉÍÓÚÜÑáéíóúüñ])", "O", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text or None
 
-    abt["duration_months"] = ((last_year - first_year) * 12 + (last_month - first_month) + 1).astype("Int64")
-    abt["event_observed"] = (abt["last_seen_period"].astype(str) < str(max_period)).astype(int)
-    abt["censor_reference_period"] = str(max_period)
 
-    ordered = [
-        "id_local",
-        "first_seen_period",
-        "last_seen_period",
-        "active_months",
-        "duration_months",
-        "event_observed",
-        "censor_reference_period",
-        "section_key_start",
-        "h3_cell_start",
-        "lat_wgs84_start",
-        "lon_wgs84_start",
-        "coord_transform_status_start",
-        "padron_lag_months_start",
-        "renta_best_eur_start",
-        "share_foreign_start",
-        "share_age_15_29_start",
-        "share_age_30_44_start",
-        "share_age_45_64_start",
-        "share_age_65_plus_start",
-        "population_density_km2_start",
-        "geometry_available_start",
-    ]
-    return abt[[column for column in ordered if column in abt.columns]].sort_values(["first_seen_period", "id_local"]).reset_index(drop=True)
+def _parse_integer_like(value: object) -> int | None:
+    raw = _clean_raw_code(value)
+    if raw is None:
+        return None
+    if not re.fullmatch(r"[+-]?\d+(?:[\.,]0+)?", raw):
+        return None
+    normalized = raw.replace(",", ".")
+    try:
+        return int(float(normalized))
+    except ValueError:
+        return None

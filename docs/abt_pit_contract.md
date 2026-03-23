@@ -10,7 +10,7 @@ Construir una ABT mensual por local para estimar supervivencia (tiempo hasta cie
 
 - Entidad primaria: `id_local`
 - Frecuencia: mensual
-- Grano final ABT: una fila por (`id_local`, `target_period`)
+- Grano final ABT v1: una fila por `id_local` (tiempo hasta primer evento o censura)
 
 ## 3) Tiempo de referencia
 
@@ -28,10 +28,14 @@ Variables minimas:
 - `event_period` (YYYY-MM, nullable): mes de cierre
 - `censor_period` (YYYY-MM): ultimo mes observable sin evento
 
-Criterio operativo inicial recomendado:
+Criterio operativo vigente:
 
-- Evento = primera transicion confirmada a estado cerrado/baja en `locales`.
-- Censura = ultimo mes disponible para el local sin transicion a cierre.
+- Evento = el primer instante observado entre:
+  1. desaparicion del `id_local` antes del ultimo periodo global, o
+  2. primer cambio robusto `single-single` de `division` entre meses consecutivos, tratado como cierre estructural del negocio previo.
+- Para cambios de division, el `event_period` se fija en el mes anterior al cambio (ultimo mes observado de la actividad previa).
+- Se excluyen como cambios de cierre los placeholders/no codificados (`0`, `-1`, `PT`, equivalentes) y las duplicidades de formato (`47` vs `47.0`) tras limpieza canonica.
+- Censura = ultimo mes observable del local sin desaparicion ni cambio estructural previo.
 
 ## 5) Contrato PiT por fuente
 
@@ -91,16 +95,19 @@ Checks obligatorios de soft-fail (warning + auditoria):
 Identidad y tiempo:
 
 - `id_local`
-- `target_period`
-- `target_date`
-- `origin_period`
+- `first_seen_period`
+- `last_seen_period`
+- `target_end_period`
 
 Target survival:
 
 - `event_observed`
 - `duration_months`
 - `event_period`
-- `censor_period`
+- `censor_reference_period`
+- `event_source`
+- `change_event_period`
+- `change_successor_period`
 
 Covariables base:
 
@@ -108,6 +115,13 @@ Covariables base:
 - Demografia por seccion (padron)
 - Renta (`renta_best_eur` + granularidad)
 - Geografia (`geometry_available`, `section_area_m2`, `population_density_km2`)
+
+Auditoria de actividad:
+
+- `previous_division_code`, `previous_division_desc`
+- `successor_division_code`, `successor_division_desc`
+- `previous_epigrafe_code`, `previous_epigrafe_desc`
+- `successor_epigrafe_code`, `successor_epigrafe_desc`
 
 Metadatos de calidad temporal:
 

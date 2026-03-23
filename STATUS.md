@@ -2,7 +2,7 @@
 
 Este archivo es la fuente unica y viva de contexto del proyecto. Se actualiza en cada avance y reemplaza al resto de documentos como referencia primaria.
 
-Ultima actualizacion: 2026-03-17
+Ultima actualizacion: 2026-03-21
 
 ## Identidad del proyecto
 
@@ -41,8 +41,13 @@ Ultima actualizacion: 2026-03-17
 - Resultado fase 3: `131` periodos materializados + `1` cacheado, `20,212,017` filas procesadas, `18,873,903` filas con coordenadas WGS84 + H3.
 - En `2017-09` se aplica politica conservadora por defecto (`transition_policy=skip`), quedando `142,878` filas marcadas para revision de transicion CRS.
 - Robustez operativa añadida: si un snapshot normalizado `locales` esta corrupto, se rematerializa automaticamente y se reintenta lectura.
-- Fase ABT iniciada: generado baseline de supervivencia por local en `data/features/local_survival_abt.csv` (`203,870` filas, censura global `2026-03`).
-- Reporte ABT disponible en `docs/abt_survival.md` con metricas iniciales de evento/duracion y cobertura de features.
+- Fase ABT redefinida y rehecha: `data/features/local_survival_abt.csv` regenerada (`203,870` filas, censura global `2026-03`) con cierre por desaparicion o primer cambio robusto `single-single` de division.
+- Limpieza masiva de `actividades` integrada en pipeline ABT:
+	- normalizacion de codigos equivalentes (`47` vs `47.0`)
+	- remapeo canonico por descripcion cuando el codigo venia mal cargado
+	- exclusion de placeholders/no codificados (`0`, `-1`, `PT`, equivalentes)
+	- auditorias exportadas en `data/processed/activity_code_normalization_audit.csv` y `data/processed/local_activity_change_candidates.csv`
+- Reporte ABT actualizado en `docs/abt_survival.md` con nuevo mix de eventos, metricas de cobertura y resumen de limpieza.
 - Verificacion automatica de `DB/actividades`: `134` ficheros detectados y `0` vacios fisicos (`size_0`/cabecera en blanco).
 - Politicas cerradas para modelado:
 	- CRS transicion `2017-09`: `exclude_transition` en entrenamiento.
@@ -52,12 +57,12 @@ Ultima actualizacion: 2026-03-17
 	- `data/exports/local_survival_scores.csv`
 	- `models/survival_baseline_metrics.json`
 	- `docs/survival_baseline.md`
-- Resultado baseline heuristico:
+- Resultado baseline heuristico reentrenado sobre el nuevo target:
 	- Filas modeladas: `203,828` (42 bloqueadas por transicion CRS)
-	- Split temporal adaptativo (event-aware): train `149,684`, valid `2,242`, test `51,902`
-	- Eventos por split: train `779`, valid `4`, test `6`
-	- C-index sampled: train `0.5252`, valid `0.5078`, test `0.5690`
-	- Quality gate baseline: `pass` (sin `NaN` en C-index)
+	- Split temporal: train `149,213`, valid `2,742`, test `51,873`
+	- Eventos por split: train `14,918`, valid `52`, test `266`
+	- C-index sampled: train `0.4493`, valid `0.3996`, test `0.4967`
+	- Quality gate baseline: `pass`
 - README publico actualizado con narrativa no tecnica del proyecto (que hacemos, por que y estado para presentacion externa).
 - Nuevo gate continuo de preparacion a modelado: `scripts/run_modeling_readiness.py` -> `docs/modeling_readiness.md` + `models/modeling_readiness.json`.
 - Estado readiness actual: `ready_with_caveats` (pipeline util, pero con eventos escasos en valid/test para evaluacion robusta).
@@ -73,7 +78,10 @@ Ultima actualizacion: 2026-03-17
 - Export final para mapa consolidada con score y banderas de calidad:
 	- scores: `risk_cox`, `risk_rsf`, `risk_gbsa`, `risk_ensemble`
 	- calidad: `quality_flag_transition`, `quality_flag_missing_h3`, `quality_flag_renta_imputed`, `quality_tier`
-- Resultado canonical (C-index ensemble): train `0.5246`, valid `0.6637`, test `0.5050`.
+- Resultado canonical actualizado (ensemble):
+	- Uno/IPCW C-index: train `0.6518`, valid `0.5235`, test `0.5262`
+	- Dynamic AUC mean: train `0.7142`, valid `0.5924`, test `0.6438`
+	- Quality gate canonico: `pass`
 - Evaluacion survival robusta integrada en pipeline canonico:
 	- `Uno / IPCW C-index` para `ensemble`
 	- `Cumulative Dynamic AUC` en `6/12/24` meses para `ensemble`
@@ -82,8 +90,8 @@ Ultima actualizacion: 2026-03-17
 - `modeling_readiness` ya gobierna sobre metricas canonicas en lugar de depender solo del baseline.
 - CLI `train_survival_canonical.py --quick` aligerado para validacion local trazable (submuestreo de fit + progreso tambien en `GBSA`).
 - Ultima validacion rapida canonical regenerada con metadata de ejecucion (`quick_mode=true`, `fit_max_rows=10000`).
-- Estado readiness actual tras metricas robustas: `ready_with_caveats`.
-- Suite actual de pruebas: `37/37` OK.
+- Estado readiness actual tras redefinir cierre y reentrenar: `ready`.
+- Guardrail extra incorporado en `assign_temporal_split_adaptive()` para evitar splits degenerados sin filas de train cuando el nuevo target aumenta la densidad de eventos.
 - Prompt de continuidad para trabajar sin contexto disponible en `docs/next_session_prompt.md`.
 - Contexto legado consolidado en este archivo; carpeta `Context/` eliminada para simplificar el repo.
 - Documentacion DB movida a `docs/documentacion_db/` para estandarizar nombres.

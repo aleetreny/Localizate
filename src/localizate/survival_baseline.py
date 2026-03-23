@@ -255,7 +255,13 @@ def assign_temporal_split_adaptive(
     test_events = float(event_series[assigned == "test"].sum())
 
     # If event-aware allocation still leaves empty-event splits, use event-quantile temporal fallback.
-    if assigned.eq("test").sum() == 0 or assigned.eq("valid").sum() == 0 or valid_events <= 0 or test_events <= 0:
+    if (
+        assigned.eq("train").sum() == 0
+        or assigned.eq("test").sum() == 0
+        or assigned.eq("valid").sum() == 0
+        or valid_events <= 0
+        or test_events <= 0
+    ):
         assigned = assign_temporal_split_event_quantiles(
             dataset,
             period_col=period_col,
@@ -267,7 +273,13 @@ def assign_temporal_split_adaptive(
     # Final guardrail: if still degenerate, revert to deterministic fixed split.
     valid_events = float(event_series[assigned == "valid"].sum())
     test_events = float(event_series[assigned == "test"].sum())
-    if assigned.eq("test").sum() == 0 or assigned.eq("valid").sum() == 0 or valid_events <= 0 or test_events <= 0:
+    if (
+        assigned.eq("train").sum() == 0
+        or assigned.eq("test").sum() == 0
+        or assigned.eq("valid").sum() == 0
+        or valid_events <= 0
+        or test_events <= 0
+    ):
         return assign_temporal_split(dataset[period_col])
     return assigned
 

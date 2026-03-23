@@ -69,6 +69,38 @@ class SurvivalBaselineTests(unittest.TestCase):
         self.assertTrue((split == "valid").any())
         self.assertTrue((split == "test").any())
 
+    def test_assign_temporal_split_adaptive_never_leaves_train_empty(self) -> None:
+        df = pd.DataFrame(
+            {
+                "first_seen_period": [
+                    "2015-01",
+                    "2016-01",
+                    "2017-01",
+                    "2018-01",
+                    "2019-01",
+                    "2020-01",
+                    "2021-01",
+                    "2022-01",
+                    "2023-01",
+                    "2024-01",
+                    "2025-01",
+                ],
+                "event_observed": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            }
+        )
+        split = assign_temporal_split_adaptive(
+            df,
+            period_col="first_seen_period",
+            event_col="event_observed",
+            min_events_valid=3,
+            min_events_test=3,
+            min_rows_valid=3,
+            min_rows_test=3,
+        )
+        self.assertTrue((split == "train").any())
+        self.assertTrue((split == "valid").any())
+        self.assertTrue((split == "test").any())
+
     def test_quality_gate_detects_missing_events_or_nan_metrics(self) -> None:
         metrics = {
             "split_event_counts": {"train": 10, "valid": 2, "test": 0},

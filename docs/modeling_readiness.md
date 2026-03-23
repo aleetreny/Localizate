@@ -2,30 +2,28 @@
 
 Chequeo continuo de calidad para asegurar que el paso a modelos de supervivencia avanzados sea estable y trazable.
 
-- Estado global: ready_with_caveats
+- Estado global: ready
 
 ## Lectura ejecutiva
 
-- Estado final: ready_with_caveats; gate canonico: pass_with_caveats.
-- Discriminacion ensemble: valid Uno=0.6637, test Uno=0.5050.
-- Horizontes dinamicos: valid mean AUC=0.6940, test mean AUC=0.5124.
-- La principal limitacion sigue siendo estadistica: muy pocos eventos en valid/test para declarar estabilidad fuerte.
-- La pipeline sirve para export operativo y comparacion iterativa, pero todavia no para afirmar excelencia robusta fuera de muestra.
+- Estado final: ready; gate canonico: pass.
+- Discriminacion ensemble: valid Uno=0.5235, test Uno=0.5262.
+- Horizontes dinamicos: valid mean AUC=0.5924, test mean AUC=0.6438.
 
 ## Resumen
 
 - Filas ABT: 203,870
-- Eventos totales: 789
-- Tasa de evento: 0.0038701133074998772
+- Eventos totales: 15,241
+- Tasa de evento: 0.07475842448619219
 - Mediana duracion (meses): 135.0
-- Cobertura H3: 0.8034531809486437
-- Cobertura renta observada: 0.2603816157355177
+- Cobertura H3: 0.8065973414430765
+- Cobertura renta observada: 0.7672389267670574
 - Filas marcadas por transicion CRS: 142878
-- Quality gate canonico: pass_with_caveats
-- Uno C-index valid: 0.6637423312883436
-- Uno C-index test: 0.50497627229586
-- Dynamic AUC valid: 0.6939935336584433
-- Dynamic AUC test: 0.5124169017509562
+- Quality gate canonico: pass
+- Uno C-index valid: 0.5234531447553381
+- Uno C-index test: 0.5261766177702657
+- Dynamic AUC valid: 0.5923551651311448
+- Dynamic AUC test: 0.6437722072350108
 - IBS valido disponible: True
 - IBS test disponible: True
 
@@ -35,7 +33,7 @@ Chequeo continuo de calidad para asegurar que el paso a modelos de supervivencia
 
 ## Warnings
 
-["low_observed_renta_coverage_expected_due_to_post_2023_carry_forward", "very_low_validation_events", "very_low_test_events"]
+[]
 
 ## Siguientes acciones
 
