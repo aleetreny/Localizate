@@ -11,6 +11,7 @@ from localizate.survival_baseline import (
     assign_temporal_split_event_quantiles,
     binary_auc,
     binary_brier,
+    build_feature_frame,
     compute_horizon_metrics,
     evaluate_quality_gate,
     sampled_concordance_index,
@@ -157,6 +158,53 @@ class SurvivalBaselineTests(unittest.TestCase):
         )
         self.assertIn("train", metrics)
         self.assertIn("h6", metrics["train"])
+
+    def test_build_feature_frame_preserves_missing_when_requested(self) -> None:
+        df = pd.DataFrame(
+            {
+                "renta_effective_eur": [1000.0, None],
+                "renta_carry_forward_years": [0, 1],
+                "share_foreign_start": [0.1, None],
+                "share_age_00_14_start": [0.2, None],
+                "share_age_15_29_start": [0.2, None],
+                "share_age_30_44_start": [0.2, None],
+                "share_age_45_64_start": [0.2, None],
+                "share_age_65_plus_start": [0.2, None],
+                "share_male_start": [0.5, None],
+                "age_mean_start": [40.0, None],
+                "total_population_start": [1000.0, None],
+                "population_density_km2_start": [5000.0, None],
+                "padron_lag_months_start": [0, None],
+                "geometry_available_start": [1, None],
+                "h3_cell_start": ["abc", None],
+                "n_divisions_start": [1, None],
+                "n_epigrafes_start": [1, None],
+                "section_local_count_start": [20, None],
+                "section_unique_division_count_start": [5, None],
+                "section_single_division_share_start": [0.5, None],
+                "section_same_division_local_count_start": [3, None],
+                "section_same_division_share_start": [0.15, None],
+                "section_local_count_delta_12m_start": [2, None],
+                "total_population_delta_12m_start": [10, None],
+                "share_foreign_delta_12m_start": [0.01, None],
+                "share_age_15_29_delta_12m_start": [0.02, None],
+                "population_density_km2_delta_12m_start": [100.0, None],
+                "renta_best_eur_delta_12m_start": [50.0, None],
+                "avisos_district_per_1000_prev_year": [4.0, None],
+                "avisos_barrio_per_1000_prev_year": [2.0, None],
+                "avisos_barrio_share_of_district_prev_year": [0.5, None],
+                "metro_distance_m_start": [250.0, None],
+                "metro_access_count_500m_start": [2.0, None],
+                "metro_access_count_1000m_start": [4.0, None],
+                "missing_metro_distance_start": [0.0, 1.0],
+            }
+        )
+
+        raw = build_feature_frame(df, fill_missing=False)
+        filled = build_feature_frame(df, fill_missing=True)
+
+        self.assertTrue(pd.isna(raw.loc[1, "share_foreign_start"]))
+        self.assertFalse(pd.isna(filled.loc[1, "share_foreign_start"]))
 
 
 if __name__ == "__main__":

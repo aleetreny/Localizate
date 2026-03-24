@@ -339,38 +339,91 @@ def _collect_tail_periods(
     return selected
 
 
-def build_feature_frame(dataset: pd.DataFrame) -> pd.DataFrame:
+def build_feature_frame(dataset: pd.DataFrame, *, fill_missing: bool = True) -> pd.DataFrame:
     frame = pd.DataFrame(index=dataset.index)
-    frame["renta"] = pd.to_numeric(dataset["renta_effective_eur"], errors="coerce")
-    frame["share_foreign"] = pd.to_numeric(dataset.get("share_foreign_start"), errors="coerce")
-    frame["share_age_15_29"] = pd.to_numeric(dataset.get("share_age_15_29_start"), errors="coerce")
-    frame["share_age_45_64"] = pd.to_numeric(dataset.get("share_age_45_64_start"), errors="coerce")
-    frame["share_age_65_plus"] = pd.to_numeric(dataset.get("share_age_65_plus_start"), errors="coerce")
-    frame["population_density"] = pd.to_numeric(dataset.get("population_density_km2_start"), errors="coerce")
-    frame["padron_lag"] = pd.to_numeric(dataset.get("padron_lag_months_start"), errors="coerce").fillna(0)
+    frame["renta_effective_eur"] = pd.to_numeric(dataset["renta_effective_eur"], errors="coerce")
+    frame["renta_carry_forward_years"] = pd.to_numeric(dataset.get("renta_carry_forward_years"), errors="coerce")
+    frame["share_foreign_start"] = pd.to_numeric(dataset.get("share_foreign_start"), errors="coerce")
+    frame["share_age_00_14_start"] = pd.to_numeric(dataset.get("share_age_00_14_start"), errors="coerce")
+    frame["share_age_15_29_start"] = pd.to_numeric(dataset.get("share_age_15_29_start"), errors="coerce")
+    frame["share_age_30_44_start"] = pd.to_numeric(dataset.get("share_age_30_44_start"), errors="coerce")
+    frame["share_age_45_64_start"] = pd.to_numeric(dataset.get("share_age_45_64_start"), errors="coerce")
+    frame["share_age_65_plus_start"] = pd.to_numeric(dataset.get("share_age_65_plus_start"), errors="coerce")
+    frame["share_male_start"] = pd.to_numeric(dataset.get("share_male_start"), errors="coerce")
+    frame["age_mean_start"] = pd.to_numeric(dataset.get("age_mean_start"), errors="coerce")
+    frame["total_population_start"] = np.log1p(pd.to_numeric(dataset.get("total_population_start"), errors="coerce"))
+    frame["population_density_km2_start"] = pd.to_numeric(dataset.get("population_density_km2_start"), errors="coerce")
+    frame["padron_lag_months_start"] = pd.to_numeric(dataset.get("padron_lag_months_start"), errors="coerce")
+    frame["geometry_available_start"] = pd.to_numeric(dataset.get("geometry_available_start"), errors="coerce")
     frame["missing_h3"] = dataset.get("h3_cell_start").isna().astype(float)
-    frame["renta_carry_forward_years"] = pd.to_numeric(dataset.get("renta_carry_forward_years"), errors="coerce").fillna(0)
+    frame["n_divisions_start"] = pd.to_numeric(dataset.get("n_divisions_start"), errors="coerce")
+    frame["n_epigrafes_start"] = pd.to_numeric(dataset.get("n_epigrafes_start"), errors="coerce")
+    frame["section_local_count_start"] = np.log1p(pd.to_numeric(dataset.get("section_local_count_start"), errors="coerce"))
+    frame["section_unique_division_count_start"] = pd.to_numeric(dataset.get("section_unique_division_count_start"), errors="coerce")
+    frame["section_single_division_share_start"] = pd.to_numeric(dataset.get("section_single_division_share_start"), errors="coerce")
+    frame["section_same_division_local_count_start"] = np.log1p(pd.to_numeric(dataset.get("section_same_division_local_count_start"), errors="coerce"))
+    frame["section_same_division_share_start"] = pd.to_numeric(dataset.get("section_same_division_share_start"), errors="coerce")
+    frame["section_local_count_delta_12m_start"] = pd.to_numeric(dataset.get("section_local_count_delta_12m_start"), errors="coerce")
+    frame["total_population_delta_12m_start"] = pd.to_numeric(dataset.get("total_population_delta_12m_start"), errors="coerce")
+    frame["share_foreign_delta_12m_start"] = pd.to_numeric(dataset.get("share_foreign_delta_12m_start"), errors="coerce")
+    frame["share_age_15_29_delta_12m_start"] = pd.to_numeric(dataset.get("share_age_15_29_delta_12m_start"), errors="coerce")
+    frame["population_density_km2_delta_12m_start"] = pd.to_numeric(dataset.get("population_density_km2_delta_12m_start"), errors="coerce")
+    frame["renta_best_eur_delta_12m_start"] = pd.to_numeric(dataset.get("renta_best_eur_delta_12m_start"), errors="coerce")
+    frame["avisos_district_per_1000_prev_year"] = np.log1p(pd.to_numeric(dataset.get("avisos_district_per_1000_prev_year"), errors="coerce"))
+    frame["avisos_barrio_per_1000_prev_year"] = np.log1p(pd.to_numeric(dataset.get("avisos_barrio_per_1000_prev_year"), errors="coerce"))
+    frame["avisos_barrio_share_of_district_prev_year"] = pd.to_numeric(dataset.get("avisos_barrio_share_of_district_prev_year"), errors="coerce")
+    frame["metro_distance_m_start"] = np.log1p(pd.to_numeric(dataset.get("metro_distance_m_start"), errors="coerce"))
+    frame["metro_access_count_500m_start"] = pd.to_numeric(dataset.get("metro_access_count_500m_start"), errors="coerce")
+    frame["metro_access_count_1000m_start"] = pd.to_numeric(dataset.get("metro_access_count_1000m_start"), errors="coerce")
+    frame["missing_metro_distance_start"] = pd.to_numeric(dataset.get("missing_metro_distance_start"), errors="coerce")
 
-    for column in frame.columns:
-        if frame[column].notna().any():
-            frame[column] = frame[column].fillna(frame[column].median())
-        else:
-            frame[column] = 0.0
+    if fill_missing:
+        for column in frame.columns:
+            if frame[column].notna().any():
+                frame[column] = frame[column].fillna(frame[column].median())
+            else:
+                frame[column] = 0.0
     return frame
 
 
 def compute_linear_risk_score(features: pd.DataFrame) -> pd.Series:
     z = (features - features.mean()) / features.std(ddof=0).replace(0, 1)
     score = (
-        -0.45 * z["renta"]
-        + 0.30 * z["share_foreign"]
-        + 0.10 * z["share_age_15_29"]
-        + 0.18 * z["share_age_45_64"]
-        + 0.35 * z["share_age_65_plus"]
-        + 0.15 * z["population_density"]
-        + 0.12 * z["padron_lag"]
+        -0.35 * z["renta_effective_eur"]
+        + 0.10 * z["renta_carry_forward_years"]
+        + 0.18 * z["share_foreign_start"]
+        -0.08 * z["share_age_00_14_start"]
+        -0.10 * z["share_age_15_29_start"]
+        -0.06 * z["share_age_30_44_start"]
+        + 0.15 * z["share_age_45_64_start"]
+        + 0.28 * z["share_age_65_plus_start"]
+        + 0.06 * z["share_male_start"]
+        + 0.08 * z["age_mean_start"]
+        -0.08 * z["total_population_start"]
+        + 0.10 * z["population_density_km2_start"]
+        + 0.10 * z["padron_lag_months_start"]
+        -0.05 * z["geometry_available_start"]
         + 0.25 * z["missing_h3"]
-        + 0.15 * z["renta_carry_forward_years"]
+        + 0.12 * z["n_divisions_start"]
+        + 0.08 * z["n_epigrafes_start"]
+        -0.05 * z["section_local_count_start"]
+        -0.08 * z["section_unique_division_count_start"]
+        + 0.08 * z["section_single_division_share_start"]
+        + 0.12 * z["section_same_division_local_count_start"]
+        + 0.16 * z["section_same_division_share_start"]
+        -0.10 * z["section_local_count_delta_12m_start"]
+        -0.06 * z["total_population_delta_12m_start"]
+        + 0.08 * z["share_foreign_delta_12m_start"]
+        + 0.06 * z["share_age_15_29_delta_12m_start"]
+        -0.06 * z["population_density_km2_delta_12m_start"]
+        -0.08 * z["renta_best_eur_delta_12m_start"]
+        + 0.14 * z["avisos_district_per_1000_prev_year"]
+        + 0.18 * z["avisos_barrio_per_1000_prev_year"]
+        + 0.10 * z["avisos_barrio_share_of_district_prev_year"]
+        + 0.10 * z["metro_distance_m_start"]
+        -0.14 * z["metro_access_count_500m_start"]
+        -0.08 * z["metro_access_count_1000m_start"]
+        + 0.10 * z["missing_metro_distance_start"]
     )
     return score.astype(float)
 

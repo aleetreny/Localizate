@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from pathlib import Path
 import re
 import unicodedata
 
 import pandas as pd
 
+from .censo import load_raw_manifest
 from .paths import DATA_DIR, DOCS_DIR
+from .survival_features import attach_avisos_features, attach_metro_features, attach_section_reference_fallbacks
 
 
 PLACEHOLDER_ACTIVITY_CODES = frozenset({"", "0", "-1", "PT", "NA", "N/A", "NULL"})
@@ -159,12 +162,48 @@ def build_local_survival_abt(
     resolved_change_candidates_csv.parent.mkdir(parents=True, exist_ok=True)
     resolved_normalization_audit_csv.parent.mkdir(parents=True, exist_ok=True)
 
-    con = duckdb.connect(database=":memory:")
+    temp_duckdb_dir = DATA_DIR / "intermediate" / "duckdb_tmp"
+    temp_duckdb_dir.mkdir(parents=True, exist_ok=True)
+    duckdb_db_path = temp_duckdb_dir / "build_local_survival_abt.duckdb"
+    for stale_path in (duckdb_db_path, duckdb_db_path.with_suffix(".duckdb.wal")):
+        if stale_path.exists():
+            stale_path.unlink()
+
+    duckdb_threads = max(1, int(os.environ.get("LOCALIZATE_DUCKDB_THREADS", "2")))
+    duckdb_memory_limit = os.environ.get("LOCALIZATE_DUCKDB_MEMORY_LIMIT", "24GB")
+
+    con = duckdb.connect(database=str(duckdb_db_path))
     try:
-        con.execute("PRAGMA threads=4")
+        con.execute(f"PRAGMA threads={duckdb_threads}")
+        con.execute("SET preserve_insertion_order=false")
+        con.execute(f"PRAGMA temp_directory='{temp_duckdb_dir.as_posix()}'")
+        con.execute(f"PRAGMA memory_limit='{duckdb_memory_limit}'")
         con.execute(
-            "CREATE TEMP TABLE section_panel AS SELECT * FROM read_csv_auto(?, union_by_name=true)",
+            "CREATE OR REPLACE TABLE section_panel_base AS SELECT * FROM read_csv_auto(?, union_by_name=true)",
             [str(resolved_section_panel)],
+        )
+        con.execute(
+            """
+            CREATE OR REPLACE TABLE section_panel AS
+            WITH ordered AS (
+                SELECT
+                    *,
+                    LAG(total_population, 12) OVER (PARTITION BY section_key ORDER BY target_period) AS total_population_lag12,
+                    LAG(share_foreign, 12) OVER (PARTITION BY section_key ORDER BY target_period) AS share_foreign_lag12,
+                    LAG(share_age_15_29, 12) OVER (PARTITION BY section_key ORDER BY target_period) AS share_age_15_29_lag12,
+                    LAG(population_density_km2, 12) OVER (PARTITION BY section_key ORDER BY target_period) AS population_density_km2_lag12,
+                    LAG(renta_best_eur, 12) OVER (PARTITION BY section_key ORDER BY target_period) AS renta_best_eur_lag12
+                FROM section_panel_base
+            )
+            SELECT
+                *,
+                total_population - total_population_lag12 AS total_population_delta_12m,
+                share_foreign - share_foreign_lag12 AS share_foreign_delta_12m,
+                share_age_15_29 - share_age_15_29_lag12 AS share_age_15_29_delta_12m,
+                population_density_km2 - population_density_km2_lag12 AS population_density_km2_delta_12m,
+                renta_best_eur - renta_best_eur_lag12 AS renta_best_eur_delta_12m
+            FROM ordered
+            """
         )
 
         activities_glob = str(DATA_DIR / "intermediate" / "censo_snapshots" / "actividades" / "*.csv.gz")
@@ -217,7 +256,7 @@ def build_local_survival_abt(
         locales_glob = str(DATA_DIR / "processed" / "censo_geospatial" / "locales" / "*.csv.gz")
         con.execute(
             """
-            CREATE TEMP TABLE local_base AS
+            CREATE OR REPLACE TABLE local_base AS
             SELECT
                 CAST(id_local AS BIGINT) AS id_local,
                 CAST(snapshot_period AS VARCHAR) AS period,
@@ -241,17 +280,28 @@ def build_local_survival_abt(
         )
         con.execute(
             """
-            CREATE TEMP TABLE local_enriched AS
+            CREATE OR REPLACE TABLE local_enriched AS
             SELECT
                 b.*,
+                s.district_code,
+                s.barrio_code,
                 s.padron_lag_months,
+                s.total_population,
+                s.age_mean,
                 s.renta_best_eur,
                 s.share_foreign,
+                s.share_male,
+                s.share_age_00_14,
                 s.share_age_15_29,
                 s.share_age_30_44,
                 s.share_age_45_64,
                 s.share_age_65_plus,
                 s.population_density_km2,
+                s.total_population_delta_12m,
+                s.share_foreign_delta_12m,
+                s.share_age_15_29_delta_12m,
+                s.population_density_km2_delta_12m,
+                s.renta_best_eur_delta_12m,
                 s.geometry_available
             FROM local_base b
             LEFT JOIN section_panel s
@@ -262,7 +312,7 @@ def build_local_survival_abt(
 
         con.execute(
             """
-            CREATE TEMP TABLE activity_rows AS
+            CREATE OR REPLACE TABLE activity_rows AS
             SELECT
                 CAST(id_local AS BIGINT) AS id_local,
                 CAST(snapshot_period AS VARCHAR) AS period,
@@ -277,7 +327,7 @@ def build_local_survival_abt(
         )
         con.execute(
             """
-            CREATE TEMP TABLE activities_clean AS
+            CREATE OR REPLACE TABLE activities_clean AS
             SELECT
                 r.id_local,
                 r.period,
@@ -301,7 +351,7 @@ def build_local_survival_abt(
         )
         con.execute(
             """
-            CREATE TEMP TABLE activity_periods AS
+            CREATE OR REPLACE TABLE activity_periods AS
             SELECT
                 id_local,
                 period,
@@ -318,7 +368,83 @@ def build_local_survival_abt(
         )
         con.execute(
             """
-            CREATE TEMP TABLE change_candidates AS
+            CREATE OR REPLACE TABLE local_activity_enriched AS
+            SELECT
+                l.*,
+                a.division_sig,
+                a.division_desc_sig,
+                a.n_divisions,
+                a.epigrafe_sig,
+                a.epigrafe_desc_sig,
+                a.n_epigrafes,
+                CASE WHEN a.n_divisions = 1 THEN a.division_sig ELSE NULL END AS division_code_start,
+                CASE WHEN a.n_divisions = 1 THEN a.division_desc_sig ELSE NULL END AS division_desc_start
+            FROM local_enriched l
+            LEFT JOIN activity_periods a
+                ON l.id_local = a.id_local
+               AND l.period = a.period
+            """
+        )
+        con.execute(
+            """
+            CREATE OR REPLACE TABLE section_period_features AS
+            WITH base AS (
+                SELECT
+                    period,
+                    section_key,
+                    COUNT(DISTINCT id_local) AS section_local_count,
+                    COUNT(DISTINCT CASE WHEN division_code_start IS NOT NULL THEN division_code_start END) AS section_unique_division_count,
+                    AVG(CASE WHEN COALESCE(n_divisions, 0) = 1 THEN 1.0 ELSE 0.0 END) AS section_single_division_share
+                FROM local_activity_enriched
+                WHERE section_key IS NOT NULL
+                GROUP BY 1, 2
+            )
+            SELECT
+                *,
+                section_local_count - LAG(section_local_count, 12) OVER (PARTITION BY section_key ORDER BY period) AS section_local_count_delta_12m
+            FROM base
+            """
+        )
+        con.execute(
+            """
+            CREATE OR REPLACE TABLE section_division_features AS
+            SELECT
+                period,
+                section_key,
+                division_code_start,
+                COUNT(DISTINCT id_local) AS section_same_division_local_count
+            FROM local_activity_enriched
+            WHERE section_key IS NOT NULL AND division_code_start IS NOT NULL
+            GROUP BY 1, 2, 3
+            """
+        )
+        con.execute(
+            """
+            CREATE OR REPLACE TABLE local_feature_base AS
+            SELECT
+                l.*,
+                s.section_local_count,
+                s.section_unique_division_count,
+                s.section_single_division_share,
+                s.section_local_count_delta_12m,
+                d.section_same_division_local_count,
+                CASE
+                    WHEN s.section_local_count IS NULL OR s.section_local_count = 0 OR d.section_same_division_local_count IS NULL THEN NULL
+                    ELSE CAST(d.section_same_division_local_count AS DOUBLE) / CAST(s.section_local_count AS DOUBLE)
+                END AS section_same_division_share
+            FROM local_activity_enriched l
+            LEFT JOIN section_period_features s
+                ON l.period = s.period
+               AND l.section_key = s.section_key
+            LEFT JOIN section_division_features d
+                ON l.period = d.period
+               AND l.section_key = d.section_key
+               AND l.division_code_start = d.division_code_start
+            """
+        )
+        con.execute(
+            """
+            CREATE OR REPLACE TABLE change_candidates AS
             WITH ordered AS (
                 SELECT
                     id_local,
@@ -385,20 +511,41 @@ def build_local_survival_abt(
                     MAX(period) AS last_seen_period,
                     COUNT(DISTINCT period) AS active_months,
                     ARG_MIN(section_key, period) AS section_key_start,
+                    ARG_MIN(district_code, period) AS district_code_start,
+                    ARG_MIN(barrio_code, period) AS barrio_code_start,
                     ARG_MIN(h3_cell, period) AS h3_cell_start,
                     ARG_MIN(lat_wgs84, period) AS lat_wgs84_start,
                     ARG_MIN(lon_wgs84, period) AS lon_wgs84_start,
                     ARG_MIN(coord_transform_status, period) AS coord_transform_status_start,
                     ARG_MIN(padron_lag_months, period) AS padron_lag_months_start,
+                    ARG_MIN(total_population, period) AS total_population_start,
+                    ARG_MIN(age_mean, period) AS age_mean_start,
                     ARG_MIN(renta_best_eur, period) AS renta_best_eur_start,
                     ARG_MIN(share_foreign, period) AS share_foreign_start,
+                    ARG_MIN(share_male, period) AS share_male_start,
+                    ARG_MIN(share_age_00_14, period) AS share_age_00_14_start,
                     ARG_MIN(share_age_15_29, period) AS share_age_15_29_start,
                     ARG_MIN(share_age_30_44, period) AS share_age_30_44_start,
                     ARG_MIN(share_age_45_64, period) AS share_age_45_64_start,
                     ARG_MIN(share_age_65_plus, period) AS share_age_65_plus_start,
                     ARG_MIN(population_density_km2, period) AS population_density_km2_start,
+                    ARG_MIN(total_population_delta_12m, period) AS total_population_delta_12m_start,
+                    ARG_MIN(share_foreign_delta_12m, period) AS share_foreign_delta_12m_start,
+                    ARG_MIN(share_age_15_29_delta_12m, period) AS share_age_15_29_delta_12m_start,
+                    ARG_MIN(population_density_km2_delta_12m, period) AS population_density_km2_delta_12m_start,
+                    ARG_MIN(renta_best_eur_delta_12m, period) AS renta_best_eur_delta_12m_start,
+                    ARG_MIN(n_divisions, period) AS n_divisions_start,
+                    ARG_MIN(n_epigrafes, period) AS n_epigrafes_start,
+                    ARG_MIN(division_code_start, period) AS division_code_start,
+                    ARG_MIN(division_desc_start, period) AS division_desc_start,
+                    ARG_MIN(section_local_count, period) AS section_local_count_start,
+                    ARG_MIN(section_unique_division_count, period) AS section_unique_division_count_start,
+                    ARG_MIN(section_single_division_share, period) AS section_single_division_share_start,
+                    ARG_MIN(section_same_division_local_count, period) AS section_same_division_local_count_start,
+                    ARG_MIN(section_same_division_share, period) AS section_same_division_share_start,
+                    ARG_MIN(section_local_count_delta_12m, period) AS section_local_count_delta_12m_start,
                     ARG_MIN(geometry_available, period) AS geometry_available_start
-                FROM local_enriched
+                FROM local_feature_base
                 GROUP BY id_local
             ), first_change AS (
                 SELECT *
@@ -471,18 +618,39 @@ def build_local_survival_abt(
                 successor_epigrafe_code,
                 successor_epigrafe_desc,
                 section_key_start,
+                district_code_start,
+                barrio_code_start,
                 h3_cell_start,
                 lat_wgs84_start,
                 lon_wgs84_start,
                 coord_transform_status_start,
                 padron_lag_months_start,
+                total_population_start,
+                age_mean_start,
                 renta_best_eur_start,
                 share_foreign_start,
+                share_male_start,
+                share_age_00_14_start,
                 share_age_15_29_start,
                 share_age_30_44_start,
                 share_age_45_64_start,
                 share_age_65_plus_start,
                 population_density_km2_start,
+                total_population_delta_12m_start,
+                share_foreign_delta_12m_start,
+                share_age_15_29_delta_12m_start,
+                population_density_km2_delta_12m_start,
+                renta_best_eur_delta_12m_start,
+                n_divisions_start,
+                n_epigrafes_start,
+                division_code_start,
+                division_desc_start,
+                section_local_count_start,
+                section_unique_division_count_start,
+                section_single_division_share_start,
+                section_same_division_local_count_start,
+                section_same_division_share_start,
+                section_local_count_delta_12m_start,
                 geometry_available_start
             FROM resolved
             ORDER BY first_seen_period, id_local
@@ -491,6 +659,11 @@ def build_local_survival_abt(
         ).df()
     finally:
         con.close()
+
+    raw_manifest = load_raw_manifest()
+    abt = attach_section_reference_fallbacks(abt)
+    abt = attach_avisos_features(abt, raw_manifest=raw_manifest, section_panel_csv=resolved_section_panel)
+    abt = attach_metro_features(abt)
 
     abt.to_csv(resolved_output_csv, index=False)
     parquet_written = True
@@ -537,6 +710,8 @@ def _render_abt_report(
     duration_median = float(pd.to_numeric(abt["duration_months"], errors="coerce").median())
     with_h3 = int(abt["h3_cell_start"].notna().sum())
     with_renta = int(pd.to_numeric(abt["renta_best_eur_start"], errors="coerce").notna().sum())
+    with_metro = int(pd.to_numeric(abt.get("metro_distance_m_start"), errors="coerce").notna().sum())
+    with_avisos = int(pd.to_numeric(abt.get("avisos_barrio_prev_year"), errors="coerce").fillna(0).gt(0).sum())
     event_source_counts = abt["event_source"].astype("string").value_counts(dropna=False).to_dict()
 
     division_audit = normalization_audit[normalization_audit["taxonomy"] == "division"].copy()
@@ -582,6 +757,8 @@ def _render_abt_report(
     lines.append(f"- Mediana de duracion (meses): {duration_median:.1f}")
     lines.append(f"- Filas con H3 inicial: {with_h3:,}")
     lines.append(f"- Filas con renta inicial: {with_renta:,}")
+    lines.append(f"- Filas con distancia a metro calculable: {with_metro:,}")
+    lines.append(f"- Filas con avisos positivos en barrio/año previo: {with_avisos:,}")
     lines.append("")
     lines.append("## Desglose de eventos")
     lines.append("")
@@ -606,7 +783,10 @@ def _render_abt_report(
     lines.append("- `first_seen_period`, `last_seen_period`, `target_end_period`, `duration_months`, `event_observed`")
     lines.append("- `event_source`, `event_period`, `change_event_period`, `change_successor_period`")
     lines.append("- Auditoria de cambio: `previous_division_*`, `successor_division_*`, `previous_epigrafe_*`, `successor_epigrafe_*`")
-    lines.append("- Features iniciales PiT: `renta_best_eur_start`, `share_*_start`, `population_density_km2_start`")
+    lines.append("- Features iniciales PiT: `renta_best_eur_start`, `share_*_start`, `total_population_start`, `age_mean_start`, `population_density_km2_start`")
+    lines.append("- Contexto comercial: `n_divisions_start`, `n_epigrafes_start`, `section_local_count_*`, `section_same_division_*`")
+    lines.append("- Dinamica interanual: `*_delta_12m_start`")
+    lines.append("- Externas: `avisos_*_prev_year`, `metro_distance_m_start`, `metro_access_count_500m_start`, `metro_access_count_1000m_start`")
     lines.append("- Geoespacial inicial: `h3_cell_start`, `lat_wgs84_start`, `lon_wgs84_start`")
 
     if not top_changes.empty:

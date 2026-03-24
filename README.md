@@ -49,7 +49,9 @@ Construimos la ABT (tabla de entrenamiento) y un baseline de riesgo con controle
 - ABT de supervivencia: regenerada con limpieza masiva de actividad y nuevo criterio de cierre estructural.
 - Baseline de riesgo con quality gate: reentrenado sobre el nuevo target.
 - Modelos de supervivencia canónicos (Cox/GBSA/RSF + ensemble): reentrenados con quality gate en `pass`.
-- Bloque inmediato: ampliar variables de negocio/entorno antes del siguiente ciclo de entrenamiento.
+- Nuevo bloque de variables completado antes del siguiente reentrenamiento: competencia local, dinamica interanual de zona, `avisos` del año previo y cercania al metro.
+- Validacion estadistica ligera de la nueva matriz de variables completada y documentada en `docs/survival_feature_validation.md`.
+- Estado actual: repo listo justo antes del siguiente relanzamiento de entrenamiento canonical.
 
 ## Bitácora pública de avance (versión explicativa)
 
@@ -86,10 +88,10 @@ Construimos la ABT (tabla de entrenamiento) y un baseline de riesgo con controle
 - Motivo: acercar el target a la realidad operativa del local y reducir falsos no-eventos.
 
 ### Situación en este momento
-- El proyecto está **listo** para una nueva fase de ingeniería de variables.
-- Ya existe una ABT depurada con cierre por desaparición o cambio estructural de división, y un ciclo completo de modelado rehecho sobre ese target.
-- La validación temporal sigue siendo estricta, pero ahora la densidad de eventos es suficiente para evaluar con mucha más estabilidad.
-- El siguiente cuello de botella ya no es la definición del cierre, sino enriquecer mejor la base antes del siguiente reentrenamiento.
+- El proyecto está **listo** para relanzar el entrenamiento canónico con una base enriquecida.
+- Ya existe una ABT depurada con cierre por desaparición o cambio estructural de división, y además una nueva capa de variables de actividad, competencia, avisos y metro ya integrada.
+- La validación temporal sigue siendo estricta, pero ahora también hay una validación estadística previa del bloque de features antes de reentrenar.
+- El siguiente paso ya no es crear más infraestructura, sino relanzar el entrenamiento canónico con esta base enriquecida.
 
 ## Dónde ver el progreso
 
@@ -117,6 +119,6 @@ Construimos la ABT (tabla de entrenamiento) y un baseline de riesgo con controle
 ## Próximos pasos
 
 1. Crear nuevas variables de actividad, zona y dinámica comercial sobre la ABT depurada.
-2. Mantener validación temporal y quality gates en cada iteración.
-3. Reentrenar con el nuevo set de variables y comparar contra la versión actual.
+2. Reentrenar con el nuevo set de variables y comparar contra la versión actual.
+3. Mantener validación temporal y quality gates en cada iteración.
 4. Preparar frontend y validación visual sobre la export final para mapa.

@@ -10,6 +10,8 @@ ABT por local con cierre observado tanto por desaparicion del `id_local` como po
 - Mediana de duracion (meses): 135.0
 - Filas con H3 inicial: 164,441
 - Filas con renta inicial: 156,417
+- Filas con distancia a metro calculable: 164,412
+- Filas con avisos positivos en barrio/año previo: 25,001
 
 ## Desglose de eventos
 
@@ -34,7 +36,10 @@ ABT por local con cierre observado tanto por desaparicion del `id_local` como po
 - `first_seen_period`, `last_seen_period`, `target_end_period`, `duration_months`, `event_observed`
 - `event_source`, `event_period`, `change_event_period`, `change_successor_period`
 - Auditoria de cambio: `previous_division_*`, `successor_division_*`, `previous_epigrafe_*`, `successor_epigrafe_*`
-- Features iniciales PiT: `renta_best_eur_start`, `share_*_start`, `population_density_km2_start`
+- Features iniciales PiT: `renta_best_eur_start`, `share_*_start`, `total_population_start`, `age_mean_start`, `population_density_km2_start`
+- Contexto comercial: `n_divisions_start`, `n_epigrafes_start`, `section_local_count_*`, `section_same_division_*`
+- Dinamica interanual: `*_delta_12m_start`
+- Externas: `avisos_*_prev_year`, `metro_distance_m_start`, `metro_access_count_500m_start`, `metro_access_count_1000m_start`
 - Geoespacial inicial: `h3_cell_start`, `lat_wgs84_start`, `lon_wgs84_start`
 
 ## Cambios de division mas frecuentes tratados como cierre

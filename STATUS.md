@@ -2,7 +2,7 @@
 
 Este archivo es la fuente unica y viva de contexto del proyecto. Se actualiza en cada avance y reemplaza al resto de documentos como referencia primaria.
 
-Ultima actualizacion: 2026-03-21
+Ultima actualizacion: 2026-03-23
 
 ## Identidad del proyecto
 
@@ -92,6 +92,21 @@ Ultima actualizacion: 2026-03-21
 - Ultima validacion rapida canonical regenerada con metadata de ejecucion (`quick_mode=true`, `fit_max_rows=10000`).
 - Estado readiness actual tras redefinir cierre y reentrenar: `ready`.
 - Guardrail extra incorporado en `assign_temporal_split_adaptive()` para evitar splits degenerados sin filas de train cuando el nuevo target aumenta la densidad de eventos.
+- Nuevo bloque pre-retraining completado: inventario raiz de variables en `VARIABLES.md` y ampliacion de la ABT con features adicionales de:
+	- complejidad de actividad al alta (`n_divisions_start`, `n_epigrafes_start`)
+	- competencia y mix en seccion (`section_local_count_*`, `section_same_division_*`, diversidad de divisiones)
+	- dinamica socioeconomica interanual (`*_delta_12m_start`)
+	- entorno externo via `avisos` del anio previo (`avisos_*_prev_year`)
+	- proximidad al metro (`metro_distance_m_start`, conteos a 500m/1000m)
+- Validacion estadistica ligera materializada antes del siguiente entrenamiento en:
+	- `models/survival_feature_validation.json`
+	- `docs/survival_feature_validation.md`
+- Resultado de validacion de variables:
+	- filas analizadas: `203,828`
+	- variables de modelado activas: `35`
+	- variables con `p < 0.05`: `32`
+	- top señales univariantes actuales: accesibilidad metro, densidad/stock comercial de seccion y variables de calidad/carry-forward
+- Estado operativo actual: repo limpio, ABT enriquecida regenerada y listo justo antes de relanzar `train_survival_canonical.py`.
 - Prompt de continuidad para trabajar sin contexto disponible en `docs/next_session_prompt.md`.
 - Contexto legado consolidado en este archivo; carpeta `Context/` eliminada para simplificar el repo.
 - Documentacion DB movida a `docs/documentacion_db/` para estandarizar nombres.
@@ -114,10 +129,10 @@ Ultima actualizacion: 2026-03-21
 
 ## Siguientes pasos inmediatos
 
-1. Endurecer auditoria PiT (lags/fallbacks/cobertura) como gate formal de entrenamiento canonical.
-2. Revisar sensibilidad del split temporal y calibracion por evento raro (valid/test con bajo numero de eventos).
-3. Definir si el siguiente ciclo de validacion sera quick-only o requiere rerun full canonical para cerrar metricas finales.
-4. Preparar primera iteracion de frontend sobre `data/exports/local_survival_map_export.csv`.
+1. Relanzar `scripts/train_survival_canonical.py` con la nueva matriz de variables y comparar contra la version canonical previa.
+2. Revisar importancia de variables, estabilidad temporal y calibracion con el set enriquecido.
+3. Actualizar readiness/gates con las nuevas metricas canonical resultantes.
+4. Preparar primera iteracion de frontend sobre `data/exports/local_survival_map_export.csv` tras el nuevo reentrenamiento.
 5. Definir protocolo de recalibracion mensual (drift y estabilidad de score).
 6. Preparar narrativa final de validacion para entrega del concurso.
 
@@ -132,6 +147,8 @@ PYTHONPATH=src .venv/bin/python -u scripts/build_section_socioeconomic_panel.py
 PYTHONPATH=src .venv/bin/python -u scripts/build_censo_historical_normalized.py
 PYTHONPATH=src .venv/bin/python -u scripts/build_censo_geospatial.py
 PYTHONPATH=src .venv/bin/python -u scripts/build_local_survival_abt.py
+PYTHONPATH=src .venv/bin/python -u scripts/write_survival_feature_inventory.py
+PYTHONPATH=src .venv/bin/python -u scripts/validate_survival_features.py
 PYTHONPATH=src .venv/bin/python -u scripts/train_survival_baseline.py
 PYTHONPATH=src .venv/bin/python -u scripts/run_modeling_readiness.py
 PYTHONPATH=src .venv/bin/python -u scripts/train_survival_canonical.py

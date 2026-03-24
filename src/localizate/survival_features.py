@@ -1,0 +1,420 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+import math
+import re
+
+import numpy as np
+import pandas as pd
+from sklearn.neighbors import BallTree
+
+from .censo import load_raw_manifest
+from .csv_utils import read_delimited_file
+from .paths import DATA_DIR, PROJECT_ROOT, RAW_DATA_DIR
+
+
+EARTH_RADIUS_M = 6_371_000.0
+DEFAULT_METRO_DISTANCE_BANDS_M = (500.0, 1000.0)
+MADRID_LAT_RANGE = (40.0, 41.0)
+MADRID_LON_RANGE = (-4.5, -3.0)
+
+
+@dataclass(frozen=True)
+class FeatureSpec:
+    name: str
+    status: str
+    category: str
+    source: str
+    description: str
+
+
+MODEL_FEATURE_SPECS: tuple[FeatureSpec, ...] = (
+    FeatureSpec("renta_effective_eur", "existing", "socioeconomic", "renta + policy fill", "Renta usable en entrenamiento tras fallback sección→distrito→ciudad."),
+    FeatureSpec("renta_carry_forward_years", "existing", "socioeconomic", "renta + policy fill", "Años de carry-forward aplicados a la renta por falta de dato reciente."),
+    FeatureSpec("share_foreign_start", "existing", "socioeconomic", "section_socioeconomic_panel", "Peso de población extranjera en la sección al alta del local."),
+    FeatureSpec("share_age_00_14_start", "new", "socioeconomic", "section_socioeconomic_panel", "Peso de población infantil en la sección al alta."),
+    FeatureSpec("share_age_15_29_start", "existing", "socioeconomic", "section_socioeconomic_panel", "Peso de población joven en la sección al alta."),
+    FeatureSpec("share_age_30_44_start", "new", "socioeconomic", "section_socioeconomic_panel", "Peso de población adulta joven en la sección al alta."),
+    FeatureSpec("share_age_45_64_start", "existing", "socioeconomic", "section_socioeconomic_panel", "Peso de población madura en la sección al alta."),
+    FeatureSpec("share_age_65_plus_start", "existing", "socioeconomic", "section_socioeconomic_panel", "Peso de población sénior en la sección al alta."),
+    FeatureSpec("share_male_start", "new", "socioeconomic", "section_socioeconomic_panel", "Peso masculino en la sección al alta."),
+    FeatureSpec("age_mean_start", "new", "socioeconomic", "section_socioeconomic_panel", "Edad media estimada de la sección al alta."),
+    FeatureSpec("total_population_start", "new", "socioeconomic", "section_socioeconomic_panel", "Población total de la sección al alta (log-transform en modelado)."),
+    FeatureSpec("population_density_km2_start", "existing", "socioeconomic", "section_socioeconomic_panel", "Densidad de población por km² en la sección al alta."),
+    FeatureSpec("padron_lag_months_start", "existing", "data_quality", "section_socioeconomic_panel", "Meses de retraso del padrón usado para el join PiT."),
+    FeatureSpec("geometry_available_start", "existing", "data_quality", "section_geography", "Flag de disponibilidad geométrica para la sección."),
+    FeatureSpec("missing_h3", "existing", "data_quality", "censo_geospatial", "Flag de H3 ausente en el punto inicial del local."),
+    FeatureSpec("n_divisions_start", "new", "activity", "actividades", "Número de divisiones activas del local en su primer mes observado."),
+    FeatureSpec("n_epigrafes_start", "new", "activity", "actividades", "Número de epígrafes activos del local en su primer mes observado."),
+    FeatureSpec("section_local_count_start", "new", "competition", "censo locales historico", "Stock de locales observados en la sección el mes de alta."),
+    FeatureSpec("section_unique_division_count_start", "new", "competition", "censo actividades historico", "Diversidad de divisiones presentes en la sección el mes de alta."),
+    FeatureSpec("section_single_division_share_start", "new", "competition", "censo actividades historico", "Peso de locales single-division en la sección el mes de alta."),
+    FeatureSpec("section_same_division_local_count_start", "new", "competition", "censo actividades historico", "Número de competidores single-division de la misma división en la sección."),
+    FeatureSpec("section_same_division_share_start", "new", "competition", "censo actividades historico", "Cuota de competidores de la misma división dentro del stock de la sección."),
+    FeatureSpec("section_local_count_delta_12m_start", "new", "zone_dynamics", "censo locales historico", "Cambio de stock de locales en la sección frente a 12 meses antes."),
+    FeatureSpec("total_population_delta_12m_start", "new", "zone_dynamics", "section_socioeconomic_panel", "Cambio interanual de población total en la sección."),
+    FeatureSpec("share_foreign_delta_12m_start", "new", "zone_dynamics", "section_socioeconomic_panel", "Cambio interanual del peso de población extranjera."),
+    FeatureSpec("share_age_15_29_delta_12m_start", "new", "zone_dynamics", "section_socioeconomic_panel", "Cambio interanual del peso de población de 15-29 años."),
+    FeatureSpec("population_density_km2_delta_12m_start", "new", "zone_dynamics", "section_socioeconomic_panel", "Cambio interanual de densidad poblacional."),
+    FeatureSpec("renta_best_eur_delta_12m_start", "new", "zone_dynamics", "section_socioeconomic_panel", "Cambio interanual de renta disponible en la sección."),
+    FeatureSpec("avisos_district_per_1000_prev_year", "new", "avisos", "DB/avisos + section_socioeconomic_panel", "Avisos recibidos del distrito en el año anterior por cada 1.000 habitantes."),
+    FeatureSpec("avisos_barrio_per_1000_prev_year", "new", "avisos", "DB/avisos + section_socioeconomic_panel", "Avisos recibidos del barrio en el año anterior por cada 1.000 habitantes."),
+    FeatureSpec("avisos_barrio_share_of_district_prev_year", "new", "avisos", "DB/avisos", "Peso del barrio dentro del total de avisos del distrito en el año anterior."),
+    FeatureSpec("metro_distance_m_start", "new", "metro", "DB/Metro", "Distancia al acceso de metro más cercano desde la localización inicial (log-transform en modelado)."),
+    FeatureSpec("metro_access_count_500m_start", "new", "metro", "DB/Metro", "Número de accesos de metro a 500 m o menos."),
+    FeatureSpec("metro_access_count_1000m_start", "new", "metro", "DB/Metro", "Número de accesos de metro a 1 km o menos."),
+    FeatureSpec("missing_metro_distance_start", "new", "data_quality", "DB/Metro + censo_geospatial", "Flag de imposibilidad de calcular cercanía a metro por falta de coordenadas iniciales."),
+)
+
+
+MODEL_FEATURE_COLUMNS = tuple(spec.name for spec in MODEL_FEATURE_SPECS)
+
+HELPER_COLUMN_SPECS: tuple[FeatureSpec, ...] = (
+    FeatureSpec("district_code_start", "new", "join_helper", "section_socioeconomic_panel", "Código de distrito del local en el periodo inicial."),
+    FeatureSpec("barrio_code_start", "new", "join_helper", "section_socioeconomic_panel", "Código de barrio del local en el periodo inicial."),
+    FeatureSpec("division_code_start", "new", "join_helper", "actividades", "Firma/división principal single-division del local al alta."),
+    FeatureSpec("event_source", "existing", "target", "abt_survival", "Origen del evento: censura, desaparición o cambio robusto de división."),
+    FeatureSpec("event_period", "existing", "target", "abt_survival", "Periodo en el que ocurre el evento objetivo."),
+    FeatureSpec("duration_months", "existing", "target", "abt_survival", "Duración observada en meses desde el alta hasta evento/censura."),
+)
+
+
+def _parse_integer_like_text(value: object) -> str | None:
+    if value is None or pd.isna(value):
+        return None
+    text = str(value).strip()
+    if not text or text.lower() == "nan":
+        return None
+    numeric_candidate = text.replace(",", ".")
+    if re.fullmatch(r"-?\d+(?:\.\d+)?", numeric_candidate):
+        try:
+            numeric_value = float(numeric_candidate)
+        except ValueError:
+            numeric_value = math.nan
+        if math.isfinite(numeric_value):
+            return str(int(numeric_value))
+    digits = re.sub(r"[^0-9]", "", text)
+    return digits or None
+
+
+def normalize_admin_code(value: object, *, width: int) -> str | None:
+    digits = _parse_integer_like_text(value)
+    if digits is None:
+        return None
+    return digits.zfill(width)[-width:]
+
+
+def normalize_section_key(value: object) -> str | None:
+    digits = _parse_integer_like_text(value)
+    if digits is None:
+        return None
+    return digits.zfill(5)[-5:]
+
+
+def attach_section_reference_fallbacks(
+    abt: pd.DataFrame,
+    *,
+    section_reference_csv: Path | None = None,
+) -> pd.DataFrame:
+    enriched = abt.copy()
+    section_key = enriched.get("section_key_start", pd.Series(pd.NA, index=enriched.index)).map(normalize_section_key)
+    enriched["section_key_start"] = pd.Series(section_key, index=enriched.index, dtype="string")
+
+    resolved_reference = section_reference_csv or (DATA_DIR / "processed" / "section_geography.csv")
+    reference = pd.read_csv(
+        resolved_reference,
+        usecols=["section_key", "district_code", "barrio_code", "geometry_available"],
+        dtype={"section_key": "string", "district_code": "string", "barrio_code": "string"},
+    )
+    reference["section_key"] = reference["section_key"].map(normalize_section_key).astype("string")
+    reference["district_code"] = reference["district_code"].map(lambda value: normalize_admin_code(value, width=2)).astype("string")
+    reference["barrio_code"] = reference["barrio_code"].map(lambda value: normalize_admin_code(value, width=3)).astype("string")
+
+    enriched = enriched.merge(reference, how="left", left_on="section_key_start", right_on="section_key")
+    district_existing = enriched.get("district_code_start", pd.Series(pd.NA, index=enriched.index)).map(
+        lambda value: normalize_admin_code(value, width=2)
+    )
+    barrio_existing = enriched.get("barrio_code_start", pd.Series(pd.NA, index=enriched.index)).map(
+        lambda value: normalize_admin_code(value, width=3)
+    )
+
+    district_from_section = enriched["section_key_start"].astype("string").str[:2]
+    enriched["district_code_start"] = district_existing.fillna(enriched["district_code"]).fillna(district_from_section).astype("string")
+    enriched["barrio_code_start"] = barrio_existing.fillna(enriched["barrio_code"]).astype("string")
+
+    geometry_existing = pd.to_numeric(enriched.get("geometry_available_start"), errors="coerce")
+    geometry_reference = pd.to_numeric(enriched.get("geometry_available"), errors="coerce")
+    enriched["geometry_available_start"] = geometry_existing.fillna(geometry_reference)
+
+    return enriched.drop(columns=[column for column in ["section_key", "district_code", "barrio_code", "geometry_available"] if column in enriched.columns])
+
+
+def is_valid_madrid_coordinate(lat: pd.Series, lon: pd.Series) -> pd.Series:
+    return (
+        lat.notna()
+        & lon.notna()
+        & lat.between(MADRID_LAT_RANGE[0], MADRID_LAT_RANGE[1], inclusive="both")
+        & lon.between(MADRID_LON_RANGE[0], MADRID_LON_RANGE[1], inclusive="both")
+    )
+
+
+def build_avisos_yearly_features(
+    *,
+    raw_manifest: pd.DataFrame | None = None,
+    section_panel_csv: Path | None = None,
+) -> pd.DataFrame:
+    manifest = raw_manifest if raw_manifest is not None else load_raw_manifest()
+    selected = manifest[
+        (manifest["source_name"] == "avisos")
+        & (manifest["status"] == "selected")
+        & manifest["selected_relative_path"].notna()
+    ][["period", "selected_relative_path"]].copy()
+    if selected.empty:
+        return pd.DataFrame(
+            columns=[
+                "avisos_year",
+                "district_code",
+                "barrio_code",
+                "avisos_district_prev_year",
+                "avisos_district_per_1000_prev_year",
+                "avisos_barrio_prev_year",
+                "avisos_barrio_per_1000_prev_year",
+                "avisos_barrio_share_of_district_prev_year",
+            ]
+        )
+
+    yearly_frames: list[pd.DataFrame] = []
+    for row in selected.sort_values("period").itertuples(index=False):
+        year = int(str(row.period))
+        frame, _ = read_delimited_file(RAW_DATA_DIR / str(row.selected_relative_path))
+        frame.columns = [str(column).strip().upper() for column in frame.columns]
+        district_series = frame.get("DISTRITO_ID", pd.Series(pd.NA, index=frame.index)).map(
+            lambda value: normalize_admin_code(value, width=2)
+        )
+        barrio_series = frame.get("BARRIO_ID", pd.Series(pd.NA, index=frame.index)).map(
+            lambda value: normalize_admin_code(value, width=3)
+        )
+        yearly_frames.append(
+            pd.DataFrame(
+                {
+                    "avisos_year": year,
+                    "district_code": district_series.astype("string"),
+                    "barrio_code": barrio_series.astype("string"),
+                }
+            )
+        )
+
+    avisos = pd.concat(yearly_frames, ignore_index=True)
+    district_counts = (
+        avisos.dropna(subset=["district_code"])
+        .groupby(["avisos_year", "district_code"], dropna=False)
+        .size()
+        .rename("avisos_district_prev_year")
+        .reset_index()
+    )
+    barrio_counts = (
+        avisos.dropna(subset=["district_code", "barrio_code"])
+        .groupby(["avisos_year", "district_code", "barrio_code"], dropna=False)
+        .size()
+        .rename("avisos_barrio_prev_year")
+        .reset_index()
+    )
+
+    resolved_section_panel = section_panel_csv or (PROJECT_ROOT / "data" / "processed" / "section_socioeconomic_panel.csv")
+    population = pd.read_csv(
+        resolved_section_panel,
+        usecols=["target_period", "district_code", "barrio_code", "total_population"],
+        dtype={"target_period": "string", "district_code": "string", "barrio_code": "string"},
+    )
+    population = population[population["target_period"].astype("string").str.endswith("-12")].copy()
+    population["avisos_year"] = pd.to_numeric(population["target_period"].astype("string").str[:4], errors="coerce").astype("Int64")
+
+    district_population = (
+        population.dropna(subset=["avisos_year", "district_code"])
+        .groupby(["avisos_year", "district_code"], dropna=False)["total_population"]
+        .sum()
+        .rename("district_population")
+        .reset_index()
+    )
+    barrio_population = (
+        population.dropna(subset=["avisos_year", "district_code", "barrio_code"])
+        .groupby(["avisos_year", "district_code", "barrio_code"], dropna=False)["total_population"]
+        .sum()
+        .rename("barrio_population")
+        .reset_index()
+    )
+
+    out = barrio_counts.merge(district_counts, how="left", on=["avisos_year", "district_code"])
+    out = out.merge(district_population, how="left", on=["avisos_year", "district_code"])
+    out = out.merge(barrio_population, how="left", on=["avisos_year", "district_code", "barrio_code"])
+    out["avisos_district_per_1000_prev_year"] = (
+        1000.0 * pd.to_numeric(out["avisos_district_prev_year"], errors="coerce") / pd.to_numeric(out["district_population"], errors="coerce")
+    )
+    out["avisos_barrio_per_1000_prev_year"] = (
+        1000.0 * pd.to_numeric(out["avisos_barrio_prev_year"], errors="coerce") / pd.to_numeric(out["barrio_population"], errors="coerce")
+    )
+    out["avisos_barrio_share_of_district_prev_year"] = (
+        pd.to_numeric(out["avisos_barrio_prev_year"], errors="coerce")
+        / pd.to_numeric(out["avisos_district_prev_year"], errors="coerce").replace({0: pd.NA})
+    )
+    return out[
+        [
+            "avisos_year",
+            "district_code",
+            "barrio_code",
+            "avisos_district_prev_year",
+            "avisos_district_per_1000_prev_year",
+            "avisos_barrio_prev_year",
+            "avisos_barrio_per_1000_prev_year",
+            "avisos_barrio_share_of_district_prev_year",
+        ]
+    ].sort_values(["avisos_year", "district_code", "barrio_code"]).reset_index(drop=True)
+
+
+def attach_avisos_features(
+    abt: pd.DataFrame,
+    *,
+    raw_manifest: pd.DataFrame | None = None,
+    section_panel_csv: Path | None = None,
+    avisos_yearly: pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    enriched = abt.copy()
+    enriched["district_code_start"] = enriched.get("district_code_start", pd.Series(pd.NA, index=enriched.index)).map(
+        lambda value: normalize_admin_code(value, width=2)
+    ).astype("string")
+    enriched["barrio_code_start"] = enriched.get("barrio_code_start", pd.Series(pd.NA, index=enriched.index)).map(
+        lambda value: normalize_admin_code(value, width=3)
+    ).astype("string")
+    enriched["avisos_year"] = (
+        pd.to_numeric(enriched["first_seen_period"].astype("string").str[:4], errors="coerce").astype("Int64") - 1
+    )
+
+    lookup = avisos_yearly if avisos_yearly is not None else build_avisos_yearly_features(
+        raw_manifest=raw_manifest,
+        section_panel_csv=section_panel_csv,
+    )
+    if not lookup.empty:
+        lookup = lookup.copy()
+        lookup["district_code"] = lookup["district_code"].astype("string")
+        lookup["barrio_code"] = lookup["barrio_code"].astype("string")
+        lookup["avisos_year"] = pd.to_numeric(lookup["avisos_year"], errors="coerce").astype("Int64")
+        enriched = enriched.merge(
+            lookup,
+            how="left",
+            left_on=["avisos_year", "district_code_start", "barrio_code_start"],
+            right_on=["avisos_year", "district_code", "barrio_code"],
+        )
+        enriched = enriched.drop(columns=[column for column in ["district_code", "barrio_code"] if column in enriched.columns])
+
+    for column in (
+        "avisos_district_prev_year",
+        "avisos_district_per_1000_prev_year",
+        "avisos_barrio_prev_year",
+        "avisos_barrio_per_1000_prev_year",
+        "avisos_barrio_share_of_district_prev_year",
+    ):
+        if column not in enriched.columns:
+            enriched[column] = 0.0
+        enriched[column] = pd.to_numeric(enriched[column], errors="coerce").fillna(0.0)
+    return enriched
+
+
+def load_metro_reference(metro_csv: Path | None = None) -> pd.DataFrame:
+    resolved_path = metro_csv or (RAW_DATA_DIR / "Metro" / "Entradas_metro_todas.csv")
+    frame = pd.read_csv(resolved_path)
+    out = pd.DataFrame(
+        {
+            "metro_lat": pd.to_numeric(frame.get("@lat"), errors="coerce"),
+            "metro_lon": pd.to_numeric(frame.get("@lon"), errors="coerce"),
+            "metro_name": frame.get("name", pd.Series(pd.NA, index=frame.index)).astype("string"),
+        }
+    )
+    return out.dropna(subset=["metro_lat", "metro_lon"]).reset_index(drop=True)
+
+
+def compute_metro_features(
+    abt: pd.DataFrame,
+    *,
+    metro_reference: pd.DataFrame | None = None,
+    distance_bands_m: tuple[float, ...] = DEFAULT_METRO_DISTANCE_BANDS_M,
+) -> pd.DataFrame:
+    features = pd.DataFrame(index=abt.index)
+    features["metro_distance_m_start"] = np.nan
+    for band in distance_bands_m:
+        features[f"metro_access_count_{int(band)}m_start"] = 0.0
+
+    lat = pd.to_numeric(abt.get("lat_wgs84_start"), errors="coerce")
+    lon = pd.to_numeric(abt.get("lon_wgs84_start"), errors="coerce")
+    valid_mask = is_valid_madrid_coordinate(lat, lon)
+    features["missing_metro_distance_start"] = (~valid_mask).astype(float)
+
+    metro = metro_reference if metro_reference is not None else load_metro_reference()
+    if metro.empty or not valid_mask.any():
+        return features
+
+    metro_radians = np.deg2rad(metro[["metro_lat", "metro_lon"]].to_numpy(dtype=float))
+    tree = BallTree(metro_radians, metric="haversine")
+    point_radians = np.deg2rad(
+        np.column_stack(
+            [
+                lat.loc[valid_mask].to_numpy(dtype=float),
+                lon.loc[valid_mask].to_numpy(dtype=float),
+            ]
+        )
+    )
+    nearest_distance, _ = tree.query(point_radians, k=1)
+    features.loc[valid_mask, "metro_distance_m_start"] = nearest_distance[:, 0] * EARTH_RADIUS_M
+
+    for band in distance_bands_m:
+        counts = tree.query_radius(point_radians, r=float(band) / EARTH_RADIUS_M, count_only=True)
+        features.loc[valid_mask, f"metro_access_count_{int(band)}m_start"] = counts.astype(float)
+    return features
+
+
+def attach_metro_features(
+    abt: pd.DataFrame,
+    *,
+    metro_reference: pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    features = compute_metro_features(abt, metro_reference=metro_reference)
+    return pd.concat([abt.reset_index(drop=True), features.reset_index(drop=True)], axis=1)
+
+
+def render_survival_feature_inventory_markdown() -> str:
+    lines: list[str] = []
+    lines.append("# Variables")
+    lines.append("")
+    lines.append("Inventario de variables del pipeline de supervivencia justo antes del siguiente reentrenamiento canónico.")
+    lines.append("")
+    lines.append("## Variables de modelado activas")
+    lines.append("")
+    lines.append("| Variable | Estado | Categoría | Fuente | Descripción |")
+    lines.append("| --- | --- | --- | --- | --- |")
+    for spec in MODEL_FEATURE_SPECS:
+        lines.append(
+            f"| {spec.name} | {spec.status} | {spec.category} | {spec.source} | {spec.description} |"
+        )
+    lines.append("")
+    lines.append("## Variables auxiliares y de target")
+    lines.append("")
+    lines.append("| Variable | Estado | Categoría | Fuente | Descripción |")
+    lines.append("| --- | --- | --- | --- | --- |")
+    for spec in HELPER_COLUMN_SPECS:
+        lines.append(
+            f"| {spec.name} | {spec.status} | {spec.category} | {spec.source} | {spec.description} |"
+        )
+    lines.append("")
+    lines.append("## Criterio de uso")
+    lines.append("")
+    lines.append("- Todas las variables de modelado son point-in-time y se congelan en `first_seen_period` o en información histórica estrictamente anterior.")
+    lines.append("- `avisos_*_prev_year` usa el año natural anterior al alta del local para evitar leakage intraanual.")
+    lines.append("- `metro_*` usa la posición inicial del local y la malla estática de accesos de metro.")
+    lines.append("- Las variables con sufijo `_delta_12m_start` miden cambio frente a 12 meses antes en la misma sección.")
+    return "\n".join(lines) + "\n"
+
+
+def write_survival_feature_inventory(output_path: Path | None = None) -> Path:
+    resolved_path = output_path or (PROJECT_ROOT / "VARIABLES.md")
+    resolved_path.write_text(render_survival_feature_inventory_markdown(), encoding="utf-8")
+    return resolved_path
