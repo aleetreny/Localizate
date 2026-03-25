@@ -12,40 +12,40 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
 ## Lectura ejecutiva
 
 - Quality gate canonico: pass.
-- Validacion: Uno=0.5235 (debil), mean Dynamic AUC=0.5924 (usable).
-- Test: Uno=0.5262 (debil), mean Dynamic AUC=0.6438 (bueno).
+- Validacion: Uno=0.6863 (bueno), mean Dynamic AUC=0.7398 (muy_bueno).
+- Test: Uno=0.6418 (bueno), mean Dynamic AUC=0.8773 (muy_bueno).
 - Regimen de evento raro confirmado: valid=52 eventos, test=266 eventos.
 
 ## C-index por modelo
 
 {
   "cox": {
-    "train": 0.5781293744779958,
-    "valid": 0.4892845082810451,
-    "test": 0.5192000361231514
+    "train": 0.6722624775930948,
+    "valid": 0.5364538750893285,
+    "test": 0.5395937084319244
   },
   "rsf": {
-    "train": 0.696770205825141,
-    "valid": 0.5760921634377528,
-    "test": 0.4819198337262074
+    "train": 0.823096704662214,
+    "valid": 0.7726226843308021,
+    "test": 0.3568127980271752
   },
   "gbsa": {
-    "train": 0.6214582669429161,
-    "valid": 0.5306151296931811,
-    "test": 0.49938949042811
+    "train": 0.7067441241237733,
+    "valid": 0.7007868759767235,
+    "test": 0.6884383413274185
   },
   "ensemble": {
-    "train": 0.6523837559547749,
-    "valid": 0.5234531447553381,
-    "test": 0.5261766177702657
+    "train": 0.7499628993949655,
+    "valid": 0.6863451102961386,
+    "test": 0.6418470390192624
   }
 }
 
 ## Interpretacion de discriminacion
 
-- En train, el ensemble marca Uno/IPCW C-index=0.6518 y se clasifica como bueno.
-- En valid, el ensemble marca Uno/IPCW C-index=0.5235 y se clasifica como debil.
-- En test, el ensemble marca Uno/IPCW C-index=0.5262 y se clasifica como debil.
+- En train, el ensemble marca Uno/IPCW C-index=0.7494 y se clasifica como muy_bueno.
+- En valid, el ensemble marca Uno/IPCW C-index=0.6863 y se clasifica como bueno.
+- En test, el ensemble marca Uno/IPCW C-index=0.6418 y se clasifica como bueno.
 
 ## Uno / IPCW C-index (ensemble)
 
@@ -54,19 +54,19 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
     "rows": 149213,
     "events": 14918,
     "tau": 134.99999999999997,
-    "uno_c_index": 0.6517808136157925
+    "uno_c_index": 0.749418520998962
   },
   "valid": {
     "rows": 2742,
     "events": 52,
     "tau": 54.99999999999999,
-    "uno_c_index": 0.5234531447553381
+    "uno_c_index": 0.6863451102961386
   },
   "test": {
     "rows": 51873,
     "events": 266,
     "tau": 25.999999999999996,
-    "uno_c_index": 0.5261766177702657
+    "uno_c_index": 0.6418470390192624
   }
 }
 
@@ -77,27 +77,27 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
     "rows": 149213,
     "events": 14918,
     "tau": 134.99999999999997,
-    "mean_auc": 0.7142414339175641,
+    "mean_auc": 0.8016250653222365,
     "horizons": {
       "h6": {
         "time": 6.0,
         "cases": 819,
         "controls": 148394,
-        "auc": 0.7303411101913737,
+        "auc": 0.8095258953480984,
         "supported": true
       },
       "h12": {
         "time": 12.0,
         "cases": 1492,
         "controls": 147721,
-        "auc": 0.7086703036462858,
+        "auc": 0.7998655529218157,
         "supported": true
       },
       "h24": {
         "time": 24.0,
         "cases": 2934,
         "controls": 146279,
-        "auc": 0.7076975613824183,
+        "auc": 0.7979588878286874,
         "supported": true
       }
     }
@@ -106,27 +106,27 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
     "rows": 2742,
     "events": 52,
     "tau": 54.99999999999999,
-    "mean_auc": 0.5923551651311448,
+    "mean_auc": 0.7397564434685907,
     "horizons": {
       "h6": {
         "time": 6.0,
         "cases": 5,
         "controls": 2737,
-        "auc": 0.5886737303617099,
+        "auc": 0.8530507855316039,
         "supported": true
       },
       "h12": {
         "time": 12.0,
         "cases": 16,
         "controls": 2726,
-        "auc": 0.6241860785033015,
+        "auc": 0.7473404255319149,
         "supported": true
       },
       "h24": {
         "time": 24.0,
         "cases": 28,
         "controls": 2714,
-        "auc": 0.564710759027266,
+        "auc": 0.6855984840509527,
         "supported": true
       }
     }
@@ -135,27 +135,27 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
     "rows": 51873,
     "events": 266,
     "tau": 25.999999999999996,
-    "mean_auc": 0.6437722072350108,
+    "mean_auc": 0.8772892767478985,
     "horizons": {
       "h6": {
         "time": 6.0,
         "cases": 56,
         "controls": 51081,
-        "auc": 0.5317716679671223,
+        "auc": 0.6461673616413148,
         "supported": true
       },
       "h12": {
         "time": 12.0,
         "cases": 182,
         "controls": 50265,
-        "auc": 0.5393694736577458,
+        "auc": 0.6530279081308624,
         "supported": true
       },
       "h24": {
         "time": 24.0,
         "cases": 266,
         "controls": 55,
-        "auc": 0.6759740259740259,
+        "auc": 0.9455912508544089,
         "supported": true
       }
     }
@@ -164,14 +164,14 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
 
 ## Interpretacion por horizontes
 
-- En valid, la media de Dynamic AUC es 0.5924 (usable).
-- valid:h6 -> AUC=0.5887, cases=5, controls=2737, estado=usable.
-- valid:h12 -> AUC=0.6242, cases=16, controls=2726, estado=bueno.
-- valid:h24 -> AUC=0.5647, cases=28, controls=2714, estado=usable.
-- En test, la media de Dynamic AUC es 0.6438 (bueno).
-- test:h6 -> AUC=0.5318, cases=56, controls=51081, estado=debil.
-- test:h12 -> AUC=0.5394, cases=182, controls=50265, estado=debil.
-- test:h24 -> AUC=0.6760, cases=266, controls=55, estado=bueno.
+- En valid, la media de Dynamic AUC es 0.7398 (muy_bueno).
+- valid:h6 -> AUC=0.8531, cases=5, controls=2737, estado=muy_bueno.
+- valid:h12 -> AUC=0.7473, cases=16, controls=2726, estado=muy_bueno.
+- valid:h24 -> AUC=0.6856, cases=28, controls=2714, estado=bueno.
+- En test, la media de Dynamic AUC es 0.8773 (muy_bueno).
+- test:h6 -> AUC=0.6462, cases=56, controls=51081, estado=bueno.
+- test:h12 -> AUC=0.6530, cases=182, controls=50265, estado=bueno.
+- test:h24 -> AUC=0.9456, cases=266, controls=55, estado=muy_bueno.
 
 ## Integrated Brier Score (modelos base)
 
@@ -185,7 +185,7 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
         12.0,
         24.0
       ],
-      "ibs": 0.012280440466704085
+      "ibs": 0.011112514965522902
     },
     "valid": {
       "rows": 2742,
@@ -195,7 +195,7 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
         12.0,
         24.0
       ],
-      "ibs": 0.006620243659141887
+      "ibs": 0.00645542371378309
     },
     "test": {
       "rows": 51873,
@@ -205,7 +205,7 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
         12.0,
         24.0
       ],
-      "ibs": 0.003595135917524103
+      "ibs": 0.06969880068818216
     }
   },
   "rsf": {
@@ -217,7 +217,7 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
         12.0,
         24.0
       ],
-      "ibs": 0.010903681248608577
+      "ibs": 0.010608983476922814
     },
     "valid": {
       "rows": 2742,
@@ -227,7 +227,7 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
         12.0,
         24.0
       ],
-      "ibs": 0.006356935251209553
+      "ibs": 0.006308049094627375
     },
     "test": {
       "rows": 51873,
@@ -237,7 +237,7 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
         12.0,
         24.0
       ],
-      "ibs": 0.03014880999341187
+      "ibs": 0.015795378554777195
     }
   },
   "gbsa": {
@@ -249,7 +249,7 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
         12.0,
         24.0
       ],
-      "ibs": 0.011080190422102012
+      "ibs": 0.011367682694577405
     },
     "valid": {
       "rows": 2742,
@@ -259,7 +259,7 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
         12.0,
         24.0
       ],
-      "ibs": 0.006344813817999017
+      "ibs": 0.00645043731647577
     },
     "test": {
       "rows": 51873,
@@ -269,15 +269,15 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
         12.0,
         24.0
       ],
-      "ibs": 0.004614068405726437
+      "ibs": 0.0036192245402403974
     }
   }
 }
 
 ## Interpretacion de IBS
 
-- En valid, el mejor IBS base es gbsa=0.0063 (muy_bueno; menor es mejor).
-- En test, el mejor IBS base es cox=0.0036 (muy_bueno; menor es mejor).
+- En valid, el mejor IBS base es rsf=0.0063 (muy_bueno; menor es mejor).
+- En test, el mejor IBS base es gbsa=0.0036 (muy_bueno; menor es mejor).
 
 Nota: el ensemble actual es rank-based; no se reporta IBS para el ensemble hasta definir una agregacion explicita de curvas de supervivencia.
 
@@ -287,157 +287,157 @@ Nota: el ensemble actual es rank-based; no se reporta IBS para el ensemble hasta
   "train": [
     {
       "decile": 1,
-      "rows": 19517,
-      "event_rate": 0.00276681867090229
+      "rows": 20089,
+      "event_rate": 4.977848573846384e-05
     },
     {
       "decile": 2,
-      "rows": 18522,
-      "event_rate": 0.004373177842565598
+      "rows": 19713,
+      "event_rate": 0.0009638309744838432
     },
     {
       "decile": 3,
-      "rows": 18251,
-      "event_rate": 0.00487644512629445
+      "rows": 17927,
+      "event_rate": 0.003012216210185753
     },
     {
       "decile": 4,
-      "rows": 18336,
-      "event_rate": 0.007308027923211169
+      "rows": 19263,
+      "event_rate": 0.006852515184550693
     },
     {
       "decile": 5,
-      "rows": 17347,
-      "event_rate": 0.009050556292154262
+      "rows": 19156,
+      "event_rate": 0.007151806222593443
     },
     {
       "decile": 6,
-      "rows": 10606,
-      "event_rate": 0.007165755232887045
+      "rows": 17274,
+      "event_rate": 0.010072941993747829
     },
     {
       "decile": 7,
-      "rows": 9092,
-      "event_rate": 0.011768587769467664
+      "rows": 15935,
+      "event_rate": 0.015563225604016316
     },
     {
       "decile": 8,
-      "rows": 11249,
-      "event_rate": 0.011289892434883101
+      "rows": 9408,
+      "event_rate": 0.01796343537414966
     },
     {
       "decile": 9,
-      "rows": 19228,
-      "event_rate": 0.013990014562096942
+      "rows": 8683,
+      "event_rate": 0.023033513762524473
     },
     {
       "decile": 10,
-      "rows": 7065,
-      "event_rate": 0.05633404104741684
+      "rows": 1765,
+      "event_rate": 0.2028328611898017
     }
   ],
   "valid": [
     {
       "decile": 1,
-      "rows": 257,
+      "rows": 248,
       "event_rate": 0.0
     },
     {
       "decile": 2,
-      "rows": 252,
-      "event_rate": 0.011904761904761904
-    },
-    {
-      "decile": 3,
-      "rows": 278,
-      "event_rate": 0.0035971223021582736
-    },
-    {
-      "decile": 4,
-      "rows": 345,
+      "rows": 384,
       "event_rate": 0.0
     },
     {
+      "decile": 3,
+      "rows": 448,
+      "event_rate": 0.004464285714285714
+    },
+    {
+      "decile": 4,
+      "rows": 622,
+      "event_rate": 0.001607717041800643
+    },
+    {
       "decile": 5,
-      "rows": 349,
-      "event_rate": 0.0028653295128939827
+      "rows": 362,
+      "event_rate": 0.008287292817679558
     },
     {
       "decile": 6,
-      "rows": 256,
-      "event_rate": 0.0078125
+      "rows": 185,
+      "event_rate": 0.021621621621621623
     },
     {
       "decile": 7,
-      "rows": 166,
-      "event_rate": 0.006024096385542169
+      "rows": 195,
+      "event_rate": 0.010256410256410256
     },
     {
       "decile": 8,
-      "rows": 314,
-      "event_rate": 0.009554140127388535
+      "rows": 123,
+      "event_rate": 0.008130081300813009
     },
     {
       "decile": 9,
-      "rows": 435,
-      "event_rate": 0.009195402298850575
+      "rows": 168,
+      "event_rate": 0.011904761904761904
     },
     {
       "decile": 10,
-      "rows": 90,
-      "event_rate": 0.011111111111111112
+      "rows": 7,
+      "event_rate": 0.14285714285714285
     }
   ],
   "test": [
     {
       "decile": 1,
-      "rows": 634,
-      "event_rate": 0.0015772870662460567
-    },
-    {
-      "decile": 2,
-      "rows": 1583,
-      "event_rate": 0.003158559696778269
-    },
-    {
-      "decile": 3,
-      "rows": 1861,
-      "event_rate": 0.0021493820526598604
-    },
-    {
-      "decile": 4,
-      "rows": 1684,
-      "event_rate": 0.0059382422802850355
-    },
-    {
-      "decile": 5,
-      "rows": 2709,
-      "event_rate": 0.0033222591362126247
-    },
-    {
-      "decile": 6,
-      "rows": 8024,
-      "event_rate": 0.001744765702891326
-    },
-    {
-      "decile": 7,
-      "rows": 14144,
-      "event_rate": 0.003110859728506787
-    },
-    {
-      "decile": 8,
-      "rows": 7291,
-      "event_rate": 0.006171992867919353
-    },
-    {
-      "decile": 9,
-      "rows": 327,
+      "rows": 45,
       "event_rate": 0.0
     },
     {
+      "decile": 2,
+      "rows": 286,
+      "event_rate": 0.0
+    },
+    {
+      "decile": 3,
+      "rows": 2008,
+      "event_rate": 0.00149402390438247
+    },
+    {
+      "decile": 4,
+      "rows": 498,
+      "event_rate": 0.002008032128514056
+    },
+    {
+      "decile": 5,
+      "rows": 865,
+      "event_rate": 0.003468208092485549
+    },
+    {
+      "decile": 6,
+      "rows": 2923,
+      "event_rate": 0.004105371193978789
+    },
+    {
+      "decile": 7,
+      "rows": 4220,
+      "event_rate": 0.0016587677725118483
+    },
+    {
+      "decile": 8,
+      "rows": 10886,
+      "event_rate": 0.0010104721660848797
+    },
+    {
+      "decile": 9,
+      "rows": 11531,
+      "event_rate": 0.0026884051686757436
+    },
+    {
       "decile": 10,
-      "rows": 13616,
-      "event_rate": 0.003672150411280846
+      "rows": 18611,
+      "event_rate": 0.006125409703938531
     }
   ]
 }

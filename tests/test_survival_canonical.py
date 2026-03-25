@@ -12,6 +12,10 @@ from localizate.survival_canonical import (
     _supported_eval_times,
     evaluate_canonical_quality_gate,
 )
+from localizate.survival_robustness import (
+    _bootstrap_payload,
+    _resolve_robustness_status,
+)
 
 
 class SurvivalCanonicalTests(unittest.TestCase):
@@ -115,6 +119,17 @@ class SurvivalCanonicalTests(unittest.TestCase):
         self.assertEqual(len(idx), 4)
         self.assertIn(0, idx.tolist())
         self.assertIn(3, idx.tolist())
+
+    def test_bootstrap_payload_reports_confidence_interval(self) -> None:
+        payload = _bootstrap_payload([0.50, 0.55, 0.60, 0.65], iterations=4, sample_rows=100, skipped=0)
+
+        self.assertAlmostEqual(payload["estimate"], 0.575)
+        self.assertGreater(payload["ci_upper"], payload["ci_lower"])
+        self.assertEqual(payload["iterations_successful"], 4)
+
+    def test_resolve_robustness_status_returns_caveats_for_wide_intervals(self) -> None:
+        status = _resolve_robustness_status(["wide_uno_ci_test"], {"matches_training_metrics": True})
+        self.assertEqual(status, "pass_with_caveats")
 
 
 if __name__ == "__main__":

@@ -378,7 +378,9 @@ def build_local_survival_abt(
                 a.epigrafe_desc_sig,
                 a.n_epigrafes,
                 CASE WHEN a.n_divisions = 1 THEN a.division_sig ELSE NULL END AS division_code_start,
-                CASE WHEN a.n_divisions = 1 THEN a.division_desc_sig ELSE NULL END AS division_desc_start
+                CASE WHEN a.n_divisions = 1 THEN a.division_desc_sig ELSE NULL END AS division_desc_start,
+                CASE WHEN a.n_epigrafes = 1 THEN a.epigrafe_sig ELSE NULL END AS epigrafe_code_start,
+                CASE WHEN a.n_epigrafes = 1 THEN a.epigrafe_desc_sig ELSE NULL END AS epigrafe_desc_start
             FROM local_enriched l
             LEFT JOIN activity_periods a
                 ON l.id_local = a.id_local
@@ -538,6 +540,8 @@ def build_local_survival_abt(
                     ARG_MIN(n_epigrafes, period) AS n_epigrafes_start,
                     ARG_MIN(division_code_start, period) AS division_code_start,
                     ARG_MIN(division_desc_start, period) AS division_desc_start,
+                    ARG_MIN(epigrafe_code_start, period) AS epigrafe_code_start,
+                    ARG_MIN(epigrafe_desc_start, period) AS epigrafe_desc_start,
                     ARG_MIN(section_local_count, period) AS section_local_count_start,
                     ARG_MIN(section_unique_division_count, period) AS section_unique_division_count_start,
                     ARG_MIN(section_single_division_share, period) AS section_single_division_share_start,
@@ -645,6 +649,8 @@ def build_local_survival_abt(
                 n_epigrafes_start,
                 division_code_start,
                 division_desc_start,
+                epigrafe_code_start,
+                epigrafe_desc_start,
                 section_local_count_start,
                 section_unique_division_count_start,
                 section_single_division_share_start,

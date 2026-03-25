@@ -2,7 +2,7 @@
 
 Este archivo es la fuente unica y viva de contexto del proyecto. Se actualiza en cada avance y reemplaza al resto de documentos como referencia primaria.
 
-Ultima actualizacion: 2026-03-23
+Ultima actualizacion: 2026-03-25
 
 ## Identidad del proyecto
 
@@ -79,8 +79,8 @@ Ultima actualizacion: 2026-03-23
 	- scores: `risk_cox`, `risk_rsf`, `risk_gbsa`, `risk_ensemble`
 	- calidad: `quality_flag_transition`, `quality_flag_missing_h3`, `quality_flag_renta_imputed`, `quality_tier`
 - Resultado canonical actualizado (ensemble):
-	- Uno/IPCW C-index: train `0.6518`, valid `0.5235`, test `0.5262`
-	- Dynamic AUC mean: train `0.7142`, valid `0.5924`, test `0.6438`
+	- Uno/IPCW C-index: train `0.7494`, valid `0.6863`, test `0.6418`
+	- Dynamic AUC mean: train `0.8016`, valid `0.7398`, test `0.8773`
 	- Quality gate canonico: `pass`
 - Evaluacion survival robusta integrada en pipeline canonico:
 	- `Uno / IPCW C-index` para `ensemble`
@@ -90,7 +90,17 @@ Ultima actualizacion: 2026-03-23
 - `modeling_readiness` ya gobierna sobre metricas canonicas en lugar de depender solo del baseline.
 - CLI `train_survival_canonical.py --quick` aligerado para validacion local trazable (submuestreo de fit + progreso tambien en `GBSA`).
 - Ultima validacion rapida canonical regenerada con metadata de ejecucion (`quick_mode=true`, `fit_max_rows=10000`).
-- Estado readiness actual tras redefinir cierre y reentrenar: `ready`.
+- Nueva capa de robustez post-fit completada sobre los scores exportados del canónico:
+	- script nuevo `scripts/evaluate_survival_robustness.py`
+	- modulo nuevo `src/localizate/survival_robustness.py`
+	- artefactos `docs/survival_canonical_robustness.md` y `models/survival_canonical_robustness.json`
+	- bootstrap configurado con `200` iteraciones y `max_rows=10000` sobre `valid/test`
+- Resultado de robustez actual:
+	- estado `pass_with_caveats`
+	- Uno bootstrap CI width: valid `0.1258`, test `0.1530`
+	- Dynamic AUC bootstrap CI width: valid `0.1726`, test `0.2828`
+	- warnings principales: `low_cases_valid_h6`, `low_cases_valid_h12`, `wide_dynamic_auc_ci_test`, `wide_uno_ci_test`, `low_controls_test_h24`
+- Estado readiness actual tras integrar robustez: `ready_with_caveats`.
 - Guardrail extra incorporado en `assign_temporal_split_adaptive()` para evitar splits degenerados sin filas de train cuando el nuevo target aumenta la densidad de eventos.
 - Nuevo bloque pre-retraining completado: inventario raiz de variables en `VARIABLES.md` y ampliacion de la ABT con features adicionales de:
 	- complejidad de actividad al alta (`n_divisions_start`, `n_epigrafes_start`)
@@ -106,7 +116,19 @@ Ultima actualizacion: 2026-03-23
 	- variables de modelado activas: `35`
 	- variables con `p < 0.05`: `32`
 	- top señales univariantes actuales: accesibilidad metro, densidad/stock comercial de seccion y variables de calidad/carry-forward
-- Estado operativo actual: repo limpio, ABT enriquecida regenerada y listo justo antes de relanzar `train_survival_canonical.py`.
+- Estado operativo actual: canonical reentrenado, robustez post-fit materializada y repo listo para decidir entre `ablation`, rolling backtest o siguiente iteracion de frontend.
+- Nueva capa producto completada para recomendacion zona x categoria:
+	- modulo `src/localizate/activity_taxonomy.py` con taxonomia web derivada desde epigrafes normalizados
+	- script `scripts/build_zone_category_survival.py`
+	- analisis survival por distrito y barrio en `data/exports/district_category_survival.csv` y `data/exports/barrio_category_survival.csv`
+	- reporte estadistico en `models/zone_category_survival_stats.json` y `docs/zone_category_survival.md`
+	- reporte de taxonomia en `data/processed/web_activity_taxonomy.csv` y `docs/activity_taxonomy_web.md`
+- Resultado inicial zona x categoria:
+	- `457` epigrafes validos unicos revisados y colapsados a `146` categorias web (`272` epigrafes priorizables)
+	- `89,270` locales con epigrafe inicial recuperado; `76,172` filas investables para analisis
+	- diferencias significativas por categoria dentro de `15` distritos
+	- diferencias significativas entre distritos para `5` categorias
+	- lectura producto: ya se puede construir un desplegable entendible y un ranking por distrito con evidencia estadistica, aunque la recomendacion debe mostrarse como supervivencia esperada y no como certeza
 - Prompt de continuidad para trabajar sin contexto disponible en `docs/next_session_prompt.md`.
 - Contexto legado consolidado en este archivo; carpeta `Context/` eliminada para simplificar el repo.
 - Documentacion DB movida a `docs/documentacion_db/` para estandarizar nombres.
@@ -129,12 +151,13 @@ Ultima actualizacion: 2026-03-23
 
 ## Siguientes pasos inmediatos
 
-1. Relanzar `scripts/train_survival_canonical.py` con la nueva matriz de variables y comparar contra la version canonical previa.
-2. Revisar importancia de variables, estabilidad temporal y calibracion con el set enriquecido.
-3. Actualizar readiness/gates con las nuevas metricas canonical resultantes.
-4. Preparar primera iteracion de frontend sobre `data/exports/local_survival_map_export.csv` tras el nuevo reentrenamiento.
-5. Definir protocolo de recalibracion mensual (drift y estabilidad de score).
-6. Preparar narrativa final de validacion para entrega del concurso.
+1. Construir la primera app web sobre la taxonomia nueva y los outputs `district_category_survival.csv` + `local_survival_map_export.csv`.
+2. Refinar la taxonomia comercial donde convenga separar categorias muy agregadas (`Otros comercios`, `Logistica y movilidad`, `Servicios profesionales`).
+3. Ejecutar `ablation` por bloques de variables y/o composicion del ensemble para medir contribucion marginal real.
+4. Implementar rolling backtest temporal para complementar el bootstrap actual con validacion entre ventanas.
+5. Revisar el peso o inclusion de `RSF`, dado su sobreajuste frente a `GBSA` y al ensemble.
+6. Definir protocolo de recalibracion mensual (drift y estabilidad de score).
+7. Preparar narrativa final de validacion para entrega del concurso con metricas puntuales + intervalos de confianza.
 
 ## Comandos utiles
 
@@ -152,6 +175,8 @@ PYTHONPATH=src .venv/bin/python -u scripts/validate_survival_features.py
 PYTHONPATH=src .venv/bin/python -u scripts/train_survival_baseline.py
 PYTHONPATH=src .venv/bin/python -u scripts/run_modeling_readiness.py
 PYTHONPATH=src .venv/bin/python -u scripts/train_survival_canonical.py
+PYTHONPATH=src .venv/bin/python -u scripts/evaluate_survival_robustness.py
+PYTHONPATH=src .venv/bin/python -u scripts/build_zone_category_survival.py
 ```
 
 ## Apéndices (verbatim, preservados)

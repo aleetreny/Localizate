@@ -22,6 +22,7 @@ def run_modeling_readiness_check(
     abt_csv: Path | None = None,
     baseline_metrics_json: Path | None = None,
     canonical_metrics_json: Path | None = None,
+    robustness_json: Path | None = None,
     geospatial_manifest_csv: Path | None = None,
     report_md: Path | None = None,
     report_json: Path | None = None,
@@ -29,6 +30,7 @@ def run_modeling_readiness_check(
     resolved_abt = abt_csv or (DATA_DIR / "features" / "local_survival_abt.csv")
     resolved_baseline_metrics = baseline_metrics_json or (PROJECT_ROOT / "models" / "survival_baseline_metrics.json")
     resolved_canonical_metrics = canonical_metrics_json or (PROJECT_ROOT / "models" / "survival_canonical_metrics.json")
+    resolved_robustness_json = robustness_json or (PROJECT_ROOT / "models" / "survival_canonical_robustness.json")
     resolved_geospatial_manifest = geospatial_manifest_csv or (DATA_DIR / "processed" / "censo_geospatial_manifest.csv")
     resolved_report_md = report_md or (DOCS_DIR / "modeling_readiness.md")
     resolved_report_json = report_json or (PROJECT_ROOT / "models" / "modeling_readiness.json")
@@ -41,12 +43,15 @@ def run_modeling_readiness_check(
 
     baseline_metrics = _load_json_if_exists(resolved_baseline_metrics)
     canonical_metrics = _load_json_if_exists(resolved_canonical_metrics)
+    robustness_metrics = _load_json_if_exists(resolved_robustness_json)
     canonical_gate = canonical_metrics.get("quality_gate", {}) if canonical_metrics else {}
     canonical_gate_status = str(canonical_gate.get("status") or "missing")
+    robustness_status = str(robustness_metrics.get("status") or "missing") if robustness_metrics else "missing"
 
     uno_c_index = canonical_metrics.get("uno_c_index", {}) if canonical_metrics else {}
     dynamic_auc = canonical_metrics.get("dynamic_auc", {}) if canonical_metrics else {}
     integrated_brier = canonical_metrics.get("integrated_brier_score", {}) if canonical_metrics else {}
+    robustness_bootstrap = robustness_metrics.get("bootstrap", {}) if robustness_metrics else {}
 
     events = pd.to_numeric(abt["event_observed"], errors="coerce").fillna(0)
     duration = pd.to_numeric(abt["duration_months"], errors="coerce")
@@ -61,12 +66,18 @@ def run_modeling_readiness_check(
         "renta_coverage": float(renta.notna().mean()) if renta.notna().any() else 0.0,
         "geo_transition_rows": int(pd.to_numeric(geo.get("rows_transition_requires_review"), errors="coerce").fillna(0).sum()),
         "canonical_quality_gate_status": canonical_gate_status,
+        "robustness_status": robustness_status,
         "canonical_uno_valid": _extract_metric_value(uno_c_index, split_name="valid", metric_key="uno_c_index"),
         "canonical_uno_test": _extract_metric_value(uno_c_index, split_name="test", metric_key="uno_c_index"),
         "canonical_dynamic_auc_valid": _extract_metric_value(dynamic_auc, split_name="valid", metric_key="mean_auc"),
         "canonical_dynamic_auc_test": _extract_metric_value(dynamic_auc, split_name="test", metric_key="mean_auc"),
         "canonical_ibs_valid_available": _split_has_any_finite_ibs(integrated_brier, split_name="valid"),
         "canonical_ibs_test_available": _split_has_any_finite_ibs(integrated_brier, split_name="test"),
+        "robustness_available": bool(robustness_metrics),
+        "robustness_uno_valid_ci_width": _extract_bootstrap_ci_width(robustness_bootstrap, split_name="valid", metric_key="uno_c_index"),
+        "robustness_uno_test_ci_width": _extract_bootstrap_ci_width(robustness_bootstrap, split_name="test", metric_key="uno_c_index"),
+        "robustness_dynamic_auc_valid_ci_width": _extract_bootstrap_ci_width(robustness_bootstrap, split_name="valid", metric_key="dynamic_auc"),
+        "robustness_dynamic_auc_test_ci_width": _extract_bootstrap_ci_width(robustness_bootstrap, split_name="test", metric_key="dynamic_auc"),
     }
 
     checks = {
@@ -78,6 +89,7 @@ def run_modeling_readiness_check(
         "transition_rows_flagged": summary["geo_transition_rows"] >= 0,
         "canonical_metrics_available": bool(canonical_metrics),
         "canonical_quality_gate_acceptable": _canonical_gate_status_is_acceptable(canonical_gate_status),
+        "robustness_status_acceptable": _robustness_status_is_acceptable(robustness_status),
     }
 
     warnings: list[str] = []
@@ -95,6 +107,8 @@ def run_modeling_readiness_check(
             warnings.append("very_low_test_events")
     for warning in canonical_gate.get("warnings", []):
         warnings.append(str(warning))
+    for warning in robustness_metrics.get("warnings", []):
+        warnings.append(str(warning))
     warnings = list(dict.fromkeys(warnings))
 
     status = _resolve_readiness_status(checks, warnings, canonical_gate_status)
@@ -107,6 +121,7 @@ def run_modeling_readiness_check(
         "next_actions": [
             "stabilize valid/test evaluation under rare-event regime",
             "monitor robust survival metrics (Uno, dynamic AUC, IBS) in each iteration",
+            "refresh survival_canonical_robustness after each training run to keep readiness tied to bootstrap intervals",
             "prepare frontend validation on top of local_survival_map_export.csv",
         ],
     }
@@ -149,12 +164,18 @@ def render_modeling_readiness_markdown(payload: dict[str, object]) -> str:
     lines.append(f"- Cobertura renta observada: {summary.get('renta_coverage')}")
     lines.append(f"- Filas marcadas por transicion CRS: {summary.get('geo_transition_rows')}")
     lines.append(f"- Quality gate canonico: {summary.get('canonical_quality_gate_status')}")
+    lines.append(f"- Robustez post-fit: {summary.get('robustness_status')}")
     lines.append(f"- Uno C-index valid: {summary.get('canonical_uno_valid')}")
     lines.append(f"- Uno C-index test: {summary.get('canonical_uno_test')}")
     lines.append(f"- Dynamic AUC valid: {summary.get('canonical_dynamic_auc_valid')}")
     lines.append(f"- Dynamic AUC test: {summary.get('canonical_dynamic_auc_test')}")
     lines.append(f"- IBS valido disponible: {summary.get('canonical_ibs_valid_available')}")
     lines.append(f"- IBS test disponible: {summary.get('canonical_ibs_test_available')}")
+    lines.append(f"- Robustez disponible: {summary.get('robustness_available')}")
+    lines.append(f"- CI width Uno valid: {summary.get('robustness_uno_valid_ci_width')}")
+    lines.append(f"- CI width Uno test: {summary.get('robustness_uno_test_ci_width')}")
+    lines.append(f"- CI width Dynamic AUC valid: {summary.get('robustness_dynamic_auc_valid_ci_width')}")
+    lines.append(f"- CI width Dynamic AUC test: {summary.get('robustness_dynamic_auc_test_ci_width')}")
     lines.append("")
     lines.append("## Checks")
     lines.append("")
@@ -198,6 +219,10 @@ def _canonical_gate_status_is_acceptable(status: str) -> bool:
     return status in {"pass", "pass_with_caveats"}
 
 
+def _robustness_status_is_acceptable(status: str) -> bool:
+    return status in {"missing", "pass", "pass_with_caveats"}
+
+
 def _extract_metric_value(metrics: dict[str, object], *, split_name: str, metric_key: str) -> float | None:
     value = pd.to_numeric(metrics.get(split_name, {}).get(metric_key), errors="coerce")
     if pd.isna(value):
@@ -211,6 +236,19 @@ def _split_has_any_finite_ibs(integrated_brier: dict[str, object], *, split_name
         if pd.notna(value) and np.isfinite(float(value)):
             return True
     return False
+
+
+def _extract_bootstrap_ci_width(bootstrap_payload: dict[str, object], *, split_name: str, metric_key: str) -> float | None:
+    if metric_key == "uno_c_index":
+        value = pd.to_numeric(bootstrap_payload.get(metric_key, {}).get(split_name, {}).get("ci_width"), errors="coerce")
+    else:
+        value = pd.to_numeric(
+            bootstrap_payload.get(metric_key, {}).get(split_name, {}).get("mean_auc", {}).get("ci_width"),
+            errors="coerce",
+        )
+    if pd.isna(value):
+        return None
+    return float(value)
 
 
 def _resolve_readiness_status(checks: dict[str, bool], warnings: list[str], canonical_gate_status: str) -> str:
@@ -244,6 +282,13 @@ def _build_readiness_executive_summary(payload: dict[str, object]) -> list[str]:
         f"Discriminacion ensemble: valid Uno={_fmt_summary_metric(uno_valid)}, test Uno={_fmt_summary_metric(uno_test)}.",
         f"Horizontes dinamicos: valid mean AUC={_fmt_summary_metric(auc_valid)}, test mean AUC={_fmt_summary_metric(auc_test)}.",
     ]
+    robustness_status = summary.get("robustness_status")
+    if summary.get("robustness_available"):
+        bullets.append(
+            "La robustez post-fit ya está materializada con bootstrap; usa los anchos de CI para distinguir mejora real de ruido estadístico."
+        )
+    elif robustness_status == "missing":
+        bullets.append("Falta materializar el chequeo robusto post-fit; el readiness aún depende solo del artefacto de entrenamiento.")
     if "very_low_validation_events" in warnings or "very_low_test_events" in warnings:
         bullets.append("La principal limitacion sigue siendo estadistica: muy pocos eventos en valid/test para declarar estabilidad fuerte.")
     if status == "ready_with_caveats":
