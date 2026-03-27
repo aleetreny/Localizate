@@ -12,6 +12,10 @@ __pycache__/
 
 .env
 .streamlit/secrets.toml
+node_modules/
+.next/
+apps/web/.next/
+apps/web/node_modules/
 
 DB/
 data/

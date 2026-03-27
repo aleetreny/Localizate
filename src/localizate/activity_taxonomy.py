@@ -16,6 +16,15 @@ class TaxonomyDecision:
     mapping_rule: str
 
 
+@dataclass(frozen=True)
+class MacroCategoryDecision:
+    macro_category_code: str
+    macro_category_name: str
+    macro_category_definition: str
+    investable: bool
+    mapping_rule: str
+
+
 EXACT_CODE_RULES: dict[str, TaxonomyDecision] = {
     "472101": TaxonomyDecision("Alimentacion", "Alimentacion fresca", "Fruteria", "Fruteria", True, "exact_code"),
     "472102": TaxonomyDecision("Alimentacion", "Alimentacion fresca", "Fruteria", "Fruteria", True, "exact_code"),
@@ -171,6 +180,229 @@ NON_INVESTABLE_PREFIXES = (
 )
 
 
+MACRO_CATEGORY_DEFINITIONS: dict[str, tuple[str, str]] = {
+    "fresh_produce": ("Fruteria y verduleria", "Locales especializados en fruta, verdura y hortaliza fresca."),
+    "butcher": ("Carniceria y proteina fresca", "Carnicerias, charcuterias, pollerias, casquerias y negocios equivalentes de proteina fresca."),
+    "fish_shop": ("Pescaderia y marisqueria", "Venta especializada de pescado, marisco y productos del mar."),
+    "bakery_pastry": ("Panaderia y pasteleria", "Pan, bolleria, pasteleria, confiteria y reposteria."),
+    "ready_meals": ("Comida preparada", "Comida para llevar, platos preparados y oferta alimentaria lista para consumir."),
+    "supermarket": ("Supermercado", "Supermercados, autoservicios y gran distribucion alimentaria."),
+    "food_convenience": ("Tienda de alimentacion", "Tiendas de proximidad con surtido general de alimentacion y conveniencia."),
+    "food_specialty": ("Especialistas de alimentacion", "Negocios especializados en cafe, bodega, lacteos, congelados, frutos secos, chuches u otras categorias gourmet."),
+    "bar_cafe": ("Bar y cafeteria", "Bares, cafeterias, tabernas y formatos de hosteleria ligera sin foco principal en restauracion completa."),
+    "restaurant": ("Restaurante", "Restaurantes, comida rapida y formatos de restauracion con cocina principal."),
+    "nightlife": ("Ocio nocturno", "Discotecas, cafes espectaculo y locales nocturnos de consumo y entretenimiento."),
+    "catering_collective": ("Catering y colectividades", "Catering, banquetes, comedores colectivos y restauracion para grupos."),
+    "tourist_accommodation": ("Alojamiento turistico", "Hoteles, hostales, albergues y otros alojamientos de corta estancia."),
+    "pharmacy_optics": ("Farmacia, optica y salud retail", "Farmacias, opticas, herbolarios y retail sanitario de alta recurrencia."),
+    "clinic_health": ("Clinicas y consultas", "Clinicas, consultas medicas, dentales, fisioterapia, podologia, veterinaria y servicios sanitarios equivalentes."),
+    "beauty_personal_care": ("Belleza y cuidado personal", "Peluqueria, barberia, estetica y otros servicios de cuidado personal recurrente."),
+    "fashion_accessories": ("Moda y complementos", "Moda, calzado, joyeria, relojeria y complementos personales."),
+    "home_decor": ("Hogar y decoracion", "Muebles, textil hogar, iluminacion, menaje y decoracion."),
+    "home_improvement": ("Ferreteria y reformas", "Ferreteria, bricolaje, materiales, saneamientos y equipamiento para reforma o mantenimiento del hogar."),
+    "electronics_telecom": ("Electronica y telecom", "Electronica de consumo, electrodomesticos, informatica y telefonia."),
+    "books_leisure_retail": ("Cultura, papeleria y ocio retail", "Librerias, papelerias, jugueterias, bicicletas, deporte retail y comercios afines de ocio."),
+    "bazaar_gifts": ("Bazar, regalos y retail variado", "Bazares, floristerias, multiproducto y comercios especializados de regalo o surtido variado."),
+    "pet_retail": ("Mascotas", "Tiendas de animales, accesorios y alimentacion para mascotas."),
+    "personal_services_repair": ("Servicios personales y reparacion ligera", "Lavanderia, tintoreria, arreglo de ropa, reparacion de calzado y servicios personales similares."),
+    "business_services": ("Servicios profesionales y oficina", "Asesoria, legal, consultoria, administracion e inmobiliaria orientada a oficina o servicios empresariales."),
+    "creative_tech_services": ("Servicios creativos y tecnologia", "Arquitectura, ingenieria, publicidad, diseno, fotografia, software, servicios digitales y telecomunicaciones."),
+    "consumer_services": ("Servicios al consumidor", "Agencias de viaje, locutorios y otros servicios presenciales para consumidor final."),
+    "logistics_mobility": ("Logistica y movilidad", "Mensajeria, paqueteria, almacenamiento ligero y otros servicios logísticos o de movilidad."),
+    "finance_insurance": ("Finanzas y seguros", "Banca, seguros, cambio de divisa y servicios financieros presenciales."),
+    "auto_repair": ("Taller y reparacion de vehiculos", "Talleres, chapa, pintura, mecanica y mantenimiento del automovil o moto."),
+    "vehicle_sales_parts": ("Venta y recambios de vehiculos", "Venta de vehiculos, motos y recambios o accesorios relevantes."),
+    "fuel_station": ("Gasolinera y servicios automocion", "Estaciones de servicio y formatos vinculados a repostaje o paso viario."),
+    "early_childhood": ("Educacion infantil", "Escuelas infantiles y centros de cuidado para primera infancia."),
+    "training_languages": ("Formacion e idiomas", "Autoescuelas, idiomas y formacion no reglada."),
+    "fitness_sports": ("Fitness y deporte", "Gimnasios, clubes y centros de practica deportiva."),
+    "entertainment": ("Ocio y entretenimiento", "Salones recreativos, celebraciones y ocio presencial no nocturno."),
+    "non_priorizable": ("No priorizable", "Actividades industriales, institucionales o fuera del foco comercial de apertura minorista."),
+}
+
+
+DISPLAY_LABEL_TO_MACRO_CODE: dict[str, str] = {
+    "Fruteria": "fresh_produce",
+    "Carniceria": "butcher",
+    "Charcuteria": "butcher",
+    "Carniceria y charcuteria": "butcher",
+    "Aves y huevos": "butcher",
+    "Casqueria": "butcher",
+    "Pescaderia": "fish_shop",
+    "Panaderia": "bakery_pastry",
+    "Pasteleria y reposteria": "bakery_pastry",
+    "Panaderia y pasteleria": "bakery_pastry",
+    "Comida preparada": "ready_meals",
+    "Supermercado": "supermarket",
+    "Gran superficie alimentacion": "supermarket",
+    "Tienda de alimentacion": "food_convenience",
+    "Alimentacion envasada": "food_convenience",
+    "Lacteos y bebidas": "food_specialty",
+    "Bodega": "food_specialty",
+    "Heladeria": "food_specialty",
+    "Congelados": "food_specialty",
+    "Golosinas": "food_specialty",
+    "Frutos secos y encurtidos": "food_specialty",
+    "Cafe e infusiones": "food_specialty",
+    "Bar restaurante": "bar_cafe",
+    "Bar con cocina": "bar_cafe",
+    "Cafeteria": "bar_cafe",
+    "Heladeria y salon de te": "bar_cafe",
+    "Bodega con consumo": "bar_cafe",
+    "Bar especial": "bar_cafe",
+    "Taberna": "bar_cafe",
+    "Bar sin cocina": "bar_cafe",
+    "Churreria": "bar_cafe",
+    "Restaurante": "restaurant",
+    "Comida rapida": "restaurant",
+    "Discoteca": "nightlife",
+    "Cafe espectaculo": "nightlife",
+    "Bar especial con actuaciones": "nightlife",
+    "Eventos y banquetes": "catering_collective",
+    "Comedor colectivo": "catering_collective",
+    "Hotel": "tourist_accommodation",
+    "Hostal": "tourist_accommodation",
+    "Vivienda turistica": "tourist_accommodation",
+    "Albergue": "tourist_accommodation",
+    "Alojamiento turistico": "tourist_accommodation",
+    "Farmacia": "pharmacy_optics",
+    "Optica": "pharmacy_optics",
+    "Herbolario": "pharmacy_optics",
+    "Salud retail": "pharmacy_optics",
+    "Clinica dental": "clinic_health",
+    "Consulta medica": "clinic_health",
+    "Clinica medica": "clinic_health",
+    "Fisioterapia": "clinic_health",
+    "Podologia": "clinic_health",
+    "Optometria": "clinic_health",
+    "Parasanitario": "clinic_health",
+    "Veterinaria": "clinic_health",
+    "Clinicas y consultas": "clinic_health",
+    "Peluqueria": "beauty_personal_care",
+    "Instituto de belleza": "beauty_personal_care",
+    "Centro de estetica": "beauty_personal_care",
+    "Bronceado": "beauty_personal_care",
+    "Fotodepilacion": "beauty_personal_care",
+    "Tattoo y piercing": "beauty_personal_care",
+    "Belleza y cuidado personal": "beauty_personal_care",
+    "Perfumeria y cosmetica": "beauty_personal_care",
+    "Moda": "fashion_accessories",
+    "Calzado": "fashion_accessories",
+    "Joyeria y relojeria": "fashion_accessories",
+    "Muebles": "home_decor",
+    "Muebles de cocina": "home_decor",
+    "Colchoneria": "home_decor",
+    "Iluminacion": "home_decor",
+    "Hogar y menaje": "home_decor",
+    "Menaje del hogar": "home_decor",
+    "Textil hogar": "home_decor",
+    "Ferreteria": "home_improvement",
+    "Bricolaje": "home_improvement",
+    "Materiales de construccion": "home_improvement",
+    "Puertas y ventanas": "home_improvement",
+    "Saneamientos": "home_improvement",
+    "Material electrico": "home_improvement",
+    "Electrodomesticos": "electronics_telecom",
+    "Telefonia": "electronics_telecom",
+    "Electronica": "electronics_telecom",
+    "Informatica": "electronics_telecom",
+    "Papeleria y prensa": "books_leisure_retail",
+    "Libreria": "books_leisure_retail",
+    "Deporte": "books_leisure_retail",
+    "Bicicletas": "books_leisure_retail",
+    "Jugueteria": "books_leisure_retail",
+    "Bazar y precio unico": "bazaar_gifts",
+    "Tienda multiproducto": "bazaar_gifts",
+    "Floristeria": "bazaar_gifts",
+    "Otros comercios": "bazaar_gifts",
+    "Mascotas": "pet_retail",
+    "Lavanderia y tintoreria": "personal_services_repair",
+    "Arreglo de ropa": "personal_services_repair",
+    "Reparacion de calzado": "personal_services_repair",
+    "Reparacion especializada": "personal_services_repair",
+    "Oficina y administracion": "business_services",
+    "Inmobiliaria": "business_services",
+    "Asesoria y contabilidad": "business_services",
+    "Despacho juridico": "business_services",
+    "Consultoria empresarial": "business_services",
+    "Servicios profesionales": "business_services",
+    "Arquitectura e ingenieria": "creative_tech_services",
+    "Publicidad y marketing": "creative_tech_services",
+    "Diseno": "creative_tech_services",
+    "Fotografia": "creative_tech_services",
+    "Tecnologia y software": "creative_tech_services",
+    "Servicios digitales": "creative_tech_services",
+    "Telecomunicaciones": "creative_tech_services",
+    "Agencia de viajes": "consumer_services",
+    "Locutorio": "consumer_services",
+    "Logistica y movilidad": "logistics_mobility",
+    "Banco y caja": "finance_insurance",
+    "Seguros": "finance_insurance",
+    "Cambio y envio de moneda": "finance_insurance",
+    "Servicios auxiliares seguros": "finance_insurance",
+    "Taller chapa y pintura": "auto_repair",
+    "Taller mecanica": "auto_repair",
+    "Accesorios automovil": "auto_repair",
+    "Taller automovil": "auto_repair",
+    "Recambios automovil": "vehicle_sales_parts",
+    "Venta de coches nuevos": "vehicle_sales_parts",
+    "Venta de coches usados": "vehicle_sales_parts",
+    "Motos y reparacion": "vehicle_sales_parts",
+    "Venta de motos": "vehicle_sales_parts",
+    "Gasolinera": "fuel_station",
+    "Escuela infantil": "early_childhood",
+    "Centro de cuidado infantil": "early_childhood",
+    "Autoescuela": "training_languages",
+    "Formacion no reglada": "training_languages",
+    "Idiomas": "training_languages",
+    "Educacion y formacion": "training_languages",
+    "Gimnasio": "fitness_sports",
+    "Instalacion deportiva": "fitness_sports",
+    "Club deportivo": "fitness_sports",
+    "Ocio y entretenimiento": "entertainment",
+    "Salon recreativo": "entertainment",
+    "Celebraciones infantiles": "entertainment",
+}
+
+
+WEB_CATEGORY_TO_MACRO_CODE: dict[str, str] = {
+    "Alimentacion fresca": "food_specialty",
+    "Panaderia y pasteleria": "bakery_pastry",
+    "Comida preparada": "ready_meals",
+    "Supermercado y conveniencia": "food_convenience",
+    "Especialistas alimentacion": "food_specialty",
+    "Bar y cafeteria": "bar_cafe",
+    "Restauracion": "restaurant",
+    "Ocio nocturno": "nightlife",
+    "Catering y colectividades": "catering_collective",
+    "Alojamiento turistico": "tourist_accommodation",
+    "Salud retail": "pharmacy_optics",
+    "Clinicas y consultas": "clinic_health",
+    "Peluqueria y estetica": "beauty_personal_care",
+    "Cosmetica y perfumeria": "beauty_personal_care",
+    "Moda y complementos": "fashion_accessories",
+    "Hogar y decoracion": "home_decor",
+    "Hogar y regalos": "bazaar_gifts",
+    "Hogar y reformas": "home_improvement",
+    "Electronica y telecom": "electronics_telecom",
+    "Cultura y ocio": "books_leisure_retail",
+    "Conveniencia": "bazaar_gifts",
+    "Mascotas": "pet_retail",
+    "Servicios personales": "personal_services_repair",
+    "Servicios profesionales": "business_services",
+    "Servicios al consumidor": "consumer_services",
+    "Logistica y movilidad": "logistics_mobility",
+    "Finanzas y seguros": "finance_insurance",
+    "Taller y reparacion": "auto_repair",
+    "Venta y recambios": "vehicle_sales_parts",
+    "Servicios automocion": "fuel_station",
+    "Educacion infantil": "early_childhood",
+    "Formacion": "training_languages",
+    "Fitness y deporte": "fitness_sports",
+    "Ocio y entretenimiento": "entertainment",
+}
+
+
 def build_web_taxonomy(audit_frame: pd.DataFrame) -> pd.DataFrame:
     frame = audit_frame.copy()
     frame = frame[(frame["taxonomy"] == "epigrafe") & (frame["code_valid"].astype(str).str.lower() == "true")].copy()
@@ -306,6 +538,124 @@ def render_taxonomy_report(taxonomy: pd.DataFrame) -> str:
             lines.append(f"- {row.epigrafe_code}: {row.epigrafe_desc}")
     lines.append("")
     return "\n".join(lines) + "\n"
+
+
+def build_macro_activity_taxonomy(audit_frame: pd.DataFrame) -> pd.DataFrame:
+    web_taxonomy = build_web_taxonomy(audit_frame)
+    rows: list[dict[str, object]] = []
+    for row in web_taxonomy.itertuples(index=False):
+        decision = classify_macro_category(
+            display_label=str(row.display_label),
+            web_category=str(row.web_category),
+            web_supercategory=str(row.web_supercategory),
+            investable=bool(row.investable),
+        )
+        rows.append(
+            {
+                "epigrafe_code": row.epigrafe_code,
+                "epigrafe_desc": row.epigrafe_desc,
+                "display_label": row.display_label,
+                "web_category": row.web_category,
+                "web_supercategory": row.web_supercategory,
+                "macro_category_code": decision.macro_category_code,
+                "macro_category_name": decision.macro_category_name,
+                "macro_category_definition": decision.macro_category_definition,
+                "investable": decision.investable,
+                "macro_mapping_rule": decision.mapping_rule,
+                "source_rows": row.source_rows,
+            }
+        )
+    mapped = pd.DataFrame(rows)
+    mapped["needs_manual_review"] = mapped["macro_mapping_rule"].eq("fallback_non_priorizable")
+    return mapped.sort_values(["investable", "macro_category_name", "display_label", "epigrafe_code"], ascending=[False, True, True, True]).reset_index(drop=True)
+
+
+def classify_macro_category(
+    *,
+    display_label: str,
+    web_category: str,
+    web_supercategory: str,
+    investable: bool,
+) -> MacroCategoryDecision:
+    label = str(display_label or "").strip()
+    category = str(web_category or "").strip()
+    supercategory = str(web_supercategory or "").strip()
+
+    if not investable or supercategory == "No priorizable":
+        return _macro_decision("non_priorizable", investable=False, mapping_rule="non_investable")
+    if label in DISPLAY_LABEL_TO_MACRO_CODE:
+        return _macro_decision(DISPLAY_LABEL_TO_MACRO_CODE[label], investable=investable, mapping_rule="display_label")
+    if category in WEB_CATEGORY_TO_MACRO_CODE:
+        return _macro_decision(WEB_CATEGORY_TO_MACRO_CODE[category], investable=investable, mapping_rule="web_category")
+    if supercategory == "Alimentacion":
+        return _macro_decision("food_specialty", investable=investable, mapping_rule="supercategory_food")
+    if supercategory == "Hosteleria":
+        return _macro_decision("bar_cafe", investable=investable, mapping_rule="supercategory_hosteleria")
+    if supercategory == "Salud y bienestar":
+        return _macro_decision("clinic_health", investable=investable, mapping_rule="supercategory_health")
+    if supercategory == "Belleza y cuidado personal":
+        return _macro_decision("beauty_personal_care", investable=investable, mapping_rule="supercategory_beauty")
+    if supercategory == "Retail especializado":
+        return _macro_decision("bazaar_gifts", investable=investable, mapping_rule="supercategory_retail")
+    if supercategory == "Servicios":
+        return _macro_decision("business_services", investable=investable, mapping_rule="supercategory_services")
+    if supercategory == "Automocion":
+        return _macro_decision("auto_repair", investable=investable, mapping_rule="supercategory_auto")
+    if supercategory == "Educacion":
+        return _macro_decision("training_languages", investable=investable, mapping_rule="supercategory_education")
+    if supercategory == "Deporte y ocio":
+        return _macro_decision("entertainment", investable=investable, mapping_rule="supercategory_leisure")
+    if supercategory == "Finanzas":
+        return _macro_decision("finance_insurance", investable=investable, mapping_rule="supercategory_finance")
+    if supercategory == "Alojamiento":
+        return _macro_decision("tourist_accommodation", investable=investable, mapping_rule="supercategory_accommodation")
+    return _macro_decision("non_priorizable", investable=False, mapping_rule="fallback_non_priorizable")
+
+
+def render_macro_glossary(macro_taxonomy: pd.DataFrame) -> str:
+    lines: list[str] = []
+    lines.append("# ACTIVITY_GLOSSARY")
+    lines.append("")
+    lines.append("Glosario de macrocategorias comerciales usadas para el nuevo target de supervivencia de la actividad.")
+    lines.append("")
+    lines.append(f"- Epigrafes cubiertos: {len(macro_taxonomy):,}")
+    lines.append(f"- Macrocategorias activas: {macro_taxonomy['macro_category_name'].nunique(dropna=True):,}")
+    lines.append("")
+    grouped = (
+        macro_taxonomy.groupby(["macro_category_code", "macro_category_name", "macro_category_definition"], dropna=False)
+        .agg(
+            epigrafes=("epigrafe_code", "nunique"),
+            source_rows=("source_rows", "sum"),
+            fine_labels=("display_label", lambda s: ", ".join(pd.Series(s).dropna().astype(str).drop_duplicates().sort_values().head(8).tolist())),
+        )
+        .reset_index()
+        .sort_values(["source_rows", "macro_category_name"], ascending=[False, True])
+    )
+    for row in grouped.itertuples(index=False):
+        lines.append(f"## {row.macro_category_name}")
+        lines.append("")
+        lines.append(f"- Codigo: {row.macro_category_code}")
+        lines.append(f"- Definicion: {row.macro_category_definition}")
+        lines.append(f"- Epigrafes mapeados: {int(row.epigrafes):,}")
+        lines.append(f"- Cobertura historica bruta: {int(row.source_rows):,} filas")
+        lines.append(f"- Ejemplos de etiquetas finas: {row.fine_labels}")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def macro_category_feature_names() -> list[str]:
+    return [f"macro_category__{code}" for code in MACRO_CATEGORY_DEFINITIONS if code != "non_priorizable"]
+
+
+def _macro_decision(code: str, *, investable: bool, mapping_rule: str) -> MacroCategoryDecision:
+    name, definition = MACRO_CATEGORY_DEFINITIONS[code]
+    return MacroCategoryDecision(
+        macro_category_code=code,
+        macro_category_name=name,
+        macro_category_definition=definition,
+        investable=investable and code != "non_priorizable",
+        mapping_rule=mapping_rule,
+    )
 
 
 def _normalize_text(value: object) -> str:

@@ -2,7 +2,19 @@
 
 Este archivo es la fuente unica y viva de contexto del proyecto. Se actualiza en cada avance y reemplaza al resto de documentos como referencia primaria.
 
-Ultima actualizacion: 2026-03-25
+Ultima actualizacion: 2026-03-27
+
+Nota de implementacion en curso (2026-03-27):
+- Refactor ABT arrancado para unificar el target en `cese_de_actividad` con `event_subtype` solo de auditoria.
+- Las features de contexto comercial en `abt_survival.py` pasan a construirse con join lagged `t-1` para reducir contemporaneidad evitable.
+- ABT y artefactos base ya regenerados con la nueva semantica; el ABT materializa `event_subtype_detail` para auditoria forense y el builder DuckDB se ha endurecido para evitar OOM en la agregacion de actividades.
+- Nuevo bloque de variables internas ya materializado en `local_survival_abt`: flujos de entrada/salida por seccion (`3/6/12m`), tasas/net flow/turnover a `12m`, concentracion comercial (`HHI` y `top share` por division y categoria) y features temporales de cohorte/calendario de entrada para modelado.
+- Validacion del bloque nuevo completada: `tests.test_survival_baseline` y `tests.test_abt_survival` en verde; artefacto `data/features/local_survival_abt.csv` regenerado y verificado con las nuevas columnas materializadas.
+- Arranque frontend web completado: nueva app `apps/web/` en `Next.js + TypeScript + MapLibre + deck.gl`, builder estatico `scripts/build_frontend_map_artifacts.py` y artefacto JSON materializado en `apps/web/public/data/frontend-map-artifacts.json`.
+- El primer MVP web ya compila en `production build`, renderiza hexagonos H3 de Madrid, permite selector por tipo de local, horizonte `12m/24m`, filtro de calidad y panel lateral de detalle.
+- Ajuste de UX del mapa web aplicado: vista completa en desktop sin scroll de pagina, sidebar con scroll propio y estado de camara compartido entre mapa base y capa H3 para que pan/zoom mantengan los hexagonos anclados al mapa.
+- Refinamiento adicional del mapa aplicado: escala de color dinamica por filtro visual, tooltip compacto autoajustado al texto, mayor legibilidad del mapa base y retirada del control de calidad / banner de viewport para simplificar la experiencia.
+- Pendiente tras este bloque: enriquecer detalle de zona, conectar comparativas distrito/barrio en UI y decidir cuando sustituir artefactos estaticos por una API ligera.
 
 ## Identidad del proyecto
 
@@ -18,7 +30,7 @@ Ultima actualizacion: 2026-03-25
 - El CRS del censo cambia en 2017-09 (ED50 -> ETRS89). Todo join espacial debe normalizar CRS antes de H3 o distancias.
 - Modelo previsto: Survival Analysis (RSF o Gradient Boosting) con point-in-time joins.
 - Visualizacion: H3 res 10 para mapa; punto exacto para features de distancia.
-- Outputs en batch (mapa de calor + locales vacios) para servir con Streamlit.
+- Outputs en batch para servir un mapa/app web; `Streamlit` queda como via legacy de exploracion, no como frontend objetivo.
 - LLM es capa opcional para explicacion; no bloquea pipeline de datos.
 
 ## Estado actual (hecho)
@@ -129,6 +141,129 @@ Ultima actualizacion: 2026-03-25
 	- diferencias significativas por categoria dentro de `15` distritos
 	- diferencias significativas entre distritos para `5` categorias
 	- lectura producto: ya se puede construir un desplegable entendible y un ranking por distrito con evidencia estadistica, aunque la recomendacion debe mostrarse como supervivencia esperada y no como certeza
+- Nuevo bloque completado para alinear el target con la pregunta de producto (`que actividad aguanta mejor en cada zona`):
+	- taxonomia macro de actividad implementada en `src/localizate/activity_taxonomy.py` con `37` categorias compactas para modelado
+	- glosario raiz generado en `ACTIVITY_GLOSSARY.md`
+	- nueva ABT en `data/features/activity_survival_abt.csv` y `data/features/activity_survival_abt.parquet`
+	- auditorias nuevas en `data/processed/activity_macro_taxonomy.csv` y `data/processed/activity_category_change_candidates.csv`
+	- wrapper de build `scripts/build_activity_survival_abt.py`
+	- wrapper de entrenamiento `scripts/train_activity_survival_canonical.py`
+	- reporte ABT nuevo en `docs/abt_activity_survival.md`
+- Definicion operativa del nuevo target `activity_survival`:
+	- evento por desaparicion del local o primer cambio robusto `single-single` entre categorias macro de actividad
+	- `18,893` eventos totales frente a `15,241` del target anterior
+	- tasa de evento `0.0927` frente a `0.0748` del target anterior
+	- desglose actual del nuevo target: `18,114` cambios de actividad + `779` desapariciones + `184,977` censuras
+- Features de modelado ampliadas para el nuevo target:
+	- categoria macro inicial del local
+	- `n_activity_categories_start`
+	- competencia local por la misma categoria en seccion
+	- share de la categoria en seccion
+	- one-hot estables por categoria macro para entrenamiento canonico
+- Nuevo entrenamiento canonico completado sobre `activity_survival`:
+	- artefactos `models/survival_activity_canonical_metrics.json`, `docs/survival_activity_canonical.md` y `data/exports/activity_survival_map_export.csv`
+	- split temporal: train `149,280`, valid `2,646`, test `51,902`
+	- eventos por split: train `18,588`, valid `61`, test `238`
+	- Uno/IPCW C-index ensemble: train `0.7991`, valid `0.7756`, test `0.6050`
+	- Dynamic AUC mean ensemble: train `0.8455`, valid `0.7928`, test `0.9236`
+	- quality gate actual: `pass`
+- Comparacion resumida vs canonical anterior (`local_survival`):
+	- mejora clara en alineacion producto y en volumen de eventos observables
+	- mejora en validacion: Uno `0.6863 -> 0.7756`, dynamic AUC `0.7398 -> 0.7928`
+	- test mixto: Uno empeora `0.6418 -> 0.6050`, mientras dynamic AUC sube `0.8773 -> 0.9236`
+	- conclusion operativa: el nuevo target es mejor como representacion del problema y mas rico en eventos, pero todavia no es una victoria limpia en generalizacion `test`; conviene robustecer comparacion antes de descartar modelos logisticos por horizonte
+- Robustez bootstrap ya ejecutada tambien sobre `activity_survival`:
+	- script nuevo `scripts/evaluate_activity_survival_robustness.py`
+	- artefactos `docs/survival_activity_canonical_robustness.md` y `models/survival_activity_canonical_robustness.json`
+	- estado `pass_with_caveats`
+	- Uno bootstrap: valid `0.7784` con CI `[0.7397, 0.8234]`; test `0.6046` con CI `[0.5283, 0.6919]`
+	- dynamic AUC bootstrap mean: valid `0.7917` con CI `[0.7321, 0.8514]`; test `0.7936` con CI `[0.6533, 0.9749]`
+	- warning principal: el test sigue siendo inestable por amplitud de CI y por soporte fragil en horizontes extremos
+- Comparativa survival vs regresion logistica por horizontes completada sobre `activity_survival`:
+	- modulo nuevo `src/localizate/activity_horizon_logistic.py`
+	- script nuevo `scripts/train_activity_horizon_logistic.py`
+	- artefactos `docs/activity_horizon_logistic.md` y `models/activity_horizon_logistic_metrics.json`
+	- horizontes elegidos automaticamente por soporte real de cierres: `12`, `15` y `18` meses
+	- criterio de seleccion: al menos `15` casos valid, `1000` controles valid, `100` casos test y `200` controles test
+	- lectura final: la logistica no gana en ninguno de los `3` horizontes ni en `valid` ni en `test` frente al score survival actual
+	- detalle test AUC:
+		- `h12`: logit `0.5759` vs survival `0.6256`
+		- `h15`: logit `0.5773` vs survival `0.6101`
+		- `h18`: logit `0.9163` vs survival `0.9508`
+	- conclusion operativa actual: no hay evidencia para sustituir el enfoque survival por logistica horizon-based en esta iteracion
+- Rolling backtest temporal completado sobre `activity_survival`:
+	- modulo nuevo `src/localizate/survival_rolling_backtest.py`
+	- script nuevo `scripts/run_activity_survival_rolling_backtest.py`
+	- artefactos `docs/activity_survival_rolling_backtest.md` y `models/activity_survival_rolling_backtest.json`
+	- esquema walk-forward con `4` folds contiguos y cutoffs `2020-03 -> 2021-04 -> 2022-06 -> 2023-06 -> 2024-10 -> 2026-04`
+	- configuracion de ejecucion usada para hacerlo operativo en una sola pasada: `RSF=120`, `GBSA=120`, `fit_max_rows=25000`
+	- resumen agregado rolling:
+		- valid Uno mean `0.6898` (std `0.0627`)
+		- test Uno mean `0.6885` (std `0.0665`)
+		- valid dynamic AUC mean `0.7080` (std `0.0853`)
+		- test dynamic AUC mean `0.7230` (std `0.0679`)
+	- comparacion contra split unico actual:
+		- valid Uno baja `0.7756 -> 0.6898`
+		- test Uno sube `0.6050 -> 0.6885`
+		- valid dynamic AUC mean baja `0.7928 -> 0.7080`
+		- test dynamic AUC mean baja `0.9236 -> 0.7230`
+	- conclusion operativa: el split unico estaba dando una foto optimista para algunas metricas y pesimista para otras; el rolling backtest sugiere un nivel de discriminacion mas estable alrededor de `0.69` en Uno fuera de train, sin mejora real del modelo pero con una lectura mucho mas robusta
+- Benchmark de composicion del ensemble ya ejecutado dentro del rolling backtest sin coste extra de entrenamiento por variante:
+	- variantes evaluadas: `cox_only`, `gbsa_only`, `rsf_only`, `cox_gbsa_rank`, `ensemble_all_rank`, `ensemble_weighted_rank`
+	- ranking por media de `Uno test`:
+		- `ensemble_all_rank`: `0.6885`
+		- `cox_only`: `0.6875`
+		- `cox_gbsa_rank`: `0.6810`
+		- `ensemble_weighted_rank`: `0.6766`
+		- `rsf_only`: `0.6588`
+		- `gbsa_only`: `0.6397`
+	- lectura tecnica principal:
+		- el ensemble actual sigue siendo el mejor en media, aunque por margen minimo frente a `cox_only`
+		- `cox_only` casi empata en rendimiento y es mas estable en `test` (`std 0.0464` vs `0.0665` del ensemble)
+		- `rsf_only` gana `3/4` folds individualmente pero es demasiado volatil (`test Uno` entre `0.4036` y `0.7636`)
+		- `gbsa_only` queda claramente por debajo en este setup
+- Primer corte del nuevo frontend web ya implementado:
+	- app nueva en `apps/web/` con `App Router`, `TypeScript`, `MapLibre` y `deck.gl`
+	- shell visual minimalista con viewport fijo de Madrid y capa principal `H3HexagonLayer`
+	- selector por tipo de local apoyado en `activity_category_desc_start` del ABT de `activity_survival`
+	- metrica visual principal en UI: supervivencia observada agregada a `12m/24m` por hexagono
+	- contrato de datos estatico en `apps/web/public/data/frontend-map-artifacts.json`
+	- builder dedicado `scripts/build_frontend_map_artifacts.py` que agrega `activity_survival_abt.csv` + `activity_survival_map_export.csv` y reutiliza `district_category_survival.csv` / `barrio_category_survival.csv`
+	- validacion tecnica completada: `npm run typecheck` y `npm run build` en `apps/web` en verde
+		- el ensemble ponderado con menos peso para `RSF` no mejora al ensemble actual
+	- conclusion operativa actual: no hay evidencia para reemplazar el ensemble igualitario por otra combinacion; si se busca simplificar sin perder casi nada, `cox_only` es el backup mas serio
+- Runner completo de HPO competitivo ya implementado para dejarlo corriendo overnight:
+	- modulo nuevo `src/localizate/survival_hpo.py`
+	- script nuevo `scripts/run_activity_survival_hpo.py`
+	- artefactos esperados `models/activity_survival_hpo.json`, `docs/activity_survival_hpo.md` y `models/activity_survival_hpo_checkpoint.json`
+	- progreso persistente en `models/run_progress_activity_survival_hpo.json`
+	- estrategia de busqueda en `3` fases: cribado, confirmacion y finalistas `full-fidelity`
+	- familias optimizadas: `cox_only` y `ensemble_all_rank`
+	- smoke test del pipeline completado con exito antes del lanzamiento largo; en ese test rapido el mejor candidato fue `cox_only`
+	- lanzamiento overnight ya iniciado en background con configuracion seria:
+		- `cox_screen_trials=20`
+		- `ensemble_screen_trials=8`
+		- `confirm_top_k=2`
+		- `final_top_k=2`
+		- `screen_fit_max_rows=12000`, `confirm_fit_max_rows=25000`, `final_fit_max_rows=None`
+		- `screen_rsf/gbsa=80`, `confirm_rsf/gbsa=160`, `final_rsf/gbsa=300`
+	- objetivo del HPO: maximizar una combinacion de `Uno test`, `Uno valid`, `dynamic AUC` y estabilidad entre folds, no solo un score puntual en un split unico
+	- HPO overnight ya completado (`34` trials evaluados)
+	- mejor trial final encontrado: `cox_only` con `alpha=0.004431207789037498`, `ties=breslow`
+	- metricas del mejor trial:
+		- valid Uno mean `0.6718`
+		- test Uno mean `0.6886`
+		- valid dynamic AUC mean `0.6764`
+		- test dynamic AUC mean `0.7119`
+	- comparacion contra el mejor benchmark rolling previo (`ensemble_all_rank`):
+		- test Uno mejora solo de `0.6885 -> 0.6886` (cambio marginal)
+		- valid Uno empeora de `0.6898 -> 0.6718`
+		- test dynamic AUC mean empeora de `0.7230 -> 0.7119`
+		- valid dynamic AUC mean empeora de `0.7080 -> 0.6764`
+	- mejor trial de la familia `ensemble_all_rank` no fue finalista ganador y quedo claramente por debajo:
+		- valid Uno mean `0.6547`
+		- test Uno mean `0.6613`
+	- conclusion operativa final del HPO: no hay mejora material sobre el benchmark rolling actual; `cox_only` queda como opcion simplificada muy competitiva, pero no como salto claro de performance frente al ensemble baseline
 - Prompt de continuidad para trabajar sin contexto disponible en `docs/next_session_prompt.md`.
 - Contexto legado consolidado en este archivo; carpeta `Context/` eliminada para simplificar el repo.
 - Documentacion DB movida a `docs/documentacion_db/` para estandarizar nombres.
@@ -141,6 +276,12 @@ Ultima actualizacion: 2026-03-25
 - `renta` llega solo hasta 2023; hay que definir carry-forward.
 - Build historico completo de `padron` sigue siendo costoso si se reconstruye sin cache (se recomienda modo incremental).
 - Pendiente definir politica final para `2017-09` (asuncion CRS vs exclusion en modelado).
+- La comparacion del nuevo target `activity_survival` sigue siendo mixta en `test`: mas eventos y mejor validacion, pero peor Uno out-of-sample que `local_survival`.
+- `valid/test` siguen teniendo pocos eventos absolutos para decidir un cambio definitivo de framework sin intervalos de confianza adicionales.
+- La logistica por horizonte tampoco corrige esa debilidad: en los horizontes con soporte suficiente queda por debajo del survival actual.
+- El rolling backtest confirma variabilidad temporal no trivial: los folds se mueven entre `0.5877` y `0.7554` en Uno test, asi que conviene usar medias y dispersion, no un unico corte, para decidir cambios de modelo.
+- La composicion del ensemble tampoco ofrece una mejora clara de primera ronda: el ensemble actual gana por poco y el mejor competidor real es `cox_only`, no una mezcla mas compleja.
+- El HPO completo no encontro una mejora clara: el espacio afinado de `ensemble_all_rank` rindio peor de lo esperado y `cox_only` solo mejora de forma marginal el `test Uno` a costa de peorar `valid` y `AUC` medias.
 
 ## Punto exacto en el que estamos
 
@@ -151,11 +292,11 @@ Ultima actualizacion: 2026-03-25
 
 ## Siguientes pasos inmediatos
 
-1. Construir la primera app web sobre la taxonomia nueva y los outputs `district_category_survival.csv` + `local_survival_map_export.csv`.
-2. Refinar la taxonomia comercial donde convenga separar categorias muy agregadas (`Otros comercios`, `Logistica y movilidad`, `Servicios profesionales`).
-3. Ejecutar `ablation` por bloques de variables y/o composicion del ensemble para medir contribucion marginal real.
-4. Implementar rolling backtest temporal para complementar el bootstrap actual con validacion entre ventanas.
-5. Revisar el peso o inclusion de `RSF`, dado su sobreajuste frente a `GBSA` y al ensemble.
+1. Decidir si se prefiere `ensemble_all_rank` como baseline operativo o `cox_only` como opcion simplificada casi equivalente.
+2. Ejecutar `ablation` por bloques de variables sobre el candidato que se elija como principal (`ensemble_all_rank` o `cox_only`).
+3. Revisar si merece la pena mantener `RSF` dentro del ensemble dado que aporta picos puntuales pero no mejora la media agregada.
+4. Construir la primera app web sobre la taxonomia nueva y los outputs `district_category_survival.csv` + `activity_survival_map_export.csv`.
+5. Refinar la taxonomia comercial donde convenga separar categorias muy agregadas (`Otros comercios`, `Logistica y movilidad`, `Servicios profesionales`).
 6. Definir protocolo de recalibracion mensual (drift y estabilidad de score).
 7. Preparar narrativa final de validacion para entrega del concurso con metricas puntuales + intervalos de confianza.
 
@@ -177,6 +318,12 @@ PYTHONPATH=src .venv/bin/python -u scripts/run_modeling_readiness.py
 PYTHONPATH=src .venv/bin/python -u scripts/train_survival_canonical.py
 PYTHONPATH=src .venv/bin/python -u scripts/evaluate_survival_robustness.py
 PYTHONPATH=src .venv/bin/python -u scripts/build_zone_category_survival.py
+PYTHONPATH=src .venv/bin/python -u scripts/build_activity_survival_abt.py
+PYTHONPATH=src .venv/bin/python -u scripts/train_activity_survival_canonical.py
+PYTHONPATH=src .venv/bin/python -u scripts/evaluate_activity_survival_robustness.py
+PYTHONPATH=src .venv/bin/python -u scripts/train_activity_horizon_logistic.py
+PYTHONPATH=src .venv/bin/python -u scripts/run_activity_survival_rolling_backtest.py
+PYTHONPATH=src .venv/bin/python -u scripts/run_activity_survival_hpo.py
 ```
 
 ## Apéndices (verbatim, preservados)
@@ -210,6 +357,7 @@ Base de datos analitica para construir una macro DB historica de locales comerci
 - `data/processed/`: datasets maestros y tablas consolidadas.
 - `data/exports/`: salidas para mapa, API o app.
 - `models/`: artefactos entrenados.
+- `apps/web/`: frontend web moderno del producto de mapa.
 - `apps/streamlit/`: frontend inicial y exploracion visual.
 - `tests/`: pruebas.
 - `docs/`: auditoria, bitacora y decisiones.
@@ -354,7 +502,7 @@ Nota: la fuente canonica y actualizada es `STATUS.md`. Este documento es legado 
 ### Context/Frontend.md (snapshot)
 
 ````markdown
-# CONTEXTO TÉCNICO FASE 5: DESARROLLO FRONTEND (STREAMLIT) Y CAPA AGÉNTICA
+# CONTEXTO TÉCNICO FASE 5: DESARROLLO FRONTEND WEB Y CAPA AGÉNTICA
 
 Nota: la fuente canonica y actualizada es `STATUS.md`. Este documento es legado y puede quedar desalineado.
 
@@ -362,6 +510,6 @@ Nota: la fuente canonica y actualizada es `STATUS.md`. Este documento es legado 
 
 ## ESTADO REAL (Mar 2026)
 
-- Frontend aun no iniciado.
-- Esta guia asume que ya existen outputs batch y modelo entrenado; ambos siguen pendientes.
+- Frontend web ya iniciado en `apps/web/` con stack moderno (`Next.js`, `TypeScript`, `MapLibre`, `deck.gl`).
+- La primera iteracion funciona sobre artefactos estaticos generados offline desde el pipeline actual; la API queda para una fase posterior.
 ````

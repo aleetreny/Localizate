@@ -30,11 +30,15 @@ Variables minimas:
 
 Criterio operativo vigente:
 
+- El target modelado es unico y binario: `event_observed = 1` cuando se observa un `cese de actividad`.
 - Evento = el primer instante observado entre:
   1. desaparicion del `id_local` antes del ultimo periodo global, o
-  2. primer cambio robusto `single-single` de `division` entre meses consecutivos, tratado como cierre estructural del negocio previo.
-- Para cambios de division, el `event_period` se fija en el mes anterior al cambio (ultimo mes observado de la actividad previa).
-- Se excluyen como cambios de cierre los placeholders/no codificados (`0`, `-1`, `PT`, equivalentes) y las duplicidades de formato (`47` vs `47.0`) tras limpieza canonica.
+  2. primer cambio robusto `single-single` de actividad entre meses consecutivos, tratado como fin del concepto comercial previo.
+- Para cambios robustos, el `event_period` se fija en el mes anterior al cambio (ultimo mes observado de la actividad previa).
+- Se excluyen como cambios de cierre los placeholders/no codificados (`0`, `-1`, `PT`, equivalentes) y las duplicidades de formato tras limpieza canonica.
+- `event_source` queda unificado en `cese_de_actividad` o `censored`.
+- `event_subtype` se mantiene solo para auditoria forense (`cambio_actividad`, `desaparicion`, `censored`).
+- `event_subtype_detail` conserva el detalle exacto del cierre auditado: fuente concreta del cambio robusto o el subtipo final en desaparicion/censura.
 - Censura = ultimo mes observable del local sin desaparicion ni cambio estructural previo.
 
 ## 5) Contrato PiT por fuente
@@ -83,6 +87,7 @@ Checks obligatorios de hard-fail:
 1. Ninguna feature con `feature_effective_date > target_date`.
 2. Ningun dato de estado futuro del local usado como predictor en la misma fila.
 3. Ninguna agregacion movil que use datos posteriores a `target_date`.
+4. Ninguna feature de competencia o contexto comercial construida con el mismo mes si existe alternativa estrictamente lagged; por defecto usar `t-1` o ventanas cerradas en `<= t-1`.
 
 Checks obligatorios de soft-fail (warning + auditoria):
 
@@ -106,6 +111,8 @@ Target survival:
 - `event_period`
 - `censor_reference_period`
 - `event_source`
+- `event_subtype`
+- `event_subtype_detail`
 - `change_event_period`
 - `change_successor_period`
 
@@ -115,6 +122,7 @@ Covariables base:
 - Demografia por seccion (padron)
 - Renta (`renta_best_eur` + granularidad)
 - Geografia (`geometry_available`, `section_area_m2`, `population_density_km2`)
+- Competencia/contexto comercial lagged (`t-1` como minimo para stock, diversidad y cuota de categoria/actividad)
 
 Auditoria de actividad:
 

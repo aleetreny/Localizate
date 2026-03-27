@@ -71,9 +71,24 @@ class AbtSurvivalTests(unittest.TestCase):
             change_event_period="2020-03",
         )
 
-        self.assertEqual(resolved["event_source"], "division_change_single_single")
+        self.assertEqual(resolved["event_source"], "cese_de_actividad")
+        self.assertEqual(resolved["event_subtype"], "cambio_actividad")
         self.assertEqual(resolved["event_period"], "2020-03")
         self.assertEqual(resolved["duration_months"], 3)
+
+    def test_resolve_survival_target_accepts_activity_change_source(self) -> None:
+        resolved = resolve_survival_target(
+            first_seen_period="2020-01",
+            last_observed_period="2020-06",
+            max_period="2020-12",
+            change_event_period="2020-04",
+            change_event_source="activity_category_change_single_single",
+        )
+
+        self.assertEqual(resolved["event_source"], "cese_de_actividad")
+        self.assertEqual(resolved["event_subtype"], "cambio_actividad")
+        self.assertEqual(resolved["event_subtype_detail"], "activity_category_change_single_single")
+        self.assertEqual(resolved["event_period"], "2020-04")
 
     def test_resolve_survival_target_falls_back_to_disappearance(self) -> None:
         resolved = resolve_survival_target(
@@ -83,7 +98,8 @@ class AbtSurvivalTests(unittest.TestCase):
             change_event_period=None,
         )
 
-        self.assertEqual(resolved["event_source"], "disappearance")
+        self.assertEqual(resolved["event_source"], "cese_de_actividad")
+        self.assertEqual(resolved["event_subtype"], "desaparicion")
         self.assertEqual(resolved["event_period"], "2020-06")
         self.assertEqual(resolved["duration_months"], 6)
 

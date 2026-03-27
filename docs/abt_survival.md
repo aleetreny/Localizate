@@ -15,8 +15,8 @@ ABT por local con cierre observado tanto por desaparicion del `id_local` como po
 
 ## Desglose de eventos
 
-- Cierre por cambio `single-single` de division: 14,457
-- Cierre por desaparicion del local: 784
+- Cierre por cambio `single-single` de division: 0
+- Cierre por desaparicion del local: 0
 - Censurados: 188,629
 - Candidatos de cambio `single-single` auditados: 17,845
 
@@ -34,10 +34,10 @@ ABT por local con cierre observado tanto por desaparicion del `id_local` como po
 ## Columnas clave
 
 - `first_seen_period`, `last_seen_period`, `target_end_period`, `duration_months`, `event_observed`
-- `event_source`, `event_period`, `change_event_period`, `change_successor_period`
-- Auditoria de cambio: `previous_division_*`, `successor_division_*`, `previous_epigrafe_*`, `successor_epigrafe_*`
+- `event_source`, `event_subtype`, `event_subtype_detail`, `event_period`, `change_event_period`, `change_successor_period`
+- Auditoria de cambio: `previous_division_*`, `successor_division_*`, `previous_epigrafe_*`, `successor_epigrafe_*`, `previous_macro_category_*`, `successor_macro_category_*`
 - Features iniciales PiT: `renta_best_eur_start`, `share_*_start`, `total_population_start`, `age_mean_start`, `population_density_km2_start`
-- Contexto comercial: `n_divisions_start`, `n_epigrafes_start`, `section_local_count_*`, `section_same_division_*`
+- Contexto comercial: `n_divisions_start`, `n_epigrafes_start`, `n_activity_categories_start`, `activity_category_code_start`, `section_local_count_*_start (lagged t-1)`, `section_same_division_*_start (lagged t-1)`, `section_*_hhi_start`, `section_*_entry_count_*_start`, `section_*_exit_count_*_start`
 - Dinamica interanual: `*_delta_12m_start`
 - Externas: `avisos_*_prev_year`, `metro_distance_m_start`, `metro_access_count_500m_start`, `metro_access_count_1000m_start`
 - Geoespacial inicial: `h3_cell_start`, `lat_wgs84_start`, `lon_wgs84_start`

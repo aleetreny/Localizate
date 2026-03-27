@@ -23,6 +23,8 @@ def main() -> int:
         print(f"Skipped ABT Parquet (pyarrow/fastparquet unavailable): {result.output_parquet}")
     print(f"Wrote change candidates audit CSV: {result.change_candidates_csv}")
     print(f"Wrote normalization audit CSV: {result.normalization_audit_csv}")
+    print(f"Wrote activity taxonomy CSV: {result.activity_taxonomy_csv}")
+    print(f"Wrote glossary: {result.glossary_md}")
     print(f"Wrote ABT report: {result.report_md}")
     print(f"Rows in ABT: {result.rows:,}")
     print(f"Censor reference period: {result.max_period}")

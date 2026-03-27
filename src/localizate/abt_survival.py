@@ -8,8 +8,9 @@ import unicodedata
 
 import pandas as pd
 
+from .activity_taxonomy import build_macro_activity_taxonomy, render_macro_glossary
 from .censo import load_raw_manifest
-from .paths import DATA_DIR, DOCS_DIR
+from .paths import DATA_DIR, DOCS_DIR, PROJECT_ROOT
 from .survival_features import attach_avisos_features, attach_metro_features, attach_section_reference_fallbacks
 
 
@@ -26,6 +27,11 @@ PLACEHOLDER_ACTIVITY_DESC_KEYS = frozenset(
     }
 )
 
+UNIFIED_EVENT_SOURCE = "cese_de_actividad"
+EVENT_SUBTYPE_ACTIVITY_CHANGE = "cambio_actividad"
+EVENT_SUBTYPE_DISAPPEARANCE = "desaparicion"
+EVENT_SUBTYPE_CENSORED = "censored"
+
 
 @dataclass(frozen=True)
 class SurvivalAbtBuildResult:
@@ -33,6 +39,8 @@ class SurvivalAbtBuildResult:
     output_parquet: Path
     parquet_written: bool
     report_md: Path
+    glossary_md: Path
+    activity_taxonomy_csv: Path
     rows: int
     max_period: str
     change_candidates_csv: Path
@@ -95,25 +103,31 @@ def resolve_survival_target(
     last_observed_period: str,
     max_period: str,
     change_event_period: str | None,
+    change_event_source: str = "division_change_single_single",
 ) -> dict[str, object]:
     disappearance_event_period = last_observed_period if last_observed_period < max_period else None
     if change_event_period is not None and (
         disappearance_event_period is None or change_event_period <= disappearance_event_period
     ):
         event_period = change_event_period
-        event_source = "division_change_single_single"
+        event_source = UNIFIED_EVENT_SOURCE
+        event_subtype = EVENT_SUBTYPE_ACTIVITY_CHANGE
     elif disappearance_event_period is not None:
         event_period = disappearance_event_period
-        event_source = "disappearance"
+        event_source = UNIFIED_EVENT_SOURCE
+        event_subtype = EVENT_SUBTYPE_DISAPPEARANCE
     else:
         event_period = None
         event_source = "censored"
+        event_subtype = EVENT_SUBTYPE_CENSORED
 
     duration_end_period = event_period or last_observed_period
     return {
         "event_period": event_period,
         "disappearance_event_period": disappearance_event_period,
         "event_source": event_source,
+        "event_subtype": event_subtype,
+        "event_subtype_detail": change_event_source if event_subtype == EVENT_SUBTYPE_ACTIVITY_CHANGE else event_subtype,
         "event_observed": int(event_period is not None),
         "target_end_period": duration_end_period,
         "duration_months": months_between_inclusive(first_seen_period, duration_end_period),
@@ -129,6 +143,9 @@ def build_local_survival_abt(
     report_md: Path | None = None,
     change_candidates_csv: Path | None = None,
     normalization_audit_csv: Path | None = None,
+    activity_taxonomy_csv: Path | None = None,
+    glossary_md: Path | None = None,
+    target_mode: str = "local_survival",
 ) -> SurvivalAbtBuildResult:
     try:
         import duckdb  # type: ignore
@@ -137,15 +154,31 @@ def build_local_survival_abt(
 
     resolved_manifest = geospatial_manifest_csv or (DATA_DIR / "processed" / "censo_geospatial_manifest.csv")
     resolved_section_panel = section_panel_csv or (DATA_DIR / "processed" / "section_socioeconomic_panel.csv")
-    resolved_output_csv = output_csv or (DATA_DIR / "features" / "local_survival_abt.csv")
-    resolved_output_parquet = output_parquet or (DATA_DIR / "features" / "local_survival_abt.parquet")
-    resolved_report_md = report_md or (DOCS_DIR / "abt_survival.md")
-    resolved_change_candidates_csv = change_candidates_csv or (
-        DATA_DIR / "processed" / "local_activity_change_candidates.csv"
-    )
+    if target_mode not in {"local_survival", "activity_survival", "cese_activity"}:
+        raise ValueError(f"Unsupported target_mode: {target_mode}")
+
+    activity_closure_mode = target_mode in {"activity_survival", "cese_activity"}
+
+    if activity_closure_mode:
+        default_output_csv = DATA_DIR / "features" / "activity_survival_abt.csv"
+        default_output_parquet = DATA_DIR / "features" / "activity_survival_abt.parquet"
+        default_report_md = DOCS_DIR / "abt_activity_survival.md"
+        default_change_candidates_csv = DATA_DIR / "processed" / "activity_category_change_candidates.csv"
+    else:
+        default_output_csv = DATA_DIR / "features" / "local_survival_abt.csv"
+        default_output_parquet = DATA_DIR / "features" / "local_survival_abt.parquet"
+        default_report_md = DOCS_DIR / "abt_survival.md"
+        default_change_candidates_csv = DATA_DIR / "processed" / "local_activity_change_candidates.csv"
+
+    resolved_output_csv = output_csv or default_output_csv
+    resolved_output_parquet = output_parquet or default_output_parquet
+    resolved_report_md = report_md or default_report_md
+    resolved_change_candidates_csv = change_candidates_csv or default_change_candidates_csv
     resolved_normalization_audit_csv = normalization_audit_csv or (
         DATA_DIR / "processed" / "activity_code_normalization_audit.csv"
     )
+    resolved_activity_taxonomy_csv = activity_taxonomy_csv or (DATA_DIR / "processed" / "activity_macro_taxonomy.csv")
+    resolved_glossary_md = glossary_md or (PROJECT_ROOT / "ACTIVITY_GLOSSARY.md")
 
     manifest = pd.read_csv(resolved_manifest)
     usable = manifest[manifest["status"].isin(["materialized", "skipped_existing"])].copy()
@@ -161,6 +194,8 @@ def build_local_survival_abt(
     resolved_report_md.parent.mkdir(parents=True, exist_ok=True)
     resolved_change_candidates_csv.parent.mkdir(parents=True, exist_ok=True)
     resolved_normalization_audit_csv.parent.mkdir(parents=True, exist_ok=True)
+    resolved_activity_taxonomy_csv.parent.mkdir(parents=True, exist_ok=True)
+    resolved_glossary_md.parent.mkdir(parents=True, exist_ok=True)
 
     temp_duckdb_dir = DATA_DIR / "intermediate" / "duckdb_tmp"
     temp_duckdb_dir.mkdir(parents=True, exist_ok=True)
@@ -249,9 +284,16 @@ def build_local_survival_abt(
 
         normalization_audit = pd.concat([division_lookup, epigrafe_lookup], ignore_index=True)
         normalization_audit.to_csv(resolved_normalization_audit_csv, index=False)
+        macro_taxonomy = build_macro_activity_taxonomy(normalization_audit)
+        macro_taxonomy.to_csv(resolved_activity_taxonomy_csv, index=False)
+        resolved_glossary_md.write_text(render_macro_glossary(macro_taxonomy), encoding="utf-8")
 
         con.register("division_lookup_df", division_lookup)
         con.register("epigrafe_lookup_df", epigrafe_lookup)
+        con.register(
+            "macro_lookup_df",
+            macro_taxonomy[["epigrafe_code", "macro_category_code", "macro_category_name", "macro_category_definition"]].drop_duplicates(),
+        )
 
         locales_glob = str(DATA_DIR / "processed" / "censo_geospatial" / "locales" / "*.csv.gz")
         con.execute(
@@ -340,6 +382,9 @@ def build_local_survival_abt(
                 e.clean_desc AS epigrafe_desc,
                 CAST(COALESCE(e.code_valid, FALSE) AS BOOLEAN) AS epigrafe_valid,
                 COALESCE(e.mapping_reason, 'invalid') AS epigrafe_mapping_reason
+                ,m.macro_category_code,
+                m.macro_category_name,
+                m.macro_category_definition
             FROM activity_rows r
             LEFT JOIN division_lookup_df d
                 ON r.division_raw_code = d.raw_code
@@ -347,23 +392,98 @@ def build_local_survival_abt(
             LEFT JOIN epigrafe_lookup_df e
                 ON r.epigrafe_raw_code = e.raw_code
                AND r.epigrafe_raw_desc = e.raw_desc
+            LEFT JOIN macro_lookup_df m
+                ON e.clean_code = m.epigrafe_code
+            """
+        )
+        con.execute(
+            """
+            CREATE OR REPLACE TABLE activity_period_divisions AS
+            WITH distinct_divisions AS (
+                SELECT DISTINCT
+                    id_local,
+                    period,
+                    division_code,
+                    division_desc
+                FROM activities_clean
+                WHERE division_valid
+            )
+            SELECT
+                id_local,
+                period,
+                string_agg(division_code, '|' ORDER BY division_code) AS division_sig,
+                string_agg(division_desc, ' | ' ORDER BY division_desc) AS division_desc_sig,
+                COUNT(*) AS n_divisions
+            FROM distinct_divisions
+            GROUP BY 1, 2
+            """
+        )
+        con.execute(
+            """
+            CREATE OR REPLACE TABLE activity_period_epigrafes AS
+            WITH distinct_epigrafes AS (
+                SELECT DISTINCT
+                    id_local,
+                    period,
+                    epigrafe_code,
+                    epigrafe_desc
+                FROM activities_clean
+                WHERE division_valid AND epigrafe_valid
+            )
+            SELECT
+                id_local,
+                period,
+                string_agg(epigrafe_code, '|' ORDER BY epigrafe_code) AS epigrafe_sig,
+                string_agg(epigrafe_desc, ' | ' ORDER BY epigrafe_desc) AS epigrafe_desc_sig,
+                COUNT(*) AS n_epigrafes
+            FROM distinct_epigrafes
+            GROUP BY 1, 2
+            """
+        )
+        con.execute(
+            """
+            CREATE OR REPLACE TABLE activity_period_macro_categories AS
+            WITH distinct_macro_categories AS (
+                SELECT DISTINCT
+                    id_local,
+                    period,
+                    macro_category_code,
+                    macro_category_name
+                FROM activities_clean
+                WHERE division_valid AND epigrafe_valid AND macro_category_code IS NOT NULL
+            )
+            SELECT
+                id_local,
+                period,
+                string_agg(macro_category_code, '|' ORDER BY macro_category_code) AS macro_category_sig,
+                string_agg(macro_category_name, ' | ' ORDER BY macro_category_name) AS macro_category_desc_sig,
+                COUNT(*) AS n_macro_categories
+            FROM distinct_macro_categories
+            GROUP BY 1, 2
             """
         )
         con.execute(
             """
             CREATE OR REPLACE TABLE activity_periods AS
             SELECT
-                id_local,
-                period,
-                string_agg(DISTINCT division_code, '|' ORDER BY division_code) AS division_sig,
-                string_agg(DISTINCT division_desc, ' | ' ORDER BY division_desc) AS division_desc_sig,
-                COUNT(DISTINCT division_code) AS n_divisions,
-                string_agg(DISTINCT CASE WHEN epigrafe_valid THEN epigrafe_code END, '|' ORDER BY CASE WHEN epigrafe_valid THEN epigrafe_code END) AS epigrafe_sig,
-                string_agg(DISTINCT CASE WHEN epigrafe_valid THEN epigrafe_desc END, ' | ' ORDER BY CASE WHEN epigrafe_valid THEN epigrafe_desc END) AS epigrafe_desc_sig,
-                COUNT(DISTINCT CASE WHEN epigrafe_valid THEN epigrafe_code END) AS n_epigrafes
-            FROM activities_clean
-            WHERE division_valid
-            GROUP BY 1, 2
+                d.id_local,
+                d.period,
+                d.division_sig,
+                d.division_desc_sig,
+                d.n_divisions,
+                e.epigrafe_sig,
+                e.epigrafe_desc_sig,
+                COALESCE(e.n_epigrafes, 0) AS n_epigrafes,
+                m.macro_category_sig,
+                m.macro_category_desc_sig,
+                COALESCE(m.n_macro_categories, 0) AS n_macro_categories
+            FROM activity_period_divisions d
+            LEFT JOIN activity_period_epigrafes e
+                ON d.id_local = e.id_local
+               AND d.period = e.period
+            LEFT JOIN activity_period_macro_categories m
+                ON d.id_local = m.id_local
+               AND d.period = m.period
             """
         )
         con.execute(
@@ -377,10 +497,15 @@ def build_local_survival_abt(
                 a.epigrafe_sig,
                 a.epigrafe_desc_sig,
                 a.n_epigrafes,
+                a.macro_category_sig,
+                a.macro_category_desc_sig,
+                a.n_macro_categories,
                 CASE WHEN a.n_divisions = 1 THEN a.division_sig ELSE NULL END AS division_code_start,
                 CASE WHEN a.n_divisions = 1 THEN a.division_desc_sig ELSE NULL END AS division_desc_start,
                 CASE WHEN a.n_epigrafes = 1 THEN a.epigrafe_sig ELSE NULL END AS epigrafe_code_start,
-                CASE WHEN a.n_epigrafes = 1 THEN a.epigrafe_desc_sig ELSE NULL END AS epigrafe_desc_start
+                CASE WHEN a.n_epigrafes = 1 THEN a.epigrafe_desc_sig ELSE NULL END AS epigrafe_desc_start,
+                CASE WHEN a.n_macro_categories = 1 THEN a.macro_category_sig ELSE NULL END AS activity_category_code_start,
+                CASE WHEN a.n_macro_categories = 1 THEN a.macro_category_desc_sig ELSE NULL END AS activity_category_desc_start
             FROM local_enriched l
             LEFT JOIN activity_periods a
                 ON l.id_local = a.id_local
@@ -390,22 +515,165 @@ def build_local_survival_abt(
         con.execute(
             """
             CREATE OR REPLACE TABLE section_period_features AS
-            WITH base AS (
+            WITH section_grid AS (
+                SELECT DISTINCT
+                    CAST(target_period AS VARCHAR) AS period,
+                    section_key
+                FROM section_panel
+                WHERE section_key IS NOT NULL
+            ), stock AS (
                 SELECT
                     period,
                     section_key,
                     COUNT(DISTINCT id_local) AS section_local_count,
                     COUNT(DISTINCT CASE WHEN division_code_start IS NOT NULL THEN division_code_start END) AS section_unique_division_count,
+                    COUNT(DISTINCT CASE WHEN activity_category_code_start IS NOT NULL THEN activity_category_code_start END) AS section_unique_activity_category_count,
                     AVG(CASE WHEN COALESCE(n_divisions, 0) = 1 THEN 1.0 ELSE 0.0 END) AS section_single_division_share
                 FROM local_activity_enriched
                 WHERE section_key IS NOT NULL
                 GROUP BY 1, 2
+            ), section_entry_events AS (
+                WITH first_seen AS (
+                    SELECT
+                        id_local,
+                        MIN(period) AS period
+                    FROM local_activity_enriched
+                    GROUP BY 1
+                )
+                SELECT
+                    f.period,
+                    l.section_key,
+                    COUNT(DISTINCT l.id_local) AS section_entry_count
+                FROM first_seen f
+                INNER JOIN local_activity_enriched l
+                    ON f.id_local = l.id_local
+                   AND f.period = l.period
+                WHERE l.section_key IS NOT NULL
+                GROUP BY 1, 2
+            ), section_exit_events AS (
+                WITH last_seen AS (
+                    SELECT
+                        id_local,
+                        MAX(period) AS period
+                    FROM local_activity_enriched
+                    GROUP BY 1
+                )
+                SELECT
+                    f.period,
+                    l.section_key,
+                    COUNT(DISTINCT l.id_local) AS section_exit_count
+                FROM last_seen f
+                INNER JOIN local_activity_enriched l
+                    ON f.id_local = l.id_local
+                   AND f.period = l.period
+                WHERE l.section_key IS NOT NULL
+                  AND f.period < ?
+                GROUP BY 1, 2
+            ), section_division_distribution AS (
+                SELECT
+                    period,
+                    section_key,
+                    division_code_start,
+                    COUNT(DISTINCT id_local) AS division_local_count
+                FROM local_activity_enriched
+                WHERE section_key IS NOT NULL AND division_code_start IS NOT NULL
+                GROUP BY 1, 2, 3
+            ), section_division_concentration AS (
+                SELECT
+                    d.period,
+                    d.section_key,
+                    SUM(POW(CAST(d.division_local_count AS DOUBLE) / CAST(s.section_local_count AS DOUBLE), 2)) AS section_division_hhi,
+                    MAX(CAST(d.division_local_count AS DOUBLE) / CAST(s.section_local_count AS DOUBLE)) AS section_division_top_share
+                FROM section_division_distribution d
+                INNER JOIN stock s
+                    ON d.period = s.period
+                   AND d.section_key = s.section_key
+                WHERE s.section_local_count > 0
+                GROUP BY 1, 2
+            ), section_activity_category_distribution AS (
+                SELECT
+                    period,
+                    section_key,
+                    activity_category_code_start,
+                    COUNT(DISTINCT id_local) AS activity_category_local_count
+                FROM local_activity_enriched
+                WHERE section_key IS NOT NULL AND activity_category_code_start IS NOT NULL
+                GROUP BY 1, 2, 3
+            ), section_activity_category_concentration AS (
+                SELECT
+                    d.period,
+                    d.section_key,
+                    SUM(POW(CAST(d.activity_category_local_count AS DOUBLE) / CAST(s.section_local_count AS DOUBLE), 2)) AS section_activity_category_hhi,
+                    MAX(CAST(d.activity_category_local_count AS DOUBLE) / CAST(s.section_local_count AS DOUBLE)) AS section_activity_category_top_share
+                FROM section_activity_category_distribution d
+                INNER JOIN stock s
+                    ON d.period = s.period
+                   AND d.section_key = s.section_key
+                WHERE s.section_local_count > 0
+                GROUP BY 1, 2
+            ), base AS (
+                SELECT
+                    g.period,
+                    g.section_key,
+                    COALESCE(s.section_local_count, 0) AS section_local_count,
+                    COALESCE(s.section_unique_division_count, 0) AS section_unique_division_count,
+                    COALESCE(s.section_unique_activity_category_count, 0) AS section_unique_activity_category_count,
+                    s.section_single_division_share,
+                    COALESCE(e.section_entry_count, 0) AS section_entry_count,
+                    COALESCE(x.section_exit_count, 0) AS section_exit_count,
+                    dc.section_division_hhi,
+                    dc.section_division_top_share,
+                    ac.section_activity_category_hhi,
+                    ac.section_activity_category_top_share
+                FROM section_grid g
+                LEFT JOIN stock s
+                    ON g.period = s.period
+                   AND g.section_key = s.section_key
+                LEFT JOIN section_entry_events e
+                    ON g.period = e.period
+                   AND g.section_key = e.section_key
+                LEFT JOIN section_exit_events x
+                    ON g.period = x.period
+                   AND g.section_key = x.section_key
+                LEFT JOIN section_division_concentration dc
+                    ON g.period = dc.period
+                   AND g.section_key = dc.section_key
+                LEFT JOIN section_activity_category_concentration ac
+                    ON g.period = ac.period
+                   AND g.section_key = ac.section_key
             )
             SELECT
                 *,
-                section_local_count - LAG(section_local_count, 12) OVER (PARTITION BY section_key ORDER BY period) AS section_local_count_delta_12m
+                section_local_count - LAG(section_local_count, 12) OVER (PARTITION BY section_key ORDER BY period) AS section_local_count_delta_12m,
+                SUM(section_entry_count) OVER (PARTITION BY section_key ORDER BY period ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS section_entry_count_3m,
+                SUM(section_entry_count) OVER (PARTITION BY section_key ORDER BY period ROWS BETWEEN 5 PRECEDING AND CURRENT ROW) AS section_entry_count_6m,
+                SUM(section_entry_count) OVER (PARTITION BY section_key ORDER BY period ROWS BETWEEN 11 PRECEDING AND CURRENT ROW) AS section_entry_count_12m,
+                SUM(section_exit_count) OVER (PARTITION BY section_key ORDER BY period ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS section_exit_count_3m,
+                SUM(section_exit_count) OVER (PARTITION BY section_key ORDER BY period ROWS BETWEEN 5 PRECEDING AND CURRENT ROW) AS section_exit_count_6m,
+                SUM(section_exit_count) OVER (PARTITION BY section_key ORDER BY period ROWS BETWEEN 11 PRECEDING AND CURRENT ROW) AS section_exit_count_12m,
+                CASE
+                    WHEN section_local_count <= 0 THEN NULL
+                    ELSE CAST(SUM(section_entry_count) OVER (PARTITION BY section_key ORDER BY period ROWS BETWEEN 11 PRECEDING AND CURRENT ROW) AS DOUBLE)
+                        / CAST(section_local_count AS DOUBLE)
+                END AS section_entry_rate_12m,
+                CASE
+                    WHEN section_local_count <= 0 THEN NULL
+                    ELSE CAST(SUM(section_exit_count) OVER (PARTITION BY section_key ORDER BY period ROWS BETWEEN 11 PRECEDING AND CURRENT ROW) AS DOUBLE)
+                        / CAST(section_local_count AS DOUBLE)
+                END AS section_exit_rate_12m,
+                SUM(section_entry_count) OVER (PARTITION BY section_key ORDER BY period ROWS BETWEEN 11 PRECEDING AND CURRENT ROW)
+                    - SUM(section_exit_count) OVER (PARTITION BY section_key ORDER BY period ROWS BETWEEN 11 PRECEDING AND CURRENT ROW) AS section_net_flow_12m,
+                CASE
+                    WHEN section_local_count <= 0 THEN NULL
+                    ELSE CAST(
+                        SUM(section_entry_count) OVER (PARTITION BY section_key ORDER BY period ROWS BETWEEN 11 PRECEDING AND CURRENT ROW)
+                        + SUM(section_exit_count) OVER (PARTITION BY section_key ORDER BY period ROWS BETWEEN 11 PRECEDING AND CURRENT ROW)
+                        AS DOUBLE
+                    ) / CAST(section_local_count AS DOUBLE)
+                END AS section_turnover_rate_12m
             FROM base
-            """
+            """,
+            [max_period],
         )
         con.execute(
             """
@@ -422,30 +690,73 @@ def build_local_survival_abt(
         )
         con.execute(
             """
-            CREATE OR REPLACE TABLE local_feature_base AS
+            CREATE OR REPLACE TABLE section_activity_category_features AS
             SELECT
-                l.*,
-                s.section_local_count,
-                s.section_unique_division_count,
-                s.section_single_division_share,
-                s.section_local_count_delta_12m,
-                d.section_same_division_local_count,
-                CASE
-                    WHEN s.section_local_count IS NULL OR s.section_local_count = 0 OR d.section_same_division_local_count IS NULL THEN NULL
-                    ELSE CAST(d.section_same_division_local_count AS DOUBLE) / CAST(s.section_local_count AS DOUBLE)
-                END AS section_same_division_share
-            FROM local_activity_enriched l
-            LEFT JOIN section_period_features s
-                ON l.period = s.period
-               AND l.section_key = s.section_key
-            LEFT JOIN section_division_features d
-                ON l.period = d.period
-               AND l.section_key = d.section_key
-               AND l.division_code_start = d.division_code_start
+                period,
+                section_key,
+                activity_category_code_start,
+                COUNT(DISTINCT id_local) AS section_same_activity_category_local_count
+            FROM local_activity_enriched
+            WHERE section_key IS NOT NULL AND activity_category_code_start IS NOT NULL
+            GROUP BY 1, 2, 3
             """
         )
         con.execute(
             """
+            CREATE OR REPLACE TABLE local_feature_base AS
+            WITH lagged_context AS (
+                SELECT
+                    *,
+                    STRFTIME(CAST(period || '-01' AS DATE) - INTERVAL 1 MONTH, '%Y-%m') AS context_period
+                FROM local_activity_enriched
+            )
+            SELECT
+                l.*,
+                s.section_local_count,
+                s.section_unique_division_count,
+                s.section_unique_activity_category_count,
+                s.section_single_division_share,
+                s.section_local_count_delta_12m,
+                d.section_same_division_local_count,
+                a.section_same_activity_category_local_count,
+                s.section_entry_count_3m,
+                s.section_entry_count_6m,
+                s.section_entry_count_12m,
+                s.section_exit_count_3m,
+                s.section_exit_count_6m,
+                s.section_exit_count_12m,
+                s.section_entry_rate_12m,
+                s.section_exit_rate_12m,
+                s.section_net_flow_12m,
+                s.section_turnover_rate_12m,
+                s.section_division_hhi,
+                s.section_division_top_share,
+                s.section_activity_category_hhi,
+                s.section_activity_category_top_share,
+                CASE
+                    WHEN s.section_local_count IS NULL OR s.section_local_count = 0 OR d.section_same_division_local_count IS NULL THEN NULL
+                    ELSE CAST(d.section_same_division_local_count AS DOUBLE) / CAST(s.section_local_count AS DOUBLE)
+                END AS section_same_division_share,
+                CASE
+                    WHEN s.section_local_count IS NULL OR s.section_local_count = 0 OR a.section_same_activity_category_local_count IS NULL THEN NULL
+                    ELSE CAST(a.section_same_activity_category_local_count AS DOUBLE) / CAST(s.section_local_count AS DOUBLE)
+                END AS section_same_activity_category_share
+            FROM lagged_context l
+            LEFT JOIN section_period_features s
+                ON l.context_period = s.period
+               AND l.section_key = s.section_key
+            LEFT JOIN section_division_features d
+                ON l.context_period = d.period
+               AND l.section_key = d.section_key
+               AND l.division_code_start = d.division_code_start
+            LEFT JOIN section_activity_category_features a
+                ON l.context_period = a.period
+               AND l.section_key = a.section_key
+               AND l.activity_category_code_start = a.activity_category_code_start
+            """
+        )
+        con.execute(
+            f"""
             CREATE OR REPLACE TABLE change_candidates AS
             WITH ordered AS (
                 SELECT
@@ -464,6 +775,12 @@ def build_local_survival_abt(
                     LAG(epigrafe_desc_sig) OVER (PARTITION BY id_local ORDER BY period) AS previous_epigrafe_desc,
                     LAG(n_divisions) OVER (PARTITION BY id_local ORDER BY period) AS previous_n_divisions,
                     LAG(n_epigrafes) OVER (PARTITION BY id_local ORDER BY period) AS previous_n_epigrafes,
+                    macro_category_sig AS successor_macro_category_code,
+                    macro_category_desc_sig AS successor_macro_category_desc,
+                    n_macro_categories AS successor_n_macro_categories,
+                    LAG(macro_category_sig) OVER (PARTITION BY id_local ORDER BY period) AS previous_macro_category_code,
+                    LAG(macro_category_desc_sig) OVER (PARTITION BY id_local ORDER BY period) AS previous_macro_category_desc,
+                    LAG(n_macro_categories) OVER (PARTITION BY id_local ORDER BY period) AS previous_n_macro_categories,
                     (
                         (CAST(SUBSTR(period, 1, 4) AS INTEGER) * 12 + CAST(SUBSTR(period, 6, 2) AS INTEGER))
                         - (
@@ -477,6 +794,7 @@ def build_local_survival_abt(
                 id_local,
                 previous_period AS event_period,
                 successor_period,
+                '{"activity_category_change_single_single" if activity_closure_mode else "division_change_single_single"}' AS event_source,
                 previous_division_code,
                 previous_division_desc,
                 successor_division_code,
@@ -489,14 +807,20 @@ def build_local_survival_abt(
                 successor_n_divisions,
                 previous_n_epigrafes,
                 successor_n_epigrafes,
+                                previous_macro_category_code,
+                                previous_macro_category_desc,
+                                successor_macro_category_code,
+                                successor_macro_category_desc,
+                                previous_n_macro_categories,
+                                successor_n_macro_categories,
                 month_gap
             FROM ordered
             WHERE previous_period IS NOT NULL
               AND month_gap = 1
-              AND previous_n_divisions = 1
-              AND successor_n_divisions = 1
-              AND previous_division_code <> successor_division_code
-            """
+                            AND {'previous_n_macro_categories = 1' if activity_closure_mode else 'previous_n_divisions = 1'}
+                            AND {'successor_n_macro_categories = 1' if activity_closure_mode else 'successor_n_divisions = 1'}
+                            AND {'previous_macro_category_code <> successor_macro_category_code' if activity_closure_mode else 'previous_division_code <> successor_division_code'}
+                        """
         )
 
         change_candidates = con.execute(
@@ -505,7 +829,7 @@ def build_local_survival_abt(
         change_candidates.to_csv(resolved_change_candidates_csv, index=False)
 
         abt = con.execute(
-            """
+            f"""
             WITH local_summary AS (
                 SELECT
                     id_local,
@@ -538,15 +862,35 @@ def build_local_survival_abt(
                     ARG_MIN(renta_best_eur_delta_12m, period) AS renta_best_eur_delta_12m_start,
                     ARG_MIN(n_divisions, period) AS n_divisions_start,
                     ARG_MIN(n_epigrafes, period) AS n_epigrafes_start,
+                    ARG_MIN(n_macro_categories, period) AS n_activity_categories_start,
                     ARG_MIN(division_code_start, period) AS division_code_start,
                     ARG_MIN(division_desc_start, period) AS division_desc_start,
                     ARG_MIN(epigrafe_code_start, period) AS epigrafe_code_start,
                     ARG_MIN(epigrafe_desc_start, period) AS epigrafe_desc_start,
+                    ARG_MIN(activity_category_code_start, period) AS activity_category_code_start,
+                    ARG_MIN(activity_category_desc_start, period) AS activity_category_desc_start,
                     ARG_MIN(section_local_count, period) AS section_local_count_start,
                     ARG_MIN(section_unique_division_count, period) AS section_unique_division_count_start,
+                    ARG_MIN(section_unique_activity_category_count, period) AS section_unique_activity_category_count_start,
                     ARG_MIN(section_single_division_share, period) AS section_single_division_share_start,
                     ARG_MIN(section_same_division_local_count, period) AS section_same_division_local_count_start,
                     ARG_MIN(section_same_division_share, period) AS section_same_division_share_start,
+                    ARG_MIN(section_same_activity_category_local_count, period) AS section_same_activity_category_local_count_start,
+                    ARG_MIN(section_same_activity_category_share, period) AS section_same_activity_category_share_start,
+                    ARG_MIN(section_entry_count_3m, period) AS section_entry_count_3m_start,
+                    ARG_MIN(section_entry_count_6m, period) AS section_entry_count_6m_start,
+                    ARG_MIN(section_entry_count_12m, period) AS section_entry_count_12m_start,
+                    ARG_MIN(section_exit_count_3m, period) AS section_exit_count_3m_start,
+                    ARG_MIN(section_exit_count_6m, period) AS section_exit_count_6m_start,
+                    ARG_MIN(section_exit_count_12m, period) AS section_exit_count_12m_start,
+                    ARG_MIN(section_entry_rate_12m, period) AS section_entry_rate_12m_start,
+                    ARG_MIN(section_exit_rate_12m, period) AS section_exit_rate_12m_start,
+                    ARG_MIN(section_net_flow_12m, period) AS section_net_flow_12m_start,
+                    ARG_MIN(section_turnover_rate_12m, period) AS section_turnover_rate_12m_start,
+                    ARG_MIN(section_division_hhi, period) AS section_division_hhi_start,
+                    ARG_MIN(section_division_top_share, period) AS section_division_top_share_start,
+                    ARG_MIN(section_activity_category_hhi, period) AS section_activity_category_hhi_start,
+                    ARG_MIN(section_activity_category_top_share, period) AS section_activity_category_top_share_start,
                     ARG_MIN(section_local_count_delta_12m, period) AS section_local_count_delta_12m_start,
                     ARG_MIN(geometry_available, period) AS geometry_available_start
                 FROM local_feature_base
@@ -566,6 +910,7 @@ def build_local_survival_abt(
                     CASE WHEN l.last_seen_period < ? THEN l.last_seen_period ELSE NULL END AS disappearance_event_period,
                     c.event_period AS change_event_period,
                     c.successor_period AS change_successor_period,
+                    c.event_source AS change_event_source,
                     c.previous_division_code,
                     c.previous_division_desc,
                     c.successor_division_code,
@@ -573,7 +918,11 @@ def build_local_survival_abt(
                     c.previous_epigrafe_code,
                     c.previous_epigrafe_desc,
                     c.successor_epigrafe_code,
-                    c.successor_epigrafe_desc
+                    c.successor_epigrafe_desc,
+                    c.previous_macro_category_code,
+                    c.previous_macro_category_desc,
+                    c.successor_macro_category_code,
+                    c.successor_macro_category_desc
                 FROM local_summary l
                 LEFT JOIN first_change c USING (id_local)
             ), resolved AS (
@@ -590,11 +939,27 @@ def build_local_survival_abt(
                     CASE
                         WHEN change_event_period IS NOT NULL
                              AND (disappearance_event_period IS NULL OR change_event_period <= disappearance_event_period)
-                            THEN 'division_change_single_single'
+                            THEN '{UNIFIED_EVENT_SOURCE}'
                         WHEN disappearance_event_period IS NOT NULL
-                            THEN 'disappearance'
+                            THEN '{UNIFIED_EVENT_SOURCE}'
                         ELSE 'censored'
                     END AS event_source
+                    ,CASE
+                        WHEN change_event_period IS NOT NULL
+                             AND (disappearance_event_period IS NULL OR change_event_period <= disappearance_event_period)
+                            THEN '{EVENT_SUBTYPE_ACTIVITY_CHANGE}'
+                        WHEN disappearance_event_period IS NOT NULL
+                            THEN '{EVENT_SUBTYPE_DISAPPEARANCE}'
+                        ELSE '{EVENT_SUBTYPE_CENSORED}'
+                    END AS event_subtype,
+                    CASE
+                        WHEN change_event_period IS NOT NULL
+                             AND (disappearance_event_period IS NULL OR change_event_period <= disappearance_event_period)
+                            THEN change_event_source
+                        WHEN disappearance_event_period IS NOT NULL
+                            THEN '{EVENT_SUBTYPE_DISAPPEARANCE}'
+                        ELSE '{EVENT_SUBTYPE_CENSORED}'
+                    END AS event_subtype_detail
                 FROM event_base
             )
             SELECT
@@ -604,6 +969,8 @@ def build_local_survival_abt(
                 active_months,
                 event_period,
                 event_source,
+                event_subtype,
+                                event_subtype_detail,
                 CASE WHEN event_period IS NOT NULL THEN 1 ELSE 0 END AS event_observed,
                 COALESCE(event_period, last_seen_period) AS target_end_period,
                 ((CAST(SUBSTR(COALESCE(event_period, last_seen_period), 1, 4) AS INTEGER) - CAST(SUBSTR(first_seen_period, 1, 4) AS INTEGER)) * 12
@@ -647,15 +1014,35 @@ def build_local_survival_abt(
                 renta_best_eur_delta_12m_start,
                 n_divisions_start,
                 n_epigrafes_start,
+                n_activity_categories_start,
                 division_code_start,
                 division_desc_start,
                 epigrafe_code_start,
                 epigrafe_desc_start,
+                activity_category_code_start,
+                activity_category_desc_start,
                 section_local_count_start,
                 section_unique_division_count_start,
+                section_unique_activity_category_count_start,
                 section_single_division_share_start,
                 section_same_division_local_count_start,
                 section_same_division_share_start,
+                section_same_activity_category_local_count_start,
+                section_same_activity_category_share_start,
+                section_entry_count_3m_start,
+                section_entry_count_6m_start,
+                section_entry_count_12m_start,
+                section_exit_count_3m_start,
+                section_exit_count_6m_start,
+                section_exit_count_12m_start,
+                section_entry_rate_12m_start,
+                section_exit_rate_12m_start,
+                section_net_flow_12m_start,
+                section_turnover_rate_12m_start,
+                section_division_hhi_start,
+                section_division_top_share_start,
+                section_activity_category_hhi_start,
+                section_activity_category_top_share_start,
                 section_local_count_delta_12m_start,
                 geometry_available_start
             FROM resolved
@@ -685,6 +1072,7 @@ def build_local_survival_abt(
         max_month=max_month,
         normalization_audit=normalization_audit,
         change_candidates=change_candidates,
+        target_mode=target_mode,
     )
     resolved_report_md.write_text(report, encoding="utf-8")
 
@@ -693,6 +1081,8 @@ def build_local_survival_abt(
         output_parquet=resolved_output_parquet,
         parquet_written=parquet_written,
         report_md=resolved_report_md,
+        glossary_md=resolved_glossary_md,
+        activity_taxonomy_csv=resolved_activity_taxonomy_csv,
         rows=len(abt),
         max_period=max_period,
         change_candidates_csv=resolved_change_candidates_csv,
@@ -708,6 +1098,7 @@ def _render_abt_report(
     max_month: int,
     normalization_audit: pd.DataFrame,
     change_candidates: pd.DataFrame,
+    target_mode: str,
 ) -> str:
     if abt.empty:
         return "# ABT Survival\n\nNo se genero ninguna fila en la ABT.\n"
@@ -719,6 +1110,7 @@ def _render_abt_report(
     with_metro = int(pd.to_numeric(abt.get("metro_distance_m_start"), errors="coerce").notna().sum())
     with_avisos = int(pd.to_numeric(abt.get("avisos_barrio_prev_year"), errors="coerce").fillna(0).gt(0).sum())
     event_source_counts = abt["event_source"].astype("string").value_counts(dropna=False).to_dict()
+    event_subtype_counts = abt.get("event_subtype", abt["event_source"]).astype("string").value_counts(dropna=False).to_dict()
 
     division_audit = normalization_audit[normalization_audit["taxonomy"] == "division"].copy()
     epigrafe_audit = normalization_audit[normalization_audit["taxonomy"] == "epigrafe"].copy()
@@ -740,20 +1132,30 @@ def _render_abt_report(
 
     top_changes = pd.DataFrame()
     if not change_candidates.empty:
+        previous_desc_col = "previous_macro_category_desc" if target_mode in {"activity_survival", "cese_activity"} else "previous_division_desc"
+        successor_desc_col = "successor_macro_category_desc" if target_mode in {"activity_survival", "cese_activity"} else "successor_division_desc"
         top_changes = (
-            change_candidates.groupby(["previous_division_desc", "successor_division_desc"], dropna=False)
+            change_candidates.groupby([previous_desc_col, successor_desc_col], dropna=False)
             .size()
             .reset_index(name="transitions")
-            .sort_values(["transitions", "previous_division_desc", "successor_division_desc"], ascending=[False, True, True])
+            .sort_values(["transitions", previous_desc_col, successor_desc_col], ascending=[False, True, True])
             .head(10)
         )
 
-    lines: list[str] = []
-    lines.append("# ABT Survival")
-    lines.append("")
-    lines.append(
-        "ABT por local con cierre observado tanto por desaparicion del `id_local` como por primer cambio robusto `single-single` de division, tratado como cierre estructural."
+    activity_closure_mode = target_mode in {"activity_survival", "cese_activity"}
+    change_label = "macrocategoria de actividad" if activity_closure_mode else "division"
+    context_label = "section_same_activity_category_*_start (lagged t-1)" if activity_closure_mode else "section_same_division_*_start (lagged t-1)"
+    title = "# ABT Cese de Actividad" if activity_closure_mode else "# ABT Survival"
+    intro = (
+        "ABT por local con target unico de `cese de actividad`: evento por desaparicion del `id_local` o por primer cambio robusto `single-single` entre macrocategorias de actividad. El subtipo del evento se conserva solo para auditoria."
+        if activity_closure_mode
+        else "ABT por local con cierre observado tanto por desaparicion del `id_local` como por primer cambio robusto `single-single` de division, tratado como cierre estructural."
     )
+
+    lines: list[str] = []
+    lines.append(title)
+    lines.append("")
+    lines.append(intro)
     lines.append("")
     lines.append("## Resumen")
     lines.append("")
@@ -768,8 +1170,13 @@ def _render_abt_report(
     lines.append("")
     lines.append("## Desglose de eventos")
     lines.append("")
-    lines.append(f"- Cierre por cambio `single-single` de division: {int(event_source_counts.get('division_change_single_single', 0)):,}")
-    lines.append(f"- Cierre por desaparicion del local: {int(event_source_counts.get('disappearance', 0)):,}")
+    if activity_closure_mode:
+        lines.append(f"- Evento unificado `cese_de_actividad`: {int(event_source_counts.get(UNIFIED_EVENT_SOURCE, 0)):,}")
+        lines.append(f"- Subtipo auditoria `cambio_actividad`: {int(event_subtype_counts.get(EVENT_SUBTYPE_ACTIVITY_CHANGE, 0)):,}")
+        lines.append(f"- Subtipo auditoria `desaparicion`: {int(event_subtype_counts.get(EVENT_SUBTYPE_DISAPPEARANCE, 0)):,}")
+    else:
+        lines.append(f"- Cierre por cambio `single-single` de {change_label}: {int(event_source_counts.get('division_change_single_single', 0)):,}")
+        lines.append(f"- Cierre por desaparicion del local: {int(event_source_counts.get('disappearance', 0)):,}")
     lines.append(f"- Censurados: {int(event_source_counts.get('censored', 0)):,}")
     lines.append(f"- Candidatos de cambio `single-single` auditados: {len(change_candidates):,}")
     lines.append("")
@@ -787,21 +1194,21 @@ def _render_abt_report(
     lines.append("## Columnas clave")
     lines.append("")
     lines.append("- `first_seen_period`, `last_seen_period`, `target_end_period`, `duration_months`, `event_observed`")
-    lines.append("- `event_source`, `event_period`, `change_event_period`, `change_successor_period`")
-    lines.append("- Auditoria de cambio: `previous_division_*`, `successor_division_*`, `previous_epigrafe_*`, `successor_epigrafe_*`")
+    lines.append("- `event_source`, `event_subtype`, `event_subtype_detail`, `event_period`, `change_event_period`, `change_successor_period`")
+    lines.append("- Auditoria de cambio: `previous_division_*`, `successor_division_*`, `previous_epigrafe_*`, `successor_epigrafe_*`, `previous_macro_category_*`, `successor_macro_category_*`")
     lines.append("- Features iniciales PiT: `renta_best_eur_start`, `share_*_start`, `total_population_start`, `age_mean_start`, `population_density_km2_start`")
-    lines.append("- Contexto comercial: `n_divisions_start`, `n_epigrafes_start`, `section_local_count_*`, `section_same_division_*`")
+    lines.append(f"- Contexto comercial: `n_divisions_start`, `n_epigrafes_start`, `n_activity_categories_start`, `activity_category_code_start`, `section_local_count_*_start (lagged t-1)`, `{context_label}`, `section_*_hhi_start`, `section_*_entry_count_*_start`, `section_*_exit_count_*_start`")
     lines.append("- Dinamica interanual: `*_delta_12m_start`")
     lines.append("- Externas: `avisos_*_prev_year`, `metro_distance_m_start`, `metro_access_count_500m_start`, `metro_access_count_1000m_start`")
     lines.append("- Geoespacial inicial: `h3_cell_start`, `lat_wgs84_start`, `lon_wgs84_start`")
 
     if not top_changes.empty:
         lines.append("")
-        lines.append("## Cambios de division mas frecuentes tratados como cierre")
+        lines.append(f"## Cambios de {change_label} mas frecuentes tratados como cierre")
         lines.append("")
         for row in top_changes.itertuples(index=False):
-            prev_desc = getattr(row, "previous_division_desc") or "(sin descripcion)"
-            next_desc = getattr(row, "successor_division_desc") or "(sin descripcion)"
+            prev_desc = getattr(row, previous_desc_col) or "(sin descripcion)"
+            next_desc = getattr(row, successor_desc_col) or "(sin descripcion)"
             lines.append(f"- {prev_desc} -> {next_desc}: {int(getattr(row, 'transitions')):,}")
 
     return "\n".join(lines) + "\n"

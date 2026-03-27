@@ -162,6 +162,7 @@ class SurvivalBaselineTests(unittest.TestCase):
     def test_build_feature_frame_preserves_missing_when_requested(self) -> None:
         df = pd.DataFrame(
             {
+                "first_seen_period": ["2016-05", "2021-11"],
                 "renta_effective_eur": [1000.0, None],
                 "renta_carry_forward_years": [0, 1],
                 "share_foreign_start": [0.1, None],
@@ -179,11 +180,29 @@ class SurvivalBaselineTests(unittest.TestCase):
                 "h3_cell_start": ["abc", None],
                 "n_divisions_start": [1, None],
                 "n_epigrafes_start": [1, None],
+                "n_activity_categories_start": [1, None],
                 "section_local_count_start": [20, None],
                 "section_unique_division_count_start": [5, None],
+                "section_unique_activity_category_count_start": [4, None],
                 "section_single_division_share_start": [0.5, None],
                 "section_same_division_local_count_start": [3, None],
                 "section_same_division_share_start": [0.15, None],
+                "section_same_activity_category_local_count_start": [2, None],
+                "section_same_activity_category_share_start": [0.10, None],
+                "section_entry_count_3m_start": [1, None],
+                "section_entry_count_6m_start": [2, None],
+                "section_entry_count_12m_start": [3, None],
+                "section_exit_count_3m_start": [1, None],
+                "section_exit_count_6m_start": [2, None],
+                "section_exit_count_12m_start": [4, None],
+                "section_entry_rate_12m_start": [0.15, None],
+                "section_exit_rate_12m_start": [0.20, None],
+                "section_net_flow_12m_start": [-1, None],
+                "section_turnover_rate_12m_start": [0.35, None],
+                "section_division_hhi_start": [0.30, None],
+                "section_division_top_share_start": [0.45, None],
+                "section_activity_category_hhi_start": [0.25, None],
+                "section_activity_category_top_share_start": [0.40, None],
                 "section_local_count_delta_12m_start": [2, None],
                 "total_population_delta_12m_start": [10, None],
                 "share_foreign_delta_12m_start": [0.01, None],
@@ -205,6 +224,10 @@ class SurvivalBaselineTests(unittest.TestCase):
 
         self.assertTrue(pd.isna(raw.loc[1, "share_foreign_start"]))
         self.assertFalse(pd.isna(filled.loc[1, "share_foreign_start"]))
+        self.assertEqual(raw.loc[0, "cohort_2015_2017"], 1.0)
+        self.assertEqual(raw.loc[1, "cohort_2020_2021"], 1.0)
+        self.assertAlmostEqual(raw.loc[0, "section_entry_rate_12m_start"], 0.15)
+        self.assertAlmostEqual(raw.loc[0, "section_activity_category_hhi_start"], 0.25)
 
 
 if __name__ == "__main__":

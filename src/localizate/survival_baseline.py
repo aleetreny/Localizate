@@ -7,6 +7,7 @@ import json
 import numpy as np
 import pandas as pd
 
+from .activity_taxonomy import macro_category_feature_names
 from .paths import DATA_DIR, DOCS_DIR, PROJECT_ROOT
 
 
@@ -341,6 +342,10 @@ def _collect_tail_periods(
 
 def build_feature_frame(dataset: pd.DataFrame, *, fill_missing: bool = True) -> pd.DataFrame:
     frame = pd.DataFrame(index=dataset.index)
+    macro_category_series = dataset.get("activity_category_code_start", pd.Series(pd.NA, index=dataset.index)).astype("string")
+    first_seen_period = dataset.get("first_seen_period", pd.Series(pd.NA, index=dataset.index)).astype("string")
+    cohort_year = pd.to_numeric(first_seen_period.str[:4], errors="coerce")
+    entry_month = pd.to_numeric(first_seen_period.str[5:7], errors="coerce")
     frame["renta_effective_eur"] = pd.to_numeric(dataset["renta_effective_eur"], errors="coerce")
     frame["renta_carry_forward_years"] = pd.to_numeric(dataset.get("renta_carry_forward_years"), errors="coerce")
     frame["share_foreign_start"] = pd.to_numeric(dataset.get("share_foreign_start"), errors="coerce")
@@ -358,11 +363,29 @@ def build_feature_frame(dataset: pd.DataFrame, *, fill_missing: bool = True) -> 
     frame["missing_h3"] = dataset.get("h3_cell_start").isna().astype(float)
     frame["n_divisions_start"] = pd.to_numeric(dataset.get("n_divisions_start"), errors="coerce")
     frame["n_epigrafes_start"] = pd.to_numeric(dataset.get("n_epigrafes_start"), errors="coerce")
+    frame["n_activity_categories_start"] = pd.to_numeric(dataset.get("n_activity_categories_start"), errors="coerce")
     frame["section_local_count_start"] = np.log1p(pd.to_numeric(dataset.get("section_local_count_start"), errors="coerce"))
     frame["section_unique_division_count_start"] = pd.to_numeric(dataset.get("section_unique_division_count_start"), errors="coerce")
+    frame["section_unique_activity_category_count_start"] = pd.to_numeric(dataset.get("section_unique_activity_category_count_start"), errors="coerce")
     frame["section_single_division_share_start"] = pd.to_numeric(dataset.get("section_single_division_share_start"), errors="coerce")
     frame["section_same_division_local_count_start"] = np.log1p(pd.to_numeric(dataset.get("section_same_division_local_count_start"), errors="coerce"))
     frame["section_same_division_share_start"] = pd.to_numeric(dataset.get("section_same_division_share_start"), errors="coerce")
+    frame["section_same_activity_category_local_count_start"] = np.log1p(pd.to_numeric(dataset.get("section_same_activity_category_local_count_start"), errors="coerce"))
+    frame["section_same_activity_category_share_start"] = pd.to_numeric(dataset.get("section_same_activity_category_share_start"), errors="coerce")
+    frame["section_entry_count_3m_start"] = np.log1p(pd.to_numeric(dataset.get("section_entry_count_3m_start"), errors="coerce"))
+    frame["section_entry_count_6m_start"] = np.log1p(pd.to_numeric(dataset.get("section_entry_count_6m_start"), errors="coerce"))
+    frame["section_entry_count_12m_start"] = np.log1p(pd.to_numeric(dataset.get("section_entry_count_12m_start"), errors="coerce"))
+    frame["section_exit_count_3m_start"] = np.log1p(pd.to_numeric(dataset.get("section_exit_count_3m_start"), errors="coerce"))
+    frame["section_exit_count_6m_start"] = np.log1p(pd.to_numeric(dataset.get("section_exit_count_6m_start"), errors="coerce"))
+    frame["section_exit_count_12m_start"] = np.log1p(pd.to_numeric(dataset.get("section_exit_count_12m_start"), errors="coerce"))
+    frame["section_entry_rate_12m_start"] = pd.to_numeric(dataset.get("section_entry_rate_12m_start"), errors="coerce")
+    frame["section_exit_rate_12m_start"] = pd.to_numeric(dataset.get("section_exit_rate_12m_start"), errors="coerce")
+    frame["section_net_flow_12m_start"] = pd.to_numeric(dataset.get("section_net_flow_12m_start"), errors="coerce")
+    frame["section_turnover_rate_12m_start"] = pd.to_numeric(dataset.get("section_turnover_rate_12m_start"), errors="coerce")
+    frame["section_division_hhi_start"] = pd.to_numeric(dataset.get("section_division_hhi_start"), errors="coerce")
+    frame["section_division_top_share_start"] = pd.to_numeric(dataset.get("section_division_top_share_start"), errors="coerce")
+    frame["section_activity_category_hhi_start"] = pd.to_numeric(dataset.get("section_activity_category_hhi_start"), errors="coerce")
+    frame["section_activity_category_top_share_start"] = pd.to_numeric(dataset.get("section_activity_category_top_share_start"), errors="coerce")
     frame["section_local_count_delta_12m_start"] = pd.to_numeric(dataset.get("section_local_count_delta_12m_start"), errors="coerce")
     frame["total_population_delta_12m_start"] = pd.to_numeric(dataset.get("total_population_delta_12m_start"), errors="coerce")
     frame["share_foreign_delta_12m_start"] = pd.to_numeric(dataset.get("share_foreign_delta_12m_start"), errors="coerce")
@@ -376,6 +399,15 @@ def build_feature_frame(dataset: pd.DataFrame, *, fill_missing: bool = True) -> 
     frame["metro_access_count_500m_start"] = pd.to_numeric(dataset.get("metro_access_count_500m_start"), errors="coerce")
     frame["metro_access_count_1000m_start"] = pd.to_numeric(dataset.get("metro_access_count_1000m_start"), errors="coerce")
     frame["missing_metro_distance_start"] = pd.to_numeric(dataset.get("missing_metro_distance_start"), errors="coerce")
+    frame["cohort_2015_2017"] = cohort_year.between(2015, 2017, inclusive="both").astype(float)
+    frame["cohort_2018_2019"] = cohort_year.between(2018, 2019, inclusive="both").astype(float)
+    frame["cohort_2020_2021"] = cohort_year.between(2020, 2021, inclusive="both").astype(float)
+    frame["cohort_2022_plus"] = cohort_year.ge(2022).astype(float)
+    frame["entry_month_sin"] = np.sin(2.0 * np.pi * ((entry_month.fillna(1.0) - 1.0) / 12.0))
+    frame["entry_month_cos"] = np.cos(2.0 * np.pi * ((entry_month.fillna(1.0) - 1.0) / 12.0))
+    for feature_name in macro_category_feature_names():
+        macro_code = feature_name.split("__", 1)[1]
+        frame[feature_name] = macro_category_series.eq(macro_code).astype(float)
 
     if fill_missing:
         for column in frame.columns:
