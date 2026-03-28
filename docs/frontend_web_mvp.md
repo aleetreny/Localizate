@@ -34,7 +34,8 @@ Y produce:
 
 - agregados por hexagono H3 y categoria
 - opciones de selector
-- payload zonal para siguientes iteraciones de detalle
+- fichas resumidas de categoria apoyadas en `ACTIVITY_GLOSSARY.md`
+- payload zonal por barrio y distrito sobre la misma macrocategoria del mapa, con soporte, confianza y ranking intra-zona
 - metadata de viewport fijo sobre Madrid
 
 ## Convenciones del MVP
@@ -43,6 +44,7 @@ Y produce:
 - Riesgo `ensemble`: metrica secundaria de apoyo
 - Region primaria de UI: H3, no poligonos administrativos completos
 - Carga inicial: artefacto estatico, no fetch a backend
+- Semantica de soporte: cuando un horizonte no tiene soporte suficiente, `survival_12m/24m` se serializa como `null` y el frontend lo trata como `sin datos`, nunca como `0%`
 
 ## Arranque local
 
@@ -79,6 +81,6 @@ npm run build
 
 ## Siguiente iteracion natural
 
-- enriquecer el panel lateral con resumen de distrito/barrio
-- exponer mas comparativas de categoria en click de hexagono
+- enriquecer el panel lateral con comparativas socioeconomicas y de accesibilidad
+- exponer mas comparativas de categoria en click de hexagono dentro de la pantalla de prediccion
 - evaluar si conviene servir artefactos por viewport desde API ligera

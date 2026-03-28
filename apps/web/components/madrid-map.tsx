@@ -3,16 +3,17 @@
 import type { Color, PickingInfo } from "@deck.gl/core";
 import { H3HexagonLayer } from "@deck.gl/geo-layers";
 import { MapboxOverlay } from "@deck.gl/mapbox";
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import Map, { NavigationControl, useControl, type ViewState } from "react-map-gl/maplibre";
 
+import { formatHorizonShortLabel, getHorizonSupport, getHorizonSurvival, isFiniteNumber, type Horizon } from "@/lib/horizon";
 import type { Bounds, ColorScale, HexAggregate } from "@/lib/types";
 
 type MadridMapProps = {
   bounds: Bounds;
   colorScale: ColorScale;
   hexes: HexAggregate[];
-  horizon: "12m" | "24m";
+  horizon: Horizon;
   selectedHex: HexAggregate | null;
   onSelectHex: (hex: HexAggregate | null) => void;
 };
@@ -28,8 +29,35 @@ const INITIAL_ZOOM_INSET = 0.45;
 const INITIAL_LATITUDE_FOCUS_RATIO = 0.36;
 
 export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onSelectHex }: MadridMapProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{ left: number; top: number } | null>(null);
   const minZoom = getMinZoom(bounds);
+
+  useLayoutEffect(() => {
+    if (!tooltip) {
+      setTooltipPosition(null);
+      return;
+    }
+
+    const container = containerRef.current;
+    const bubble = tooltipRef.current;
+
+    if (!container || !bubble) {
+      return;
+    }
+
+    const padding = 12;
+    const offset = 14;
+    const maxLeft = Math.max(padding, container.clientWidth - bubble.offsetWidth - padding);
+    const maxTop = Math.max(padding, container.clientHeight - bubble.offsetHeight - padding);
+
+    setTooltipPosition({
+      left: clamp(tooltip.x + offset, padding, maxLeft),
+      top: clamp(tooltip.y + offset, padding, maxTop)
+    });
+  }, [tooltip, horizon]);
 
   const layers = useMemo(() => {
     return [
@@ -46,7 +74,7 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
         getLineColor: (item) =>
           selectedHex?.h3_cell === item.h3_cell ? [6, 39, 46, 255] : [255, 255, 255, 70],
         getHexagon: (item) => item.h3_cell,
-        getFillColor: (item) => colorForSurvival(horizon === "24m" ? item.survival_24m : item.survival_12m, colorScale),
+        getFillColor: (item) => colorForSurvival(getHorizonSurvival(item, horizon), colorScale),
         updateTriggers: {
           getFillColor: [horizon, colorScale.min, colorScale.low, colorScale.mid, colorScale.high, colorScale.max],
           getLineColor: [selectedHex?.h3_cell]
@@ -66,7 +94,7 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
   }, [colorScale.high, colorScale.low, colorScale.max, colorScale.mid, colorScale.min, hexes, horizon, onSelectHex, selectedHex?.h3_cell]);
 
   return (
-    <div className="map-canvas">
+    <div className="map-canvas" ref={containerRef}>
       <Map
         key={buildBoundsKey(bounds)}
         initialViewState={buildInitialViewState(bounds, minZoom)}
@@ -94,12 +122,19 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
       </Map>
 
       {tooltip ? (
-        <div className="tooltip" style={{ left: tooltip.x + 14, top: tooltip.y + 14 }}>
+        <div
+          className="tooltip"
+          ref={tooltipRef}
+          style={tooltipPosition ? tooltipPosition : { left: 0, top: 0, visibility: "hidden" }}
+        >
           <strong>{tooltip.object.category_desc}</strong>
+          <span>{tooltip.object.location_label}</span>
           <span>{tooltip.object.n_locales} locales en el hexágono</span>
           <span>
-            Supervivencia {horizon}: {((horizon === "24m" ? tooltip.object.survival_24m : tooltip.object.survival_12m) * 100).toFixed(0)}%
+            Supervivencia {formatHorizonShortLabel(horizon)}: {formatTooltipPercent(getHorizonSurvival(tooltip.object, horizon))}
           </span>
+          <small>Soporte {formatHorizonShortLabel(horizon)}: {getHorizonSupport(tooltip.object, horizon)}/{tooltip.object.n_locales} locales</small>
+          {getHorizonSupport(tooltip.object, horizon) <= 0 ? <small>Sin soporte suficiente para este horizonte.</small> : null}
           <small>Risk ensemble medio {tooltip.object.avg_risk_ensemble.toFixed(2)}</small>
         </div>
       ) : null}
@@ -142,7 +177,15 @@ function buildBoundsKey(bounds: Bounds) {
   return [bounds.min_lng, bounds.min_lat, bounds.max_lng, bounds.max_lat, bounds.min_zoom, bounds.max_zoom].join(":");
 }
 
-function colorForSurvival(value: number, scale: ColorScale): Color {
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function colorForSurvival(value: number | null, scale: ColorScale): Color {
+  if (!isFiniteNumber(value)) {
+    return [136, 142, 147, 96];
+  }
+
   const anchors = [scale.min, scale.low, scale.mid, scale.high, scale.max];
   const palette: ReadonlyArray<Color> = [
     [156, 56, 32, 232],
@@ -175,6 +218,13 @@ function colorForSurvival(value: number, scale: ColorScale): Color {
   }
 
   return palette[4];
+}
+
+function formatTooltipPercent(value: number | null) {
+  if (!isFiniteNumber(value)) {
+    return "Sin muestra";
+  }
+  return `${(value * 100).toFixed(0)}%`;
 }
 
 function interpolateColor(left: Color, right: Color, ratio: number): Color {
