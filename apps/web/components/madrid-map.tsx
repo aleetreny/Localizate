@@ -2,9 +2,9 @@
 
 import type { Color, PickingInfo } from "@deck.gl/core";
 import { H3HexagonLayer } from "@deck.gl/geo-layers";
-import { DeckGL } from "@deck.gl/react";
-import { useEffect, useMemo, useState } from "react";
-import Map, { NavigationControl, type ViewState } from "react-map-gl/maplibre";
+import { MapboxOverlay } from "@deck.gl/mapbox";
+import { useMemo, useState } from "react";
+import Map, { NavigationControl, useControl, type ViewState } from "react-map-gl/maplibre";
 
 import type { Bounds, ColorScale, HexAggregate } from "@/lib/types";
 
@@ -24,14 +24,11 @@ type TooltipState = {
 } | null;
 
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
+const INITIAL_ZOOM_INSET = 0.45;
 
 export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onSelectHex }: MadridMapProps) {
   const [tooltip, setTooltip] = useState<TooltipState>(null);
-  const [viewState, setViewState] = useState<ViewState>(() => buildInitialViewState(bounds));
-
-  useEffect(() => {
-    setViewState(buildInitialViewState(bounds));
-  }, [bounds]);
+  const minZoom = getMinZoom(bounds);
 
   const layers = useMemo(() => {
     return [
@@ -65,51 +62,35 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
         }
       })
     ];
-  }, [hexes, horizon, onSelectHex, selectedHex?.h3_cell]);
+  }, [colorScale.high, colorScale.low, colorScale.max, colorScale.mid, colorScale.min, hexes, horizon, onSelectHex, selectedHex?.h3_cell]);
 
   return (
     <div className="map-canvas">
-      <div className="map-base">
-        <Map
-          longitude={viewState.longitude}
-          latitude={viewState.latitude}
-          zoom={viewState.zoom}
-          bearing={viewState.bearing}
-          pitch={viewState.pitch}
-          onMove={(event) => setViewState(event.viewState)}
-          mapStyle={MAP_STYLE}
-          minZoom={bounds.min_zoom}
-          maxZoom={bounds.max_zoom}
-          reuseMaps
-          dragPan
-          scrollZoom
-          doubleClickZoom
-          touchZoomRotate
-          style={{ width: "100%", height: "100%" }}
-          maxBounds={[
-            [bounds.min_lng, bounds.min_lat],
-            [bounds.max_lng, bounds.max_lat]
-          ]}
-        >
-          <NavigationControl position="bottom-right" showCompass={false} />
-        </Map>
-      </div>
-
-      <div className="map-stage">
-        <DeckGL
-          controller={{ dragRotate: false, touchRotate: false }}
-          viewState={viewState}
-          onViewStateChange={({ viewState: nextViewState }) => setViewState(nextViewState as ViewState)}
-          layers={layers}
-          style={{ position: "absolute", top: "0px", right: "0px", bottom: "0px", left: "0px" }}
-          getCursor={({ isDragging, isHovering }) => {
-            if (isDragging) {
-              return "grabbing";
-            }
-            return isHovering ? "pointer" : "grab";
-          }}
-        />
-      </div>
+      <Map
+        key={buildBoundsKey(bounds)}
+        initialViewState={buildInitialViewState(bounds, minZoom)}
+        mapStyle={MAP_STYLE}
+        minZoom={minZoom}
+        maxZoom={bounds.max_zoom}
+        maxBounds={[
+          [bounds.min_lng, bounds.min_lat],
+          [bounds.max_lng, bounds.max_lat]
+        ]}
+        dragPan
+        scrollZoom
+        doubleClickZoom
+        touchZoomRotate={false}
+        dragRotate={false}
+        pitchWithRotate={false}
+        touchPitch={false}
+        maxPitch={0}
+        renderWorldCopies={false}
+        reuseMaps
+        style={{ width: "100%", height: "100%" }}
+      >
+        <NavigationControl position="bottom-right" showCompass={false} />
+        <DeckOverlay layers={layers} />
+      </Map>
 
       {tooltip ? (
         <div className="tooltip" style={{ left: tooltip.x + 14, top: tooltip.y + 14 }}>
@@ -125,15 +106,39 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
   );
 }
 
-function buildInitialViewState(bounds: Bounds): ViewState {
+function DeckOverlay({ layers }: { layers: H3HexagonLayer<HexAggregate>[] }) {
+  const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay({ interleaved: false }));
+
+  overlay.setProps({
+    layers,
+    getCursor: ({ isDragging, isHovering }) => {
+      if (isDragging) {
+        return "grabbing";
+      }
+      return isHovering ? "pointer" : "grab";
+    }
+  });
+
+  return null;
+}
+
+function buildInitialViewState(bounds: Bounds, minZoom: number): ViewState {
   return {
     longitude: (bounds.min_lng + bounds.max_lng) / 2,
     latitude: (bounds.min_lat + bounds.max_lat) / 2,
-    zoom: Math.min(bounds.min_zoom + 0.25, bounds.max_zoom),
+    zoom: minZoom,
     pitch: 0,
     bearing: 0,
     padding: { top: 0, right: 0, bottom: 0, left: 0 }
   };
+}
+
+function getMinZoom(bounds: Bounds) {
+  return Math.min(bounds.max_zoom, bounds.min_zoom + INITIAL_ZOOM_INSET);
+}
+
+function buildBoundsKey(bounds: Bounds) {
+  return [bounds.min_lng, bounds.min_lat, bounds.max_lng, bounds.max_lat, bounds.min_zoom, bounds.max_zoom].join(":");
 }
 
 function colorForSurvival(value: number, scale: ColorScale): Color {

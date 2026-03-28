@@ -240,19 +240,9 @@ select {
   inset: 0;
 }
 
-.map-base,
-.map-stage,
-.map-stage > div,
-.map-stage canvas,
 .map-canvas .maplibregl-map {
   width: 100%;
   height: 100%;
-}
-
-.map-base,
-.map-stage {
-  position: absolute;
-  inset: 0;
 }
 
 .map-overlay {
@@ -308,6 +298,13 @@ select {
 .tooltip span + span,
 .tooltip span + small {
   margin-top: 2px;
+}
+
+.map-canvas .overlays,
+.map-canvas .deckgl-overlay,
+.map-canvas .deckgl-overlay canvas {
+  width: 100%;
+  height: 100%;
 }
 
 @media (max-width: 1080px) {

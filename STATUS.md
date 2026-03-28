@@ -14,6 +14,7 @@ Nota de implementacion en curso (2026-03-27):
 - El primer MVP web ya compila en `production build`, renderiza hexagonos H3 de Madrid, permite selector por tipo de local, horizonte `12m/24m`, filtro de calidad y panel lateral de detalle.
 - Ajuste de UX del mapa web aplicado: vista completa en desktop sin scroll de pagina, sidebar con scroll propio y estado de camara compartido entre mapa base y capa H3 para que pan/zoom mantengan los hexagonos anclados al mapa.
 - Refinamiento adicional del mapa aplicado: escala de color dinamica por filtro visual, tooltip compacto autoajustado al texto, mayor legibilidad del mapa base y retirada del control de calidad / banner de viewport para simplificar la experiencia.
+- Endurecimiento de navegacion del mapa web aplicado: la capa H3 ya no gobierna una camara paralela, sino que se monta como overlay nativo de `MapLibre`; ademas se acota el zoom out minimo y se desactivan rotaciones/world copies para evitar cualquier descuadre persistente entre hexagonos y mapa base.
 - Pendiente tras este bloque: enriquecer detalle de zona, conectar comparativas distrito/barrio en UI y decidir cuando sustituir artefactos estaticos por una API ligera.
 
 ## Identidad del proyecto
