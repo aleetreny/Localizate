@@ -15,6 +15,8 @@ Nota de implementacion en curso (2026-03-27):
 - Ajuste de UX del mapa web aplicado: vista completa en desktop sin scroll de pagina, sidebar con scroll propio y estado de camara compartido entre mapa base y capa H3 para que pan/zoom mantengan los hexagonos anclados al mapa.
 - Refinamiento adicional del mapa aplicado: escala de color dinamica por filtro visual, tooltip compacto autoajustado al texto, mayor legibilidad del mapa base y retirada del control de calidad / banner de viewport para simplificar la experiencia.
 - Endurecimiento de navegacion del mapa web aplicado: la capa H3 ya no gobierna una camara paralela, sino que se monta como overlay nativo de `MapLibre`; ademas se acota el zoom out minimo y se desactivan rotaciones/world copies para evitar cualquier descuadre persistente entre hexagonos y mapa base.
+- Afinado visual adicional del frontend web: la carga inicial del mapa se desplaza hacia Madrid mas central para evitar arrancar demasiado al norte y la escala cromatica pasa a degradar con transicion mas suave, limitando el tramo naranja para que valores altos (>=95% aprox.) entren antes en la zona neutra/verde y la leyenda no colapse en etiquetas repetidas de `100%`.
+- Simplificacion adicional de la UI web aplicada: se retira la escala de color del lateral para dejar el panel centrado en filtro, metricas y detalle, manteniendo el coloreado solo como soporte visual dentro del mapa.
 - Pendiente tras este bloque: enriquecer detalle de zona, conectar comparativas distrito/barrio en UI y decidir cuando sustituir artefactos estaticos por una API ligera.
 
 ## Identidad del proyecto

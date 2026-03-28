@@ -112,16 +112,6 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
           </div>
         </div>
 
-        <div className="legend">
-          <span className="control-label">Escala de color</span>
-          <div className="legend-bar" />
-          <div className="legend-scale">
-            <span>{formatPercent(colorScale.min)}</span>
-            <span>{formatPercent(colorScale.mid)}</span>
-            <span>{formatPercent(colorScale.max)}</span>
-          </div>
-        </div>
-
         <section className="detail-card">
           <div className="eyebrow">Detalle activo</div>
           {detail ? (
@@ -178,13 +168,57 @@ function buildColorScale(hexes: HexAggregate[], horizon: Horizon): ColorScale {
     return { min: 0, low: 0.25, mid: 0.5, high: 0.75, max: 1 };
   }
 
-  return {
-    min: quantile(values, 0),
-    low: quantile(values, 0.2),
-    mid: quantile(values, 0.5),
-    high: quantile(values, 0.8),
-    max: quantile(values, 1)
+  const min = quantile(values, 0);
+  const max = quantile(values, 1);
+  const range = max - min;
+
+  if (range <= 1e-6) {
+    return { min, low: min, mid: min, high: min, max };
+  }
+
+  if (range < 0.025) {
+    return {
+      min,
+      low: min + range * 0.24,
+      mid: min + range * 0.52,
+      high: min + range * 0.8,
+      max
+    };
+  }
+
+  const rawScale = {
+    min,
+    low: quantile(values, 0.18),
+    mid: Math.min(quantile(values, 0.5), max > 0.95 ? 0.95 : max),
+    high: quantile(values, 0.88),
+    max
   };
+
+  return ensureProgressiveScale(rawScale);
+}
+
+function ensureProgressiveScale(scale: ColorScale): ColorScale {
+  const range = scale.max - scale.min;
+  if (range <= 1e-6) {
+    return scale;
+  }
+
+  const epsilon = Math.min(0.012, range / 6);
+  const low = clamp(scale.low, scale.min + epsilon, scale.max - epsilon * 3);
+  const mid = clamp(scale.mid, low + epsilon, scale.max - epsilon * 2);
+  const high = clamp(scale.high, mid + epsilon, scale.max - epsilon);
+
+  return {
+    min: scale.min,
+    low,
+    mid,
+    high,
+    max: scale.max
+  };
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
 }
 
 function quantile(sortedValues: number[], q: number) {

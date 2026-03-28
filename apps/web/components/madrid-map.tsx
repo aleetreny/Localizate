@@ -25,6 +25,7 @@ type TooltipState = {
 
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
 const INITIAL_ZOOM_INSET = 0.45;
+const INITIAL_LATITUDE_FOCUS_RATIO = 0.36;
 
 export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onSelectHex }: MadridMapProps) {
   const [tooltip, setTooltip] = useState<TooltipState>(null);
@@ -125,7 +126,7 @@ function DeckOverlay({ layers }: { layers: H3HexagonLayer<HexAggregate>[] }) {
 function buildInitialViewState(bounds: Bounds, minZoom: number): ViewState {
   return {
     longitude: (bounds.min_lng + bounds.max_lng) / 2,
-    latitude: (bounds.min_lat + bounds.max_lat) / 2,
+    latitude: bounds.min_lat + (bounds.max_lat - bounds.min_lat) * INITIAL_LATITUDE_FOCUS_RATIO,
     zoom: minZoom,
     pitch: 0,
     bearing: 0,
@@ -144,10 +145,10 @@ function buildBoundsKey(bounds: Bounds) {
 function colorForSurvival(value: number, scale: ColorScale): Color {
   const anchors = [scale.min, scale.low, scale.mid, scale.high, scale.max];
   const palette: ReadonlyArray<Color> = [
-    [158, 55, 32, 232],
-    [210, 120, 44, 220],
-    [235, 196, 91, 212],
-    [96, 166, 133, 214],
+    [156, 56, 32, 232],
+    [196, 106, 52, 224],
+    [228, 192, 122, 214],
+    [142, 181, 156, 216],
     [27, 112, 123, 230]
   ];
 
