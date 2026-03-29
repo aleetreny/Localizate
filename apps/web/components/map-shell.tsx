@@ -1,18 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { MadridMap } from "@/components/madrid-map";
+import { ViewTabs } from "@/components/view-tabs";
 import { formatHorizonLongLabel, formatHorizonShortLabel, getHorizonSupport, getHorizonSurvival, isFiniteNumber, type Horizon } from "@/lib/horizon";
+import { FALLBACK_MAP_ARTIFACTS, loadMapArtifactsFromPublic } from "@/lib/public-data";
 import type { ColorScale, FrontendArtifacts, HexAggregate, ZoneAggregate } from "@/lib/types";
 
 type MapShellProps = {
-  initialArtifacts: FrontendArtifacts;
+  initialArtifacts?: FrontendArtifacts;
 };
 
-type DetailMetricProps = {
+type MetricDefinition = {
+  id: string;
   label: string;
   value: string;
+  summary: string;
+  calculation: string;
 };
 
 type ZoneListProps = {
@@ -21,25 +26,69 @@ type ZoneListProps = {
 };
 
 export function MapShell({ initialArtifacts }: MapShellProps) {
-  const [selectedCategory, setSelectedCategory] = useState(initialArtifacts.meta.defaultCategoryCode);
+  const [artifacts, setArtifacts] = useState(initialArtifacts ?? FALLBACK_MAP_ARTIFACTS);
+  const [isLoadingArtifacts, setIsLoadingArtifacts] = useState(!initialArtifacts);
+  const [selectedCategory, setSelectedCategory] = useState((initialArtifacts ?? FALLBACK_MAP_ARTIFACTS).meta.defaultCategoryCode);
   const [horizon, setHorizon] = useState<Horizon>("24m");
   const [selectedHex, setSelectedHex] = useState<HexAggregate | null>(null);
+  const [activeMetricId, setActiveMetricId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+
+    if (initialArtifacts) {
+      return () => {
+        alive = false;
+      };
+    }
+
+    void loadMapArtifactsFromPublic().then((nextArtifacts) => {
+      if (!alive) {
+        return;
+      }
+
+      setArtifacts(nextArtifacts);
+      setIsLoadingArtifacts(false);
+      setSelectedHex(null);
+      setSelectedCategory((currentCategory) => {
+        return nextArtifacts.categories.some((item) => item.category_code === currentCategory)
+          ? currentCategory
+          : nextArtifacts.meta.defaultCategoryCode;
+      });
+    });
+
+    return () => {
+      alive = false;
+    };
+  }, [initialArtifacts]);
+
+  useEffect(() => {
+    if (!selectedHex) {
+      return;
+    }
+
+    if (artifacts.hexes.some((item) => item.h3_cell === selectedHex.h3_cell && item.category_code === selectedHex.category_code)) {
+      return;
+    }
+
+    setSelectedHex(null);
+  }, [artifacts.hexes, selectedHex]);
 
   const selectedCategoryMeta = useMemo(() => {
-    return initialArtifacts.categories.find((item) => item.category_code === selectedCategory) ?? initialArtifacts.categories[0];
-  }, [initialArtifacts.categories, selectedCategory]);
+    return artifacts.categories.find((item) => item.category_code === selectedCategory) ?? artifacts.categories[0];
+  }, [artifacts.categories, selectedCategory]);
 
   const filteredHexes = useMemo(() => {
-    return initialArtifacts.hexes.filter((item) => item.category_code === selectedCategory);
-  }, [initialArtifacts.hexes, selectedCategory]);
+    return artifacts.hexes.filter((item) => item.category_code === selectedCategory);
+  }, [artifacts.hexes, selectedCategory]);
 
   const filteredDistrictZones = useMemo(() => {
-    return initialArtifacts.zones.district.filter((item) => item.category_code === selectedCategory);
-  }, [initialArtifacts.zones.district, selectedCategory]);
+    return artifacts.zones.district.filter((item) => item.category_code === selectedCategory);
+  }, [artifacts.zones.district, selectedCategory]);
 
   const filteredBarrioZones = useMemo(() => {
-    return initialArtifacts.zones.barrio.filter((item) => item.category_code === selectedCategory);
-  }, [initialArtifacts.zones.barrio, selectedCategory]);
+    return artifacts.zones.barrio.filter((item) => item.category_code === selectedCategory);
+  }, [artifacts.zones.barrio, selectedCategory]);
 
   const colorScale = useMemo(() => buildColorScale(filteredHexes, horizon), [filteredHexes, horizon]);
 
@@ -97,10 +146,40 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
     };
   }, [filteredBarrioZones, filteredDistrictZones]);
 
+  const detailMetrics = useMemo(() => {
+    if (!detail) {
+      return [];
+    }
+
+    return buildHexMetrics({
+      detail,
+      detailRank,
+      detailSupport,
+      detailSurvival,
+      horizon,
+      meanSurvival: activeStats.meanSurvival
+    });
+  }, [activeStats.meanSurvival, detail, detailRank, detailSupport, detailSurvival, horizon]);
+
+  const activeMetric = detailMetrics.find((metric) => metric.id === activeMetricId) ?? null;
+
+  useEffect(() => {
+    if (!activeMetricId) {
+      return;
+    }
+
+    if (detailMetrics.some((metric) => metric.id === activeMetricId)) {
+      return;
+    }
+
+    setActiveMetricId(null);
+  }, [activeMetricId, detailMetrics]);
+
   return (
     <main className="app-shell">
       <aside className="sidebar panel">
         <div>
+          <ViewTabs />
           <div className="eyebrow">Localizate / Madrid</div>
           <h1>Mapa de supervivencia comercial.</h1>
         </div>
@@ -120,7 +199,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
               setSelectedHex(null);
             }}
           >
-            {initialArtifacts.categories.map((category) => (
+            {artifacts.categories.map((category) => (
               <option key={category.category_code} value={category.category_code}>
                 {category.category_desc}
               </option>
@@ -158,7 +237,11 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
             <span className="value">{formatCompact(activeStats.hexes)}</span>
           </div>
         </div>
-        <p className="support-note">{buildGlobalSupportNote(activeStats.hexesWithSupport, activeStats.hexes, horizon)}</p>
+        <p className="support-note">
+          {isLoadingArtifacts
+            ? "Cargando el artefacto histórico del mapa. La vista aparece primero y los hexágonos se hidratan en segundo plano."
+            : buildGlobalSupportNote(activeStats.hexesWithSupport, activeStats.hexes, horizon)}
+        </p>
 
         <section className="info-card">
           <div className="eyebrow">Ficha categoria</div>
@@ -183,16 +266,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
                 <span className={`chip${detailSurvival === null ? " chip-muted" : ""}`}>Surv {formatPercent(detailSurvival, detailSupport > 0 ? "Sin datos" : "Sin muestra")}</span>
                 <span className="chip">Soporte {detailSupport}/{detail.n_locales}</span>
               </div>
-              <div className="detail-grid">
-                <DetailMetric label="Ranking Madrid" value={detailRank ? formatHexRank(detailRank.rank, detailRank.total) : "-"} />
-                <DetailMetric label="Percentil riesgo" value={formatRiskPercentile(detail.avg_risk_percentile)} />
-                <DetailMetric label="Riesgo local" value={formatRiskValue(detail.avg_risk_ensemble)} />
-                <DetailMetric label={`Vs media ${formatHorizonShortLabel(horizon)}`} value={formatSignedPercent(computeSurvivalDelta(detailSurvival, activeStats.meanSurvival), detailSupport > 0 && activeStats.hexesWithSupport > 0 ? "Sin datos" : "Sin muestra")} />
-                <DetailMetric label={`Supervivencia ${formatHorizonShortLabel(horizon)}`} value={formatPercent(detailSurvival, detailSupport > 0 ? "Sin datos" : "Sin muestra")} />
-                <DetailMetric label={`Soporte ${formatHorizonShortLabel(horizon)}`} value={formatSupport(detailSupport, detail.n_locales)} />
-                <DetailMetric label="Barrio" value={detail.barrio_name || "Sin asignar"} />
-                <DetailMetric label="Distrito" value={detail.district_name || "Sin asignar"} />
-              </div>
+              <MetricGrid activeMetricId={activeMetricId} metrics={detailMetrics} onSelect={setActiveMetricId} />
               <p className="detail-footnote">{buildDetailSupportNote(detailSupport, detail.n_locales, horizon)}</p>
             </>
           ) : (
@@ -205,8 +279,14 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
       </aside>
 
       <section className="map-panel panel">
+        {activeMetric ? (
+          <div className="map-overlay panel metric-banner">
+            <MetricExplainer metric={activeMetric} />
+          </div>
+        ) : null}
+
         <MadridMap
-          bounds={initialArtifacts.meta.map_bounds}
+          bounds={artifacts.meta.map_bounds}
           colorScale={colorScale}
           horizon={horizon}
           hexes={filteredHexes}
@@ -218,11 +298,67 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   );
 }
 
-function DetailMetric({ label, value }: DetailMetricProps) {
+function MetricGrid({
+  metrics,
+  activeMetricId,
+  onSelect
+}: {
+  metrics: MetricDefinition[];
+  activeMetricId: string | null;
+  onSelect: (metricId: string | null) => void;
+}) {
   return (
-    <div className="detail-metric">
-      <span className="detail-metric-label">{label}</span>
-      <strong className="detail-metric-value">{value}</strong>
+    <div className="detail-grid">
+      {metrics.map((metric) => {
+        const isActive = activeMetricId === metric.id;
+        return (
+          <button
+            aria-pressed={isActive}
+            className="detail-metric detail-metric-button"
+            data-active={isActive}
+            key={metric.id}
+            onClick={() => onSelect(isActive ? null : metric.id)}
+            type="button"
+          >
+            <span className="detail-metric-label">{metric.label}</span>
+            <strong className="detail-metric-value">{metric.value}</strong>
+            <span className="detail-metric-hint">Qué es, para qué sirve y cómo se calcula</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function MetricExplainer({ metric }: { metric: MetricDefinition | null }) {
+  return (
+    <div className="metric-explainer" data-empty={metric ? "false" : "true"}>
+      <div className="eyebrow">Definición de métrica</div>
+      {metric ? (
+        <>
+          <h3>{metric.label}</h3>
+          <div className="metric-explainer-block">
+            <span className="metric-explainer-label">Qué significa</span>
+            <p className="metric-explainer-copy">{metric.summary}</p>
+          </div>
+          <div className="metric-explainer-block">
+            <span className="metric-explainer-label">Por qué te ayuda</span>
+            <p className="metric-explainer-copy">{buildMetricWhyUseful(metric)}</p>
+          </div>
+          <div className="metric-explainer-block">
+            <span className="metric-explainer-label">Cómo se calcula</span>
+            <p className="metric-explainer-copy">{metric.calculation}</p>
+          </div>
+          {buildMetricExample(metric) ? (
+            <div className="metric-explainer-block">
+              <span className="metric-explainer-label">Ejemplo rápido</span>
+              <p className="metric-explainer-copy">{buildMetricExample(metric)}</p>
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <p className="metric-explainer-copy">Haz click en una tarjeta del hexágono para ver qué significa, por qué es útil y cómo se calcula.</p>
+      )}
     </div>
   );
 }
@@ -354,6 +490,123 @@ function buildTopZones(zones: ZoneAggregate[]) {
       return left.zone_name.localeCompare(right.zone_name, "es");
     })
     .slice(0, 3);
+}
+
+function buildHexMetrics({
+  detail,
+  detailRank,
+  detailSupport,
+  detailSurvival,
+  horizon,
+  meanSurvival
+}: {
+  detail: HexAggregate;
+  detailRank: { rank: number; total: number } | null;
+  detailSupport: number;
+  detailSurvival: number | null;
+  horizon: Horizon;
+  meanSurvival: number | null;
+}): MetricDefinition[] {
+  const horizonLabel = formatHorizonShortLabel(horizon);
+  return [
+    {
+      id: `hex:${detail.h3_cell}:city-rank`,
+      label: "Ranking Madrid",
+      value: detailRank ? formatHexRank(detailRank.rank, detailRank.total) : "-",
+      summary: "Posición del hexágono frente al resto de hexágonos visibles de la categoría cuando ordenas por menor riesgo.",
+      calculation: "Ordenamos todos los hexágonos visibles por riesgo medio ascendente y asignamos la posición relativa del hexágono seleccionado."
+    },
+    {
+      id: `hex:${detail.h3_cell}:risk-percentile`,
+      label: "Percentil riesgo",
+      value: formatRiskPercentile(detail.avg_risk_percentile),
+      summary: "Ubica el riesgo del hexágono dentro de la distribución de la categoría en Madrid.",
+      calculation: "Convertimos el riesgo relativo del hexágono a percentil para expresar qué parte del mapa tiene un riesgo igual o menor."
+    },
+    {
+      id: `hex:${detail.h3_cell}:risk-value`,
+      label: "Riesgo local",
+      value: formatRiskValue(detail.avg_risk_ensemble),
+      summary: "Es el score bruto medio de riesgo del modelo en este hexágono.",
+      calculation: "Promediamos el score ensemble de los locales históricos de esta categoría que caen dentro del hexágono."
+    },
+    {
+      id: `hex:${detail.h3_cell}:vs-category`,
+      label: `Vs media ${horizonLabel}`,
+      value: formatSignedPercent(computeSurvivalDelta(detailSurvival, meanSurvival), detailSupport > 0 && isFiniteNumber(meanSurvival) ? "Sin datos" : "Sin muestra"),
+      summary: "Mide cuánto mejor o peor rinde este hexágono frente a la media de la categoría activa.",
+      calculation: `Restamos la supervivencia media de la categoría a la supervivencia del hexágono en ${horizonLabel} y expresamos la diferencia en puntos porcentuales.`
+    },
+    {
+      id: `hex:${detail.h3_cell}:survival:${horizon}`,
+      label: `Supervivencia ${horizonLabel}`,
+      value: formatPercent(detailSurvival, detailSupport > 0 ? "Sin datos" : "Sin muestra"),
+      summary: `Es la supervivencia observada de la categoría en este hexágono para ${horizonLabel}.`,
+      calculation: `Usamos solo locales con soporte suficiente en ${horizonLabel} y calculamos la supervivencia observada agregada para este hexágono.`
+    },
+    {
+      id: `hex:${detail.h3_cell}:support:${horizon}`,
+      label: `Soporte ${horizonLabel}`,
+      value: formatSupport(detailSupport, detail.n_locales),
+      summary: "Indica cuántos locales realmente sostienen la métrica del horizonte frente al total visible en el hexágono.",
+      calculation: `El numerador cuenta los locales con observación válida en ${horizonLabel}; el denominador es el total de locales agregados del hexágono.`
+    },
+    {
+      id: `hex:${detail.h3_cell}:barrio-name`,
+      label: "Barrio",
+      value: detail.barrio_name || "Sin asignar",
+      summary: "Nombre aproximado del barrio al que pertenece la mayor parte del hexágono.",
+      calculation: "Se infiere a partir de la geografía censal enlazada al hexágono y se usa como referencia interpretativa, no como límite exacto del polígono H3."
+    },
+    {
+      id: `hex:${detail.h3_cell}:district-name`,
+      label: "Distrito",
+      value: detail.district_name || "Sin asignar",
+      summary: "Distrito administrativo asociado al hexágono para facilitar lectura territorial rápida.",
+      calculation: "Se recupera desde la mejor asignación geográfica disponible entre las secciones históricas y el hexágono H3."
+    }
+  ];
+}
+
+function buildMetricWhyUseful(metric: MetricDefinition) {
+  if (metric.id.endsWith(":city-rank")) {
+    return "Te ayuda a priorizar rápido: con una sola cifra ves si este hexágono está entre los mejores o peores de la categoría activa dentro de Madrid.";
+  }
+  if (metric.id.endsWith(":risk-percentile")) {
+    return "Es útil cuando quieres comparar zonas sin entrar en el detalle técnico del score: te dice si estás en una parte más segura o más delicada del mapa.";
+  }
+  if (metric.id.endsWith(":risk-value")) {
+    return "Sirve para comparar intensidad de riesgo con más precisión cuando dos hexágonos tienen percentiles parecidos pero no idénticos.";
+  }
+  if (metric.id.endsWith(":vs-category")) {
+    return "Te da contexto relativo: no solo ves cómo rinde el hexágono, sino si está por encima o por debajo del nivel normal de la categoría.";
+  }
+  if (metric.id.includes(":survival:")) {
+    return "Es la señal más directa para entender qué probabilidad histórica tiene esa categoría de aguantar en esta zona durante el horizonte elegido.";
+  }
+  if (metric.id.includes(":support:")) {
+    return "Evita sobreinterpretar celdas con poca base histórica: cuanto mayor es el soporte, más robusta suele ser la lectura.";
+  }
+  if (metric.id.endsWith(":barrio-name") || metric.id.endsWith(":district-name")) {
+    return "Te orienta territorialmente y hace más fácil relacionar el hexágono con zonas reconocibles de Madrid sin tener que leer un identificador H3.";
+  }
+  return "Aporta contexto adicional para interpretar mejor el comportamiento histórico del hexágono seleccionado.";
+}
+
+function buildMetricExample(metric: MetricDefinition) {
+  if (metric.id.endsWith(":city-rank")) {
+    return "Ejemplo: #45 de 3.200 significa que este hexágono está muy arriba dentro del mapa de esa categoría cuando ordenas por menor riesgo.";
+  }
+  if (metric.id.endsWith(":risk-percentile")) {
+    return "Ejemplo: P20 indica que el hexágono tiene menos riesgo que aproximadamente el 80% de los hexágonos comparables.";
+  }
+  if (metric.id.endsWith(":vs-category")) {
+    return "Ejemplo: +6 pp significa que la supervivencia del hexágono está 6 puntos porcentuales por encima de la media de la categoría.";
+  }
+  if (metric.id.includes(":support:")) {
+    return "Ejemplo: 18 / 26 quiere decir que 18 locales del total de 26 tienen observación válida para ese horizonte.";
+  }
+  return null;
 }
 
 function buildHexRanking(hexes: HexAggregate[], detail: HexAggregate, _horizon: Horizon) {

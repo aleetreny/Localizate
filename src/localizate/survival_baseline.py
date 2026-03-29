@@ -360,7 +360,7 @@ def build_feature_frame(dataset: pd.DataFrame, *, fill_missing: bool = True) -> 
     frame["population_density_km2_start"] = pd.to_numeric(dataset.get("population_density_km2_start"), errors="coerce")
     frame["padron_lag_months_start"] = pd.to_numeric(dataset.get("padron_lag_months_start"), errors="coerce")
     frame["geometry_available_start"] = pd.to_numeric(dataset.get("geometry_available_start"), errors="coerce")
-    frame["missing_h3"] = dataset.get("h3_cell_start").isna().astype(float)
+    frame["missing_h3"] = dataset.get("h3_cell_start", pd.Series(pd.NA, index=dataset.index)).isna().astype(float)
     frame["n_divisions_start"] = pd.to_numeric(dataset.get("n_divisions_start"), errors="coerce")
     frame["n_epigrafes_start"] = pd.to_numeric(dataset.get("n_epigrafes_start"), errors="coerce")
     frame["n_activity_categories_start"] = pd.to_numeric(dataset.get("n_activity_categories_start"), errors="coerce")
@@ -418,8 +418,25 @@ def build_feature_frame(dataset: pd.DataFrame, *, fill_missing: bool = True) -> 
     return frame
 
 
-def compute_linear_risk_score(features: pd.DataFrame) -> pd.Series:
-    z = (features - features.mean()) / features.std(ddof=0).replace(0, 1)
+def compute_linear_risk_score(
+    features: pd.DataFrame,
+    *,
+    reference_means: pd.Series | None = None,
+    reference_stds: pd.Series | None = None,
+) -> pd.Series:
+    if reference_means is None:
+        resolved_means = features.mean()
+    else:
+        resolved_means = reference_means.reindex(features.columns)
+
+    if reference_stds is None:
+        resolved_stds = features.std(ddof=0)
+    else:
+        resolved_stds = reference_stds.reindex(features.columns)
+
+    resolved_means = pd.to_numeric(resolved_means, errors="coerce").fillna(0.0)
+    resolved_stds = pd.to_numeric(resolved_stds, errors="coerce").replace(0, 1).fillna(1.0)
+    z = (features - resolved_means) / resolved_stds
     score = (
         -0.35 * z["renta_effective_eur"]
         + 0.10 * z["renta_carry_forward_years"]
@@ -460,10 +477,17 @@ def compute_linear_risk_score(features: pd.DataFrame) -> pd.Series:
     return score.astype(float)
 
 
-def score_to_probability(score: pd.Series) -> pd.Series:
-    std = float(pd.to_numeric(score, errors="coerce").std(ddof=0))
+def score_to_probability(
+    score: pd.Series,
+    *,
+    reference_mean: float | None = None,
+    reference_std: float | None = None,
+) -> pd.Series:
+    score_numeric = pd.to_numeric(score, errors="coerce")
+    mean = float(reference_mean) if reference_mean is not None and np.isfinite(reference_mean) else float(score_numeric.mean())
+    std = float(reference_std) if reference_std is not None and np.isfinite(reference_std) else float(score_numeric.std(ddof=0))
     denom = std if np.isfinite(std) and std > 0 else 1.0
-    z = (score - score.mean()) / denom
+    z = (score_numeric - mean) / denom
     clipped = z.clip(lower=-6, upper=6)
     prob = 1.0 / (1.0 + np.exp(-clipped))
     return pd.Series(prob, index=score.index, dtype=float)

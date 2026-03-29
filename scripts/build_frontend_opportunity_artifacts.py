@@ -1,0 +1,1306 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+from pathlib import Path
+import sys
+
+import numpy as np
+import pandas as pd
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SRC_DIR = PROJECT_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from localizate.manual_available_locales import MADRID_BBOX  # noqa: E402
+from localizate.section_geography import load_section_geodataframe  # noqa: E402
+from localizate.section_keys import normalize_section_key_series  # noqa: E402
+from localizate.survival_baseline import apply_training_policies, build_feature_frame, compute_linear_risk_score  # noqa: E402
+from localizate.survival_features import build_avisos_yearly_features, compute_metro_features, normalize_admin_code  # noqa: E402
+
+
+AVAILABLE_LISTINGS_CSV = PROJECT_ROOT / "data" / "exports" / "manual_available_locales_madrid.csv"
+SELECTED_LISTINGS_CSV = PROJECT_ROOT / "data" / "exports" / "manual_available_locales_madrid_selected.csv"
+SELECTED_SUMMARY_JSON = PROJECT_ROOT / "data" / "processed" / "manual_available_locales_madrid_selected_summary.json"
+SECTION_PANEL_CSV = PROJECT_ROOT / "data" / "processed" / "section_socioeconomic_panel.csv"
+LOCAL_SURVIVAL_ABT_CSV = PROJECT_ROOT / "data" / "features" / "local_survival_abt.csv"
+DISTRICT_CATEGORY_CSV = PROJECT_ROOT / "data" / "exports" / "district_category_survival.csv"
+BARRIO_CATEGORY_CSV = PROJECT_ROOT / "data" / "exports" / "barrio_category_survival.csv"
+FRONTEND_OUTPUT_JSON = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-opportunity-artifacts.json"
+FRONTEND_SECTIONS_GEOJSON = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-opportunity-sections.geojson"
+
+CALIBRATION_BUCKETS = 20
+SECTION_SIMPLIFY_TOLERANCE_M = 8.0
+RECENT_LOOKBACK_MONTHS = 36
+ACTIVITY_PRIOR_STRENGTH = 25.0
+UNSUPPORTED_ACTIVITY_PENALTY = 0.03
+POINT_OUTPUT_COLUMNS = [
+    "listing_id",
+    "listing_url",
+    "card_title",
+    "address_text",
+    "operation",
+    "price_eur",
+    "price_per_m2_eur",
+    "area_m2",
+    "lat_wgs84",
+    "lon_wgs84",
+    "section_key",
+    "district_code",
+    "district_name",
+    "barrio_code",
+    "barrio_name",
+    "risk_score",
+    "risk_percentile",
+    "expected_survival_12m",
+    "expected_survival_24m",
+    "opportunity_tier",
+    "city_rank",
+    "city_total_sections",
+    "district_rank",
+    "district_total_sections",
+    "barrio_rank",
+    "barrio_total_sections",
+    "renta_effective_eur",
+    "total_population_start",
+    "population_density_km2_start",
+    "age_mean_start",
+    "share_foreign_start",
+    "share_age_15_29_start",
+    "metro_distance_m_start",
+    "metro_access_count_500m_start",
+    "metro_access_count_1000m_start",
+    "avisos_barrio_per_1000_prev_year",
+    "avisos_district_per_1000_prev_year",
+    "section_local_count_start",
+    "section_unique_activity_category_count_start",
+    "section_turnover_rate_12m_start",
+    "section_same_activity_category_share_start",
+    "best_activity_label",
+    "best_activity_risk",
+    "best_activity_survival_24m",
+]
+
+ABT_USECOLS = [
+    "first_seen_period",
+    "duration_months",
+    "event_observed",
+    "section_key_start",
+    "district_code_start",
+    "barrio_code_start",
+    "h3_cell_start",
+    "coord_transform_status_start",
+    "padron_lag_months_start",
+    "total_population_start",
+    "age_mean_start",
+    "renta_best_eur_start",
+    "share_foreign_start",
+    "share_male_start",
+    "share_age_00_14_start",
+    "share_age_15_29_start",
+    "share_age_30_44_start",
+    "share_age_45_64_start",
+    "share_age_65_plus_start",
+    "population_density_km2_start",
+    "total_population_delta_12m_start",
+    "share_foreign_delta_12m_start",
+    "share_age_15_29_delta_12m_start",
+    "population_density_km2_delta_12m_start",
+    "renta_best_eur_delta_12m_start",
+    "n_divisions_start",
+    "n_epigrafes_start",
+    "n_activity_categories_start",
+    "section_local_count_start",
+    "section_unique_division_count_start",
+    "section_unique_activity_category_count_start",
+    "section_single_division_share_start",
+    "section_same_division_local_count_start",
+    "section_same_division_share_start",
+    "section_same_activity_category_local_count_start",
+    "section_same_activity_category_share_start",
+    "section_entry_count_3m_start",
+    "section_entry_count_6m_start",
+    "section_entry_count_12m_start",
+    "section_exit_count_3m_start",
+    "section_exit_count_6m_start",
+    "section_exit_count_12m_start",
+    "section_entry_rate_12m_start",
+    "section_exit_rate_12m_start",
+    "section_net_flow_12m_start",
+    "section_turnover_rate_12m_start",
+    "section_division_hhi_start",
+    "section_division_top_share_start",
+    "section_activity_category_hhi_start",
+    "section_activity_category_top_share_start",
+    "section_local_count_delta_12m_start",
+    "geometry_available_start",
+    "avisos_district_per_1000_prev_year",
+    "avisos_barrio_per_1000_prev_year",
+    "avisos_barrio_share_of_district_prev_year",
+    "metro_distance_m_start",
+    "metro_access_count_500m_start",
+    "metro_access_count_1000m_start",
+    "missing_metro_distance_start",
+]
+
+SECTION_PROFILE_MEDIAN_COLUMNS = [
+    "section_local_count_start",
+    "section_unique_division_count_start",
+    "section_unique_activity_category_count_start",
+    "section_single_division_share_start",
+    "section_same_division_local_count_start",
+    "section_same_division_share_start",
+    "section_same_activity_category_local_count_start",
+    "section_same_activity_category_share_start",
+    "section_entry_count_3m_start",
+    "section_entry_count_6m_start",
+    "section_entry_count_12m_start",
+    "section_exit_count_3m_start",
+    "section_exit_count_6m_start",
+    "section_exit_count_12m_start",
+    "section_entry_rate_12m_start",
+    "section_exit_rate_12m_start",
+    "section_net_flow_12m_start",
+    "section_turnover_rate_12m_start",
+    "section_division_hhi_start",
+    "section_division_top_share_start",
+    "section_activity_category_hhi_start",
+    "section_activity_category_top_share_start",
+    "section_local_count_delta_12m_start",
+]
+
+
+def main() -> int:
+    selected_listings, filter_summary = build_selected_available_listings(AVAILABLE_LISTINGS_CSV)
+    reference = build_reference_inputs(LOCAL_SURVIVAL_ABT_CSV)
+    section_profiles, sections_geojson = build_section_profiles(reference)
+    selected_scored = score_selected_available_listings(selected_listings, section_profiles, reference)
+
+    SELECTED_LISTINGS_CSV.parent.mkdir(parents=True, exist_ok=True)
+    selected_scored[POINT_OUTPUT_COLUMNS].to_csv(SELECTED_LISTINGS_CSV, index=False)
+
+    summary = build_selected_summary(selected_scored, filter_summary)
+    SELECTED_SUMMARY_JSON.parent.mkdir(parents=True, exist_ok=True)
+    SELECTED_SUMMARY_JSON.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    FRONTEND_OUTPUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    FRONTEND_SECTIONS_GEOJSON.parent.mkdir(parents=True, exist_ok=True)
+    FRONTEND_OUTPUT_JSON.write_text(
+        json.dumps(build_frontend_artifacts(selected_scored, filter_summary), ensure_ascii=False, indent=2, allow_nan=False),
+        encoding="utf-8",
+    )
+    FRONTEND_SECTIONS_GEOJSON.write_text(json.dumps(sections_geojson, ensure_ascii=False, allow_nan=False), encoding="utf-8")
+
+    print(f"Selected opportunity listings: {len(selected_scored):,}")
+    print(f"Sections with opportunity profile: {len(section_profiles):,}")
+    print(f"Wrote selected CSV: {SELECTED_LISTINGS_CSV}")
+    print(f"Wrote summary JSON: {SELECTED_SUMMARY_JSON}")
+    print(f"Wrote frontend artifacts: {FRONTEND_OUTPUT_JSON}")
+    print(f"Wrote section GeoJSON: {FRONTEND_SECTIONS_GEOJSON}")
+    return 0
+
+
+def build_selected_available_listings(path: Path) -> tuple[pd.DataFrame, dict[str, object]]:
+    frame = pd.read_csv(path, low_memory=False)
+    frame["listing_id"] = frame["listing_id"].astype("string")
+    frame["section_key"] = normalize_section_key_series(frame.get("section_key", pd.Series(pd.NA, index=frame.index))).astype("string")
+    frame["district_code"] = frame.get("district_code", pd.Series(pd.NA, index=frame.index)).map(
+        lambda value: normalize_admin_code(value, width=2)
+    ).astype("string")
+    frame["barrio_code"] = frame.get("barrio_code", pd.Series(pd.NA, index=frame.index)).map(
+        lambda value: normalize_admin_code(value, width=3)
+    ).astype("string")
+
+    for column in ["price_eur", "price_per_m2_eur", "area_m2", "lat_wgs84", "lon_wgs84"]:
+        frame[column] = pd.to_numeric(frame.get(column), errors="coerce")
+
+    frame["district_name"] = frame.get("district_name", pd.Series(pd.NA, index=frame.index)).map(clean_place_name).astype("string")
+    frame["barrio_name"] = frame.get("barrio_name", pd.Series(pd.NA, index=frame.index)).map(clean_place_name).astype("string")
+    frame["price_per_m2_eur"] = frame["price_per_m2_eur"].fillna(frame["price_eur"] / frame["area_m2"].replace({0: np.nan}))
+
+    precise_mask = (
+        frame.get("coord_precision", pd.Series(pd.NA, index=frame.index)).astype("string").eq("street_approx")
+        & frame["section_key"].notna()
+        & frame["lat_wgs84"].notna()
+        & frame["lon_wgs84"].notna()
+    )
+    precise = frame.loc[precise_mask].copy()
+    precise["has_commercial_fields"] = precise["price_eur"].notna() & precise["area_m2"].notna()
+    precise["outlier_flag_count"], precise["outlier_reasons"] = compute_outlier_flags(precise)
+
+    selected = precise.loc[precise["has_commercial_fields"] & precise["outlier_flag_count"].le(1)].copy()
+    selected = selected.sort_values(["operation", "district_name", "barrio_name", "listing_id"], na_position="last").reset_index(drop=True)
+
+    summary = {
+        "total_listings": int(len(frame)),
+        "precise_candidates": int(len(precise)),
+        "selected_listings": int(len(selected)),
+        "excluded_incomplete": int((~precise["has_commercial_fields"]).sum()),
+        "excluded_outliers": int((precise["has_commercial_fields"] & precise["outlier_flag_count"].gt(1)).sum()),
+        "operations": {
+            str(key): int(value) for key, value in selected["operation"].astype("string").value_counts(dropna=False).to_dict().items()
+        },
+    }
+    return selected, summary
+
+
+def build_reference_inputs(abt_path: Path) -> dict[str, object]:
+    abt = pd.read_csv(abt_path, usecols=ABT_USECOLS, low_memory=False)
+    abt["section_key_start"] = normalize_section_key_series(abt.get("section_key_start", pd.Series(pd.NA, index=abt.index))).astype("string")
+    abt["district_code_start"] = abt.get("district_code_start", pd.Series(pd.NA, index=abt.index)).map(
+        lambda value: normalize_admin_code(value, width=2)
+    ).astype("string")
+    abt["barrio_code_start"] = abt.get("barrio_code_start", pd.Series(pd.NA, index=abt.index)).map(
+        lambda value: normalize_admin_code(value, width=3)
+    ).astype("string")
+
+    policy = apply_training_policies(abt, transition_policy="exclude_transition", renta_max_year=2023)
+    dataset = policy["dataset"].copy()
+    dataset["first_seen_date"] = pd.to_datetime(dataset["first_seen_period"].astype("string") + "-01", errors="coerce")
+
+    reference_features = build_feature_frame(dataset, fill_missing=True)
+    feature_means = reference_features.mean()
+    feature_stds = reference_features.std(ddof=0).replace(0, 1).fillna(1.0)
+    feature_fill_values = reference_features.median().fillna(0.0)
+    reference_scores = compute_linear_risk_score(reference_features, reference_means=feature_means, reference_stds=feature_stds)
+    dataset["risk_score"] = reference_scores
+
+    latest_period = str(dataset["first_seen_period"].astype("string").dropna().max())
+    return {
+        "dataset": dataset,
+        "feature_columns": list(reference_features.columns),
+        "feature_means": feature_means,
+        "feature_stds": feature_stds,
+        "feature_fill_values": feature_fill_values,
+        "sorted_scores": np.sort(reference_scores.to_numpy(dtype=float)),
+        "calibration": build_calibration_lookup(
+            score=reference_scores,
+            duration=dataset["duration_months"],
+            event=dataset["event_observed"],
+            bucket_count=CALIBRATION_BUCKETS,
+        ),
+        "section_reference": build_section_feature_reference(dataset),
+        "latest_period": latest_period,
+    }
+
+
+def build_section_profiles(reference: dict[str, object]) -> tuple[pd.DataFrame, dict[str, object]]:
+    section_panel, latest_period = load_latest_section_panel(SECTION_PANEL_CSV)
+    sections = load_section_geometry()
+    section_reference = reference["section_reference"]
+    activity_recommendations = build_activity_recommendation_lookup()
+    avisos_lookup = build_latest_avisos_lookup(SECTION_PANEL_CSV)
+
+    section_profiles = sections.merge(section_panel, how="left", on="section_key", suffixes=("", "_panel"))
+    section_profiles = section_profiles.merge(section_reference, how="left", on="section_key", suffixes=("", "_median"))
+    section_profiles = section_profiles.merge(avisos_lookup, how="left", on=["district_code", "barrio_code"])
+
+    section_profiles["district_name"] = coalesce_strings(section_profiles.get("district_name_panel"), section_profiles.get("district_name"))
+    section_profiles["barrio_name"] = coalesce_strings(section_profiles.get("barrio_name_panel"), section_profiles.get("barrio_name"))
+    section_profiles["district_code"] = coalesce_strings(section_profiles.get("district_code_panel"), section_profiles.get("district_code"))
+    section_profiles["barrio_code"] = coalesce_strings(section_profiles.get("barrio_code_panel"), section_profiles.get("barrio_code"))
+
+    section_profiles["first_seen_period"] = latest_period or reference["latest_period"]
+    section_profiles["h3_cell_start"] = latlon_to_h3(section_profiles["centroid_lat"], section_profiles["centroid_lon"], resolution=10)
+    section_profiles["missing_h3"] = 0.0
+    section_profiles["n_divisions_start"] = 1.0
+    section_profiles["n_epigrafes_start"] = 1.0
+    section_profiles["n_activity_categories_start"] = 1.0
+
+    section_profiles["renta_effective_eur"] = section_profiles["renta_effective_eur"]
+    section_profiles["renta_carry_forward_years"] = pd.to_numeric(section_profiles.get("renta_carry_forward_years"), errors="coerce").fillna(0.0)
+    section_profiles["padron_lag_months_start"] = pd.to_numeric(section_profiles.get("padron_lag_months_start"), errors="coerce")
+    section_profiles["geometry_available_start"] = pd.to_numeric(section_profiles.get("geometry_available_start"), errors="coerce")
+
+    metro_input = section_profiles[["centroid_lat", "centroid_lon"]].rename(
+        columns={"centroid_lat": "lat_wgs84_start", "centroid_lon": "lon_wgs84_start"}
+    )
+    metro_features = compute_metro_features(metro_input)
+    section_profiles = pd.concat([section_profiles.reset_index(drop=True), metro_features.reset_index(drop=True)], axis=1)
+
+    fill_section_reference_holes(section_profiles)
+    fill_avisos_holes(section_profiles)
+
+    scores = score_entity_frame(section_profiles, reference=reference)
+    section_profiles = pd.concat([section_profiles.reset_index(drop=True), scores.reset_index(drop=True)], axis=1)
+    section_profiles = add_section_rankings(section_profiles)
+    section_profiles["opportunity_tier"] = section_profiles["risk_percentile"].map(opportunity_tier_from_percentile).astype("string")
+    section_profiles["top_activities"] = [
+        combine_activity_recommendations(
+            lookup_zone_recommendations(
+                activity_recommendations,
+                zone_level="barrio",
+                zone_name=barrio_name,
+            ),
+            lookup_zone_recommendations(
+                activity_recommendations,
+                zone_level="district",
+                zone_code=district_code,
+                zone_name=district_name,
+            ),
+            activity_recommendations["citywide"],
+        )
+        for district_code, district_name, barrio_name in zip(
+            section_profiles["district_code"],
+            section_profiles["district_name"],
+            section_profiles["barrio_name"],
+        )
+    ]
+    section_profiles["best_activity_label"] = section_profiles["top_activities"].map(
+        lambda rows: rows[0]["display_label"] if rows else None
+    )
+    section_profiles["best_activity_risk"] = section_profiles["top_activities"].map(
+        lambda rows: rows[0]["activity_risk"] if rows else None
+    )
+    section_profiles["best_activity_survival_24m"] = section_profiles["top_activities"].map(
+        lambda rows: rows[0]["survival_24m"] if rows else None
+    )
+
+    geojson = build_sections_geojson(section_profiles)
+    return section_profiles, geojson
+
+
+def score_selected_available_listings(
+    selected_listings: pd.DataFrame,
+    section_profiles: pd.DataFrame,
+    reference: dict[str, object],
+) -> pd.DataFrame:
+    required_columns = [
+        "section_key",
+        "district_code",
+        "district_name",
+        "barrio_code",
+        "barrio_name",
+        "renta_effective_eur",
+        "renta_carry_forward_years",
+        "share_foreign_start",
+        "share_age_00_14_start",
+        "share_age_15_29_start",
+        "share_age_30_44_start",
+        "share_age_45_64_start",
+        "share_age_65_plus_start",
+        "share_male_start",
+        "age_mean_start",
+        "total_population_start",
+        "population_density_km2_start",
+        "padron_lag_months_start",
+        "geometry_available_start",
+        "n_divisions_start",
+        "n_epigrafes_start",
+        "n_activity_categories_start",
+        "section_local_count_start",
+        "section_unique_division_count_start",
+        "section_unique_activity_category_count_start",
+        "section_single_division_share_start",
+        "section_same_division_local_count_start",
+        "section_same_division_share_start",
+        "section_same_activity_category_local_count_start",
+        "section_same_activity_category_share_start",
+        "section_entry_count_3m_start",
+        "section_entry_count_6m_start",
+        "section_entry_count_12m_start",
+        "section_exit_count_3m_start",
+        "section_exit_count_6m_start",
+        "section_exit_count_12m_start",
+        "section_entry_rate_12m_start",
+        "section_exit_rate_12m_start",
+        "section_net_flow_12m_start",
+        "section_turnover_rate_12m_start",
+        "section_division_hhi_start",
+        "section_division_top_share_start",
+        "section_activity_category_hhi_start",
+        "section_activity_category_top_share_start",
+        "section_local_count_delta_12m_start",
+        "total_population_delta_12m_start",
+        "share_foreign_delta_12m_start",
+        "share_age_15_29_delta_12m_start",
+        "population_density_km2_delta_12m_start",
+        "renta_best_eur_delta_12m_start",
+        "avisos_district_per_1000_prev_year",
+        "avisos_barrio_per_1000_prev_year",
+        "avisos_barrio_share_of_district_prev_year",
+        "city_rank",
+        "city_total_sections",
+        "district_rank",
+        "district_total_sections",
+        "barrio_rank",
+        "barrio_total_sections",
+        "top_activities",
+        "best_activity_label",
+        "best_activity_risk",
+        "best_activity_survival_24m",
+    ]
+    enriched = selected_listings.merge(section_profiles[required_columns], how="left", on="section_key", suffixes=("", "_section"))
+    enriched["first_seen_period"] = section_profiles["first_seen_period"].iloc[0] if not section_profiles.empty else reference["latest_period"]
+    enriched["h3_cell_start"] = enriched.get("h3_cell", pd.Series(pd.NA, index=enriched.index)).astype("string")
+
+    metro_input = enriched[["lat_wgs84", "lon_wgs84"]].rename(columns={"lat_wgs84": "lat_wgs84_start", "lon_wgs84": "lon_wgs84_start"})
+    metro_features = compute_metro_features(metro_input)
+    for column in ["metro_distance_m_start", "metro_access_count_500m_start", "metro_access_count_1000m_start", "missing_metro_distance_start"]:
+        enriched[column] = pd.to_numeric(metro_features[column], errors="coerce")
+
+    scores = score_entity_frame(enriched, reference=reference)
+    enriched = pd.concat([enriched.reset_index(drop=True), scores.reset_index(drop=True)], axis=1)
+    enriched["opportunity_tier"] = enriched["risk_percentile"].map(opportunity_tier_from_percentile).astype("string")
+    return enriched.sort_values(["operation", "risk_score", "district_name", "barrio_name", "listing_id"], na_position="last").reset_index(drop=True)
+
+
+def score_entity_frame(frame: pd.DataFrame, *, reference: dict[str, object]) -> pd.DataFrame:
+    features = build_feature_frame(frame, fill_missing=False)
+    features = features.reindex(columns=reference["feature_columns"]) 
+    features = features.fillna(reference["feature_fill_values"])
+    features = features.fillna(0.0)
+    scores = compute_linear_risk_score(features, reference_means=reference["feature_means"], reference_stds=reference["feature_stds"])
+    percentiles = scores.map(lambda value: compute_score_percentile(reference["sorted_scores"], value))
+    calibration_rows = [lookup_calibration(reference["calibration"], float(score)) for score in scores]
+    return pd.DataFrame(
+        {
+            "risk_score": scores.astype(float),
+            "risk_percentile": percentiles.astype(float),
+            "expected_survival_12m": [row["survival_12m"] for row in calibration_rows],
+            "expected_survival_24m": [row["survival_24m"] for row in calibration_rows],
+            "calibration_bucket": [row["bucket_label"] for row in calibration_rows],
+        },
+        index=frame.index,
+    )
+
+
+def build_section_feature_reference(dataset: pd.DataFrame) -> pd.DataFrame:
+    scoped = dataset[["section_key_start", "district_code_start", "barrio_code_start", "first_seen_date", *SECTION_PROFILE_MEDIAN_COLUMNS]].copy()
+    scoped = scoped[scoped["section_key_start"].notna()].copy()
+
+    recent_cutoff = scoped["first_seen_date"].max() - pd.DateOffset(months=RECENT_LOOKBACK_MONTHS)
+    recent = scoped[scoped["first_seen_date"].ge(recent_cutoff)].copy() if scoped["first_seen_date"].notna().any() else scoped.iloc[0:0].copy()
+
+    history_medians = scoped.groupby("section_key_start", dropna=False)[SECTION_PROFILE_MEDIAN_COLUMNS].median(numeric_only=True)
+    recent_medians = recent.groupby("section_key_start", dropna=False)[SECTION_PROFILE_MEDIAN_COLUMNS].median(numeric_only=True)
+    combined = history_medians.copy()
+    combined.update(recent_medians)
+
+    identity = scoped.groupby("section_key_start", dropna=False).agg(
+        district_code=("district_code_start", first_valid),
+        barrio_code=("barrio_code_start", first_valid),
+    )
+    combined = identity.join(combined, how="outer").reset_index().rename(columns={"section_key_start": "section_key"})
+    fill_section_reference_holes(combined, district_col="district_code", barrio_col="barrio_code")
+    return combined
+
+
+def load_latest_section_panel(path: Path) -> tuple[pd.DataFrame, str | None]:
+    panel = pd.read_csv(
+        path,
+        usecols=[
+            "target_period",
+            "target_date",
+            "section_key",
+            "district_code",
+            "district_name",
+            "barrio_code",
+            "barrio_name",
+            "total_population",
+            "age_mean",
+            "renta_best_eur",
+            "renta_lag_years",
+            "share_foreign",
+            "share_male",
+            "share_age_00_14",
+            "share_age_15_29",
+            "share_age_30_44",
+            "share_age_45_64",
+            "share_age_65_plus",
+            "padron_lag_months",
+            "geometry_available",
+            "population_density_km2",
+        ],
+        dtype={"target_period": "string", "section_key": "string", "district_code": "string", "district_name": "string", "barrio_code": "string", "barrio_name": "string"},
+        low_memory=False,
+    )
+    panel["section_key"] = normalize_section_key_series(panel["section_key"]).astype("string")
+    panel["district_code"] = panel["district_code"].map(lambda value: normalize_admin_code(value, width=2)).astype("string")
+    panel["barrio_code"] = panel["barrio_code"].map(lambda value: normalize_admin_code(value, width=3)).astype("string")
+    panel["district_name"] = panel["district_name"].map(clean_place_name).astype("string")
+    panel["barrio_name"] = panel["barrio_name"].map(clean_place_name).astype("string")
+    panel["target_date"] = pd.to_datetime(panel["target_date"], errors="coerce")
+
+    previous = panel[["section_key", "target_date", "total_population", "share_foreign", "share_age_15_29", "population_density_km2", "renta_best_eur"]].copy()
+    previous["target_date"] = previous["target_date"] + pd.DateOffset(months=12)
+    previous = previous.rename(
+        columns={
+            "total_population": "total_population_prev12",
+            "share_foreign": "share_foreign_prev12",
+            "share_age_15_29": "share_age_15_29_prev12",
+            "population_density_km2": "population_density_km2_prev12",
+            "renta_best_eur": "renta_best_eur_prev12",
+        }
+    )
+
+    latest = panel.sort_values(["section_key", "target_date"]).groupby("section_key", dropna=False).tail(1).copy()
+    latest = latest.merge(previous, how="left", on=["section_key", "target_date"])
+
+    latest["renta_effective_eur"] = pd.to_numeric(latest["renta_best_eur"], errors="coerce")
+    district_median = latest.groupby("district_code", dropna=False)["renta_effective_eur"].median(numeric_only=True)
+    city_median = float(latest["renta_effective_eur"].median()) if latest["renta_effective_eur"].notna().any() else 0.0
+    latest["renta_effective_eur"] = latest["renta_effective_eur"].fillna(latest["district_code"].map(district_median)).fillna(city_median)
+    # For current opportunity scoring, stale public updates should not inflate model risk.
+    latest["renta_carry_forward_years"] = 0.0
+
+    latest["total_population_delta_12m_start"] = pd.to_numeric(latest["total_population"], errors="coerce") - pd.to_numeric(
+        latest["total_population_prev12"], errors="coerce"
+    )
+    latest["share_foreign_delta_12m_start"] = pd.to_numeric(latest["share_foreign"], errors="coerce") - pd.to_numeric(
+        latest["share_foreign_prev12"], errors="coerce"
+    )
+    latest["share_age_15_29_delta_12m_start"] = pd.to_numeric(latest["share_age_15_29"], errors="coerce") - pd.to_numeric(
+        latest["share_age_15_29_prev12"], errors="coerce"
+    )
+    latest["population_density_km2_delta_12m_start"] = pd.to_numeric(latest["population_density_km2"], errors="coerce") - pd.to_numeric(
+        latest["population_density_km2_prev12"], errors="coerce"
+    )
+    latest["renta_best_eur_delta_12m_start"] = pd.to_numeric(latest["renta_best_eur"], errors="coerce") - pd.to_numeric(
+        latest["renta_best_eur_prev12"], errors="coerce"
+    )
+
+    latest = latest.rename(
+        columns={
+            "share_foreign": "share_foreign_start",
+            "share_male": "share_male_start",
+            "share_age_00_14": "share_age_00_14_start",
+            "share_age_15_29": "share_age_15_29_start",
+            "share_age_30_44": "share_age_30_44_start",
+            "share_age_45_64": "share_age_45_64_start",
+            "share_age_65_plus": "share_age_65_plus_start",
+            "age_mean": "age_mean_start",
+            "total_population": "total_population_start",
+            "population_density_km2": "population_density_km2_start",
+            "padron_lag_months": "padron_lag_months_start",
+            "geometry_available": "geometry_available_start",
+            "district_code": "district_code_panel",
+            "district_name": "district_name_panel",
+            "barrio_code": "barrio_code_panel",
+            "barrio_name": "barrio_name_panel",
+        }
+    )
+
+    latest["padron_lag_months_start"] = 0.0
+
+    latest_period = str(latest["target_period"].astype("string").dropna().max()) if not latest.empty else None
+    return latest, latest_period
+
+
+def build_latest_avisos_lookup(section_panel_csv: Path) -> pd.DataFrame:
+    avisos = build_avisos_yearly_features(section_panel_csv=section_panel_csv)
+    if avisos.empty:
+        return pd.DataFrame(columns=[
+            "district_code",
+            "barrio_code",
+            "avisos_district_per_1000_prev_year",
+            "avisos_barrio_per_1000_prev_year",
+            "avisos_barrio_share_of_district_prev_year",
+        ])
+
+    avisos["district_code"] = avisos["district_code"].map(lambda value: normalize_admin_code(value, width=2)).astype("string")
+    avisos["barrio_code"] = [
+        normalize_section_barrio_code(district_code, barrio_code)
+        for district_code, barrio_code in zip(avisos["district_code"], avisos["barrio_code"])
+    ]
+    for column in [
+        "avisos_district_per_1000_prev_year",
+        "avisos_barrio_per_1000_prev_year",
+        "avisos_barrio_share_of_district_prev_year",
+    ]:
+        avisos[column] = pd.to_numeric(avisos[column], errors="coerce")
+
+    valid_mask = avisos[[
+        "avisos_district_per_1000_prev_year",
+        "avisos_barrio_per_1000_prev_year",
+    ]].notna().any(axis=1)
+    if not bool(valid_mask.any()):
+        return pd.DataFrame(columns=[
+            "district_code",
+            "barrio_code",
+            "avisos_district_per_1000_prev_year",
+            "avisos_barrio_per_1000_prev_year",
+            "avisos_barrio_share_of_district_prev_year",
+        ])
+
+    latest_year = int(pd.to_numeric(avisos.loc[valid_mask, "avisos_year"], errors="coerce").dropna().max())
+    latest = avisos[pd.to_numeric(avisos["avisos_year"], errors="coerce").eq(latest_year)].copy()
+    return latest[[
+        "district_code",
+        "barrio_code",
+        "avisos_district_per_1000_prev_year",
+        "avisos_barrio_per_1000_prev_year",
+        "avisos_barrio_share_of_district_prev_year",
+    ]]
+
+
+def load_section_geometry() -> pd.DataFrame:
+    sections = load_section_geodataframe().copy()
+    sections["section_key"] = normalize_section_key_series(sections["COD_SECCIO"]).astype("string")
+    sections["district_code"] = sections["COD_DIS"].astype("string").str.strip().replace({"": pd.NA}).str.zfill(2)
+    sections["district_name"] = sections["NOM_DIS"].astype("string").map(clean_place_name)
+    sections["barrio_code"] = sections["COD_BAR"].astype("string").str.strip().replace({"": pd.NA}).str.zfill(3)
+    sections["barrio_name"] = sections["NOM_BAR"].astype("string").map(clean_place_name)
+    sections = sections[["section_key", "district_code", "district_name", "barrio_code", "barrio_name", "geometry"]].dropna(subset=["section_key", "geometry"])
+    sections = sections.to_crs("EPSG:25830")
+    sections = sections.dissolve(
+        by="section_key",
+        aggfunc={
+            "district_code": "first",
+            "district_name": "first",
+            "barrio_code": "first",
+            "barrio_name": "first",
+        },
+    ).reset_index()
+    sections["geometry"] = sections.geometry.simplify(SECTION_SIMPLIFY_TOLERANCE_M, preserve_topology=True)
+    sections["centroid_geometry"] = sections.geometry.centroid
+    centroids = sections.copy().set_geometry("centroid_geometry").to_crs("EPSG:4326")
+    sections = sections.to_crs("EPSG:4326")
+    sections["centroid_lat"] = centroids.geometry.y
+    sections["centroid_lon"] = centroids.geometry.x
+    return sections[["section_key", "district_code", "district_name", "barrio_code", "barrio_name", "centroid_lat", "centroid_lon", "geometry"]]
+
+
+def build_activity_recommendation_lookup() -> dict[str, dict[str, list[dict[str, object]]]]:
+    return {
+        "district_by_code": load_zone_recommendations(DISTRICT_CATEGORY_CSV, zone_level="district", key_mode="code"),
+        "district_by_name": load_zone_recommendations(DISTRICT_CATEGORY_CSV, zone_level="district", key_mode="name"),
+        "barrio_by_name": load_zone_recommendations(BARRIO_CATEGORY_CSV, zone_level="barrio", key_mode="name"),
+        "citywide": load_city_recommendations(DISTRICT_CATEGORY_CSV),
+    }
+
+
+def load_zone_recommendations(path: Path, *, zone_level: str, key_mode: str) -> dict[str, list[dict[str, object]]]:
+    frame = pd.read_csv(path, low_memory=False)
+    width = 2 if zone_level == "district" else 3
+    frame["zone_code"] = frame["zone_code"].map(lambda value: normalize_admin_code(value, width=width)).astype("string")
+    frame["zone_name"] = frame["zone_name"].astype("string")
+    frame["zone_lookup_key"] = frame["zone_code"] if key_mode == "code" else frame["zone_name"].map(normalize_zone_lookup_key).astype("string")
+    frame["display_label"] = frame["display_label"].astype("string")
+    frame["event_rate"] = pd.to_numeric(frame["event_rate"], errors="coerce")
+    frame["survival_12m"] = pd.to_numeric(frame["survival_12m"], errors="coerce")
+    frame["survival_24m"] = pd.to_numeric(frame["survival_24m"], errors="coerce")
+    frame["n_locales"] = pd.to_numeric(frame["n_locales"], errors="coerce")
+    frame["supported_for_stats"] = frame["supported_for_stats"].fillna(False).astype(bool)
+
+    out: dict[str, list[dict[str, object]]] = {}
+    for zone_key, part in frame.groupby("zone_lookup_key", dropna=False):
+        if pd.isna(zone_key) or not str(zone_key).strip():
+            continue
+        scoped = part[part["supported_for_stats"]].copy()
+        if scoped.empty:
+            scoped = part.copy()
+
+        prior_event_rate = float(pd.to_numeric(scoped["event_rate"], errors="coerce").median()) if scoped["event_rate"].notna().any() else 0.15
+        scoped["activity_risk"] = [
+            compute_activity_risk(
+                event_rate=event_rate,
+                n_locales=n_locales,
+                supported_for_stats=supported_for_stats,
+                prior_event_rate=prior_event_rate,
+            )
+            for event_rate, n_locales, supported_for_stats in zip(
+                scoped["event_rate"],
+                scoped["n_locales"],
+                scoped["supported_for_stats"],
+            )
+        ]
+        scoped = scoped.sort_values(
+            ["activity_risk", "event_rate", "survival_24m", "n_locales", "display_label"],
+            ascending=[True, True, False, False, True],
+        )
+        scoped = scoped.drop_duplicates(subset=["display_label"], keep="first")
+
+        rows: list[dict[str, object]] = []
+        for index, row in enumerate(scoped.head(5).itertuples(index=False), start=1):
+            rows.append(
+                {
+                    "rank": index,
+                    "source_zone": zone_level,
+                    "display_label": str(row.display_label),
+                    "web_supercategory": str(getattr(row, "web_supercategory", "") or ""),
+                    "web_category": str(getattr(row, "web_category", "") or ""),
+                    "event_rate": serialize_probability(getattr(row, "event_rate", None)),
+                    "activity_risk": serialize_probability(getattr(row, "activity_risk", None)),
+                    "survival_12m": serialize_probability(getattr(row, "survival_12m", None)),
+                    "survival_24m": serialize_probability(getattr(row, "survival_24m", None)),
+                    "n_locales": int(float(getattr(row, "n_locales", 0) or 0)),
+                    "confidence_tier": str(getattr(row, "confidence_tier", "") or ""),
+                    "supported_for_stats": bool(getattr(row, "supported_for_stats", False)),
+                }
+            )
+        out[str(zone_key)] = rows
+    return out
+
+
+def lookup_zone_recommendations(
+    lookup: dict[str, dict[str, list[dict[str, object]]]],
+    *,
+    zone_level: str,
+    zone_code: object | None = None,
+    zone_name: object | None = None,
+) -> list[dict[str, object]]:
+    if zone_level == "district":
+        zone_code_key = normalize_admin_code(zone_code, width=2)
+        zone_name_key = normalize_zone_lookup_key(zone_name)
+        if zone_code_key and zone_code_key in lookup["district_by_code"]:
+            return lookup["district_by_code"][zone_code_key]
+        if zone_name_key and zone_name_key in lookup["district_by_name"]:
+            return lookup["district_by_name"][zone_name_key]
+        return []
+
+    zone_name_key = normalize_zone_lookup_key(zone_name)
+    if zone_name_key and zone_name_key in lookup["barrio_by_name"]:
+        return lookup["barrio_by_name"][zone_name_key]
+    return []
+
+
+def load_city_recommendations(path: Path) -> list[dict[str, object]]:
+    frame = pd.read_csv(path, low_memory=False)
+    frame["display_label"] = frame["display_label"].astype("string")
+    frame["web_supercategory"] = frame["web_supercategory"].astype("string")
+    frame["web_category"] = frame["web_category"].astype("string")
+    frame["n_locales"] = pd.to_numeric(frame["n_locales"], errors="coerce").fillna(0.0)
+    frame["n_events"] = pd.to_numeric(frame.get("n_events"), errors="coerce").fillna(0.0)
+    frame["survival_12m"] = pd.to_numeric(frame["survival_12m"], errors="coerce")
+    frame["survival_24m"] = pd.to_numeric(frame["survival_24m"], errors="coerce")
+    frame["supported_for_stats"] = frame["supported_for_stats"].fillna(False).astype(bool)
+
+    grouped = frame.groupby(["display_label", "web_supercategory", "web_category"], dropna=False).apply(
+        lambda part: pd.Series(
+            {
+                "n_locales": float(part["n_locales"].sum()),
+                "n_events": float(part["n_events"].sum()),
+                "survival_12m": weighted_mean(part["survival_12m"], part["n_locales"]),
+                "survival_24m": weighted_mean(part["survival_24m"], part["n_locales"]),
+                "supported_for_stats": bool(part["supported_for_stats"].any()),
+            }
+        ),
+        include_groups=False,
+    ).reset_index()
+    grouped = grouped[grouped["display_label"].notna()].copy()
+    grouped["event_rate"] = grouped["n_events"] / grouped["n_locales"].replace({0.0: np.nan})
+
+    prior_event_rate = float(grouped["event_rate"].median()) if grouped["event_rate"].notna().any() else 0.15
+    grouped["activity_risk"] = [
+        compute_activity_risk(
+            event_rate=event_rate,
+            n_locales=n_locales,
+            supported_for_stats=supported_for_stats,
+            prior_event_rate=prior_event_rate,
+        )
+        for event_rate, n_locales, supported_for_stats in zip(
+            grouped["event_rate"],
+            grouped["n_locales"],
+            grouped["supported_for_stats"],
+        )
+    ]
+    grouped["confidence_tier"] = grouped["n_locales"].map(city_confidence_tier)
+    grouped = grouped.sort_values(
+        ["activity_risk", "event_rate", "survival_24m", "n_locales", "display_label"],
+        ascending=[True, True, False, False, True],
+    )
+
+    rows: list[dict[str, object]] = []
+    for index, row in enumerate(grouped.head(50).itertuples(index=False), start=1):
+        rows.append(
+            {
+                "rank": index,
+                "source_zone": "city",
+                "display_label": str(row.display_label),
+                "web_supercategory": str(getattr(row, "web_supercategory", "") or ""),
+                "web_category": str(getattr(row, "web_category", "") or ""),
+                "event_rate": serialize_probability(getattr(row, "event_rate", None)),
+                "activity_risk": serialize_probability(getattr(row, "activity_risk", None)),
+                "survival_12m": serialize_probability(getattr(row, "survival_12m", None)),
+                "survival_24m": serialize_probability(getattr(row, "survival_24m", None)),
+                "n_locales": int(round(float(getattr(row, "n_locales", 0) or 0))),
+                "confidence_tier": str(getattr(row, "confidence_tier", "") or ""),
+                "supported_for_stats": bool(getattr(row, "supported_for_stats", False)),
+            }
+        )
+    return rows
+
+
+def combine_activity_recommendations(
+    barrio_rows: list[dict[str, object]],
+    district_rows: list[dict[str, object]],
+    city_rows: list[dict[str, object]],
+    *,
+    max_rows: int = 5,
+) -> list[dict[str, object]]:
+    best_by_label: dict[str, dict[str, object]] = {}
+
+    for rows in [barrio_rows, district_rows, city_rows]:
+        for row in rows:
+            key = str(row.get("display_label") or "")
+            if not key:
+                continue
+
+            item = dict(row)
+            existing = best_by_label.get(key)
+            if existing is None or activity_recommendation_sort_key(item) < activity_recommendation_sort_key(existing):
+                best_by_label[key] = item
+
+    merged = sorted(best_by_label.values(), key=activity_recommendation_sort_key)[:max_rows]
+    for index, item in enumerate(merged, start=1):
+        item["rank"] = index
+    return merged
+
+
+def build_calibration_lookup(
+    *,
+    score: pd.Series,
+    duration: pd.Series,
+    event: pd.Series,
+    bucket_count: int,
+) -> list[dict[str, object]]:
+    frame = pd.DataFrame(
+        {
+            "score": pd.to_numeric(score, errors="coerce"),
+            "duration": pd.to_numeric(duration, errors="coerce"),
+            "event": pd.to_numeric(event, errors="coerce").fillna(0),
+        }
+    ).dropna(subset=["score", "duration"])
+    if frame.empty:
+        return [{"score_max": float("inf"), "survival_12m": None, "survival_24m": None, "bucket_label": "P00-P100"}]
+
+    rank = frame["score"].rank(method="first", pct=True)
+    frame["bucket_index"] = np.minimum(bucket_count - 1, np.floor(rank * bucket_count).astype(int))
+    rows: list[dict[str, object]] = []
+    for bucket_index, part in frame.groupby("bucket_index", dropna=False):
+        support_12m, survival_12m = compute_horizon_metrics(part["duration"], part["event"], horizon=12.0)
+        support_24m, survival_24m = compute_horizon_metrics(part["duration"], part["event"], horizon=24.0)
+        bucket_low = int(bucket_index) / bucket_count
+        bucket_high = (int(bucket_index) + 1) / bucket_count
+        rows.append(
+            {
+                "bucket_index": int(bucket_index),
+                "bucket_label": f"P{int(bucket_low * 100):02d}-P{int(bucket_high * 100):02d}",
+                "score_max": float(part["score"].max()),
+                "survival_12m": serialize_probability(survival_12m),
+                "survival_24m": serialize_probability(survival_24m),
+                "support_12m": int(support_12m),
+                "support_24m": int(support_24m),
+            }
+        )
+    return sorted(rows, key=lambda item: item["score_max"])
+
+
+def lookup_calibration(rows: list[dict[str, object]], score: float) -> dict[str, object]:
+    for row in rows:
+        if score <= float(row["score_max"]):
+            return row
+    return rows[-1]
+
+
+def compute_score_percentile(sorted_scores: np.ndarray, value: float) -> float:
+    if len(sorted_scores) == 0 or not np.isfinite(value):
+        return float("nan")
+    position = np.searchsorted(sorted_scores, value, side="right")
+    return float(position / len(sorted_scores))
+
+
+def add_section_rankings(frame: pd.DataFrame) -> pd.DataFrame:
+    ranked = frame.copy()
+    ranked["city_total_sections"] = int(len(ranked))
+    ranked["city_rank"] = ranked["risk_score"].rank(method="min", ascending=True).astype(int)
+    ranked["district_total_sections"] = ranked.groupby("district_code", dropna=False)["section_key"].transform("size").astype(int)
+    ranked["district_rank"] = ranked.groupby("district_code", dropna=False)["risk_score"].rank(method="min", ascending=True).astype(int)
+    ranked["barrio_total_sections"] = ranked.groupby("barrio_code", dropna=False)["section_key"].transform("size").astype(int)
+    ranked["barrio_rank"] = ranked.groupby("barrio_code", dropna=False)["risk_score"].rank(method="min", ascending=True).astype(int)
+    return ranked
+
+
+def compute_outlier_flags(frame: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
+    numeric_columns = ["price_eur", "price_per_m2_eur", "area_m2"]
+    flag_count = pd.Series(0, index=frame.index, dtype=int)
+    reasons = pd.Series("", index=frame.index, dtype="string")
+
+    for _, index_values in frame.groupby(frame["operation"].astype("string").fillna("unknown")).groups.items():
+        index_list = list(index_values)
+        scoped = frame.loc[index_list]
+        for column in numeric_columns:
+            series = pd.to_numeric(scoped[column], errors="coerce")
+            valid = series.dropna()
+            if len(valid) < 8:
+                continue
+            transformed = np.log1p(valid.clip(lower=0))
+            q1 = float(transformed.quantile(0.25))
+            q3 = float(transformed.quantile(0.75))
+            iqr = q3 - q1
+            if not np.isfinite(iqr) or iqr <= 0:
+                continue
+
+            lower = max(0.0, float(np.expm1(q1 - 1.5 * iqr)))
+            upper = float(np.expm1(q3 + 1.5 * iqr))
+            flagged = series.notna() & ((series < lower) | (series > upper))
+            if not bool(flagged.any()):
+                continue
+
+            flagged_index = flagged[flagged].index
+            flag_count.loc[flagged_index] = flag_count.loc[flagged_index] + 1
+            reasons.loc[flagged_index] = reasons.loc[flagged_index].fillna("") + f"{column};"
+
+    return flag_count, reasons.fillna("")
+
+
+def fill_section_reference_holes(
+    frame: pd.DataFrame,
+    *,
+    district_col: str = "district_code",
+    barrio_col: str = "barrio_code",
+) -> None:
+    for column in SECTION_PROFILE_MEDIAN_COLUMNS:
+        if column not in frame.columns:
+            frame[column] = np.nan
+        frame[column] = pd.to_numeric(frame[column], errors="coerce")
+        barrio_fill = frame.groupby(barrio_col, dropna=False)[column].transform("median") if barrio_col in frame.columns else np.nan
+        district_fill = frame.groupby(district_col, dropna=False)[column].transform("median") if district_col in frame.columns else np.nan
+        city_fill = float(frame[column].median()) if frame[column].notna().any() else 0.0
+        frame[column] = frame[column].fillna(barrio_fill).fillna(district_fill).fillna(city_fill).fillna(0.0)
+
+
+def fill_avisos_holes(frame: pd.DataFrame) -> None:
+    for column in [
+        "avisos_district_per_1000_prev_year",
+        "avisos_barrio_per_1000_prev_year",
+        "avisos_barrio_share_of_district_prev_year",
+    ]:
+        frame[column] = pd.to_numeric(frame.get(column), errors="coerce")
+        city_fill = float(frame[column].median()) if frame[column].notna().any() else 0.0
+        frame[column] = frame[column].fillna(city_fill).fillna(0.0)
+
+
+def build_sections_geojson(section_profiles: pd.DataFrame) -> dict[str, object]:
+    features: list[dict[str, object]] = []
+    for row in section_profiles.itertuples(index=False):
+        properties = {
+            "section_key": str(row.section_key),
+            "district_code": str(row.district_code or ""),
+            "district_name": str(row.district_name or ""),
+            "barrio_code": str(row.barrio_code or ""),
+            "barrio_name": str(row.barrio_name or ""),
+            "centroid_lat": serialize_probability(getattr(row, "centroid_lat", None)),
+            "centroid_lon": serialize_probability(getattr(row, "centroid_lon", None)),
+            "risk_score": float(row.risk_score),
+            "risk_percentile": float(row.risk_percentile),
+            "expected_survival_12m": serialize_probability(row.expected_survival_12m),
+            "expected_survival_24m": serialize_probability(row.expected_survival_24m),
+            "opportunity_tier": str(row.opportunity_tier),
+            "city_rank": int(row.city_rank),
+            "city_total_sections": int(row.city_total_sections),
+            "district_rank": int(row.district_rank),
+            "district_total_sections": int(row.district_total_sections),
+            "barrio_rank": int(row.barrio_rank),
+            "barrio_total_sections": int(row.barrio_total_sections),
+            "renta_effective_eur": serialize_probability(getattr(row, "renta_effective_eur", None)),
+            "total_population_start": serialize_probability(getattr(row, "total_population_start", None)),
+            "population_density_km2_start": serialize_probability(getattr(row, "population_density_km2_start", None)),
+            "age_mean_start": serialize_probability(getattr(row, "age_mean_start", None)),
+            "share_foreign_start": serialize_probability(getattr(row, "share_foreign_start", None)),
+            "share_age_15_29_start": serialize_probability(getattr(row, "share_age_15_29_start", None)),
+            "metro_distance_m_start": serialize_probability(getattr(row, "metro_distance_m_start", None)),
+            "metro_access_count_500m_start": serialize_probability(getattr(row, "metro_access_count_500m_start", None)),
+            "metro_access_count_1000m_start": serialize_probability(getattr(row, "metro_access_count_1000m_start", None)),
+            "avisos_barrio_per_1000_prev_year": serialize_probability(getattr(row, "avisos_barrio_per_1000_prev_year", None)),
+            "avisos_district_per_1000_prev_year": serialize_probability(getattr(row, "avisos_district_per_1000_prev_year", None)),
+            "section_local_count_start": serialize_probability(getattr(row, "section_local_count_start", None)),
+            "section_unique_activity_category_count_start": serialize_probability(getattr(row, "section_unique_activity_category_count_start", None)),
+            "section_turnover_rate_12m_start": serialize_probability(getattr(row, "section_turnover_rate_12m_start", None)),
+            "section_same_activity_category_share_start": serialize_probability(getattr(row, "section_same_activity_category_share_start", None)),
+            "best_activity_label": str(getattr(row, "best_activity_label", "") or ""),
+            "best_activity_risk": serialize_probability(getattr(row, "best_activity_risk", None)),
+            "best_activity_survival_24m": serialize_probability(getattr(row, "best_activity_survival_24m", None)),
+            "top_activities": getattr(row, "top_activities", []),
+        }
+        features.append(
+            {
+                "type": "Feature",
+                "geometry": row.geometry.__geo_interface__,
+                "properties": _to_jsonable(properties),
+            }
+        )
+    return {"type": "FeatureCollection", "features": features}
+
+
+def build_selected_summary(selected_scored: pd.DataFrame, filter_summary: dict[str, object]) -> dict[str, object]:
+    return {
+        "generated_at": pd.Timestamp.utcnow().isoformat(),
+        "filter_summary": filter_summary,
+        "selected_listings": int(len(selected_scored)),
+        "districts": int(selected_scored["district_code"].dropna().nunique()),
+        "barrios": int(selected_scored["barrio_code"].dropna().nunique()),
+        "operations": {
+            str(key): int(value) for key, value in selected_scored["operation"].astype("string").value_counts(dropna=False).to_dict().items()
+        },
+        "median_risk_percentile": float(pd.to_numeric(selected_scored["risk_percentile"], errors="coerce").median()),
+        "median_survival_24m": serialize_probability(pd.to_numeric(selected_scored["expected_survival_24m"], errors="coerce").median()),
+    }
+
+
+def build_frontend_artifacts(selected_scored: pd.DataFrame, filter_summary: dict[str, object]) -> dict[str, object]:
+    points = [build_point_payload(row) for row in selected_scored.itertuples(index=False)]
+    generated_at = pd.Timestamp.utcnow().isoformat()
+    generated_version = pd.Timestamp.utcnow().strftime('%Y%m%dT%H%M%S')
+    stats = {
+        "selected_listings": int(len(selected_scored)),
+        "districts": int(selected_scored["district_code"].dropna().nunique()),
+        "barrios": int(selected_scored["barrio_code"].dropna().nunique()),
+        "median_survival_24m": serialize_probability(pd.to_numeric(selected_scored["expected_survival_24m"], errors="coerce").median()),
+        "median_price_per_m2": serialize_probability(pd.to_numeric(selected_scored["price_per_m2_eur"], errors="coerce").median()),
+    }
+    return {
+        "meta": {
+            "title": "Madrid Opportunity Map",
+            "subtitle": "Locales disponibles y recomendación de actividad",
+            "generated_at": generated_at,
+            "section_geojson_path": f"/data/frontend-opportunity-sections.geojson?v={generated_version}",
+            "map_bounds": {
+                "min_lng": MADRID_BBOX["min_lon"],
+                "min_lat": MADRID_BBOX["min_lat"],
+                "max_lng": MADRID_BBOX["max_lon"],
+                "max_lat": MADRID_BBOX["max_lat"],
+                "min_zoom": 9.8,
+                "max_zoom": 16.2,
+            },
+        },
+        "filters": _to_jsonable(filter_summary),
+        "stats": _to_jsonable(stats),
+        "points": _to_jsonable(points),
+    }
+
+
+def build_point_payload(row: object) -> dict[str, object]:
+    top_activities = getattr(row, "top_activities", []) or []
+    return {
+        "listing_id": str(getattr(row, "listing_id")),
+        "listing_url": str(getattr(row, "listing_url", "") or ""),
+        "card_title": str(getattr(row, "card_title", "") or ""),
+        "address_text": str(getattr(row, "address_text", "") or ""),
+        "operation": str(getattr(row, "operation", "") or ""),
+        "price_eur": serialize_probability(getattr(row, "price_eur", None)),
+        "price_per_m2_eur": serialize_probability(getattr(row, "price_per_m2_eur", None)),
+        "area_m2": serialize_probability(getattr(row, "area_m2", None)),
+        "lat_wgs84": serialize_probability(getattr(row, "lat_wgs84", None)),
+        "lon_wgs84": serialize_probability(getattr(row, "lon_wgs84", None)),
+        "section_key": str(getattr(row, "section_key", "") or ""),
+        "district_code": str(getattr(row, "district_code", "") or ""),
+        "district_name": str(getattr(row, "district_name", "") or ""),
+        "barrio_code": str(getattr(row, "barrio_code", "") or ""),
+        "barrio_name": str(getattr(row, "barrio_name", "") or ""),
+        "risk_score": float(getattr(row, "risk_score")),
+        "risk_percentile": float(getattr(row, "risk_percentile")),
+        "expected_survival_12m": serialize_probability(getattr(row, "expected_survival_12m", None)),
+        "expected_survival_24m": serialize_probability(getattr(row, "expected_survival_24m", None)),
+        "opportunity_tier": str(getattr(row, "opportunity_tier", "") or ""),
+        "city_rank": int(getattr(row, "city_rank")),
+        "city_total_sections": int(getattr(row, "city_total_sections")),
+        "district_rank": int(getattr(row, "district_rank")),
+        "district_total_sections": int(getattr(row, "district_total_sections")),
+        "barrio_rank": int(getattr(row, "barrio_rank")),
+        "barrio_total_sections": int(getattr(row, "barrio_total_sections")),
+        "renta_effective_eur": serialize_probability(getattr(row, "renta_effective_eur", None)),
+        "total_population_start": serialize_probability(getattr(row, "total_population_start", None)),
+        "population_density_km2_start": serialize_probability(getattr(row, "population_density_km2_start", None)),
+        "age_mean_start": serialize_probability(getattr(row, "age_mean_start", None)),
+        "share_foreign_start": serialize_probability(getattr(row, "share_foreign_start", None)),
+        "share_age_15_29_start": serialize_probability(getattr(row, "share_age_15_29_start", None)),
+        "metro_distance_m_start": serialize_probability(getattr(row, "metro_distance_m_start", None)),
+        "metro_access_count_500m_start": serialize_probability(getattr(row, "metro_access_count_500m_start", None)),
+        "metro_access_count_1000m_start": serialize_probability(getattr(row, "metro_access_count_1000m_start", None)),
+        "avisos_barrio_per_1000_prev_year": serialize_probability(getattr(row, "avisos_barrio_per_1000_prev_year", None)),
+        "avisos_district_per_1000_prev_year": serialize_probability(getattr(row, "avisos_district_per_1000_prev_year", None)),
+        "section_local_count_start": serialize_probability(getattr(row, "section_local_count_start", None)),
+        "section_unique_activity_category_count_start": serialize_probability(getattr(row, "section_unique_activity_category_count_start", None)),
+        "section_turnover_rate_12m_start": serialize_probability(getattr(row, "section_turnover_rate_12m_start", None)),
+        "section_same_activity_category_share_start": serialize_probability(getattr(row, "section_same_activity_category_share_start", None)),
+        "best_activity_label": str(getattr(row, "best_activity_label", "") or ""),
+        "best_activity_risk": serialize_probability(getattr(row, "best_activity_risk", None)),
+        "best_activity_survival_24m": serialize_probability(getattr(row, "best_activity_survival_24m", None)),
+        "top_activities": top_activities,
+    }
+
+
+def compute_horizon_metrics(duration: pd.Series, event: pd.Series, *, horizon: float) -> tuple[int, float | None]:
+    support = int(((duration >= float(horizon)) | ((event == 1) & (duration <= float(horizon)))).sum())
+    if support <= 0:
+        return 0, None
+    survivors = int((duration >= float(horizon)).sum())
+    return support, float(survivors / support)
+
+
+def latlon_to_h3(lat: pd.Series, lon: pd.Series, *, resolution: int) -> pd.Series:
+    try:
+        import h3
+    except ModuleNotFoundError as exc:
+        raise ModuleNotFoundError("h3 is required to compute the opportunity H3 cells") from exc
+
+    valid = lat.notna() & lon.notna()
+    out = pd.Series(pd.NA, index=lat.index, dtype="string")
+    if not bool(valid.any()):
+        return out
+
+    if hasattr(h3, "latlng_to_cell"):
+        out.loc[valid] = [
+            h3.latlng_to_cell(float(lat_value), float(lon_value), resolution)
+            for lat_value, lon_value in zip(lat.loc[valid], lon.loc[valid])
+        ]
+        return out
+
+    out.loc[valid] = [
+        h3.geo_to_h3(float(lat_value), float(lon_value), resolution)
+        for lat_value, lon_value in zip(lat.loc[valid], lon.loc[valid])
+    ]
+    return out
+
+
+def clean_place_name(value: object) -> object:
+    if value is None or pd.isna(value):
+        return pd.NA
+    text = str(value).strip()
+    if not text:
+        return pd.NA
+    return text.title()
+
+
+def normalize_zone_lookup_key(value: object) -> str | None:
+    if value is None or pd.isna(value):
+        return None
+    text = str(value).strip().lower()
+    return text or None
+
+
+def normalize_section_barrio_code(district_code: object, barrio_code: object) -> str | None:
+    district = normalize_admin_code(district_code, width=2)
+    barrio_local = normalize_admin_code(barrio_code, width=3)
+    if district is None or barrio_local is None:
+        return None
+
+    district_value = int(district)
+    barrio_value = int(barrio_local)
+    citywide_value = (district_value * 10) + barrio_value
+    return str(citywide_value).zfill(3)
+
+
+def coalesce_strings(primary: pd.Series | None, secondary: pd.Series | None) -> pd.Series:
+    if primary is None and secondary is None:
+        return pd.Series(dtype="string")
+    if primary is None:
+        return secondary.astype("string")
+    if secondary is None:
+        return primary.astype("string")
+    left = primary.astype("string")
+    right = secondary.astype("string")
+    return left.fillna(right).astype("string")
+
+
+def first_valid(series: pd.Series) -> object:
+    non_null = series.dropna()
+    if non_null.empty:
+        return pd.NA
+    return non_null.iloc[0]
+
+
+def opportunity_tier_from_percentile(value: float) -> str:
+    if not np.isfinite(value):
+        return "Sin lectura"
+    if value <= 0.2:
+        return "Alta"
+    if value <= 0.45:
+        return "Solida"
+    if value <= 0.7:
+        return "Intermedia"
+    return "Fragil"
+
+
+def activity_recommendation_sort_key(row: dict[str, object]) -> tuple[float, float, float, float, int, str]:
+    risk = coerce_sort_float(row.get("activity_risk"), default=float("inf"))
+    event_rate = coerce_sort_float(row.get("event_rate"), default=float("inf"))
+    survival_24m = coerce_sort_float(row.get("survival_24m"), default=float("-inf"))
+    n_locales = coerce_sort_float(row.get("n_locales"), default=0.0)
+    source_zone = str(row.get("source_zone") or "")
+    if source_zone == "barrio":
+        source_priority = 0
+    elif source_zone == "district":
+        source_priority = 1
+    else:
+        source_priority = 2
+    label = str(row.get("display_label") or "")
+    return (risk, event_rate, -survival_24m, -n_locales, source_priority, label)
+
+
+def coerce_sort_float(value: object, *, default: float) -> float:
+    if value is None or pd.isna(value):
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def weighted_mean(values: pd.Series, weights: pd.Series) -> float | None:
+    valid = values.notna() & weights.notna() & weights.gt(0)
+    if not bool(valid.any()):
+        return None
+    return float(np.average(values.loc[valid], weights=weights.loc[valid]))
+
+
+def city_confidence_tier(n_locales: float) -> str:
+    if not np.isfinite(n_locales):
+        return "city"
+    if n_locales >= 1500:
+        return "high"
+    if n_locales >= 500:
+        return "medium"
+    if n_locales >= 150:
+        return "low"
+    return "very_low"
+
+
+def compute_activity_risk(
+    *,
+    event_rate: object,
+    n_locales: object,
+    supported_for_stats: object,
+    prior_event_rate: float,
+) -> float:
+    resolved_event_rate = float(event_rate) if event_rate is not None and pd.notna(event_rate) else float(prior_event_rate)
+    resolved_event_rate = min(max(resolved_event_rate, 0.0), 1.0)
+    resolved_support = float(n_locales) if n_locales is not None and pd.notna(n_locales) else 0.0
+    shrunk = ((resolved_event_rate * resolved_support) + (prior_event_rate * ACTIVITY_PRIOR_STRENGTH)) / (resolved_support + ACTIVITY_PRIOR_STRENGTH)
+    if not bool(supported_for_stats):
+        shrunk += UNSUPPORTED_ACTIVITY_PENALTY
+    return float(min(max(shrunk, 0.0), 1.0))
+
+
+def serialize_probability(value: object) -> float | None:
+    if value is None or pd.isna(value):
+        return None
+    return float(value)
+
+
+def _to_jsonable(value: object) -> object:
+    if isinstance(value, dict):
+        return {str(key): _to_jsonable(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_to_jsonable(item) for item in value]
+    if isinstance(value, tuple):
+        return [_to_jsonable(item) for item in value]
+    if isinstance(value, pd.Series):
+        return {str(key): _to_jsonable(item) for key, item in value.to_dict().items()}
+    if isinstance(value, (np.bool_, bool)):
+        return bool(value)
+    if isinstance(value, (np.floating, float)):
+        return None if not np.isfinite(value) else float(value)
+    if isinstance(value, (np.integer, int)):
+        return int(value)
+    if value is None or pd.isna(value):
+        return None
+    return value
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

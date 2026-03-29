@@ -127,15 +127,29 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
           ref={tooltipRef}
           style={tooltipPosition ? tooltipPosition : { left: 0, top: 0, visibility: "hidden" }}
         >
-          <strong>{tooltip.object.category_desc}</strong>
-          <span>{tooltip.object.location_label}</span>
-          <span>{tooltip.object.n_locales} locales en el hexágono</span>
-          <span>
-            Supervivencia {formatHorizonShortLabel(horizon)}: {formatTooltipPercent(getHorizonSurvival(tooltip.object, horizon))}
-          </span>
-          <small>Soporte {formatHorizonShortLabel(horizon)}: {getHorizonSupport(tooltip.object, horizon)}/{tooltip.object.n_locales} locales</small>
-          {getHorizonSupport(tooltip.object, horizon) <= 0 ? <small>Sin soporte suficiente para este horizonte.</small> : null}
-          <small>Risk ensemble medio {tooltip.object.avg_risk_ensemble.toFixed(2)}</small>
+          <span className="tooltip-kicker">Hexágono histórico</span>
+          <strong className="tooltip-title">{tooltip.object.category_desc}</strong>
+          <span className="tooltip-subtitle">{tooltip.object.location_label}</span>
+          <div className="tooltip-badges">
+            <span className="tooltip-chip">{tooltip.object.n_locales} locales</span>
+            <span className="tooltip-chip">{formatTooltipRiskPercentile(tooltip.object.avg_risk_percentile)}</span>
+          </div>
+          <div className="tooltip-grid">
+            <div className="tooltip-item">
+              <span className="tooltip-label">Supervivencia {formatHorizonShortLabel(horizon)}</span>
+              <strong className="tooltip-value">{formatTooltipPercent(getHorizonSurvival(tooltip.object, horizon))}</strong>
+            </div>
+            <div className="tooltip-item">
+              <span className="tooltip-label">Soporte {formatHorizonShortLabel(horizon)}</span>
+              <strong className="tooltip-value">{getHorizonSupport(tooltip.object, horizon)}/{tooltip.object.n_locales}</strong>
+            </div>
+            <div className="tooltip-item">
+              <span className="tooltip-label">Riesgo medio</span>
+              <strong className="tooltip-value">{tooltip.object.avg_risk_ensemble.toFixed(2)}</strong>
+            </div>
+          </div>
+          {getHorizonSupport(tooltip.object, horizon) <= 0 ? <small className="tooltip-note">Sin soporte suficiente para este horizonte.</small> : null}
+          <small className="tooltip-note">Haz click para fijar el hexágono y abrir su ficha completa.</small>
         </div>
       ) : null}
     </div>
@@ -225,6 +239,11 @@ function formatTooltipPercent(value: number | null) {
     return "Sin muestra";
   }
   return `${(value * 100).toFixed(0)}%`;
+}
+
+function formatTooltipRiskPercentile(value: number) {
+  const clamped = Math.max(0, Math.min(1, value));
+  return `P${Math.round(clamped * 100)} riesgo`;
 }
 
 function interpolateColor(left: Color, right: Color, ratio: number): Color {

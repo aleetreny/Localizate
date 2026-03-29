@@ -2,16 +2,33 @@
 
 Este archivo es la fuente unica y viva de contexto del proyecto. Se actualiza en cada avance y reemplaza al resto de documentos como referencia primaria.
 
-Ultima actualizacion: 2026-03-28
+Ultima actualizacion: 2026-03-29
 
 Nota de implementacion en curso (2026-03-27):
 - Nuevo pipeline manual para `locales disponibles` preparado fuera del frontend: `scripts/build_manual_available_locales.py` + `src/localizate/manual_available_locales.py`, con crawl paginado de `Locales.es` (`venta` + `alquiler`), export bruto/final a CSV, geocoding cacheado via `Nominatim`, H3 res `10` y join espacial a `section_key` cuando la precision de direccion es suficiente.
 - Endurecimiento posterior del pipeline manual de `locales disponibles`: se anade modo `--resume-from-raw` para reanudar desde el CSV bruto y la asignacion H3 pasa a ser conservadora, solo para geocodificaciones con precision `street_approx`, evitando centroides difusos de `Madrid`/barrios cuando la direccion del portal es demasiado generica.
+- Nuevo corte producto para `locales disponibles` ya materializado: `scripts/build_frontend_opportunity_artifacts.py` genera un subset filtrado `manual_available_locales_madrid_selected.csv` con solo locales precisos y sin outliers claros (`207` filas sobre `229` candidatas precisas; se excluyen `18` fichas incompletas y `4` outliers fuertes), ademas de un resumen dedicado en `data/processed/manual_available_locales_madrid_selected_summary.json`.
+- Nueva pantalla web independiente de oportunidades ya operativa en `apps/web/app/oportunidades/page.tsx`, con mapa de puntos sin hexagonos historicos, ficha de local filtrado, ranking de mejores actividades por entorno y seleccion manual de cualquier punto de Madrid resolviendo la seccion censal contenedora.
+- Navegacion entre `historico` y `oportunidades` aligerada: los artefactos pesados del frontend web dejan de viajar embebidos en la respuesta HTML/RSC de cada ruta y pasan a cargarse desde `public/data` en cliente, eliminando el cuello de botella de servir decenas de MB al cambiar de pestaña; ademas la pestana precalienta el artefacto objetivo al pasar por encima para adelantar parte de la descarga.
+- Ajuste posterior de UX aplicado sobre la vista de oportunidades: el lateral elimina la tarjeta de `Filtro activo`, usa el subtitulo `Locales disponibles y recomendacion de actividad`, corrige el wrapping del titulo principal y reordena la `lectura del punto` para explicar explicitamente que la ficha se interpreta siempre contra la seccion censal contenedora.
+- La capa de scoring para oportunidades usa referencia historica fija del ABT `local_survival_abt` para evitar normalizaciones inestables punto a punto; en esta lectura de aperturas se neutralizan penalizaciones de `padron_lag` y `renta_carry_forward` por ser artefactos de frescura del dato historico y no señales economicas del punto actual.
+- Correccion de datos aplicada al producto de oportunidades: el merge de `avisos` ya no colapsa a cero por desalineacion de codigos de barrio entre la fuente de avisos y la geografia censal usada en frontend; los artefactos regenerados vuelven a exponer tasas positivas por barrio/distrito en los `207` locales seleccionados.
+- Replanteamiento del ranking de actividad aplicado en oportunidades: la recomendacion deja de ordenarse por supervivencia bruta y pasa a usar un `riesgo historico` ajustado por tamano muestral, con lookup de barrio por nombre estable (en vez de `barrio_code`, que colisionaba entre distritos en el export), aumentando la diversidad real de sugerencias servidas al frontend.
+- Correccion posterior del orden visual en `Actividades recomendadas`: la mezcla barrio+distrito ya no conserva el orden de concatenacion, sino que reordena el ranking combinado por `activity_risk` final y resuelve duplicados por la mejor variante disponible, evitando que aparezcan riesgos mas altos por delante de riesgos mas bajos en la tarjeta.
+- Endurecimiento adicional del producto de oportunidades: en desarrollo los fetchs de artefactos y secciones dejan de usar cache agresiva para no quedarse con rankings viejos tras regenerar; ademas el GeoJSON de secciones sale versionado y el ranking puede completar huecos con fallback `citywide` cuando barrio+distrito se quedan en 1-4 actividades.
+- Endurecimiento extra de la vista de oportunidades: la shell cliente revalida el artefacto al recuperar foco/visibilidad y con sondeo ligero en desarrollo, de modo que una sesion ya abierta no se quede mostrando rankings obsoletos tras regenerar el dataset de oportunidades.
+- Refinamiento adicional de UI en oportunidades: el titulo principal reduce ligeramente tamano y deja de cortar palabras a mitad; el subtitulo pasa a `recomendación`, se elimina el bloque redundante `Como leer esta ficha` y la tarjeta/ranking pierden el copy ruidoso de `cierre observado` y `confidence_tier`.
+- Nueva capa explicativa en la ficha de oportunidades: la lectura contextual deja de mostrarse como texto corrido y pasa a una rejilla de metricas clicables; cada tarjeta del detalle del local o del punto libre puede abrir una definicion y su regla de calculo, y se elimina la antigua tarjeta de `Unidad de analisis`.
+- Ajuste posterior de esa capa explicativa: las metricas contextuales se integran ya en la misma rejilla que el resto del detalle, sin subseccion aparte, y la explicacion de la metrica activa se desplaza a un banner flotante dentro del mapa para lectura inmediata.
+- Nueva iteracion de claridad transversal web: el banner explicativo de metricas gana descripciones mas completas, motivo de utilidad y ejemplos cuando aportan contexto; ademas el historico adopta tambien metricas clicables en la ficha del hexagono y los tooltips de mapa para locales/hexagonos pasan a una tarjeta flotante mas legible y accionable.
+- Artefactos estaticos nuevos ya servidos al frontend web: `apps/web/public/data/frontend-opportunity-artifacts.json` y `apps/web/public/data/frontend-opportunity-sections.geojson`, junto con el contrato TS y el loader independiente para no tocar la pantalla historica salvo por un switch visual entre vistas.
 - Refactor ABT arrancado para unificar el target en `cese_de_actividad` con `event_subtype` solo de auditoria.
 - Las features de contexto comercial en `abt_survival.py` pasan a construirse con join lagged `t-1` para reducir contemporaneidad evitable.
 - ABT y artefactos base ya regenerados con la nueva semantica; el ABT materializa `event_subtype_detail` para auditoria forense y el builder DuckDB se ha endurecido para evitar OOM en la agregacion de actividades.
 - Nuevo bloque de variables internas ya materializado en `local_survival_abt`: flujos de entrada/salida por seccion (`3/6/12m`), tasas/net flow/turnover a `12m`, concentracion comercial (`HHI` y `top share` por division y categoria) y features temporales de cohorte/calendario de entrada para modelado.
 - Validacion del bloque nuevo completada: `tests.test_survival_baseline` y `tests.test_abt_survival` en verde; artefacto `data/features/local_survival_abt.csv` regenerado y verificado con las nuevas columnas materializadas.
+- Retraining canonico de `local_survival` completado sobre el ABT ampliado: el ensemble mejora en `valid` (`Uno 0.6863 -> 0.7428`), pero empeora con fuerza en `test` (`Uno 0.6418 -> 0.5335`), asi que no se considera una mejora neta del campeon actual.
+- Benchmark directo por variantes sobre este retrain ya medido con el mismo split holdout del pipeline: `cox` queda por delante del ensemble en `test` (`Uno 0.6100` vs `0.5338`; `AUC@12m 0.6135` vs `0.5394`), mientras `rsf` arrastra la mezcla (`Uno test 0.3622`). Decision provisional para `local_survival`: si hay que simplificar o elegir un campeon temporal, priorizar `cox_only` y relegar el ensemble hasta tener evidencia rolling/robustez especifica para este target.
 - Arranque frontend web completado: nueva app `apps/web/` en `Next.js + TypeScript + MapLibre + deck.gl`, builder estatico `scripts/build_frontend_map_artifacts.py` y artefacto JSON materializado en `apps/web/public/data/frontend-map-artifacts.json`.
 - El primer MVP web ya compila en `production build`, renderiza hexagonos H3 de Madrid, permite selector por tipo de local, horizonte `12m/24m`, filtro de calidad y panel lateral de detalle.
 - Ajuste de UX del mapa web aplicado: vista completa en desktop sin scroll de pagina, sidebar con scroll propio y estado de camara compartido entre mapa base y capa H3 para que pan/zoom mantengan los hexagonos anclados al mapa.
@@ -215,30 +232,31 @@ Nota de implementacion en curso (2026-03-27):
 	- esquema walk-forward con `4` folds contiguos y cutoffs `2020-03 -> 2021-04 -> 2022-06 -> 2023-06 -> 2024-10 -> 2026-04`
 	- configuracion de ejecucion usada para hacerlo operativo en una sola pasada: `RSF=120`, `GBSA=120`, `fit_max_rows=25000`
 	- resumen agregado rolling:
-		- valid Uno mean `0.6898` (std `0.0627`)
-		- test Uno mean `0.6885` (std `0.0665`)
-		- valid dynamic AUC mean `0.7080` (std `0.0853`)
-		- test dynamic AUC mean `0.7230` (std `0.0679`)
+		- valid Uno mean `0.6735` (std `0.0657`)
+		- test Uno mean `0.6753` (std `0.0662`)
+		- valid dynamic AUC mean `0.6741` (std `0.0984`)
+		- test dynamic AUC mean `0.6990` (std `0.0714`)
 	- comparacion contra split unico actual:
-		- valid Uno baja `0.7756 -> 0.6898`
-		- test Uno sube `0.6050 -> 0.6885`
-		- valid dynamic AUC mean baja `0.7928 -> 0.7080`
-		- test dynamic AUC mean baja `0.9236 -> 0.7230`
-	- conclusion operativa: el split unico estaba dando una foto optimista para algunas metricas y pesimista para otras; el rolling backtest sugiere un nivel de discriminacion mas estable alrededor de `0.69` en Uno fuera de train, sin mejora real del modelo pero con una lectura mucho mas robusta
+		- valid Uno baja `0.7756 -> 0.6735`
+		- test Uno sube `0.6050 -> 0.6753`
+		- valid dynamic AUC mean baja `0.7928 -> 0.6741`
+		- test dynamic AUC mean baja `0.9236 -> 0.6990`
+	- conclusion operativa: el split unico estaba siendo claramente optimista; el rolling backtest baja el nivel esperado de discriminacion fuera de train a la zona `0.67-0.68` en Uno y `~0.70` en mean AUC, que sigue siendo util para producto pero mas lejos de una señal "muy fuerte".
 - Benchmark de composicion del ensemble ya ejecutado dentro del rolling backtest sin coste extra de entrenamiento por variante:
 	- variantes evaluadas: `cox_only`, `gbsa_only`, `rsf_only`, `cox_gbsa_rank`, `ensemble_all_rank`, `ensemble_weighted_rank`
 	- ranking por media de `Uno test`:
-		- `ensemble_all_rank`: `0.6885`
-		- `cox_only`: `0.6875`
-		- `cox_gbsa_rank`: `0.6810`
-		- `ensemble_weighted_rank`: `0.6766`
-		- `rsf_only`: `0.6588`
-		- `gbsa_only`: `0.6397`
+		- `cox_only`: `0.6811`
+		- `ensemble_all_rank`: `0.6753`
+		- `cox_gbsa_rank`: `0.6647`
+		- `rsf_only`: `0.6627`
+		- `ensemble_weighted_rank`: `0.6608`
+		- `gbsa_only`: `0.6299`
 	- lectura tecnica principal:
-		- el ensemble actual sigue siendo el mejor en media, aunque por margen minimo frente a `cox_only`
-		- `cox_only` casi empata en rendimiento y es mas estable en `test` (`std 0.0464` vs `0.0665` del ensemble)
-		- `rsf_only` gana `3/4` folds individualmente pero es demasiado volatil (`test Uno` entre `0.4036` y `0.7636`)
+		- `cox_only` pasa a ser la mejor variante en media de `Uno test` y tambien gana en `test dynamic AUC mean` (`0.7091` vs `0.6990` del ensemble)
+		- el ensemble actual mantiene una ligera ventaja en validacion (`valid Uno 0.6735` vs `0.6619` de `cox_only`), pero ya no compensa con mejor out-of-sample en test
+		- `rsf_only` sigue mostrando buena señal en algunos folds pero demasiada volatilidad (`test Uno std 0.1255`)
 		- `gbsa_only` queda claramente por debajo en este setup
+	- conclusion operativa actual: el rolling nuevo inclina la balanza hacia `cox_only` como candidato principal para `activity_survival`; el ensemble igualitario ya no es el baseline mas defendible si hay que elegir un solo campeon.
 - Primer corte del nuevo frontend web ya implementado:
 	- app nueva en `apps/web/` con `App Router`, `TypeScript`, `MapLibre` y `deck.gl`
 	- shell visual minimalista con viewport fijo de Madrid y capa principal `H3HexagonLayer`
@@ -272,15 +290,14 @@ Nota de implementacion en curso (2026-03-27):
 		- test Uno mean `0.6886`
 		- valid dynamic AUC mean `0.6764`
 		- test dynamic AUC mean `0.7119`
-	- comparacion contra el mejor benchmark rolling previo (`ensemble_all_rank`):
-		- test Uno mejora solo de `0.6885 -> 0.6886` (cambio marginal)
-		- valid Uno empeora de `0.6898 -> 0.6718`
-		- test dynamic AUC mean empeora de `0.7230 -> 0.7119`
-		- valid dynamic AUC mean empeora de `0.7080 -> 0.6764`
+	- comparacion contra el benchmark rolling actualizado:
+		- frente a `cox_only` untuned del rerun, mejora `test Uno 0.6811 -> 0.6886` y `test dynamic AUC mean 0.7091 -> 0.7119`
+		- frente a `ensemble_all_rank` actual, mejora `test Uno 0.6753 -> 0.6886` y `test dynamic AUC mean 0.6990 -> 0.7119`
+		- en validacion queda practicamente empatado con el ensemble (`valid Uno 0.6718` vs `0.6735`) y mejora ligeramente en `valid dynamic AUC mean` (`0.6764` vs `0.6741`)
 	- mejor trial de la familia `ensemble_all_rank` no fue finalista ganador y quedo claramente por debajo:
 		- valid Uno mean `0.6547`
 		- test Uno mean `0.6613`
-	- conclusion operativa final del HPO: no hay mejora material sobre el benchmark rolling actual; `cox_only` queda como opcion simplificada muy competitiva, pero no como salto claro de performance frente al ensemble baseline
+	- conclusion operativa final del HPO: con el benchmark rolling actualizado, el mejor `cox_only` afinado pasa a ser el candidato mas defendible para promocion operativa en `activity_survival`; la mejora no es enorme, pero ahora si supera a las variantes base relevantes en las metricas de test sin pagar un coste serio en validacion
 - Prompt de continuidad para trabajar sin contexto disponible en `docs/next_session_prompt.md`.
 - Contexto legado consolidado en este archivo; carpeta `Context/` eliminada para simplificar el repo.
 - Documentacion DB movida a `docs/documentacion_db/` para estandarizar nombres.
