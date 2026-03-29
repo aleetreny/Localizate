@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import MapView, { Layer, NavigationControl, Source, type MapLayerMouseEvent, type ViewState } from "react-map-gl/maplibre";
 
 import { formatHorizonShortLabel, isFiniteNumber, type Horizon } from "@/lib/horizon";
+import { computeTooltipPosition } from "@/lib/tooltip-position";
 import type {
   Bounds,
   OpportunityManualSelection,
@@ -100,15 +101,13 @@ export function OpportunityMap({
       return;
     }
 
-    const padding = 12;
-    const offset = 14;
-    const maxLeft = Math.max(padding, container.clientWidth - bubble.offsetWidth - padding);
-    const maxTop = Math.max(padding, container.clientHeight - bubble.offsetHeight - padding);
-
-    setTooltipPosition({
-      left: clamp(tooltip.x + offset, padding, maxLeft),
-      top: clamp(tooltip.y + offset, padding, maxTop)
-    });
+    setTooltipPosition(
+      computeTooltipPosition({
+        anchor: { x: tooltip.x, y: tooltip.y },
+        tooltip: { width: bubble.offsetWidth, height: bubble.offsetHeight },
+        viewport: { width: container.clientWidth, height: container.clientHeight }
+      })
+    );
   }, [tooltip]);
 
   const sectionsByKey = useMemo(() => {
@@ -362,15 +361,12 @@ export function OpportunityMap({
           <span className="tooltip-kicker">Local disponible</span>
           <strong className="tooltip-title">{tooltip.point.card_title}</strong>
           <span className="tooltip-subtitle">{tooltip.point.barrio_name}, {tooltip.point.district_name}</span>
+          <span className="tooltip-subtitle">Actividad sugerida: {tooltip.point.best_activity_label || "Sin ranking"}</span>
           <div className="tooltip-badges">
             <span className="tooltip-chip">{tooltip.point.operation}</span>
             <span className="tooltip-chip">{formatTooltipPrice(tooltip.point.price_eur)}</span>
           </div>
           <div className="tooltip-grid">
-            <div className="tooltip-item tooltip-item-full">
-              <span className="tooltip-label">Actividad sugerida</span>
-              <strong className="tooltip-value">{tooltip.point.best_activity_label || "Sin ranking"}</strong>
-            </div>
             <div className="tooltip-item">
               <span className="tooltip-label">Supervivencia {formatHorizonShortLabel(horizon)}</span>
               <strong className="tooltip-value">{formatTooltipPercent(getPointSurvival(tooltip.point, horizon))}</strong>
@@ -378,10 +374,6 @@ export function OpportunityMap({
             <div className="tooltip-item">
               <span className="tooltip-label">Riesgo relativo</span>
               <strong className="tooltip-value">{formatRiskPercentile(tooltip.point.risk_percentile)}</strong>
-            </div>
-            <div className="tooltip-item">
-              <span className="tooltip-label">Superficie</span>
-              <strong className="tooltip-value">{formatTooltipArea(tooltip.point.area_m2)}</strong>
             </div>
           </div>
           <small className="tooltip-note">Haz click para abrir la ficha del local.</small>
@@ -529,13 +521,6 @@ function formatTooltipPrice(value: number | null) {
     return "Precio s/d";
   }
   return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
-}
-
-function formatTooltipArea(value: number | null) {
-  if (!isFiniteNumber(value)) {
-    return "s/d";
-  }
-  return `${Math.round(value)} m²`;
 }
 
 function formatRiskPercentile(value: number) {

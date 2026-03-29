@@ -279,7 +279,7 @@ def _build_context(
     dataset["first_seen_period"] = dataset["first_seen_period"].astype("string")
     dataset["event_observed"] = pd.to_numeric(dataset["event_observed"], errors="coerce").fillna(0).astype(int)
     dataset["duration_months"] = pd.to_numeric(dataset["duration_months"], errors="coerce").fillna(0).astype(float)
-    feature_frame = build_feature_frame(dataset)
+    feature_frame = build_feature_frame(dataset, feature_profile="activity_survival_pruned")
     cutoffs = derive_event_quantile_cutoffs(dataset, quantiles=quantiles)
     folds = build_walk_forward_folds(
         dataset,

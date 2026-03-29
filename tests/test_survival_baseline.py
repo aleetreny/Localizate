@@ -229,6 +229,79 @@ class SurvivalBaselineTests(unittest.TestCase):
         self.assertAlmostEqual(raw.loc[0, "section_entry_rate_12m_start"], 0.15)
         self.assertAlmostEqual(raw.loc[0, "section_activity_category_hhi_start"], 0.25)
 
+    def test_build_feature_frame_supports_activity_pruned_profile(self) -> None:
+        df = pd.DataFrame(
+            {
+                "first_seen_period": ["2019-05"],
+                "renta_effective_eur": [1000.0],
+                "renta_carry_forward_years": [0],
+                "share_foreign_start": [0.1],
+                "share_age_00_14_start": [0.2],
+                "share_age_15_29_start": [0.2],
+                "share_age_30_44_start": [0.2],
+                "share_age_45_64_start": [0.2],
+                "share_age_65_plus_start": [0.2],
+                "share_male_start": [0.5],
+                "age_mean_start": [40.0],
+                "total_population_start": [1000.0],
+                "population_density_km2_start": [5000.0],
+                "padron_lag_months_start": [0],
+                "geometry_available_start": [1],
+                "h3_cell_start": ["abc"],
+                "n_divisions_start": [1],
+                "n_epigrafes_start": [1],
+                "n_activity_categories_start": [1],
+                "section_local_count_start": [20],
+                "section_unique_division_count_start": [5],
+                "section_unique_activity_category_count_start": [4],
+                "section_single_division_share_start": [0.5],
+                "section_same_division_local_count_start": [3],
+                "section_same_division_share_start": [0.15],
+                "section_same_activity_category_local_count_start": [2],
+                "section_same_activity_category_share_start": [0.10],
+                "section_entry_count_3m_start": [1],
+                "section_entry_count_6m_start": [2],
+                "section_entry_count_12m_start": [3],
+                "section_exit_count_3m_start": [1],
+                "section_exit_count_6m_start": [2],
+                "section_exit_count_12m_start": [4],
+                "section_entry_rate_12m_start": [0.15],
+                "section_exit_rate_12m_start": [0.20],
+                "section_net_flow_12m_start": [-1],
+                "section_turnover_rate_12m_start": [0.35],
+                "section_division_hhi_start": [0.30],
+                "section_division_top_share_start": [0.45],
+                "section_activity_category_hhi_start": [0.25],
+                "section_activity_category_top_share_start": [0.40],
+                "section_local_count_delta_12m_start": [2],
+                "total_population_delta_12m_start": [10],
+                "share_foreign_delta_12m_start": [0.01],
+                "share_age_15_29_delta_12m_start": [0.02],
+                "population_density_km2_delta_12m_start": [100.0],
+                "renta_best_eur_delta_12m_start": [50.0],
+                "avisos_district_per_1000_prev_year": [4.0],
+                "avisos_barrio_per_1000_prev_year": [2.0],
+                "avisos_barrio_share_of_district_prev_year": [0.5],
+                "metro_distance_m_start": [250.0],
+                "metro_access_count_500m_start": [2.0],
+                "metro_access_count_1000m_start": [4.0],
+                "missing_metro_distance_start": [0.0],
+                "activity_category_code_start": ["bar_cafe"],
+            }
+        )
+
+        full = build_feature_frame(df, feature_profile="full")
+        pruned = build_feature_frame(df, feature_profile="activity_survival_pruned")
+
+        self.assertIn("avisos_district_per_1000_prev_year", full.columns)
+        self.assertIn("cohort_2018_2019", full.columns)
+        self.assertIn("section_local_count_start", full.columns)
+        self.assertNotIn("avisos_district_per_1000_prev_year", pruned.columns)
+        self.assertNotIn("cohort_2018_2019", pruned.columns)
+        self.assertNotIn("section_local_count_start", pruned.columns)
+        self.assertIn("metro_distance_m_start", pruned.columns)
+        self.assertIn("macro_category__bar_cafe", pruned.columns)
+
 
 if __name__ == "__main__":
     unittest.main()

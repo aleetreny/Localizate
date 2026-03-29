@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.neighbors import BallTree
 
+from .activity_taxonomy import macro_category_feature_names
 from .censo import load_raw_manifest
 from .csv_utils import read_delimited_file
 from .paths import DATA_DIR, PROJECT_ROOT, RAW_DATA_DIR
@@ -93,6 +94,7 @@ MODEL_FEATURE_SPECS: tuple[FeatureSpec, ...] = (
 
 
 MODEL_FEATURE_COLUMNS = tuple(spec.name for spec in MODEL_FEATURE_SPECS)
+ACTIVITY_SURVIVAL_PRUNED_EXCLUDED_CATEGORIES = frozenset({"competition", "avisos", "temporal"})
 
 HELPER_COLUMN_SPECS: tuple[FeatureSpec, ...] = (
     FeatureSpec("district_code_start", "new", "join_helper", "section_socioeconomic_panel", "Código de distrito del local en el periodo inicial."),
@@ -104,6 +106,21 @@ HELPER_COLUMN_SPECS: tuple[FeatureSpec, ...] = (
     FeatureSpec("event_period", "existing", "target", "abt_survival", "Periodo en el que ocurre el evento objetivo."),
     FeatureSpec("duration_months", "existing", "target", "abt_survival", "Duración observada en meses desde el alta hasta evento/censura."),
 )
+
+
+def get_model_feature_columns(*, feature_profile: str = "full") -> tuple[str, ...]:
+    if feature_profile == "full":
+        base_columns = list(MODEL_FEATURE_COLUMNS)
+    elif feature_profile == "activity_survival_pruned":
+        base_columns = [
+            spec.name
+            for spec in MODEL_FEATURE_SPECS
+            if spec.category not in ACTIVITY_SURVIVAL_PRUNED_EXCLUDED_CATEGORIES
+        ]
+    else:
+        raise ValueError(f"Unsupported feature_profile: {feature_profile}")
+
+    return tuple(base_columns + macro_category_feature_names())
 
 
 def _parse_integer_like_text(value: object) -> str | None:

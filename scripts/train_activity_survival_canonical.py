@@ -67,6 +67,7 @@ def main() -> int:
         metrics_json=PROJECT_ROOT / "models" / "survival_activity_canonical_metrics.json",
         report_md=PROJECT_ROOT / "docs" / "survival_activity_canonical.md",
         map_export_csv=PROJECT_ROOT / "data" / "exports" / "activity_survival_map_export.csv",
+        feature_profile="activity_survival_pruned",
         transition_policy_train="exclude_transition",
         renta_max_year=2023,
         rsf_n_estimators=rsf_estimators,

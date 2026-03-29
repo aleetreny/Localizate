@@ -48,6 +48,10 @@ Nota de implementacion en curso (2026-03-27):
 - Limpieza visual adicional aplicada en `zonas destacadas`: se retiran percentiles y confianza del copy, y el ranking pasa a renderizarse por filas emparejadas distrito/barrio para que ambas columnas compartan siempre altura y composicion visual.
 - Correccion critica de semantica aplicada en el frontend historico: los horizontes sin soporte suficiente ya no se materializan como `0%`, sino como `sin datos` (`null` en el artefacto), y el mapa/panel excluyen esos casos de la media y los colorean en neutro. Impacto medido antes del fix en hexagonos: a `24m`, `3.170` filas (`4,2%` del universo hex-categoria) se estaban mostrando como `0%` pese a ser realmente `sin soporte`; eso suponia el `72,0%` de todos los `0%` visibles a `24m`.
 - Correccion robusta de geografia aplicada en el builder historico: cuando falla el join por `section_key_start`, el artefacto web intenta ahora recuperar `barrio/distrito` mediante fallback espacial por coordenadas contra la geometria real de secciones censales, manteniendo el `section_key` como via primaria y reduciendo los `Sin asignar` que ya eran recuperables con los datos actuales.
+- Nuevo selector de tamano de hexagono ya operativo en la pestana historica web: el frontend expone mallas `pequena / mediana / grande`, mantiene `pequena` como default y hace el cambio rapido mediante precarga en cliente de artefactos estaticos separados, evitando meter las tres resoluciones en un unico JSON gigante.
+- Builder historico ampliado para esa UX multi-malla: `scripts/build_frontend_map_artifacts.py` materializa ahora tres artefactos H3 (`res 10 / 9 / 8`) usando rollup a parent en build time desde los scores locales existentes, sin reentrenar el modelo; resultado actual materializado: `75.272` filas hex-categoria en pequeno, `30.993` en mediano y `9.564` en grande.
+- Validacion especifica del cambio multi-malla completada: nuevo coverage de tests para deteccion de resolucion H3 y agregacion a parents en `tests/test_build_frontend_map_artifacts.py`, `next build` en verde y artefactos regenerados en `apps/web/public/data/frontend-map-artifacts*.json`.
+- Refinamiento adicional de UX aplicado a los tooltips del mapa web: el selector de malla pasa a `Bajo / Medio / Alto`, los banners flotantes de historico y oportunidades se simplifican para dejar solo metricas de `supervivencia` y `riesgo`, y el posicionamiento del tooltip evita ya el area inmediata del puntero para no tapar el hexagono o local que se esta intentando seleccionar.
 - Pendiente tras este bloque: enriquecer detalle de zona, conectar comparativas distrito/barrio en UI y decidir cuando sustituir artefactos estaticos por una API ligera.
 
 ## Identidad del proyecto
@@ -298,6 +302,16 @@ Nota de implementacion en curso (2026-03-27):
 		- valid Uno mean `0.6547`
 		- test Uno mean `0.6613`
 	- conclusion operativa final del HPO: con el benchmark rolling actualizado, el mejor `cox_only` afinado pasa a ser el candidato mas defendible para promocion operativa en `activity_survival`; la mejora no es enorme, pero ahora si supera a las variantes base relevantes en las metricas de test sin pagar un coste serio en validacion
+- Ablation leave-one-block-out ya ejecutada sobre `activity_survival` usando el `cox_only` afinado ganador del HPO:
+	- artefactos nuevos en `models/activity_survival_cox_ablation.json` y `docs/activity_survival_cox_ablation.md`
+	- baseline de la ablation: valid Uno `0.6687`, test Uno `0.6786`, test dynamic AUC mean `0.7033`
+	- bloque claramente dominante: `activity_identity` (dummies de macrocategoria); al retirarlo el test Uno cae `-0.1447` y el test dynamic AUC mean `-0.1387`
+	- bloques con ayuda pequena pero positiva: `metro` (`delta test Uno -0.0026`) y, casi nulo, `activity_complexity`
+	- bloques que apenas mueven la aguja en este setup Cox: `competition_flow`, `competition_concentration` y `zone_dynamics`
+	- bloques que parecen ruidosos o redundantes fuera de muestra: `competition_stock` (`delta test Uno +0.0117` al quitarlo), `temporal` (`+0.0091`), `avisos` (`+0.0047`) y en menor medida `socioeconomic` (`+0.0034`, aunque con peor valid/AUC)
+	- conclusion operativa de la ablation: el modelo `activity_survival` esta capturando sobre todo identidad de actividad; buena parte del contexto adicional no esta comprando robustez extra en el Cox actual y conviene simplificar antes de seguir anadiendo features
+	- poda aplicada en codigo como perfil de modelado `activity_survival_pruned`: se excluyen del entrenamiento `competition_stock`, `avisos` y `temporal`, pero las columnas siguen existiendo en el ABT y en los builders del frontend para poder mostrarlas como contexto en UI
+	- rerun rolling tras la poda ya ejecutado: `cox_only` mejora ligeramente hasta `test Uno 0.6835` y `valid Uno 0.6678`, mientras el `ensemble_all_rank` cae a `test Uno 0.6044`; conclusion operativa actualizada: la poda refuerza la promocion de `cox_only` y no conviene seguir usando el ensemble actual como score principal de `activity_survival`
 - Prompt de continuidad para trabajar sin contexto disponible en `docs/next_session_prompt.md`.
 - Contexto legado consolidado en este archivo; carpeta `Context/` eliminada para simplificar el repo.
 - Documentacion DB movida a `docs/documentacion_db/` para estandarizar nombres.

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { MadridMap } from "@/components/madrid-map";
 import { ViewTabs } from "@/components/view-tabs";
+import { DEFAULT_HEX_SIZE, formatHexSizeLabel, HEX_SIZE_OPTIONS, type HexSize } from "@/lib/hex-size";
 import { formatHorizonLongLabel, formatHorizonShortLabel, getHorizonSupport, getHorizonSurvival, isFiniteNumber, type Horizon } from "@/lib/horizon";
 import { FALLBACK_MAP_ARTIFACTS, loadMapArtifactsFromPublic } from "@/lib/public-data";
 import type { ColorScale, FrontendArtifacts, HexAggregate, ZoneAggregate } from "@/lib/types";
@@ -28,39 +29,62 @@ type ZoneListProps = {
 export function MapShell({ initialArtifacts }: MapShellProps) {
   const [artifacts, setArtifacts] = useState(initialArtifacts ?? FALLBACK_MAP_ARTIFACTS);
   const [isLoadingArtifacts, setIsLoadingArtifacts] = useState(!initialArtifacts);
+  const [isSwitchingHexSize, setIsSwitchingHexSize] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState((initialArtifacts ?? FALLBACK_MAP_ARTIFACTS).meta.defaultCategoryCode);
   const [horizon, setHorizon] = useState<Horizon>("24m");
+  const [hexSize, setHexSize] = useState<HexSize>(DEFAULT_HEX_SIZE);
   const [selectedHex, setSelectedHex] = useState<HexAggregate | null>(null);
   const [activeMetricId, setActiveMetricId] = useState<string | null>(null);
+  const loadedArtifactsRef = useRef<Partial<Record<HexSize, FrontendArtifacts>>>(
+    initialArtifacts ? { [DEFAULT_HEX_SIZE]: initialArtifacts } : {}
+  );
 
   useEffect(() => {
     let alive = true;
 
-    if (initialArtifacts) {
-      return () => {
-        alive = false;
-      };
-    }
+    async function loadSelectedArtifacts() {
+      const cachedArtifacts = loadedArtifactsRef.current[hexSize];
+      if (cachedArtifacts) {
+        setArtifacts(cachedArtifacts);
+        setIsLoadingArtifacts(false);
+        setIsSwitchingHexSize(false);
+        prefetchRemainingHexSizes(hexSize, loadedArtifactsRef.current, alive);
+        return;
+      }
 
-    void loadMapArtifactsFromPublic().then((nextArtifacts) => {
+      const isFirstLoad = Object.keys(loadedArtifactsRef.current).length === 0;
+      if (isFirstLoad) {
+        setIsLoadingArtifacts(true);
+      } else {
+        setIsSwitchingHexSize(true);
+      }
+
+      const nextArtifacts = initialArtifacts && hexSize === DEFAULT_HEX_SIZE
+        ? initialArtifacts
+        : await loadMapArtifactsFromPublic(hexSize);
+
       if (!alive) {
         return;
       }
 
+      loadedArtifactsRef.current[hexSize] = nextArtifacts;
       setArtifacts(nextArtifacts);
       setIsLoadingArtifacts(false);
-      setSelectedHex(null);
+      setIsSwitchingHexSize(false);
       setSelectedCategory((currentCategory) => {
         return nextArtifacts.categories.some((item) => item.category_code === currentCategory)
           ? currentCategory
           : nextArtifacts.meta.defaultCategoryCode;
       });
-    });
+      prefetchRemainingHexSizes(hexSize, loadedArtifactsRef.current, alive);
+    }
+
+    void loadSelectedArtifacts();
 
     return () => {
       alive = false;
     };
-  }, [initialArtifacts]);
+  }, [hexSize, initialArtifacts]);
 
   useEffect(() => {
     if (!selectedHex) {
@@ -208,6 +232,29 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
         </div>
 
         <div className="control-group">
+          <span className="control-label">Tamaño hexágono</span>
+          <div className="toggle-row toggle-row-three">
+            {HEX_SIZE_OPTIONS.map((option) => (
+              <button
+                data-active={hexSize === option.value}
+                key={option.value}
+                onClick={() => {
+                  if (hexSize === option.value) {
+                    return;
+                  }
+                  setSelectedHex(null);
+                  setActiveMetricId(null);
+                  setHexSize(option.value);
+                }}
+                type="button"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="control-group">
           <span className="control-label">Horizonte</span>
           <div className="toggle-row">
             <button data-active={horizon === "12m"} onClick={() => setHorizon("12m")} type="button">
@@ -240,6 +287,8 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
         <p className="support-note">
           {isLoadingArtifacts
             ? "Cargando el artefacto histórico del mapa. La vista aparece primero y los hexágonos se hidratan en segundo plano."
+            : isSwitchingHexSize
+              ? `Cambiando a nivel ${formatHexSizeLabel(hexSize).toLowerCase()}...`
             : buildGlobalSupportNote(activeStats.hexesWithSupport, activeStats.hexes, horizon)}
         </p>
 
@@ -296,6 +345,25 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
       </section>
     </main>
   );
+}
+
+function prefetchRemainingHexSizes(
+  selectedHexSize: HexSize,
+  cache: Partial<Record<HexSize, FrontendArtifacts>>,
+  alive: boolean
+) {
+  for (const option of HEX_SIZE_OPTIONS) {
+    if (option.value === selectedHexSize || cache[option.value]) {
+      continue;
+    }
+
+    void loadMapArtifactsFromPublic(option.value).then((nextArtifacts) => {
+      if (!alive || cache[option.value]) {
+        return;
+      }
+      cache[option.value] = nextArtifacts;
+    });
+  }
 }
 
 function MetricGrid({

@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 import sys
 
+import h3
 import pandas as pd
 
 
@@ -16,15 +17,29 @@ if str(SRC_DIR) not in sys.path:
 
 
 DEFAULT_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-map-artifacts.json"
+MEDIUM_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-map-artifacts-medium.json"
+LARGE_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-map-artifacts-large.json"
 ACTIVITY_GLOSSARY = PROJECT_ROOT / "ACTIVITY_GLOSSARY.md"
 SPATIAL_FALLBACK_CRS = "EPSG:25830"
 SPATIAL_NEAREST_MAX_DISTANCE_M = 75.0
 GEOGRAPHY_COLUMNS = ("district_code", "district_name", "barrio_code", "barrio_name")
+HEX_SIZE_SPECS = (
+    {"key": "small", "label": "Pequeño", "resolution_offset": 0, "output_path": DEFAULT_OUTPUT},
+    {"key": "medium", "label": "Mediano", "resolution_offset": 1, "output_path": MEDIUM_OUTPUT},
+    {"key": "large", "label": "Grande", "resolution_offset": 2, "output_path": LARGE_OUTPUT},
+)
+MAP_BOUNDS = {
+    "min_lng": -3.888,
+    "min_lat": 40.312,
+    "max_lng": -3.517,
+    "max_lat": 40.643,
+    "min_zoom": 9.8,
+    "max_zoom": 15.4,
+}
 
 
 def main() -> int:
-    output_path = DEFAULT_OUTPUT
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    DEFAULT_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     section_geography = pd.read_csv(
         PROJECT_ROOT / "data" / "processed" / "section_geography.csv",
         usecols=["section_key", "district_code", "district_name", "barrio_code", "barrio_name"],
@@ -85,42 +100,41 @@ def main() -> int:
     merged = pd.concat([all_rows, merged], ignore_index=True)
 
     glossary_profiles = parse_activity_glossary(ACTIVITY_GLOSSARY)
-    hexes = build_hex_aggregates(merged)
-    categories = build_category_options(hexes, glossary_profiles)
     zones = build_zone_payloads(merged)
+    generated_at = pd.Timestamp.utcnow().isoformat()
+    base_h3_resolution = detect_h3_resolution(merged["h3_cell_start"])
 
-    payload = {
-        "meta": {
-            "title": "Madrid Survival Grid",
-            "subtitle": "Mapa H3 minimalista listo para plasmar regiones de prediccion y filtrar por tipo de local.",
-            "generated_at": pd.Timestamp.utcnow().isoformat(),
-            "defaultCategoryCode": "__all__",
-            "map_bounds": {
-                "min_lng": -3.888,
-                "min_lat": 40.312,
-                "max_lng": -3.517,
-                "max_lat": 40.643,
-                "min_zoom": 9.8,
-                "max_zoom": 15.4,
+    for spec in build_hex_size_specs(base_h3_resolution):
+        sized_frame = roll_up_hex_frame(merged, target_resolution=int(spec["h3_resolution"]))
+        hexes = build_hex_aggregates(sized_frame, hex_cell_col="hex_h3_cell")
+        categories = build_category_options(hexes, glossary_profiles)
+        payload = {
+            "meta": {
+                "title": "Madrid Survival Grid",
+                "subtitle": "Mapa H3 minimalista listo para plasmar regiones de prediccion y filtrar por tipo de local.",
+                "generated_at": generated_at,
+                "defaultCategoryCode": "__all__",
+                "map_bounds": MAP_BOUNDS,
             },
-        },
-        "categories": categories,
-        "hexes": hexes,
-        "zones": zones,
-    }
+            "categories": categories,
+            "hexes": hexes,
+            "zones": zones,
+        }
+        output_path = Path(spec["output_path"])
+        output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8")
+        print(
+            f"Wrote {spec['label'].lower()} frontend map artifacts: {output_path} "
+            f"(res={spec['h3_resolution']}, area_km2~{float(spec['hex_area_km2']):.4f}, hex_rows={len(hexes):,}, categories={len(categories):,})"
+        )
 
-    output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8")
-    print(f"Wrote frontend map artifacts: {output_path}")
-    print(f"Hex rows: {len(hexes):,}")
-    print(f"Categories: {len(categories):,}")
     print(f"Direct section geography matches: {geography_stats['matched_from_section_key']:,}")
     print(f"Coordinate geography backfills: {geography_stats['backfilled_from_coordinates']:,}")
     print(f"Rows still missing geography: {geography_stats['remaining_missing_geography']:,}")
     return 0
 
 
-def build_hex_aggregates(frame: pd.DataFrame) -> list[dict[str, object]]:
-    grouped = frame.groupby(["h3_cell_start", "category_code", "category_desc"], dropna=False)
+def build_hex_aggregates(frame: pd.DataFrame, *, hex_cell_col: str = "h3_cell_start") -> list[dict[str, object]]:
+    grouped = frame.groupby([hex_cell_col, "category_code", "category_desc"], dropna=False)
     rows: list[dict[str, object]] = []
     for (h3_cell, category_code, category_desc), part in grouped:
         duration = part["duration_months"]
@@ -372,6 +386,54 @@ def parse_integer_token(text: str) -> int | None:
     if not match:
         return None
     return int(match.group(1).replace(",", ""))
+
+
+def build_hex_size_specs(base_h3_resolution: int) -> list[dict[str, object]]:
+    specs: list[dict[str, object]] = []
+    for spec in HEX_SIZE_SPECS:
+        resolution = max(0, int(base_h3_resolution) - int(spec["resolution_offset"]))
+        specs.append(
+            {
+                **spec,
+                "h3_resolution": resolution,
+                "hex_area_km2": average_hex_area_km2(resolution),
+            }
+        )
+    return specs
+
+
+def detect_h3_resolution(series: pd.Series) -> int:
+    sample = series.dropna().astype("string").drop_duplicates().head(1024)
+    if sample.empty:
+        raise ValueError("Unable to detect H3 resolution from empty series")
+    resolutions = sample.map(lambda value: int(h3.get_resolution(str(value))))
+    return int(pd.Series(resolutions).mode().iloc[0])
+
+
+def roll_up_hex_frame(frame: pd.DataFrame, *, target_resolution: int) -> pd.DataFrame:
+    rolled = frame.copy()
+    rolled["hex_h3_cell"] = rolled["h3_cell_start"].map(lambda value: roll_up_h3_cell(value, target_resolution=target_resolution))
+    return rolled
+
+
+def roll_up_h3_cell(value: object, *, target_resolution: int) -> str:
+    cell = str(value).strip()
+    if not cell or cell.casefold() in {"nan", "<na>"}:
+        raise ValueError("Cannot roll up an empty H3 cell")
+
+    current_resolution = int(h3.get_resolution(cell))
+    if current_resolution < target_resolution:
+        raise ValueError(f"Cannot expand H3 cell from resolution {current_resolution} to {target_resolution}")
+    if current_resolution == target_resolution:
+        return cell
+    return str(h3.cell_to_parent(cell, target_resolution))
+
+
+def average_hex_area_km2(resolution: int) -> float:
+    try:
+        return float(h3.average_hexagon_area(resolution, unit="km^2"))
+    except TypeError:
+        return float(h3.average_hexagon_area(resolution, "km^2"))
 
 
 def normalize_section_key(value: object) -> str | None:

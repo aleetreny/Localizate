@@ -3,9 +3,18 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
+import h3
 import pandas as pd
 
-from scripts.build_frontend_map_artifacts import attach_section_geography, build_zone_metrics, compute_horizon_metrics
+from scripts.build_frontend_map_artifacts import (
+    attach_section_geography,
+    build_hex_aggregates,
+    build_hex_size_specs,
+    build_zone_metrics,
+    compute_horizon_metrics,
+    detect_h3_resolution,
+    roll_up_hex_frame,
+)
 
 
 class FrontendMapArtifactsTests(unittest.TestCase):
@@ -100,6 +109,56 @@ class FrontendMapArtifactsTests(unittest.TestCase):
         self.assertEqual(stats["matched_from_section_key"], 0)
         self.assertEqual(stats["backfilled_from_coordinates"], 1)
         self.assertEqual(stats["remaining_missing_geography"], 0)
+
+    def test_detect_h3_resolution_and_size_specs_follow_base_grid(self) -> None:
+        series = pd.Series(
+            [
+                h3.latlng_to_cell(40.4168, -3.7038, 10),
+                h3.latlng_to_cell(40.4182, -3.6991, 10),
+            ],
+            dtype="string",
+        )
+
+        resolution = detect_h3_resolution(series)
+        specs = build_hex_size_specs(resolution)
+
+        self.assertEqual(resolution, 10)
+        self.assertEqual([item["key"] for item in specs], ["small", "medium", "large"])
+        self.assertEqual([item["h3_resolution"] for item in specs], [10, 9, 8])
+        self.assertTrue(all(float(item["hex_area_km2"]) > 0.0 for item in specs))
+
+    def test_roll_up_hex_frame_and_aggregate_preserve_metrics(self) -> None:
+        parent = h3.latlng_to_cell(40.4168, -3.7038, 9)
+        child_cells = sorted(h3.cell_to_children(parent, 10))[:2]
+        frame = pd.DataFrame(
+            {
+                "h3_cell_start": child_cells,
+                "category_code": ["A", "A"],
+                "category_desc": ["Cafe", "Cafe"],
+                "district_name": ["Centro", "Centro"],
+                "barrio_name": ["Sol", "Sol"],
+                "duration_months": [30.0, 8.0],
+                "event_observed": [0, 1],
+                "risk_ensemble": [0.2, 0.6],
+                "risk_percentile": [0.1, 0.9],
+                "quality_tier": ["medium", "medium"],
+            }
+        )
+
+        rolled = roll_up_hex_frame(frame, target_resolution=9)
+        rows = build_hex_aggregates(rolled, hex_cell_col="hex_h3_cell")
+
+        self.assertEqual(rolled["hex_h3_cell"].nunique(), 1)
+        self.assertEqual(rolled.loc[0, "hex_h3_cell"], parent)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["h3_cell"], parent)
+        self.assertEqual(rows[0]["n_locales"], 2)
+        self.assertEqual(rows[0]["support_12m"], 2)
+        self.assertEqual(rows[0]["support_24m"], 2)
+        self.assertAlmostEqual(rows[0]["survival_12m"] or 0.0, 0.5)
+        self.assertAlmostEqual(rows[0]["survival_24m"] or 0.0, 0.5)
+        self.assertAlmostEqual(rows[0]["avg_risk_ensemble"], 0.4)
+        self.assertAlmostEqual(rows[0]["avg_risk_percentile"], 0.5)
 
 
 if __name__ == "__main__":

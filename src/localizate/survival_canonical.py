@@ -44,6 +44,7 @@ def train_canonical_survival_models(
     metrics_json: Path | None = None,
     report_md: Path | None = None,
     map_export_csv: Path | None = None,
+    feature_profile: str = "full",
     transition_policy_train: str = "exclude_transition",
     renta_max_year: int = 2023,
     rsf_n_estimators: int = 300,
@@ -91,8 +92,8 @@ def train_canonical_survival_models(
     )
     score_df = scoring_payload["dataset"].copy()
 
-    x_train_all = build_feature_frame(train_df)
-    x_score_all = build_feature_frame(score_df)
+    x_train_all = build_feature_frame(train_df, feature_profile=feature_profile)
+    x_score_all = build_feature_frame(score_df, feature_profile=feature_profile)
     _emit_progress(progress_callback, stage="features", progress=0.24, message="feature matrix built")
 
     y_struct = Surv.from_arrays(

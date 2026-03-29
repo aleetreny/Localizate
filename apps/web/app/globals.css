@@ -160,8 +160,14 @@ select {
   gap: 8px;
 }
 
+.toggle-row-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .toggle-row button {
   padding: 12px 14px;
+  min-width: 0;
+  white-space: nowrap;
   cursor: pointer;
   transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
 }

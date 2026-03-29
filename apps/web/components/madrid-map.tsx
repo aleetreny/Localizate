@@ -6,7 +6,8 @@ import { MapboxOverlay } from "@deck.gl/mapbox";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import Map, { NavigationControl, useControl, type ViewState } from "react-map-gl/maplibre";
 
-import { formatHorizonShortLabel, getHorizonSupport, getHorizonSurvival, isFiniteNumber, type Horizon } from "@/lib/horizon";
+import { formatHorizonShortLabel, getHorizonSurvival, isFiniteNumber, type Horizon } from "@/lib/horizon";
+import { computeTooltipPosition } from "@/lib/tooltip-position";
 import type { Bounds, ColorScale, HexAggregate } from "@/lib/types";
 
 type MadridMapProps = {
@@ -48,15 +49,13 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
       return;
     }
 
-    const padding = 12;
-    const offset = 14;
-    const maxLeft = Math.max(padding, container.clientWidth - bubble.offsetWidth - padding);
-    const maxTop = Math.max(padding, container.clientHeight - bubble.offsetHeight - padding);
-
-    setTooltipPosition({
-      left: clamp(tooltip.x + offset, padding, maxLeft),
-      top: clamp(tooltip.y + offset, padding, maxTop)
-    });
+    setTooltipPosition(
+      computeTooltipPosition({
+        anchor: { x: tooltip.x, y: tooltip.y },
+        tooltip: { width: bubble.offsetWidth, height: bubble.offsetHeight },
+        viewport: { width: container.clientWidth, height: container.clientHeight }
+      })
+    );
   }, [tooltip, horizon]);
 
   const layers = useMemo(() => {
@@ -140,15 +139,10 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
               <strong className="tooltip-value">{formatTooltipPercent(getHorizonSurvival(tooltip.object, horizon))}</strong>
             </div>
             <div className="tooltip-item">
-              <span className="tooltip-label">Soporte {formatHorizonShortLabel(horizon)}</span>
-              <strong className="tooltip-value">{getHorizonSupport(tooltip.object, horizon)}/{tooltip.object.n_locales}</strong>
-            </div>
-            <div className="tooltip-item">
               <span className="tooltip-label">Riesgo medio</span>
               <strong className="tooltip-value">{tooltip.object.avg_risk_ensemble.toFixed(2)}</strong>
             </div>
           </div>
-          {getHorizonSupport(tooltip.object, horizon) <= 0 ? <small className="tooltip-note">Sin soporte suficiente para este horizonte.</small> : null}
           <small className="tooltip-note">Haz click para fijar el hexágono y abrir su ficha completa.</small>
         </div>
       ) : null}
@@ -189,10 +183,6 @@ function getMinZoom(bounds: Bounds) {
 
 function buildBoundsKey(bounds: Bounds) {
   return [bounds.min_lng, bounds.min_lat, bounds.max_lng, bounds.max_lat, bounds.min_zoom, bounds.max_zoom].join(":");
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
 }
 
 function colorForSurvival(value: number | null, scale: ColorScale): Color {

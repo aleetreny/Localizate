@@ -1,9 +1,15 @@
 import { promises as fs } from "fs";
 import path from "path";
 
+import { DEFAULT_HEX_SIZE, type HexSize } from "@/lib/hex-size";
 import type { FrontendArtifacts, OpportunityArtifacts } from "@/lib/types";
 
 const DATA_DIR = path.join(process.cwd(), "public", "data");
+const MAP_ARTIFACT_FILE_NAMES: Record<HexSize, string> = {
+  small: "frontend-map-artifacts.json",
+  medium: "frontend-map-artifacts-medium.json",
+  large: "frontend-map-artifacts-large.json"
+};
 
 const FALLBACK_ARTIFACTS: FrontendArtifacts = {
   meta: {
@@ -68,8 +74,8 @@ const FALLBACK_OPPORTUNITY_ARTIFACTS: OpportunityArtifacts = {
   points: []
 };
 
-export async function loadMapArtifacts(): Promise<FrontendArtifacts> {
-  const filePath = path.join(DATA_DIR, "frontend-map-artifacts.json");
+export async function loadMapArtifacts(hexSize: HexSize = DEFAULT_HEX_SIZE): Promise<FrontendArtifacts> {
+  const filePath = path.join(DATA_DIR, MAP_ARTIFACT_FILE_NAMES[hexSize]);
 
   try {
     const raw = await fs.readFile(filePath, "utf-8");

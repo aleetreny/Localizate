@@ -11,43 +11,43 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
 
 ## Lectura ejecutiva
 
-- El rolling backtest ejecuta 4 folds walk-forward; media valid Uno=0.6735, test Uno=0.6753, valid mean AUC=0.6741, test mean AUC=0.6990.
-- Frente al split unico actual, valid Uno pasa de 0.7756 a media rolling 0.6735; test Uno pasa de 0.6050 a media rolling 0.6753.
-- Frente al split unico, valid mean AUC pasa de 0.7928 a 0.6741; test mean AUC pasa de 0.9236 a 0.6990.
+- El rolling backtest ejecuta 4 folds walk-forward; media valid Uno=0.6041, test Uno=0.6044, valid mean AUC=0.6031, test mean AUC=0.6321.
+- Frente al split unico actual, valid Uno pasa de 0.7756 a media rolling 0.6041; test Uno pasa de 0.6050 a media rolling 0.6044.
+- Frente al split unico, valid mean AUC pasa de 0.7928 a 0.6031; test mean AUC pasa de 0.9236 a 0.6321.
 - Quality gates por fold: pass, pass, pass, pass_with_caveats.
-- La mejor variante por media de Uno test es Cox solo con test Uno=0.6811 y valid Uno=0.6619.
-- Comparativa clave: ensemble actual test Uno=0.6753, ensemble ponderado=0.6608, GBSA solo=0.6299.
+- La mejor variante por media de Uno test es Cox solo con test Uno=0.6835 y valid Uno=0.6678.
+- Comparativa clave: ensemble actual test Uno=0.6044, ensemble ponderado=0.5910, GBSA solo=0.5389.
 
 ## Resumen agregado
 
 {
   "valid_uno": {
     "count": 4,
-    "mean": 0.6735158944418711,
-    "std": 0.06572175452348683,
-    "min": 0.5718495998014519,
-    "max": 0.7556044571918372
+    "mean": 0.6041099443488672,
+    "std": 0.054454683588327016,
+    "min": 0.5222125705776509,
+    "max": 0.6751145616984802
   },
   "test_uno": {
     "count": 4,
-    "mean": 0.6752597443143278,
-    "std": 0.06617966863947315,
-    "min": 0.5741175409958869,
-    "max": 0.7594698842844427
+    "mean": 0.6044144648856077,
+    "std": 0.06384313762837801,
+    "min": 0.5045814090425264,
+    "max": 0.6825239837800415
   },
   "valid_dynamic_auc_mean": {
     "count": 4,
-    "mean": 0.6741106862085041,
-    "std": 0.09842138890200267,
-    "min": 0.5104704128134034,
-    "max": 0.7710333381557396
+    "mean": 0.6031263129296229,
+    "std": 0.08712066117991377,
+    "min": 0.4827808302909714,
+    "max": 0.7282654334499818
   },
   "test_dynamic_auc_mean": {
     "count": 4,
-    "mean": 0.699014687480015,
-    "std": 0.0714421244921055,
-    "min": 0.5904000260871158,
-    "max": 0.7900371536907786
+    "mean": 0.6321266758957451,
+    "std": 0.07224869464563034,
+    "min": 0.5316872554177795,
+    "max": 0.7343927300266018
   }
 }
 
@@ -58,186 +58,186 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
     "label": "Cox solo",
     "valid_uno": {
       "count": 4,
-      "mean": 0.6619402677650145,
-      "std": 0.08726565827754902,
-      "min": 0.5325743004281194,
-      "max": 0.7773794217518873
+      "mean": 0.6677686339679356,
+      "std": 0.09435190348286247,
+      "min": 0.5239498666004839,
+      "max": 0.7879207463818284
     },
     "test_uno": {
       "count": 4,
-      "mean": 0.6811182438237625,
-      "std": 0.07215932101728381,
-      "min": 0.5908805165664671,
-      "max": 0.7901378037121287
+      "mean": 0.6834864042388389,
+      "std": 0.07481815715193156,
+      "min": 0.5812495971401743,
+      "max": 0.7914152902779151
     },
     "valid_dynamic_auc_mean": {
       "count": 4,
-      "mean": 0.6715586838930316,
-      "std": 0.10983900168849071,
-      "min": 0.5075964218485878,
-      "max": 0.808996391791924
+      "mean": 0.6658022650272486,
+      "std": 0.12771563897102228,
+      "min": 0.47604780525047524,
+      "max": 0.8308669860224905
     },
     "test_dynamic_auc_mean": {
       "count": 4,
-      "mean": 0.7091114299983602,
-      "std": 0.0880897095778036,
-      "min": 0.6072581168953309,
-      "max": 0.839010904840543
+      "mean": 0.7058263369142574,
+      "std": 0.08966954124850057,
+      "min": 0.5979734549394962,
+      "max": 0.8376956995501944
     }
   },
   "gbsa_only": {
     "label": "GBSA solo",
     "valid_uno": {
       "count": 4,
-      "mean": 0.6261920345793575,
-      "std": 0.03745919220822548,
-      "min": 0.584289880250667,
-      "max": 0.6804099495598853
+      "mean": 0.5495929321885439,
+      "std": 0.02633320257640252,
+      "min": 0.5136812061798102,
+      "max": 0.5797646127979428
     },
     "test_uno": {
       "count": 4,
-      "mean": 0.6299423776448964,
-      "std": 0.027912863807504205,
-      "min": 0.6028285465622281,
-      "max": 0.6669880987703162
+      "mean": 0.5388881296743546,
+      "std": 0.03286253904445105,
+      "min": 0.48320379393785245,
+      "max": 0.5682713546302707
     },
     "valid_dynamic_auc_mean": {
       "count": 4,
-      "mean": 0.6397188740996306,
-      "std": 0.0682116306250662,
-      "min": 0.52887010907087,
-      "max": 0.6984829282636108
+      "mean": 0.5573758083490316,
+      "std": 0.06040592213279867,
+      "min": 0.48668031182215604,
+      "max": 0.6507092547556623
     },
     "test_dynamic_auc_mean": {
       "count": 4,
-      "mean": 0.6595024934931886,
-      "std": 0.0419928796871045,
-      "min": 0.6028833212245147,
-      "max": 0.7009542650210331
+      "mean": 0.5581914930275984,
+      "std": 0.05374571251458925,
+      "min": 0.49292516464215946,
+      "max": 0.6419152167298772
     }
   },
   "rsf_only": {
     "label": "RSF solo",
     "valid_uno": {
       "count": 4,
-      "mean": 0.6853745423625252,
-      "std": 0.059283561554143625,
-      "min": 0.5875783334367438,
-      "max": 0.7473584874559062
+      "mean": 0.5708070388732226,
+      "std": 0.04885674355769266,
+      "min": 0.516938636222622,
+      "max": 0.6387728459530027
     },
     "test_uno": {
       "count": 4,
-      "mean": 0.6626843441614138,
-      "std": 0.12551830359023788,
-      "min": 0.4519878192609678,
-      "max": 0.7828355256651172
+      "mean": 0.5601071991376317,
+      "std": 0.06278369304026898,
+      "min": 0.4557229178026588,
+      "max": 0.6156222802436901
     },
     "valid_dynamic_auc_mean": {
       "count": 4,
-      "mean": 0.6796399116887633,
-      "std": 0.08898151901421816,
-      "min": 0.5329573011597668,
-      "max": 0.7599110780601804
+      "mean": 0.5599467876006867,
+      "std": 0.0692417026565067,
+      "min": 0.490167948622347,
+      "max": 0.659266195003806
     },
     "test_dynamic_auc_mean": {
       "count": 4,
-      "mean": 0.6761688841692105,
-      "std": 0.12343613562990816,
-      "min": 0.4720677774213008,
-      "max": 0.7987248926738759
+      "mean": 0.5895218699593903,
+      "std": 0.07407308926449657,
+      "min": 0.48077045859234835,
+      "max": 0.6715969768634865
     }
   },
   "cox_gbsa_rank": {
     "label": "Cox + GBSA",
     "valid_uno": {
       "count": 4,
-      "mean": 0.6569883716443731,
-      "std": 0.06661457045644446,
-      "min": 0.563101073400757,
-      "max": 0.7513928724491478
+      "mean": 0.6174493133465859,
+      "std": 0.06905115067097625,
+      "min": 0.5199789042625799,
+      "max": 0.7132166287541621
     },
     "test_uno": {
       "count": 4,
-      "mean": 0.6647467159830465,
-      "std": 0.04473987771155213,
-      "min": 0.6092100289013817,
-      "max": 0.7339696040615831
+      "mean": 0.615240652950737,
+      "std": 0.07285534523976517,
+      "min": 0.5068254471526303,
+      "max": 0.7116259519335377
     },
     "valid_dynamic_auc_mean": {
       "count": 4,
-      "mean": 0.6629857309528124,
-      "std": 0.10017608524579873,
-      "min": 0.49858613560393905,
-      "max": 0.769894192038185
+      "mean": 0.6179152142987872,
+      "std": 0.09858414613376774,
+      "min": 0.4782167995836438,
+      "max": 0.756934720403015
     },
     "test_dynamic_auc_mean": {
       "count": 4,
-      "mean": 0.6957380903860875,
-      "std": 0.056296260144172536,
-      "min": 0.6186929509076295,
-      "max": 0.7777532121852456
+      "mean": 0.6384017620581932,
+      "std": 0.07977572730779084,
+      "min": 0.5338344914306503,
+      "max": 0.7584133342861241
     }
   },
   "ensemble_all_rank": {
     "label": "Ensemble actual (rank equal)",
     "valid_uno": {
       "count": 4,
-      "mean": 0.6735158944418711,
-      "std": 0.06572175452348683,
-      "min": 0.5718495998014519,
-      "max": 0.7556044571918372
+      "mean": 0.6041099443488672,
+      "std": 0.054454683588327016,
+      "min": 0.5222125705776509,
+      "max": 0.6751145616984802
     },
     "test_uno": {
       "count": 4,
-      "mean": 0.6752597443143278,
-      "std": 0.06617966863947315,
-      "min": 0.5741175409958869,
-      "max": 0.7594698842844427
+      "mean": 0.6044144648856077,
+      "std": 0.06384313762837801,
+      "min": 0.5045814090425264,
+      "max": 0.6825239837800415
     },
     "valid_dynamic_auc_mean": {
       "count": 4,
-      "mean": 0.6741106862085041,
-      "std": 0.09842138890200267,
-      "min": 0.5104704128134034,
-      "max": 0.7710333381557396
+      "mean": 0.6031263129296229,
+      "std": 0.08712066117991377,
+      "min": 0.4827808302909714,
+      "max": 0.7282654334499818
     },
     "test_dynamic_auc_mean": {
       "count": 4,
-      "mean": 0.699014687480015,
-      "std": 0.0714421244921055,
-      "min": 0.5904000260871158,
-      "max": 0.7900371536907786
+      "mean": 0.6321266758957451,
+      "std": 0.07224869464563034,
+      "min": 0.5316872554177795,
+      "max": 0.7343927300266018
     }
   },
   "ensemble_weighted_rank": {
     "label": "Ensemble ponderado (GBSA dominante)",
     "valid_uno": {
       "count": 4,
-      "mean": 0.654628190812877,
-      "std": 0.05875648677386828,
-      "min": 0.5717255072283923,
-      "max": 0.7376042593874658
+      "mean": 0.5931793624824074,
+      "std": 0.04914396870253512,
+      "min": 0.5231432648755971,
+      "max": 0.661589687798767
     },
     "test_uno": {
       "count": 4,
-      "mean": 0.6608042385308085,
-      "std": 0.043639446117755464,
-      "min": 0.6025046557530125,
-      "max": 0.7249447796129628
+      "mean": 0.5909931835032843,
+      "std": 0.05706013039769993,
+      "min": 0.5022473045411231,
+      "max": 0.6615814459499555
     },
     "valid_dynamic_auc_mean": {
       "count": 4,
-      "mean": 0.661153956759343,
-      "std": 0.0899325963372902,
-      "min": 0.5124717765892411,
-      "max": 0.7520008070765114
+      "mean": 0.5970773430568692,
+      "std": 0.07830925547241605,
+      "min": 0.49268842660490053,
+      "max": 0.7134768482623804
     },
     "test_dynamic_auc_mean": {
       "count": 4,
-      "mean": 0.6904211982273801,
-      "std": 0.0537993816782074,
-      "min": 0.6106738937866553,
-      "max": 0.7612648679554173
+      "mean": 0.6148966603919708,
+      "std": 0.0688479373813094,
+      "min": 0.5235405035063044,
+      "max": 0.7175152705750919
     }
   }
 }
@@ -248,50 +248,50 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
   {
     "variant": "cox_only",
     "label": "Cox solo",
-    "test_uno_mean": 0.6811182438237625,
-    "valid_uno_mean": 0.6619402677650145,
-    "test_dynamic_auc_mean": 0.7091114299983602,
-    "valid_dynamic_auc_mean": 0.6715586838930316
-  },
-  {
-    "variant": "ensemble_all_rank",
-    "label": "Ensemble actual (rank equal)",
-    "test_uno_mean": 0.6752597443143278,
-    "valid_uno_mean": 0.6735158944418711,
-    "test_dynamic_auc_mean": 0.699014687480015,
-    "valid_dynamic_auc_mean": 0.6741106862085041
+    "test_uno_mean": 0.6834864042388389,
+    "valid_uno_mean": 0.6677686339679356,
+    "test_dynamic_auc_mean": 0.7058263369142574,
+    "valid_dynamic_auc_mean": 0.6658022650272486
   },
   {
     "variant": "cox_gbsa_rank",
     "label": "Cox + GBSA",
-    "test_uno_mean": 0.6647467159830465,
-    "valid_uno_mean": 0.6569883716443731,
-    "test_dynamic_auc_mean": 0.6957380903860875,
-    "valid_dynamic_auc_mean": 0.6629857309528124
+    "test_uno_mean": 0.615240652950737,
+    "valid_uno_mean": 0.6174493133465859,
+    "test_dynamic_auc_mean": 0.6384017620581932,
+    "valid_dynamic_auc_mean": 0.6179152142987872
   },
   {
-    "variant": "rsf_only",
-    "label": "RSF solo",
-    "test_uno_mean": 0.6626843441614138,
-    "valid_uno_mean": 0.6853745423625252,
-    "test_dynamic_auc_mean": 0.6761688841692105,
-    "valid_dynamic_auc_mean": 0.6796399116887633
+    "variant": "ensemble_all_rank",
+    "label": "Ensemble actual (rank equal)",
+    "test_uno_mean": 0.6044144648856077,
+    "valid_uno_mean": 0.6041099443488672,
+    "test_dynamic_auc_mean": 0.6321266758957451,
+    "valid_dynamic_auc_mean": 0.6031263129296229
   },
   {
     "variant": "ensemble_weighted_rank",
     "label": "Ensemble ponderado (GBSA dominante)",
-    "test_uno_mean": 0.6608042385308085,
-    "valid_uno_mean": 0.654628190812877,
-    "test_dynamic_auc_mean": 0.6904211982273801,
-    "valid_dynamic_auc_mean": 0.661153956759343
+    "test_uno_mean": 0.5909931835032843,
+    "valid_uno_mean": 0.5931793624824074,
+    "test_dynamic_auc_mean": 0.6148966603919708,
+    "valid_dynamic_auc_mean": 0.5970773430568692
+  },
+  {
+    "variant": "rsf_only",
+    "label": "RSF solo",
+    "test_uno_mean": 0.5601071991376317,
+    "valid_uno_mean": 0.5708070388732226,
+    "test_dynamic_auc_mean": 0.5895218699593903,
+    "valid_dynamic_auc_mean": 0.5599467876006867
   },
   {
     "variant": "gbsa_only",
     "label": "GBSA solo",
-    "test_uno_mean": 0.6299423776448964,
-    "valid_uno_mean": 0.6261920345793575,
-    "test_dynamic_auc_mean": 0.6595024934931886,
-    "valid_dynamic_auc_mean": 0.6397188740996306
+    "test_uno_mean": 0.5388881296743546,
+    "valid_uno_mean": 0.5495929321885439,
+    "test_dynamic_auc_mean": 0.5581914930275984,
+    "valid_dynamic_auc_mean": 0.5573758083490316
   }
 ]
 
@@ -331,19 +331,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 148334,
           "events": 18521,
           "tau": 134.99999999999997,
-          "uno_c_index": 0.7751733033955768
+          "uno_c_index": 0.7432305031465564
         },
         "valid": {
           "rows": 510,
           "events": 34,
           "tau": 72.99999999999999,
-          "uno_c_index": 0.5718495998014519
+          "uno_c_index": 0.5222125705776509
         },
         "test": {
           "rows": 2112,
           "events": 61,
           "tau": 59.99999999999999,
-          "uno_c_index": 0.7594698842844427
+          "uno_c_index": 0.6825239837800415
         }
       },
       "dynamic_auc": {
@@ -351,27 +351,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 148334,
           "events": 18521,
           "tau": 134.99999999999997,
-          "mean_auc": 0.828061486079472,
+          "mean_auc": 0.80149771363463,
           "horizons": {
             "h6": {
               "time": 6.0,
               "cases": 1060,
               "controls": 147274,
-              "auc": 0.8374313402742315,
+              "auc": 0.8091173818996347,
               "supported": true
             },
             "h12": {
               "time": 12.0,
               "cases": 1999,
               "controls": 146335,
-              "auc": 0.8252360676528513,
+              "auc": 0.7982074168255755,
               "supported": true
             },
             "h24": {
               "time": 24.0,
               "cases": 4064,
               "controls": 144270,
-              "auc": 0.8245365574868098,
+              "auc": 0.7990825757861054,
               "supported": true
             }
           }
@@ -380,27 +380,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 510,
           "events": 34,
           "tau": 72.99999999999999,
-          "mean_auc": 0.5104704128134034,
+          "mean_auc": 0.4827808302909714,
           "horizons": {
             "h6": {
               "time": 6.0,
               "cases": 5,
               "controls": 505,
-              "auc": 0.3996039603960396,
+              "auc": 0.435049504950495,
               "supported": true
             },
             "h12": {
               "time": 12.0,
               "cases": 7,
               "controls": 503,
-              "auc": 0.4916216983811417,
+              "auc": 0.5224368077250781,
               "supported": true
             },
             "h24": {
               "time": 24.0,
               "cases": 14,
               "controls": 496,
-              "auc": 0.5950460829493088,
+              "auc": 0.5055443548387096,
               "supported": true
             }
           }
@@ -409,27 +409,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 2112,
           "events": 61,
           "tau": 59.99999999999999,
-          "mean_auc": 0.7900371536907786,
+          "mean_auc": 0.7343927300266018,
           "horizons": {
             "h6": {
               "time": 6.0,
               "cases": 5,
               "controls": 2107,
-              "auc": 0.8433792121499762,
+              "auc": 0.7400094921689606,
               "supported": true
             },
             "h12": {
               "time": 12.0,
               "cases": 9,
               "controls": 2103,
-              "auc": 0.7910920906641306,
+              "auc": 0.7725471548581391,
               "supported": true
             },
             "h24": {
               "time": 24.0,
               "cases": 19,
               "controls": 2093,
-              "auc": 0.7629441496718385,
+              "auc": 0.7163225790228079,
               "supported": true
             }
           }
@@ -445,7 +445,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.019378713583934996
+            "ibs": 0.019482454322114918
           },
           "valid": {
             "rows": 510,
@@ -455,7 +455,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.045808845333723244
+            "ibs": 0.021701862236632945
           },
           "test": {
             "rows": 2112,
@@ -465,7 +465,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.025939527512393378
+            "ibs": 0.009037596049045341
           }
         },
         "rsf": {
@@ -477,7 +477,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.019501666887898995
+            "ibs": 0.0203806318477689
           },
           "valid": {
             "rows": 510,
@@ -487,7 +487,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.023590115634845695
+            "ibs": 0.023999943853379224
           },
           "test": {
             "rows": 2112,
@@ -497,7 +497,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.011482140257668725
+            "ibs": 0.013028944679052079
           }
         },
         "gbsa": {
@@ -509,7 +509,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.021326802339125754
+            "ibs": 0.02276811309446428
           },
           "valid": {
             "rows": 510,
@@ -519,7 +519,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.023780144160407166
+            "ibs": 0.02410756009387723
           },
           "test": {
             "rows": 2112,
@@ -529,7 +529,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.011921232706150904
+            "ibs": 0.014238947246176744
           }
         }
       },
@@ -560,19 +560,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148334,
             "events": 18521,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7550725354977847
+            "uno_c_index": 0.751801167034844
           },
           "valid": {
             "rows": 510,
             "events": 34,
             "tau": 72.99999999999999,
-            "uno_c_index": 0.5325743004281194
+            "uno_c_index": 0.5239498666004839
           },
           "test": {
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "uno_c_index": 0.7901378037121287
+            "uno_c_index": 0.7914152902779151
           }
         },
         "dynamic_auc": {
@@ -580,27 +580,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148334,
             "events": 18521,
             "tau": 134.99999999999997,
-            "mean_auc": 0.8029326139493052,
+            "mean_auc": 0.7975196959137024,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1060,
                 "controls": 147274,
-                "auc": 0.8101747230998773,
+                "auc": 0.8015585857038132,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 1999,
                 "controls": 146335,
-                "auc": 0.8010103849204815,
+                "auc": 0.7948443692581248,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4064,
                 "controls": 144270,
-                "auc": 0.8000891937839102,
+                "auc": 0.796662993033349,
                 "supported": true
               }
             }
@@ -609,27 +609,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 510,
             "events": 34,
             "tau": 72.99999999999999,
-            "mean_auc": 0.5075964218485878,
+            "mean_auc": 0.47604780525047524,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 505,
-                "auc": 0.4582178217821782,
+                "auc": 0.4568316831683168,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 7,
                 "controls": 503,
-                "auc": 0.5603521726782164,
+                "auc": 0.5266969610905993,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 14,
                 "controls": 496,
-                "auc": 0.5277937788018434,
+                "auc": 0.4753024193548387,
                 "supported": true
               }
             }
@@ -638,27 +638,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "mean_auc": 0.839010904840543,
+            "mean_auc": 0.8376956995501944,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 2107,
-                "auc": 0.8691029900332226,
+                "auc": 0.8511627906976744,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 9,
                 "controls": 2103,
-                "auc": 0.8706081259576266,
+                "auc": 0.8731441855550273,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 2093,
-                "auc": 0.8113259737973697,
+                "auc": 0.8167827595745216,
                 "supported": true
               }
             }
@@ -672,19 +672,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148334,
             "events": 18521,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7440716366956922
+            "uno_c_index": 0.6929945641220748
           },
           "valid": {
             "rows": 510,
             "events": 34,
             "tau": 72.99999999999999,
-            "uno_c_index": 0.584289880250667
+            "uno_c_index": 0.5136812061798102
           },
           "test": {
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "uno_c_index": 0.6669880987703162
+            "uno_c_index": 0.5682713546302707
           }
         },
         "dynamic_auc": {
@@ -692,27 +692,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148334,
             "events": 18521,
             "tau": 134.99999999999997,
-            "mean_auc": 0.7883317684793114,
+            "mean_auc": 0.7505555843388385,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1060,
                 "controls": 147274,
-                "auc": 0.8020528928110123,
+                "auc": 0.7641900086887206,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 1999,
                 "controls": 146335,
-                "auc": 0.7858989425693133,
+                "auc": 0.7482810732594917,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4064,
                 "controls": 144270,
-                "auc": 0.7823947378439049,
+                "auc": 0.7445910691294592,
                 "supported": true
               }
             }
@@ -721,27 +721,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 510,
             "events": 34,
             "tau": 72.99999999999999,
-            "mean_auc": 0.52887010907087,
+            "mean_auc": 0.48668031182215604,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 505,
-                "auc": 0.4314851485148515,
+                "auc": 0.4253465346534654,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 7,
                 "controls": 503,
-                "auc": 0.5001420051121841,
+                "auc": 0.5046861687020732,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 14,
                 "controls": 496,
-                "auc": 0.6066388248847927,
+                "auc": 0.5253456221198156,
                 "supported": true
               }
             }
@@ -750,27 +750,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "mean_auc": 0.7009542650210331,
+            "mean_auc": 0.6419152167298772,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 2107,
-                "auc": 0.80640721404841,
+                "auc": 0.6965353583293782,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 9,
                 "controls": 2103,
-                "auc": 0.6938236381888307,
+                "auc": 0.6551487293284726,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 2093,
-                "auc": 0.6510800412402243,
+                "auc": 0.6093117408906882,
                 "supported": true
               }
             }
@@ -784,19 +784,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148334,
             "events": 18521,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7866880771500688
+            "uno_c_index": 0.7302592450388706
           },
           "valid": {
             "rows": 510,
             "events": 34,
             "tau": 72.99999999999999,
-            "uno_c_index": 0.5875783334367438
+            "uno_c_index": 0.516938636222622
           },
           "test": {
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "uno_c_index": 0.7828355256651172
+            "uno_c_index": 0.6017909537467445
           }
         },
         "dynamic_auc": {
@@ -804,27 +804,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148334,
             "events": 18521,
             "tau": 134.99999999999997,
-            "mean_auc": 0.851594320031845,
+            "mean_auc": 0.8041331219845106,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1060,
                 "controls": 147274,
-                "auc": 0.8609791183728648,
+                "auc": 0.812595361975791,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 1999,
                 "controls": 146335,
-                "auc": 0.8487512574410006,
+                "auc": 0.8009207784949639,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4064,
                 "controls": 144270,
-                "auc": 0.8480697435336958,
+                "auc": 0.8012500305297536,
                 "supported": true
               }
             }
@@ -833,27 +833,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 510,
             "events": 34,
             "tau": 72.99999999999999,
-            "mean_auc": 0.5329573011597668,
+            "mean_auc": 0.490167948622347,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 505,
-                "auc": 0.4297029702970297,
+                "auc": 0.4405940594059406,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 7,
                 "controls": 503,
-                "auc": 0.5117864243112752,
+                "auc": 0.5217267821641579,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 14,
                 "controls": 496,
-                "auc": 0.6127592165898619,
+                "auc": 0.5165610599078341,
                 "supported": true
               }
             }
@@ -862,27 +862,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "mean_auc": 0.7987248926738759,
+            "mean_auc": 0.6715969768634865,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 2107,
-                "auc": 0.8158519221642144,
+                "auc": 0.7053630754627432,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 9,
                 "controls": 2103,
-                "auc": 0.7961377925714587,
+                "auc": 0.7176784487768795,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 2093,
-                "auc": 0.7911962179696733,
+                "auc": 0.6362813387985012,
                 "supported": true
               }
             }
@@ -896,19 +896,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148334,
             "events": 18521,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7596225518685389
+            "uno_c_index": 0.7390857433171069
           },
           "valid": {
             "rows": 510,
             "events": 34,
             "tau": 72.99999999999999,
-            "uno_c_index": 0.563101073400757
+            "uno_c_index": 0.5199789042625799
           },
           "test": {
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "uno_c_index": 0.7339696040615831
+            "uno_c_index": 0.7116259519335377
           }
         },
         "dynamic_auc": {
@@ -916,27 +916,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148334,
             "events": 18521,
             "tau": 134.99999999999997,
-            "mean_auc": 0.805869828521762,
+            "mean_auc": 0.7895398235031038,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1060,
                 "controls": 147274,
-                "auc": 0.8157180711296439,
+                "auc": 0.7974710788080541,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 1999,
                 "controls": 146335,
-                "auc": 0.8033365471473906,
+                "auc": 0.7864708450169322,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4064,
                 "controls": 144270,
-                "auc": 0.8019664939194282,
+                "auc": 0.78686410445965,
                 "supported": true
               }
             }
@@ -945,27 +945,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 510,
             "events": 34,
             "tau": 72.99999999999999,
-            "mean_auc": 0.49858613560393905,
+            "mean_auc": 0.4782167995836438,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 505,
-                "auc": 0.38851485148514847,
+                "auc": 0.433069306930693,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 7,
                 "controls": 503,
-                "auc": 0.4779892076114739,
+                "auc": 0.52215279750071,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 14,
                 "controls": 496,
-                "auc": 0.5830933179723502,
+                "auc": 0.49791186635944695,
                 "supported": true
               }
             }
@@ -974,27 +974,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "mean_auc": 0.7777532121852456,
+            "mean_auc": 0.7584133342861241,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 2107,
-                "auc": 0.8573327005220692,
+                "auc": 0.7591836734693878,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 9,
                 "controls": 2103,
-                "auc": 0.7830084006974164,
+                "auc": 0.7925186241876685,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 2093,
-                "auc": 0.7358613926119647,
+                "auc": 0.7443860487338749,
                 "supported": true
               }
             }
@@ -1008,19 +1008,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148334,
             "events": 18521,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7751733033955768
+            "uno_c_index": 0.7432305031465564
           },
           "valid": {
             "rows": 510,
             "events": 34,
             "tau": 72.99999999999999,
-            "uno_c_index": 0.5718495998014519
+            "uno_c_index": 0.5222125705776509
           },
           "test": {
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "uno_c_index": 0.7594698842844427
+            "uno_c_index": 0.6825239837800415
           }
         },
         "dynamic_auc": {
@@ -1028,27 +1028,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148334,
             "events": 18521,
             "tau": 134.99999999999997,
-            "mean_auc": 0.828061486079472,
+            "mean_auc": 0.80149771363463,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1060,
                 "controls": 147274,
-                "auc": 0.8374313402742315,
+                "auc": 0.8091173818996347,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 1999,
                 "controls": 146335,
-                "auc": 0.8252360676528513,
+                "auc": 0.7982074168255755,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4064,
                 "controls": 144270,
-                "auc": 0.8245365574868098,
+                "auc": 0.7990825757861054,
                 "supported": true
               }
             }
@@ -1057,27 +1057,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 510,
             "events": 34,
             "tau": 72.99999999999999,
-            "mean_auc": 0.5104704128134034,
+            "mean_auc": 0.4827808302909714,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 505,
-                "auc": 0.3996039603960396,
+                "auc": 0.435049504950495,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 7,
                 "controls": 503,
-                "auc": 0.4916216983811417,
+                "auc": 0.5224368077250781,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 14,
                 "controls": 496,
-                "auc": 0.5950460829493088,
+                "auc": 0.5055443548387096,
                 "supported": true
               }
             }
@@ -1086,27 +1086,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "mean_auc": 0.7900371536907786,
+            "mean_auc": 0.7343927300266018,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 2107,
-                "auc": 0.8433792121499762,
+                "auc": 0.7400094921689606,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 9,
                 "controls": 2103,
-                "auc": 0.7910920906641306,
+                "auc": 0.7725471548581391,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 2093,
-                "auc": 0.7629441496718385,
+                "auc": 0.7163225790228079,
                 "supported": true
               }
             }
@@ -1120,19 +1120,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148334,
             "events": 18521,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7617223879778506
+            "uno_c_index": 0.7289615724677107
           },
           "valid": {
             "rows": 510,
             "events": 34,
             "tau": 72.99999999999999,
-            "uno_c_index": 0.5717255072283923
+            "uno_c_index": 0.5231432648755971
           },
           "test": {
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "uno_c_index": 0.7249447796129628
+            "uno_c_index": 0.6615814459499555
           }
         },
         "dynamic_auc": {
@@ -1140,27 +1140,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148334,
             "events": 18521,
             "tau": 134.99999999999997,
-            "mean_auc": 0.809438723680515,
+            "mean_auc": 0.783884414789718,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1060,
                 "controls": 147274,
-                "auc": 0.8202583408258923,
+                "auc": 0.7933377678007953,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 1999,
                 "controls": 146335,
-                "auc": 0.8067874388897732,
+                "auc": 0.7809108572463701,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4064,
                 "controls": 144270,
-                "auc": 0.8050904245252641,
+                "auc": 0.7803839868679079,
                 "supported": true
               }
             }
@@ -1169,27 +1169,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 510,
             "events": 34,
             "tau": 72.99999999999999,
-            "mean_auc": 0.5124717765892411,
+            "mean_auc": 0.49268842660490053,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 505,
-                "auc": 0.4059405940594059,
+                "auc": 0.4461386138613861,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 7,
                 "controls": 503,
-                "auc": 0.4887815961374609,
+                "auc": 0.5318091451292246,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 14,
                 "controls": 496,
-                "auc": 0.5953341013824885,
+                "auc": 0.5147609447004609,
                 "supported": true
               }
             }
@@ -1198,27 +1198,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "mean_auc": 0.7612648679554173,
+            "mean_auc": 0.7175152705750919,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 2107,
-                "auc": 0.8397721879449453,
+                "auc": 0.7324157570004746,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 9,
                 "controls": 2103,
-                "auc": 0.7620330744439161,
+                "auc": 0.7448090030115708,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 2093,
-                "auc": 0.7217039253652526,
+                "auc": 0.6991475343878091,
                 "supported": true
               }
             }
@@ -1250,19 +1250,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 148844,
           "events": 18555,
           "tau": 134.99999999999997,
-          "uno_c_index": 0.7748265397435417
+          "uno_c_index": 0.7404729468732636
         },
         "valid": {
           "rows": 2112,
           "events": 61,
           "tau": 59.99999999999999,
-          "uno_c_index": 0.7556044571918372
+          "uno_c_index": 0.6751145616984802
         },
         "test": {
           "rows": 599,
           "events": 20,
           "tau": 45.99999999999999,
-          "uno_c_index": 0.678503046127067
+          "uno_c_index": 0.6154917319408181
         }
       },
       "dynamic_auc": {
@@ -1270,27 +1270,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 148844,
           "events": 18555,
           "tau": 134.99999999999997,
-          "mean_auc": 0.827295339632555,
+          "mean_auc": 0.7990440058477402,
           "horizons": {
             "h6": {
               "time": 6.0,
               "cases": 1065,
               "controls": 147779,
-              "auc": 0.8359565881383528,
+              "auc": 0.8074714980912845,
               "supported": true
             },
             "h12": {
               "time": 12.0,
               "cases": 2006,
               "controls": 146838,
-              "auc": 0.8245673415064467,
+              "auc": 0.7963843745055711,
               "supported": true
             },
             "h24": {
               "time": 24.0,
               "cases": 4078,
               "controls": 144766,
-              "auc": 0.8240824132705826,
+              "auc": 0.7959201804875118,
               "supported": true
             }
           }
@@ -1299,27 +1299,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 2112,
           "events": 61,
           "tau": 59.99999999999999,
-          "mean_auc": 0.7710333381557396,
+          "mean_auc": 0.7282654334499818,
           "horizons": {
             "h6": {
               "time": 6.0,
               "cases": 5,
               "controls": 2107,
-              "auc": 0.8154722354057902,
+              "auc": 0.743141907925961,
               "supported": true
             },
             "h12": {
               "time": 12.0,
               "cases": 9,
               "controls": 2103,
-              "auc": 0.8023458551275955,
+              "auc": 0.762033074443916,
               "supported": true
             },
             "h24": {
               "time": 24.0,
               "cases": 19,
               "controls": 2093,
-              "auc": 0.736288882741972,
+              "auc": 0.707320139814419,
               "supported": true
             }
           }
@@ -1328,27 +1328,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 599,
           "events": 20,
           "tau": 45.99999999999999,
-          "mean_auc": 0.6983521404130185,
+          "mean_auc": 0.6440858919065916,
           "horizons": {
             "h6": {
               "time": 6.0,
               "cases": 2,
               "controls": 597,
-              "auc": 0.7010050251256281,
+              "auc": 0.6030150753768844,
               "supported": true
             },
             "h12": {
               "time": 12.0,
               "cases": 6,
               "controls": 593,
-              "auc": 0.7121978639685216,
+              "auc": 0.6587970770095559,
               "supported": true
             },
             "h24": {
               "time": 24.0,
               "cases": 13,
               "controls": 586,
-              "auc": 0.6896823313205567,
+              "auc": 0.6474140194276713,
               "supported": true
             }
           }
@@ -1364,7 +1364,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.019420706847590043
+            "ibs": 0.019528151967378015
           },
           "valid": {
             "rows": 2112,
@@ -1374,7 +1374,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.01642552513425772
+            "ibs": 0.009245469686248746
           },
           "test": {
             "rows": 599,
@@ -1384,7 +1384,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.02648648597400257
+            "ibs": 0.01587753111559759
           }
         },
         "rsf": {
@@ -1396,7 +1396,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.01958660161925013
+            "ibs": 0.020544815403749066
           },
           "valid": {
             "rows": 2112,
@@ -1406,7 +1406,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.011775454129468807
+            "ibs": 0.013230904107136688
           },
           "test": {
             "rows": 599,
@@ -1416,7 +1416,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.01884660413907223
+            "ibs": 0.01967646074984379
           }
         },
         "gbsa": {
@@ -1428,7 +1428,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.021475145886043264
+            "ibs": 0.022742681982260624
           },
           "valid": {
             "rows": 2112,
@@ -1438,7 +1438,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.012189484920028264
+            "ibs": 0.014371708224815809
           },
           "test": {
             "rows": 599,
@@ -1448,7 +1448,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.0187914935938985
+            "ibs": 0.01992807160515084
           }
         }
       },
@@ -1479,19 +1479,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148844,
             "events": 18555,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7551754810891017
+            "uno_c_index": 0.7511491450382168
           },
           "valid": {
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "uno_c_index": 0.7773794217518873
+            "uno_c_index": 0.7879207463818284
           },
           "test": {
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "uno_c_index": 0.6893820713664056
+            "uno_c_index": 0.6923411662315057
           }
         },
         "dynamic_auc": {
@@ -1499,27 +1499,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148844,
             "events": 18555,
             "tau": 134.99999999999997,
-            "mean_auc": 0.8023228724570988,
+            "mean_auc": 0.7964778900309734,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1065,
                 "controls": 147779,
-                "auc": 0.8086081179398484,
+                "auc": 0.8000336786370538,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2006,
                 "controls": 146838,
-                "auc": 0.8008880083485904,
+                "auc": 0.7947847759381929,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4078,
                 "controls": 144766,
-                "auc": 0.7997439249122039,
+                "auc": 0.7954191571621658,
                 "supported": true
               }
             }
@@ -1528,27 +1528,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "mean_auc": 0.808996391791924,
+            "mean_auc": 0.8308669860224905,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 2107,
-                "auc": 0.8483151400094922,
+                "auc": 0.8414807783578548,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 9,
                 "controls": 2103,
-                "auc": 0.8459343794579173,
+                "auc": 0.8722988323558937,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 2093,
-                "auc": 0.7745618226167426,
+                "auc": 0.8089873513214475,
                 "supported": true
               }
             }
@@ -1557,27 +1557,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "mean_auc": 0.7363068109239498,
+            "mean_auc": 0.7315827486204742,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 2,
                 "controls": 597,
-                "auc": 0.8659966499162479,
+                "auc": 0.7881072026800671,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 6,
                 "controls": 593,
-                "auc": 0.7296233839235525,
+                "auc": 0.7116357504215851,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 13,
                 "controls": 586,
-                "auc": 0.7030716723549488,
+                "auc": 0.7268311892885272,
                 "supported": true
               }
             }
@@ -1591,19 +1591,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148844,
             "events": 18555,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7434942289192118
+            "uno_c_index": 0.6912854857191725
           },
           "valid": {
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "uno_c_index": 0.6804099495598853
+            "uno_c_index": 0.5797646127979428
           },
           "test": {
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "uno_c_index": 0.6028285465622281
+            "uno_c_index": 0.5498259355961705
           }
         },
         "dynamic_auc": {
@@ -1611,27 +1611,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148844,
             "events": 18555,
             "tau": 134.99999999999997,
-            "mean_auc": 0.7869599260117738,
+            "mean_auc": 0.749227117572945,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1065,
                 "controls": 147779,
-                "auc": 0.8001578267154223,
+                "auc": 0.7634659031359701,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2006,
                 "controls": 146838,
-                "auc": 0.7845422771579567,
+                "auc": 0.746770180611681,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4078,
                 "controls": 144766,
-                "auc": 0.7812742326343878,
+                "auc": 0.7430242561134511,
                 "supported": true
               }
             }
@@ -1640,27 +1640,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "mean_auc": 0.6984829282636108,
+            "mean_auc": 0.6507092547556623,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 2107,
-                "auc": 0.7839107736117703,
+                "auc": 0.6804935927859516,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 9,
                 "controls": 2103,
-                "auc": 0.7037301209911766,
+                "auc": 0.6551751466159454,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 2093,
-                "auc": 0.6536701284985038,
+                "auc": 0.634030728996404,
                 "supported": true
               }
             }
@@ -1669,27 +1669,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "mean_auc": 0.6353481825533487,
+            "mean_auc": 0.5413893812655202,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 2,
                 "controls": 597,
-                "auc": 0.5938023450586265,
+                "auc": 0.32202680067001677,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 6,
                 "controls": 593,
-                "auc": 0.6687745924676785,
+                "auc": 0.5602866779089376,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 13,
                 "controls": 586,
-                "auc": 0.6281176161722237,
+                "auc": 0.5932659490679969,
                 "supported": true
               }
             }
@@ -1703,19 +1703,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148844,
             "events": 18555,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.784530737967188
+            "uno_c_index": 0.7246558783277852
           },
           "valid": {
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "uno_c_index": 0.7473584874559062
+            "uno_c_index": 0.594801865954571
           },
           "test": {
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "uno_c_index": 0.7012184508268059
+            "uno_c_index": 0.6156222802436901
           }
         },
         "dynamic_auc": {
@@ -1723,27 +1723,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148844,
             "events": 18555,
             "tau": 134.99999999999997,
-            "mean_auc": 0.8497312249033933,
+            "mean_auc": 0.7993819399470152,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1065,
                 "controls": 147779,
-                "auc": 0.8587140479119832,
+                "auc": 0.8103849051084306,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2006,
                 "controls": 146838,
-                "auc": 0.8465889294619038,
+                "auc": 0.7971250171630602,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4078,
                 "controls": 144766,
-                "auc": 0.846541163854307,
+                "auc": 0.79475144112597,
                 "supported": true
               }
             }
@@ -1752,27 +1752,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "mean_auc": 0.7599110780601804,
+            "mean_auc": 0.659266195003806,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 2107,
-                "auc": 0.7826293308020882,
+                "auc": 0.7325106786900807,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 9,
                 "controls": 2103,
-                "auc": 0.7880541026047444,
+                "auc": 0.6893591166059069,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 2093,
-                "auc": 0.737294741871401,
+                "auc": 0.610606784519828,
                 "supported": true
               }
             }
@@ -1781,7 +1781,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "mean_auc": 0.6952172555513546,
+            "mean_auc": 0.6417720059182574,
             "horizons": {
               "h6": {
                 "time": 6.0,
@@ -1794,14 +1794,14 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
                 "time": 12.0,
                 "cases": 6,
                 "controls": 593,
-                "auc": 0.7223159078133783,
+                "auc": 0.6812816188870152,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 13,
                 "controls": 586,
-                "auc": 0.707272249934366,
+                "auc": 0.6314649514308217,
                 "supported": true
               }
             }
@@ -1815,19 +1815,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148844,
             "events": 18555,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.759914651274374
+            "uno_c_index": 0.7372843997617518
           },
           "valid": {
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "uno_c_index": 0.7513928724491478
+            "uno_c_index": 0.7132166287541621
           },
           "test": {
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "uno_c_index": 0.6536118363794604
+            "uno_c_index": 0.6136640557006092
           }
         },
         "dynamic_auc": {
@@ -1835,27 +1835,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148844,
             "events": 18555,
             "tau": 134.99999999999997,
-            "mean_auc": 0.8054330268147138,
+            "mean_auc": 0.7876698243017358,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1065,
                 "controls": 147779,
-                "auc": 0.8144519444353636,
+                "auc": 0.7954584670860658,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2006,
                 "controls": 146838,
-                "auc": 0.803208618400373,
+                "auc": 0.7850441375311541,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4078,
                 "controls": 144766,
-                "auc": 0.8018075543494159,
+                "auc": 0.7848589491500979,
                 "supported": true
               }
             }
@@ -1864,27 +1864,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "mean_auc": 0.769894192038185,
+            "mean_auc": 0.756934720403015,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 2107,
-                "auc": 0.826578073089701,
+                "auc": 0.7429520645467489,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 9,
                 "controls": 2103,
-                "auc": 0.8006551487293284,
+                "auc": 0.7901939028900512,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 2093,
-                "auc": 0.7292478688359696,
+                "auc": 0.7506223753363342,
                 "supported": true
               }
             }
@@ -1893,27 +1893,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "mean_auc": 0.6921826923494563,
+            "mean_auc": 0.6310745092653804,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 2,
                 "controls": 597,
-                "auc": 0.7378559463986599,
+                "auc": 0.5745393634840872,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 6,
                 "controls": 593,
-                "auc": 0.7015177065767285,
+                "auc": 0.6360314783586285,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 13,
                 "controls": 586,
-                "auc": 0.6737988973483854,
+                "auc": 0.6443948542924652,
                 "supported": true
               }
             }
@@ -1927,19 +1927,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148844,
             "events": 18555,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7748265397435417
+            "uno_c_index": 0.7404729468732636
           },
           "valid": {
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "uno_c_index": 0.7556044571918372
+            "uno_c_index": 0.6751145616984802
           },
           "test": {
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "uno_c_index": 0.678503046127067
+            "uno_c_index": 0.6154917319408181
           }
         },
         "dynamic_auc": {
@@ -1947,27 +1947,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148844,
             "events": 18555,
             "tau": 134.99999999999997,
-            "mean_auc": 0.827295339632555,
+            "mean_auc": 0.7990440058477402,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1065,
                 "controls": 147779,
-                "auc": 0.8359565881383528,
+                "auc": 0.8074714980912845,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2006,
                 "controls": 146838,
-                "auc": 0.8245673415064467,
+                "auc": 0.7963843745055711,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4078,
                 "controls": 144766,
-                "auc": 0.8240824132705826,
+                "auc": 0.7959201804875118,
                 "supported": true
               }
             }
@@ -1976,27 +1976,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "mean_auc": 0.7710333381557396,
+            "mean_auc": 0.7282654334499818,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 2107,
-                "auc": 0.8154722354057902,
+                "auc": 0.743141907925961,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 9,
                 "controls": 2103,
-                "auc": 0.8023458551275955,
+                "auc": 0.762033074443916,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 2093,
-                "auc": 0.736288882741972,
+                "auc": 0.707320139814419,
                 "supported": true
               }
             }
@@ -2005,27 +2005,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "mean_auc": 0.6983521404130185,
+            "mean_auc": 0.6440858919065916,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 2,
                 "controls": 597,
-                "auc": 0.7010050251256281,
+                "auc": 0.6030150753768844,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 6,
                 "controls": 593,
-                "auc": 0.7121978639685216,
+                "auc": 0.6587970770095559,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 13,
                 "controls": 586,
-                "auc": 0.6896823313205567,
+                "auc": 0.6474140194276713,
                 "supported": true
               }
             }
@@ -2039,19 +2039,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148844,
             "events": 18555,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7616564651707064
+            "uno_c_index": 0.7268205155000675
           },
           "valid": {
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "uno_c_index": 0.7376042593874658
+            "uno_c_index": 0.661589687798767
           },
           "test": {
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "uno_c_index": 0.6512619669277633
+            "uno_c_index": 0.5999129677980853
           }
         },
         "dynamic_auc": {
@@ -2059,27 +2059,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 148844,
             "events": 18555,
             "tau": 134.99999999999997,
-            "mean_auc": 0.8087475152039947,
+            "mean_auc": 0.7819949071824903,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1065,
                 "controls": 147779,
-                "auc": 0.8189327566823789,
+                "auc": 0.7918303969126338,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2006,
                 "controls": 146838,
-                "auc": 0.8062490211572884,
+                "auc": 0.7793514894507967,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4078,
                 "controls": 144766,
-                "auc": 0.804647032927678,
+                "auc": 0.7781400131298459,
                 "supported": true
               }
             }
@@ -2088,27 +2088,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 2112,
             "events": 61,
             "tau": 59.99999999999999,
-            "mean_auc": 0.7520008070765114,
+            "mean_auc": 0.7134768482623804,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 5,
                 "controls": 2107,
-                "auc": 0.8124347413383958,
+                "auc": 0.7169435215946844,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 9,
                 "controls": 2103,
-                "auc": 0.7764040788291858,
+                "auc": 0.7337137422729434,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 2093,
-                "auc": 0.7120225312444992,
+                "auc": 0.7036487539920036,
                 "supported": true
               }
             }
@@ -2117,27 +2117,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "mean_auc": 0.6859455743438052,
+            "mean_auc": 0.6124439509030424,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 2,
                 "controls": 597,
-                "auc": 0.6959798994974875,
+                "auc": 0.5175879396984925,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 6,
                 "controls": 593,
-                "auc": 0.7051714446318156,
+                "auc": 0.6214165261382799,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 13,
                 "controls": 586,
-                "auc": 0.6720924127067471,
+                "auc": 0.6344184825413495,
                 "supported": true
               }
             }
@@ -2169,19 +2169,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 150956,
           "events": 18616,
           "tau": 134.99999999999997,
-          "uno_c_index": 0.7750157165406986
+          "uno_c_index": 0.7425951788826662
         },
         "valid": {
           "rows": 599,
           "events": 20,
           "tau": 45.99999999999999,
-          "uno_c_index": 0.6809399477806789
+          "uno_c_index": 0.6147084421235858
         },
         "test": {
           "rows": 680,
           "events": 23,
           "tau": 33.99999999999999,
-          "uno_c_index": 0.6889485058499143
+          "uno_c_index": 0.6150607347790447
         }
       },
       "dynamic_auc": {
@@ -2189,27 +2189,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 150956,
           "events": 18616,
           "tau": 134.99999999999997,
-          "mean_auc": 0.828488691338725,
+          "mean_auc": 0.8017563484440019,
           "horizons": {
             "h6": {
               "time": 6.0,
               "cases": 1070,
               "controls": 149886,
-              "auc": 0.8375407833317807,
+              "auc": 0.808813679704987,
               "supported": true
             },
             "h12": {
               "time": 12.0,
               "cases": 2015,
               "controls": 148941,
-              "auc": 0.8259699366693454,
+              "auc": 0.798762647250715,
               "supported": true
             },
             "h24": {
               "time": 24.0,
               "cases": 4097,
               "controls": 146859,
-              "auc": 0.8249797983175887,
+              "auc": 0.7994881943510153,
               "supported": true
             }
           }
@@ -2218,27 +2218,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 599,
           "events": 20,
           "tau": 45.99999999999999,
-          "mean_auc": 0.6942536138658678,
+          "mean_auc": 0.610871344399123,
           "horizons": {
             "h6": {
               "time": 6.0,
               "cases": 2,
               "controls": 597,
-              "auc": 0.6976549413735343,
+              "auc": 0.551926298157454,
               "supported": true
             },
             "h12": {
               "time": 12.0,
               "cases": 6,
               "controls": 593,
-              "auc": 0.7062956717256885,
+              "auc": 0.623946037099494,
               "supported": true
             },
             "h24": {
               "time": 24.0,
               "cases": 13,
               "controls": 586,
-              "auc": 0.686400630086637,
+              "auc": 0.6202415332108165,
               "supported": true
             }
           }
@@ -2247,27 +2247,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 680,
           "events": 23,
           "tau": 33.99999999999999,
-          "mean_auc": 0.7172694297291475,
+          "mean_auc": 0.6183408262320077,
           "horizons": {
             "h6": {
               "time": 6.0,
               "cases": 6,
               "controls": 674,
-              "auc": 0.8125618199802177,
+              "auc": 0.6742087042532147,
               "supported": true
             },
             "h12": {
               "time": 12.0,
               "cases": 12,
               "controls": 668,
-              "auc": 0.6939870259481038,
+              "auc": 0.625561377245509,
               "supported": true
             },
             "h24": {
               "time": 24.0,
               "cases": 19,
               "controls": 443,
-              "auc": 0.6662706427468219,
+              "auc": 0.573660449091125,
               "supported": true
             }
           }
@@ -2283,7 +2283,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.019488756423832552
+            "ibs": 0.019539429072749945
           },
           "valid": {
             "rows": 599,
@@ -2293,7 +2293,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.015880599979759755
+            "ibs": 0.01688160171297186
           },
           "test": {
             "rows": 680,
@@ -2303,7 +2303,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.020781096919255018
+            "ibs": 0.020862973524324098
           }
         },
         "rsf": {
@@ -2315,7 +2315,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.019537747894623203
+            "ibs": 0.020464006992237518
           },
           "valid": {
             "rows": 599,
@@ -2325,7 +2325,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.019989244167293748
+            "ibs": 0.02020910707012437
           },
           "test": {
             "rows": 680,
@@ -2335,7 +2335,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.02312166273218763
+            "ibs": 0.023161080801538145
           }
         },
         "gbsa": {
@@ -2347,7 +2347,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.021401038331943692
+            "ibs": 0.022579901986390722
           },
           "valid": {
             "rows": 599,
@@ -2357,7 +2357,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.018871336089787374
+            "ibs": 0.02016642898453373
           },
           "test": {
             "rows": 680,
@@ -2367,7 +2367,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.022381040271432062
+            "ibs": 0.02329166111000644
           }
         }
       },
@@ -2398,19 +2398,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 150956,
             "events": 18616,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7536526773169472
+            "uno_c_index": 0.7501742218675703
           },
           "valid": {
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "uno_c_index": 0.6812010443864229
+            "uno_c_index": 0.6898172323759791
           },
           "test": {
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "uno_c_index": 0.6540725836500484
+            "uno_c_index": 0.6689395633057605
           }
         },
         "dynamic_auc": {
@@ -2418,27 +2418,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 150956,
             "events": 18616,
             "tau": 134.99999999999997,
-            "mean_auc": 0.8004338020221285,
+            "mean_auc": 0.7964929833806113,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1070,
                 "controls": 149886,
-                "auc": 0.8061107345008998,
+                "auc": 0.799469469070637,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2015,
                 "controls": 148941,
-                "auc": 0.7991210335373027,
+                "auc": 0.7945314282773519,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4097,
                 "controls": 146859,
-                "auc": 0.7981121154063144,
+                "auc": 0.7958536125277067,
                 "supported": true
               }
             }
@@ -2447,27 +2447,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "mean_auc": 0.7174851788054769,
+            "mean_auc": 0.707192177266526,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 2,
                 "controls": 597,
-                "auc": 0.8534338358458962,
+                "auc": 0.7621440536013401,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 6,
                 "controls": 593,
-                "auc": 0.718381112984823,
+                "auc": 0.685778527262507,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 13,
                 "controls": 586,
-                "auc": 0.6781307429771594,
+                "auc": 0.7037280126017327,
                 "supported": true
               }
             }
@@ -2476,27 +2476,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "mean_auc": 0.6538698873336172,
+            "mean_auc": 0.6560534445468652,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 6,
                 "controls": 674,
-                "auc": 0.6866963402571711,
+                "auc": 0.6539317507418397,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 12,
                 "controls": 668,
-                "auc": 0.5948103792415169,
+                "auc": 0.6075973053892215,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 443,
-                "auc": 0.6724486158964003,
+                "auc": 0.6918735891647856,
                 "supported": true
               }
             }
@@ -2510,19 +2510,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 150956,
             "events": 18616,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7418109250785975
+            "uno_c_index": 0.6931422218291381
           },
           "valid": {
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "uno_c_index": 0.5995213228894691
+            "uno_c_index": 0.5357702349869452
           },
           "test": {
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "uno_c_index": 0.6468812877263581
+            "uno_c_index": 0.5542514345331246
           }
         },
         "dynamic_auc": {
@@ -2530,27 +2530,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 150956,
             "events": 18616,
             "tau": 134.99999999999997,
-            "mean_auc": 0.7870450241652628,
+            "mean_auc": 0.7510452742905244,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1070,
                 "controls": 149886,
-                "auc": 0.8009928667282461,
+                "auc": 0.7632660697519522,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2015,
                 "controls": 148941,
-                "auc": 0.7848969339750382,
+                "auc": 0.7488851639972749,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4097,
                 "controls": 146859,
-                "auc": 0.7808518222859977,
+                "auc": 0.7457451076639119,
                 "supported": true
               }
             }
@@ -2559,27 +2559,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "mean_auc": 0.6382454623520983,
+            "mean_auc": 0.5283046802981239,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 2,
                 "controls": 597,
-                "auc": 0.5967336683417086,
+                "auc": 0.31909547738693467,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 6,
                 "controls": 593,
-                "auc": 0.6808600337268128,
+                "auc": 0.544266441821248,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 13,
                 "controls": 586,
-                "auc": 0.6257547912838015,
+                "auc": 0.5789577316881072,
                 "supported": true
               }
             }
@@ -2588,27 +2588,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "mean_auc": 0.6988242051738578,
+            "mean_auc": 0.5565362094728369,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 6,
                 "controls": 674,
-                "auc": 0.8136745796241345,
+                "auc": 0.6212908011869435,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 12,
                 "controls": 668,
-                "auc": 0.6972929141716566,
+                "auc": 0.590818363273453,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 443,
-                "auc": 0.6185695616015208,
+                "auc": 0.48639657835333255,
                 "supported": true
               }
             }
@@ -2622,19 +2622,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 150956,
             "events": 18616,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7864878393102331
+            "uno_c_index": 0.7269979909057687
           },
           "valid": {
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "uno_c_index": 0.7009573542210618
+            "uno_c_index": 0.6387728459530027
           },
           "test": {
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "uno_c_index": 0.714695580892764
+            "uno_c_index": 0.5672926447574335
           }
         },
         "dynamic_auc": {
@@ -2642,27 +2642,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 150956,
             "events": 18616,
             "tau": 134.99999999999997,
-            "mean_auc": 0.8520470159809814,
+            "mean_auc": 0.801980712584682,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1070,
                 "controls": 149886,
-                "auc": 0.8617515386460065,
+                "auc": 0.8113603410242876,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2015,
                 "controls": 148941,
-                "auc": 0.8494519896074224,
+                "auc": 0.799058889256913,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4097,
                 "controls": 146859,
-                "auc": 0.8482374389739865,
+                "auc": 0.7984864381439343,
                 "supported": true
               }
             }
@@ -2671,27 +2671,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "mean_auc": 0.685401558227156,
+            "mean_auc": 0.5899420029364253,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 2,
                 "controls": 597,
-                "auc": 0.6197654941373534,
+                "auc": 0.5251256281407035,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 6,
                 "controls": 593,
-                "auc": 0.6978639685216413,
+                "auc": 0.6135469364811692,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 13,
                 "controls": 586,
-                "auc": 0.6970333420845365,
+                "auc": 0.594972433709635,
                 "supported": true
               }
             }
@@ -2700,27 +2700,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "mean_auc": 0.7386656110303109,
+            "mean_auc": 0.5639480384634685,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 6,
                 "controls": 674,
-                "auc": 0.8439663699307616,
+                "auc": 0.6076904055390702,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 12,
                 "controls": 668,
-                "auc": 0.7239271457085829,
+                "auc": 0.5967440119760479,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 443,
-                "auc": 0.6745277414755853,
+                "auc": 0.5097421884281811,
                 "supported": true
               }
             }
@@ -2734,19 +2734,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 150956,
             "events": 18616,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7589020587700531
+            "uno_c_index": 0.7389821710315744
           },
           "valid": {
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "uno_c_index": 0.6533507397737163
+            "uno_c_index": 0.604177545691906
           },
           "test": {
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "uno_c_index": 0.6621953945897607
+            "uno_c_index": 0.6288471570161711
           }
         },
         "dynamic_auc": {
@@ -2754,27 +2754,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 150956,
             "events": 18616,
             "tau": 134.99999999999997,
-            "mean_auc": 0.8054721524254927,
+            "mean_auc": 0.7901269346897593,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1070,
                 "controls": 149886,
-                "auc": 0.814667380854309,
+                "auc": 0.7966864536674041,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2015,
                 "controls": 148941,
-                "auc": 0.8032922623965062,
+                "auc": 0.7874205088920333,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4097,
                 "controls": 146859,
-                "auc": 0.8017358900136575,
+                "auc": 0.787984229153146,
                 "supported": true
               }
             }
@@ -2783,27 +2783,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "mean_auc": 0.6877481486568946,
+            "mean_auc": 0.6141905041232175,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 2,
                 "controls": 597,
-                "auc": 0.7345058626465661,
+                "auc": 0.5619765494137353,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 6,
                 "controls": 593,
-                "auc": 0.7009555930297919,
+                "auc": 0.6177627880831928,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 13,
                 "controls": 586,
-                "auc": 0.6668416907324757,
+                "auc": 0.6270674717773694,
                 "supported": true
               }
             }
@@ -2812,27 +2812,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "mean_auc": 0.694323506102019,
+            "mean_auc": 0.6302847132506179,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 6,
                 "controls": 674,
-                "auc": 0.787833827893175,
+                "auc": 0.6779179030662711,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 12,
                 "controls": 668,
-                "auc": 0.6654191616766467,
+                "auc": 0.6193238522954092,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 443,
-                "auc": 0.6485683735297612,
+                "auc": 0.6043127004871094,
                 "supported": true
               }
             }
@@ -2846,19 +2846,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 150956,
             "events": 18616,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7750157165406986
+            "uno_c_index": 0.7425951788826662
           },
           "valid": {
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "uno_c_index": 0.6809399477806789
+            "uno_c_index": 0.6147084421235858
           },
           "test": {
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "uno_c_index": 0.6889485058499143
+            "uno_c_index": 0.6150607347790447
           }
         },
         "dynamic_auc": {
@@ -2866,27 +2866,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 150956,
             "events": 18616,
             "tau": 134.99999999999997,
-            "mean_auc": 0.828488691338725,
+            "mean_auc": 0.8017563484440019,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1070,
                 "controls": 149886,
-                "auc": 0.8375407833317807,
+                "auc": 0.808813679704987,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2015,
                 "controls": 148941,
-                "auc": 0.8259699366693454,
+                "auc": 0.798762647250715,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4097,
                 "controls": 146859,
-                "auc": 0.8249797983175887,
+                "auc": 0.7994881943510153,
                 "supported": true
               }
             }
@@ -2895,27 +2895,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "mean_auc": 0.6942536138658678,
+            "mean_auc": 0.610871344399123,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 2,
                 "controls": 597,
-                "auc": 0.6976549413735343,
+                "auc": 0.551926298157454,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 6,
                 "controls": 593,
-                "auc": 0.7062956717256885,
+                "auc": 0.623946037099494,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 13,
                 "controls": 586,
-                "auc": 0.686400630086637,
+                "auc": 0.6202415332108165,
                 "supported": true
               }
             }
@@ -2924,27 +2924,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "mean_auc": 0.7172694297291475,
+            "mean_auc": 0.6183408262320077,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 6,
                 "controls": 674,
-                "auc": 0.8125618199802177,
+                "auc": 0.6742087042532147,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 12,
                 "controls": 668,
-                "auc": 0.6939870259481038,
+                "auc": 0.625561377245509,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 443,
-                "auc": 0.6662706427468219,
+                "auc": 0.573660449091125,
                 "supported": true
               }
             }
@@ -2958,19 +2958,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 150956,
             "events": 18616,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7608658011970333
+            "uno_c_index": 0.7287880757349339
           },
           "valid": {
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "uno_c_index": 0.6495213228894691
+            "uno_c_index": 0.5879025239338556
           },
           "test": {
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "uno_c_index": 0.6645055518294954
+            "uno_c_index": 0.6002310157239734
           }
         },
         "dynamic_auc": {
@@ -2978,27 +2978,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 150956,
             "events": 18616,
             "tau": 134.99999999999997,
-            "mean_auc": 0.809300645370553,
+            "mean_auc": 0.7844606654553691,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1070,
                 "controls": 149886,
-                "auc": 0.8198868710313296,
+                "auc": 0.7927816386559704,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2015,
                 "controls": 148941,
-                "auc": 0.8069308690737916,
+                "auc": 0.7816949832900509,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4097,
                 "controls": 146859,
-                "auc": 0.8049356968323247,
+                "auc": 0.7814395935637177,
                 "supported": true
               }
             }
@@ -3007,27 +3007,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 599,
             "events": 20,
             "tau": 45.99999999999999,
-            "mean_auc": 0.6774327148189059,
+            "mean_auc": 0.5886908557680066,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 2,
                 "controls": 597,
-                "auc": 0.6842546063651591,
+                "auc": 0.48157453936348404,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 6,
                 "controls": 593,
-                "auc": 0.6989881956155143,
+                "auc": 0.5966835300730746,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 13,
                 "controls": 586,
-                "auc": 0.6631661853504858,
+                "auc": 0.6147282751378315,
                 "supported": true
               }
             }
@@ -3036,27 +3036,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "mean_auc": 0.7038004568236428,
+            "mean_auc": 0.6060869165834445,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 6,
                 "controls": 674,
-                "auc": 0.8076162215628091,
+                "auc": 0.6635756676557863,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 12,
                 "controls": 668,
-                "auc": 0.6835079840319361,
+                "auc": 0.6177020958083832,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 443,
-                "auc": 0.6446477367232981,
+                "auc": 0.5571462516335987,
                 "supported": true
               }
             }
@@ -3088,19 +3088,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 151555,
           "events": 18636,
           "tau": 134.99999999999997,
-          "uno_c_index": 0.7769867721077287
+          "uno_c_index": 0.7390931710364164
         },
         "valid": {
           "rows": 680,
           "events": 23,
           "tau": 33.99999999999999,
-          "uno_c_index": 0.6856695729935166
+          "uno_c_index": 0.6044042029957523
         },
         "test": {
           "rows": 51593,
           "events": 228,
           "tau": 17.999999999999996,
-          "uno_c_index": 0.5741175409958869
+          "uno_c_index": 0.5045814090425264
         }
       },
       "dynamic_auc": {
@@ -3108,27 +3108,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 151555,
           "events": 18636,
           "tau": 134.99999999999997,
-          "mean_auc": 0.8285803869969081,
+          "mean_auc": 0.7987873540114908,
           "horizons": {
             "h6": {
               "time": 6.0,
               "cases": 1072,
               "controls": 150483,
-              "auc": 0.8380302366677805,
+              "auc": 0.8070938040950923,
               "supported": true
             },
             "h12": {
               "time": 12.0,
               "cases": 2021,
               "controls": 149534,
-              "auc": 0.8260518524489875,
+              "auc": 0.7961051564931985,
               "supported": true
             },
             "h24": {
               "time": 24.0,
               "cases": 4110,
               "controls": 147445,
-              "auc": 0.8248797361777607,
+              "auc": 0.7957432616013609,
               "supported": true
             }
           }
@@ -3137,27 +3137,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 680,
           "events": 23,
           "tau": 33.99999999999999,
-          "mean_auc": 0.7206853799990056,
+          "mean_auc": 0.5905876435784159,
           "horizons": {
             "h6": {
               "time": 6.0,
               "cases": 6,
               "controls": 674,
-              "auc": 0.8281404549950544,
+              "auc": 0.6245054401582592,
               "supported": true
             },
             "h12": {
               "time": 12.0,
               "cases": 12,
               "controls": 668,
-              "auc": 0.68687624750499,
+              "auc": 0.5998627744510978,
               "supported": true
             },
             "h24": {
               "time": 24.0,
               "cases": 19,
               "controls": 443,
-              "auc": 0.668527979089937,
+              "auc": 0.5599976238564809,
               "supported": true
             }
           }
@@ -3166,20 +3166,20 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
           "rows": 51593,
           "events": 228,
           "tau": 17.999999999999996,
-          "mean_auc": 0.5904000260871158,
+          "mean_auc": 0.5316872554177795,
           "horizons": {
             "h6": {
               "time": 6.0,
               "cases": 41,
               "controls": 50816,
-              "auc": 0.5997484468114517,
+              "auc": 0.5554472952632549,
               "supported": true
             },
             "h12": {
               "time": 12.0,
               "cases": 152,
               "controls": 50015,
-              "auc": 0.5870021230472963,
+              "auc": 0.5230511109824948,
               "supported": true
             },
             "h24": {
@@ -3202,7 +3202,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.019496649679489334
+            "ibs": 0.01953298405351334
           },
           "valid": {
             "rows": 680,
@@ -3212,7 +3212,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.028069201075470826
+            "ibs": 0.02107354985296718
           },
           "test": {
             "rows": 51593,
@@ -3221,7 +3221,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               6.0,
               12.0
             ],
-            "ibs": 0.11392563508602893
+            "ibs": 0.114372238612175
           }
         },
         "rsf": {
@@ -3233,7 +3233,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.019428106379635705
+            "ibs": 0.02048295281631686
           },
           "valid": {
             "rows": 680,
@@ -3243,7 +3243,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.023092950453527335
+            "ibs": 0.02316668327609111
           },
           "test": {
             "rows": 51593,
@@ -3252,7 +3252,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               6.0,
               12.0
             ],
-            "ibs": 0.022579078358957335
+            "ibs": 0.07961314168166833
           }
         },
         "gbsa": {
@@ -3264,7 +3264,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.021343672421296637
+            "ibs": 0.02260759843778537
           },
           "valid": {
             "rows": 680,
@@ -3274,7 +3274,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               12.0,
               24.0
             ],
-            "ibs": 0.022404786534203334
+            "ibs": 0.023307608888870405
           },
           "test": {
             "rows": 51593,
@@ -3283,7 +3283,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
               6.0,
               12.0
             ],
-            "ibs": 0.004587732486110257
+            "ibs": 0.005684639981155225
           }
         }
       },
@@ -3316,19 +3316,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 151555,
             "events": 18636,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7539987715528752
+            "uno_c_index": 0.750316853527961
           },
           "valid": {
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "uno_c_index": 0.6566063044936284
+            "uno_c_index": 0.6693866905134511
           },
           "test": {
             "rows": 51593,
             "events": 228,
             "tau": 17.999999999999996,
-            "uno_c_index": 0.5908805165664671
+            "uno_c_index": 0.5812495971401743
           }
         },
         "dynamic_auc": {
@@ -3336,27 +3336,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 151555,
             "events": 18636,
             "tau": 134.99999999999997,
-            "mean_auc": 0.8007827890920989,
+            "mean_auc": 0.7970696457985235,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1072,
                 "controls": 150483,
-                "auc": 0.8078182685831226,
+                "auc": 0.8010630489971545,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2021,
                 "controls": 149534,
-                "auc": 0.7996576443153858,
+                "auc": 0.795534306688302,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4110,
                 "controls": 147445,
-                "auc": 0.797683568593642,
+                "auc": 0.7957178547916626,
                 "supported": true
               }
             }
@@ -3365,27 +3365,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "mean_auc": 0.6521567431261375,
+            "mean_auc": 0.6491020915695028,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 6,
                 "controls": 674,
-                "auc": 0.6909000989119684,
+                "auc": 0.6403313550939663,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 12,
                 "controls": 668,
-                "auc": 0.5830838323353293,
+                "auc": 0.5989895209580838,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 443,
-                "auc": 0.6736366876559343,
+                "auc": 0.6908043245812046,
                 "supported": true
               }
             }
@@ -3394,20 +3394,20 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 51593,
             "events": 228,
             "tau": 17.999999999999996,
-            "mean_auc": 0.6072581168953309,
+            "mean_auc": 0.5979734549394962,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 41,
                 "controls": 50816,
-                "auc": 0.5943005275849358,
+                "auc": 0.5883695168028507,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 152,
                 "controls": 50015,
-                "auc": 0.6119678570113176,
+                "auc": 0.6014642317830966,
                 "supported": true
               },
               "h24": {
@@ -3428,19 +3428,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 151555,
             "events": 18636,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.747866867152362
+            "uno_c_index": 0.6925264117073943
           },
           "valid": {
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "uno_c_index": 0.6405469856174082
+            "uno_c_index": 0.5691556747894776
           },
           "test": {
             "rows": 51593,
             "events": 228,
             "tau": 17.999999999999996,
-            "uno_c_index": 0.6030715775206831
+            "uno_c_index": 0.48320379393785245
           }
         },
         "dynamic_auc": {
@@ -3448,27 +3448,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 151555,
             "events": 18636,
             "tau": 134.99999999999997,
-            "mean_auc": 0.7902777828315269,
+            "mean_auc": 0.7511353328155418,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1072,
                 "controls": 150483,
-                "auc": 0.803591657499667,
+                "auc": 0.7638774570013909,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2021,
                 "controls": 149534,
-                "auc": 0.788379061066818,
+                "auc": 0.7490815074271938,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4110,
                 "controls": 147445,
-                "auc": 0.7843081386527155,
+                "auc": 0.7455295516601143,
                 "supported": true
               }
             }
@@ -3477,27 +3477,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "mean_auc": 0.6932769967119433,
+            "mean_auc": 0.563808986520184,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 6,
                 "controls": 674,
-                "auc": 0.812809099901088,
+                "auc": 0.607566765578635,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 12,
                 "controls": 668,
-                "auc": 0.6981037924151696,
+                "auc": 0.5936252495009979,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 443,
-                "auc": 0.6052037543067601,
+                "auc": 0.5117025068314126,
                 "supported": true
               }
             }
@@ -3506,20 +3506,20 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 51593,
             "events": 228,
             "tau": 17.999999999999996,
-            "mean_auc": 0.6028833212245147,
+            "mean_auc": 0.49292516464215946,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 41,
                 "controls": 50816,
-                "auc": 0.6152311351907599,
+                "auc": 0.5233170270934446,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 152,
                 "controls": 50015,
-                "auc": 0.5983952182766222,
+                "auc": 0.48187852854669905,
                 "supported": true
               },
               "h24": {
@@ -3540,19 +3540,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 151555,
             "events": 18636,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7925092731328335
+            "uno_c_index": 0.7268824298864558
           },
           "valid": {
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "uno_c_index": 0.7056039943363887
+            "uno_c_index": 0.5327148073626947
           },
           "test": {
             "rows": 51593,
             "events": 228,
             "tau": 17.999999999999996,
-            "uno_c_index": 0.4519878192609678
+            "uno_c_index": 0.4557229178026588
           }
         },
         "dynamic_auc": {
@@ -3560,27 +3560,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 151555,
             "events": 18636,
             "tau": 134.99999999999997,
-            "mean_auc": 0.8571923089448438,
+            "mean_auc": 0.8039187324311139,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1072,
                 "controls": 150483,
-                "auc": 0.8671893914530535,
+                "auc": 0.8154416937907698,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2021,
                 "controls": 149534,
-                "auc": 0.8542760091888171,
+                "auc": 0.8007553163329968,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4110,
                 "controls": 147445,
-                "auc": 0.8533869934923155,
+                "auc": 0.7994426516745614,
                 "supported": true
               }
             }
@@ -3589,27 +3589,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "mean_auc": 0.7402897093079499,
+            "mean_auc": 0.5004110038401686,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 6,
                 "controls": 674,
-                "auc": 0.8533630069238378,
+                "auc": 0.5027200791295747,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 12,
                 "controls": 668,
-                "auc": 0.7088323353293413,
+                "auc": 0.5364271457085829,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 443,
-                "auc": 0.6824878222644648,
+                "auc": 0.4732683854104789,
                 "supported": true
               }
             }
@@ -3618,20 +3618,20 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 51593,
             "events": 228,
             "tau": 17.999999999999996,
-            "mean_auc": 0.4720677774213008,
+            "mean_auc": 0.48077045859234835,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 41,
                 "controls": 50816,
-                "auc": 0.4984926487528415,
+                "auc": 0.4921922997173926,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 152,
                 "controls": 50015,
-                "auc": 0.46246303740456807,
+                "auc": 0.47661892221807145,
                 "supported": true
               },
               "h24": {
@@ -3652,19 +3652,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 151555,
             "events": 18636,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7598523493037687
+            "uno_c_index": 0.7340698881047939
           },
           "valid": {
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "uno_c_index": 0.6601088009538714
+            "uno_c_index": 0.6324241746776958
           },
           "test": {
             "rows": 51593,
             "events": 228,
             "tau": 17.999999999999996,
-            "uno_c_index": 0.6092100289013817
+            "uno_c_index": 0.5068254471526303
           }
         },
         "dynamic_auc": {
@@ -3672,27 +3672,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 151555,
             "events": 18636,
             "tau": 134.99999999999997,
-            "mean_auc": 0.8040419972552462,
+            "mean_auc": 0.7865745106099297,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1072,
                 "controls": 150483,
-                "auc": 0.8136912574346425,
+                "auc": 0.7943052351527584,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2021,
                 "controls": 149534,
-                "auc": 0.8021474806770144,
+                "auc": 0.7843368479719748,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4110,
                 "controls": 147445,
-                "auc": 0.7999509916642595,
+                "auc": 0.7836239146949018,
                 "supported": true
               }
             }
@@ -3701,27 +3701,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "mean_auc": 0.695714447512231,
+            "mean_auc": 0.6223188330852724,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 6,
                 "controls": 674,
-                "auc": 0.8006923837784371,
+                "auc": 0.65986646884273,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 12,
                 "controls": 668,
-                "auc": 0.6626746506986028,
+                "auc": 0.6127120758483033,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 443,
-                "auc": 0.6447665438992515,
+                "auc": 0.602530592847808,
                 "supported": true
               }
             }
@@ -3730,20 +3730,20 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 51593,
             "events": 228,
             "tau": 17.999999999999996,
-            "mean_auc": 0.6186929509076295,
+            "mean_auc": 0.5338344914306503,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 41,
                 "controls": 50816,
-                "auc": 0.6249952002826074,
+                "auc": 0.5606787472353628,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 152,
                 "controls": 50015,
-                "auc": 0.6164022503775184,
+                "auc": 0.5240773162788006,
                 "supported": true
               },
               "h24": {
@@ -3764,19 +3764,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 151555,
             "events": 18636,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7769867721077287
+            "uno_c_index": 0.7390931710364164
           },
           "valid": {
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "uno_c_index": 0.6856695729935166
+            "uno_c_index": 0.6044042029957523
           },
           "test": {
             "rows": 51593,
             "events": 228,
             "tau": 17.999999999999996,
-            "uno_c_index": 0.5741175409958869
+            "uno_c_index": 0.5045814090425264
           }
         },
         "dynamic_auc": {
@@ -3784,27 +3784,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 151555,
             "events": 18636,
             "tau": 134.99999999999997,
-            "mean_auc": 0.8285803869969081,
+            "mean_auc": 0.7987873540114908,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1072,
                 "controls": 150483,
-                "auc": 0.8380302366677805,
+                "auc": 0.8070938040950923,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2021,
                 "controls": 149534,
-                "auc": 0.8260518524489875,
+                "auc": 0.7961051564931985,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4110,
                 "controls": 147445,
-                "auc": 0.8248797361777607,
+                "auc": 0.7957432616013609,
                 "supported": true
               }
             }
@@ -3813,27 +3813,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "mean_auc": 0.7206853799990056,
+            "mean_auc": 0.5905876435784159,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 6,
                 "controls": 674,
-                "auc": 0.8281404549950544,
+                "auc": 0.6245054401582592,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 12,
                 "controls": 668,
-                "auc": 0.68687624750499,
+                "auc": 0.5998627744510978,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 443,
-                "auc": 0.668527979089937,
+                "auc": 0.5599976238564809,
                 "supported": true
               }
             }
@@ -3842,20 +3842,20 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 51593,
             "events": 228,
             "tau": 17.999999999999996,
-            "mean_auc": 0.5904000260871158,
+            "mean_auc": 0.5316872554177795,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 41,
                 "controls": 50816,
-                "auc": 0.5997484468114517,
+                "auc": 0.5554472952632549,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 152,
                 "controls": 50015,
-                "auc": 0.5870021230472963,
+                "auc": 0.5230511109824948,
                 "supported": true
               },
               "h24": {
@@ -3876,19 +3876,19 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 151555,
             "events": 18636,
             "tau": 134.99999999999997,
-            "uno_c_index": 0.7624493946279945
+            "uno_c_index": 0.7251224494523406
           },
           "valid": {
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "uno_c_index": 0.6596616737461808
+            "uno_c_index": 0.6000819733214099
           },
           "test": {
             "rows": 51593,
             "events": 228,
             "tau": 17.999999999999996,
-            "uno_c_index": 0.6025046557530125
+            "uno_c_index": 0.5022473045411231
           }
         },
         "dynamic_auc": {
@@ -3896,27 +3896,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 151555,
             "events": 18636,
             "tau": 134.99999999999997,
-            "mean_auc": 0.808286485685368,
+            "mean_auc": 0.7813734017788513,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 1072,
                 "controls": 150483,
-                "auc": 0.8189982237295412,
+                "auc": 0.7906322673330185,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 2021,
                 "controls": 149534,
-                "auc": 0.8061221244634997,
+                "auc": 0.7789334326299946,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 4110,
                 "controls": 147445,
-                "auc": 0.803772840695516,
+                "auc": 0.7777305232954612,
                 "supported": true
               }
             }
@@ -3925,27 +3925,27 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 680,
             "events": 23,
             "tau": 33.99999999999999,
-            "mean_auc": 0.7027105285527131,
+            "mean_auc": 0.5934532415921892,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 6,
                 "controls": 674,
-                "auc": 0.818001978239367,
+                "auc": 0.6356330365974283,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 12,
                 "controls": 668,
-                "auc": 0.6801397205588822,
+                "auc": 0.6057260479041916,
                 "supported": true
               },
               "h24": {
                 "time": 24.0,
                 "cases": 19,
                 "controls": 443,
-                "auc": 0.6370440774622788,
+                "auc": 0.5548889152904836,
                 "supported": true
               }
             }
@@ -3954,20 +3954,20 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
             "rows": 51593,
             "events": 228,
             "tau": 17.999999999999996,
-            "mean_auc": 0.6106738937866553,
+            "mean_auc": 0.5235405035063044,
             "horizons": {
               "h6": {
                 "time": 6.0,
                 "cases": 41,
                 "controls": 50816,
-                "auc": 0.6181714420654911,
+                "auc": 0.5496965138692633,
                 "supported": true
               },
               "h12": {
                 "time": 12.0,
                 "cases": 152,
                 "controls": 50015,
-                "auc": 0.6079487338009124,
+                "auc": 0.5140334873222244,
                 "supported": true
               },
               "h24": {

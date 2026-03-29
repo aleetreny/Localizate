@@ -9,6 +9,7 @@ import pandas as pd
 
 from .activity_taxonomy import macro_category_feature_names
 from .paths import DATA_DIR, DOCS_DIR, PROJECT_ROOT
+from .survival_features import get_model_feature_columns
 
 
 @dataclass(frozen=True)
@@ -340,7 +341,12 @@ def _collect_tail_periods(
     return selected
 
 
-def build_feature_frame(dataset: pd.DataFrame, *, fill_missing: bool = True) -> pd.DataFrame:
+def build_feature_frame(
+    dataset: pd.DataFrame,
+    *,
+    fill_missing: bool = True,
+    feature_profile: str = "full",
+) -> pd.DataFrame:
     frame = pd.DataFrame(index=dataset.index)
     macro_category_series = dataset.get("activity_category_code_start", pd.Series(pd.NA, index=dataset.index)).astype("string")
     first_seen_period = dataset.get("first_seen_period", pd.Series(pd.NA, index=dataset.index)).astype("string")
@@ -408,6 +414,8 @@ def build_feature_frame(dataset: pd.DataFrame, *, fill_missing: bool = True) -> 
     for feature_name in macro_category_feature_names():
         macro_code = feature_name.split("__", 1)[1]
         frame[feature_name] = macro_category_series.eq(macro_code).astype(float)
+
+    frame = frame.reindex(columns=get_model_feature_columns(feature_profile=feature_profile))
 
     if fill_missing:
         for column in frame.columns:

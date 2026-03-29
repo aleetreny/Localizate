@@ -82,7 +82,7 @@ def train_activity_horizon_logistic_models(
     if not selected_horizons:
         raise ValueError("No supported logistic horizons available under the configured support thresholds")
 
-    features = build_feature_frame(dataset)
+    features = build_feature_frame(dataset, feature_profile="activity_survival_pruned")
     merged = _merge_survival_scores(dataset, resolved_scores)
     feature_names = list(features.columns)
 

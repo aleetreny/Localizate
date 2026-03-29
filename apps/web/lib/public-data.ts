@@ -1,6 +1,11 @@
+import { DEFAULT_HEX_SIZE, type HexSize } from "@/lib/hex-size";
 import type { FrontendArtifacts, OpportunityArtifacts } from "@/lib/types";
 
-export const MAP_ARTIFACTS_PATH = "/data/frontend-map-artifacts.json";
+export const MAP_ARTIFACTS_PATHS: Record<HexSize, string> = {
+  small: "/data/frontend-map-artifacts.json",
+  medium: "/data/frontend-map-artifacts-medium.json",
+  large: "/data/frontend-map-artifacts-large.json"
+};
 export const OPPORTUNITY_ARTIFACTS_PATH = "/data/frontend-opportunity-artifacts.json";
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
@@ -67,15 +72,24 @@ export const FALLBACK_OPPORTUNITY_ARTIFACTS: OpportunityArtifacts = {
   points: []
 };
 
-let mapArtifactsPromise: Promise<FrontendArtifacts> | null = null;
+const mapArtifactsPromises = new Map<HexSize, Promise<FrontendArtifacts>>();
 let opportunityArtifactsPromise: Promise<OpportunityArtifacts> | null = null;
 
-export function loadMapArtifactsFromPublic() {
+export function loadMapArtifactsFromPublic(hexSize: HexSize = DEFAULT_HEX_SIZE) {
+  const path = MAP_ARTIFACTS_PATHS[hexSize];
+
   if (!IS_PRODUCTION) {
-    return fetchPublicJson(MAP_ARTIFACTS_PATH, FALLBACK_MAP_ARTIFACTS);
+    return fetchPublicJson(path, FALLBACK_MAP_ARTIFACTS);
   }
-  mapArtifactsPromise ??= fetchPublicJson(MAP_ARTIFACTS_PATH, FALLBACK_MAP_ARTIFACTS);
-  return mapArtifactsPromise;
+
+  const cached = mapArtifactsPromises.get(hexSize);
+  if (cached) {
+    return cached;
+  }
+
+  const promise = fetchPublicJson(path, FALLBACK_MAP_ARTIFACTS);
+  mapArtifactsPromises.set(hexSize, promise);
+  return promise;
 }
 
 export function loadOpportunityArtifactsFromPublic() {
