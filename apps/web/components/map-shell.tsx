@@ -24,11 +24,33 @@ type MetricDefinition = {
 type ZoneListProps = {
   districtZones: ZoneAggregate[];
   barrioZones: ZoneAggregate[];
+  onSelectZone: (zone: ZoneAggregate) => void;
 };
 
 type RiskAggregate = {
   avg_risk_primary?: number;
   avg_risk_ensemble: number;
+};
+
+type ZoneActivityRankingItem = {
+  rank: number;
+  categoryCode: string;
+  categoryDesc: string;
+  riskIndex: number | null;
+  survival: number | null;
+  nLocales: number;
+  support: number;
+};
+
+type ZoneActivityInsight = {
+  zoneLevel: ZoneAggregate["zone_level"];
+  zoneCode: string;
+  zoneName: string;
+  horizon: Horizon;
+  totalActivities: number;
+  currentCategoryDesc: string;
+  currentCategoryRank: number | null;
+  items: ZoneActivityRankingItem[];
 };
 
 export function MapShell({ initialArtifacts }: MapShellProps) {
@@ -41,6 +63,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   const [selectedHex, setSelectedHex] = useState<HexAggregate | null>(null);
   const [activeMetricId, setActiveMetricId] = useState<string | null>(null);
   const [isRiskExplainerOpen, setIsRiskExplainerOpen] = useState(false);
+  const [activeZoneInsight, setActiveZoneInsight] = useState<ZoneActivityInsight | null>(null);
   const loadedArtifactsRef = useRef<Partial<Record<HexSize, FrontendArtifacts>>>(
     initialArtifacts ? { [DEFAULT_HEX_SIZE]: initialArtifacts } : {}
   );
@@ -230,6 +253,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
             onChange={(event) => {
               setSelectedCategory(event.target.value);
               setSelectedHex(null);
+              setActiveZoneInsight(null);
             }}
           >
             {artifacts.categories.map((category) => (
@@ -253,6 +277,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
                   }
                   setSelectedHex(null);
                   setActiveMetricId(null);
+                  setActiveZoneInsight(null);
                   setHexSize(option.value);
                 }}
                 type="button"
@@ -266,10 +291,16 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
         <div className="control-group">
           <span className="control-label">Horizonte</span>
           <div className="toggle-row">
-            <button data-active={horizon === "12m"} onClick={() => setHorizon("12m")} type="button">
+            <button data-active={horizon === "12m"} onClick={() => {
+              setActiveZoneInsight(null);
+              setHorizon("12m");
+            }} type="button">
               12 meses
             </button>
-            <button data-active={horizon === "24m"} onClick={() => setHorizon("24m")} type="button">
+            <button data-active={horizon === "24m"} onClick={() => {
+              setActiveZoneInsight(null);
+              setHorizon("24m");
+            }} type="button">
               24 meses
             </button>
           </div>
@@ -314,12 +345,39 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
               <h3>Menor índice relativo</h3>
             </div>
           </div>
-          <ZoneList barrioZones={topZones.barrio} districtZones={topZones.district} />
+          <ZoneList
+            barrioZones={topZones.barrio}
+            districtZones={topZones.district}
+            onSelectZone={(zone) => {
+              const zonePool = zone.zone_level === "district" ? artifacts.zones.district : artifacts.zones.barrio;
+              const nextInsight = buildZoneActivityInsight({
+                zone,
+                zonePool,
+                currentCategoryCode: selectedCategory,
+                horizon,
+              });
+
+              setIsRiskExplainerOpen(false);
+              setActiveMetricId(null);
+              setActiveZoneInsight((current) => {
+                if (!nextInsight) {
+                  return null;
+                }
+                if (current && current.zoneLevel === nextInsight.zoneLevel && current.zoneCode === nextInsight.zoneCode) {
+                  return null;
+                }
+                return nextInsight;
+              });
+            }}
+          />
           <div className="zone-board-footer">
             <button
               aria-expanded={isRiskExplainerOpen}
               className="zone-board-action"
-              onClick={() => setIsRiskExplainerOpen((current) => !current)}
+              onClick={() => {
+                setActiveZoneInsight(null);
+                setIsRiskExplainerOpen((current) => !current);
+              }}
               type="button"
             >
               {isRiskExplainerOpen ? "Ocultar guía" : "Cómo interpretar este ranking"}
@@ -338,7 +396,14 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
                 <span className={`chip${detailSurvival === null ? " chip-muted" : ""}`}>Surv {formatPercent(detailSurvival, detailSupport > 0 ? "Sin datos" : "Sin muestra")}</span>
                 <span className="chip">Soporte {detailSupport}/{detail.n_locales}</span>
               </div>
-              <MetricGrid activeMetricId={activeMetricId} metrics={detailMetrics} onSelect={setActiveMetricId} />
+              <MetricGrid
+                activeMetricId={activeMetricId}
+                metrics={detailMetrics}
+                onSelect={(metricId) => {
+                  setActiveZoneInsight(null);
+                  setActiveMetricId(metricId);
+                }}
+              />
               <p className="detail-footnote">{buildDetailSupportNote(detailSupport, detail.n_locales, horizon)}</p>
             </>
           ) : (
@@ -355,9 +420,11 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
           <div className="map-overlay panel risk-explainer-overlay">
             <RelativeRiskExplainerBanner onClose={() => setIsRiskExplainerOpen(false)} />
           </div>
-        ) : null}
-
-        {!isRiskExplainerOpen && activeMetric ? (
+        ) : activeZoneInsight ? (
+          <div className="map-overlay panel zone-explainer-overlay">
+            <ZoneActivityExplainer insight={activeZoneInsight} onClose={() => setActiveZoneInsight(null)} />
+          </div>
+        ) : activeMetric ? (
           <div className="map-overlay panel metric-banner">
             <MetricExplainer metric={activeMetric} />
           </div>
@@ -368,7 +435,10 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
           colorScale={colorScale}
           horizon={horizon}
           hexes={filteredHexes}
-          onSelectHex={setSelectedHex}
+          onSelectHex={(hex) => {
+            setActiveZoneInsight(null);
+            setSelectedHex(hex);
+          }}
           selectedHex={selectedHex}
         />
       </section>
@@ -494,9 +564,10 @@ type ZoneRankCardProps = {
   rank: number;
   zone: ZoneAggregate | null;
   emptyLabel: string;
+  onSelectZone: (zone: ZoneAggregate) => void;
 };
 
-function ZoneList({ districtZones, barrioZones }: ZoneListProps) {
+function ZoneList({ districtZones, barrioZones, onSelectZone }: ZoneListProps) {
   const rowCount = Math.max(districtZones.length, barrioZones.length);
 
   if (rowCount === 0) {
@@ -518,8 +589,8 @@ function ZoneList({ districtZones, barrioZones }: ZoneListProps) {
       <div className="zone-board-body">
         {rows.map((row) => (
           <div className="zone-row" key={`zone-row:${row.rank}`}>
-            <ZoneRankCard emptyLabel="Sin distrito suficiente" rank={row.rank} zone={row.district} />
-            <ZoneRankCard emptyLabel="Sin barrio suficiente" rank={row.rank} zone={row.barrio} />
+            <ZoneRankCard emptyLabel="Sin distrito suficiente" onSelectZone={onSelectZone} rank={row.rank} zone={row.district} />
+            <ZoneRankCard emptyLabel="Sin barrio suficiente" onSelectZone={onSelectZone} rank={row.rank} zone={row.barrio} />
           </div>
         ))}
       </div>
@@ -527,7 +598,7 @@ function ZoneList({ districtZones, barrioZones }: ZoneListProps) {
   );
 }
 
-function ZoneRankCard({ rank, zone, emptyLabel }: ZoneRankCardProps) {
+function ZoneRankCard({ rank, zone, emptyLabel, onSelectZone }: ZoneRankCardProps) {
   if (!zone) {
     return (
       <div className="zone-list-item zone-list-item-empty">
@@ -540,14 +611,60 @@ function ZoneRankCard({ rank, zone, emptyLabel }: ZoneRankCardProps) {
   }
 
   return (
-    <div className="zone-list-item">
+    <button
+      aria-label={`Ver ranking de actividades en ${zone.zone_name}`}
+      className="zone-list-item zone-list-item-button"
+      onClick={() => onSelectZone(zone)}
+      type="button"
+    >
       <div className="zone-list-top">
         <span className="zone-list-rank">#{rank}</span>
         <span className="zone-list-value">{formatRelativeRiskIndex(zone.avg_risk_percentile)}</span>
       </div>
       <strong className="zone-list-title">{zone.zone_name}</strong>
-      <span className="zone-list-meta">{formatCompact(zone.n_locales)} locales</span>
-    </div>
+      <span className="zone-list-meta">{formatCompact(zone.n_locales)} locales · ver actividades</span>
+    </button>
+  );
+}
+
+function ZoneActivityExplainer({ insight, onClose }: { insight: ZoneActivityInsight; onClose: () => void }) {
+  const scopeLabel = insight.zoneLevel === "district" ? "distrito" : "barrio";
+
+  return (
+    <section aria-label={`Ranking de actividades del ${scopeLabel}`} aria-modal="false" className="explain-banner explain-banner-floating" role="dialog">
+      <div className="explain-banner-header">
+        <div className="explain-banner-headcopy">
+          <span className="explain-banner-kicker">Ranking territorial</span>
+          <strong className="explain-banner-title">{insight.zoneName}</strong>
+          <span className="explain-banner-summary">{buildZoneActivityInsightSummary(insight)}</span>
+        </div>
+        <button aria-label="Cerrar ranking territorial" className="explain-banner-close" onClick={onClose} type="button">
+          Cerrar
+        </button>
+      </div>
+      <div className="explain-banner-body">
+        <p className="explain-banner-copy">
+          Ordenamos las macrocategorías de este {scopeLabel} por menor índice relativo. Cuanto más bajo sale el valor, más defensiva es la lectura histórica dentro de ese ámbito.
+        </p>
+        <div className="metric-breakdown-list">
+          {insight.items.map((item) => (
+            <div className="metric-breakdown-item" key={`${insight.zoneLevel}:${insight.zoneCode}:${item.categoryCode}`}>
+              <div className="metric-breakdown-main">
+                <span className="metric-breakdown-rank">#{item.rank}</span>
+                <span className="metric-breakdown-name">{item.categoryDesc}</span>
+              </div>
+              <strong className="metric-breakdown-value">{formatRelativeRiskIndex(item.riskIndex)}</strong>
+              <span className="metric-breakdown-detail">{formatZoneActivityDetail(item, insight.horizon)}</span>
+            </div>
+          ))}
+        </div>
+        {insight.currentCategoryRank && insight.currentCategoryRank > insight.items.length ? (
+          <p className="explain-banner-note">
+            La categoría activa ahora mismo ocupa el puesto #{insight.currentCategoryRank} de {insight.totalActivities} actividades en este {scopeLabel}.
+          </p>
+        ) : null}
+      </div>
+    </section>
   );
 }
 
@@ -604,22 +721,82 @@ function buildFallbackCategoryDefinition(categoryDesc: string) {
 
 function buildTopZones(zones: ZoneAggregate[]) {
   const source = zones.some((item) => item.supported_for_stats) ? zones.filter((item) => item.supported_for_stats) : zones;
-  return [...source]
-    .sort((left, right) => {
-      const rawRiskDiff = getPrimaryRiskValue(left) - getPrimaryRiskValue(right);
-      if (Math.abs(rawRiskDiff) > 1e-6) {
-        return rawRiskDiff;
-      }
-      const riskDiff = left.avg_risk_percentile - right.avg_risk_percentile;
-      if (Math.abs(riskDiff) > 1e-6) {
-        return riskDiff;
-      }
-      if (right.n_locales !== left.n_locales) {
-        return right.n_locales - left.n_locales;
-      }
-      return left.zone_name.localeCompare(right.zone_name, "es");
-    })
-    .slice(0, 3);
+  return sortZonesByRisk(source).slice(0, 3);
+}
+
+function buildZoneActivityInsight({
+  zone,
+  zonePool,
+  currentCategoryCode,
+  horizon,
+}: {
+  zone: ZoneAggregate;
+  zonePool: ZoneAggregate[];
+  currentCategoryCode: string;
+  horizon: Horizon;
+}): ZoneActivityInsight | null {
+  const matchingZones = zonePool.filter((item) => item.zone_code === zone.zone_code);
+  if (matchingZones.length === 0) {
+    return null;
+  }
+
+  const scopedZones = matchingZones.some((item) => item.supported_for_stats)
+    ? matchingZones.filter((item) => item.supported_for_stats)
+    : matchingZones;
+
+  const sorted = sortZonesByRisk(scopedZones).map((item, index) => ({
+    rank: index + 1,
+    categoryCode: item.category_code,
+    categoryDesc: item.category_desc,
+    riskIndex: item.avg_risk_percentile,
+    survival: horizon === "24m" ? item.survival_24m : item.survival_12m,
+    support: horizon === "24m" ? item.support_24m : item.support_12m,
+    nLocales: item.n_locales,
+  }));
+
+  const currentCategoryRank = sorted.find((item) => item.categoryCode === currentCategoryCode)?.rank ?? null;
+
+  return {
+    zoneLevel: zone.zone_level,
+    zoneCode: zone.zone_code,
+    zoneName: zone.zone_name,
+    horizon,
+    totalActivities: sorted.length,
+    currentCategoryDesc: zone.category_desc,
+    currentCategoryRank,
+    items: sorted.slice(0, 5),
+  };
+}
+
+function buildZoneActivityInsightSummary(insight: ZoneActivityInsight) {
+  const scopeLabel = insight.zoneLevel === "district" ? "distrito" : "barrio";
+  if (isFiniteNumber(insight.currentCategoryRank)) {
+    return `${insight.currentCategoryDesc} ocupa el puesto #${insight.currentCategoryRank} de ${insight.totalActivities} actividades en este ${scopeLabel}.`;
+  }
+  return `Consulta qué macrocategorías salen mejor dentro de este ${scopeLabel}.`;
+}
+
+function formatZoneActivityDetail(item: ZoneActivityRankingItem, horizon: Horizon) {
+  const horizonLabel = formatHorizonShortLabel(horizon);
+  const survivalLabel = formatPercent(item.survival, item.support > 0 ? "Sin datos" : "Sin muestra");
+  return `Surv ${horizonLabel} ${survivalLabel} · ${formatCompact(item.nLocales)} locales`;
+}
+
+function sortZonesByRisk(zones: ZoneAggregate[]) {
+  return [...zones].sort((left, right) => {
+    const rawRiskDiff = getPrimaryRiskValue(left) - getPrimaryRiskValue(right);
+    if (Math.abs(rawRiskDiff) > 1e-6) {
+      return rawRiskDiff;
+    }
+    const riskDiff = left.avg_risk_percentile - right.avg_risk_percentile;
+    if (Math.abs(riskDiff) > 1e-6) {
+      return riskDiff;
+    }
+    if (right.n_locales !== left.n_locales) {
+      return right.n_locales - left.n_locales;
+    }
+    return left.zone_name.localeCompare(right.zone_name, "es");
+  });
 }
 
 function buildHexMetrics({

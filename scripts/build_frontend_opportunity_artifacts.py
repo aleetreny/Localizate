@@ -16,6 +16,8 @@ if str(SRC_DIR) not in sys.path:
 
 from localizate.activity_survival_cox import fit_activity_survival_cox_scorer  # noqa: E402
 from localizate.activity_taxonomy import classify_macro_category  # noqa: E402
+from localizate.censo import load_raw_manifest  # noqa: E402
+from localizate.csv_utils import read_delimited_file  # noqa: E402
 from localizate.manual_available_locales import MADRID_BBOX  # noqa: E402
 from localizate.section_geography import load_section_geodataframe  # noqa: E402
 from localizate.section_keys import normalize_section_key_series  # noqa: E402
@@ -55,6 +57,7 @@ ACTIVITY_DISTRICT_MIN_EVENTS = 12
 ACTIVITY_BARRIO_MIN_LOCALES = 40
 ACTIVITY_BARRIO_MIN_EVENTS = 8
 ACTIVITY_CITY_MIN_LOCALES = 150
+AVISOS_TOP_CATEGORY_COUNT = 3
 
 POINT_OUTPUT_COLUMNS = [
     "listing_id",
@@ -256,6 +259,26 @@ SECTION_PROFILE_MEDIAN_COLUMNS = [
     "section_local_count_delta_12m_start",
 ]
 
+SECTION_CONTEXT_OVERRIDE_COLUMNS = [
+    "section_local_count_start",
+    "section_unique_division_count_start",
+    "section_unique_activity_category_count_start",
+    "section_single_division_share_start",
+    "section_same_division_local_count_start",
+    "section_same_division_share_start",
+    "section_same_activity_category_local_count_start",
+    "section_same_activity_category_share_start",
+    "section_local_count_delta_12m_start",
+]
+
+SECTION_CONTEXT_OVERRIDE_USECOLS = [
+    "first_seen_period",
+    "section_key_start",
+    "district_code_start",
+    "barrio_code_start",
+    *SECTION_CONTEXT_OVERRIDE_COLUMNS,
+]
+
 
 def main() -> int:
     selected_listings, filter_summary = build_selected_available_listings(AVAILABLE_LISTINGS_CSV)
@@ -352,6 +375,18 @@ def build_reference_inputs(abt_path: Path) -> dict[str, object]:
     reference_scores = compute_linear_risk_score(reference_features, reference_means=feature_means, reference_stds=feature_stds)
     dataset["risk_score"] = reference_scores
 
+    section_reference = build_section_feature_reference(dataset)
+    section_context_override_source = pd.read_csv(ACTIVITY_SURVIVAL_ABT_CSV, usecols=SECTION_CONTEXT_OVERRIDE_USECOLS, low_memory=False)
+    section_context_override = build_section_feature_reference(
+        section_context_override_source,
+        value_columns=SECTION_CONTEXT_OVERRIDE_COLUMNS,
+    )
+    section_reference = overwrite_section_reference_columns(
+        section_reference,
+        section_context_override,
+        columns=SECTION_CONTEXT_OVERRIDE_COLUMNS,
+    )
+
     latest_period = str(dataset["first_seen_period"].astype("string").dropna().max())
     return {
         "dataset": dataset,
@@ -366,7 +401,10 @@ def build_reference_inputs(abt_path: Path) -> dict[str, object]:
             event=dataset["event_observed"],
             bucket_count=CALIBRATION_BUCKETS,
         ),
-        "section_reference": build_section_feature_reference(dataset),
+        # Commercial stock/diversity fields are materially healthier in the activity ABT.
+        # The local ABT currently carries degenerate zeros for much of that block, which
+        # leaks into the opportunity competition cards if we do not override it here.
+        "section_reference": section_reference,
         "latest_period": latest_period,
     }
 
@@ -406,7 +444,11 @@ def build_section_profiles(reference: dict[str, object]) -> tuple[pd.DataFrame, 
     section_profiles = pd.concat([section_profiles.reset_index(drop=True), metro_features.reset_index(drop=True)], axis=1)
 
     fill_section_reference_holes(section_profiles)
+    harmonize_section_commercial_context(section_profiles)
     fill_avisos_holes(section_profiles)
+    for column in ["top_avisos_district_categories", "top_avisos_barrio_categories"]:
+        values = section_profiles[column] if column in section_profiles.columns else pd.Series([None] * len(section_profiles), index=section_profiles.index, dtype=object)
+        section_profiles[column] = [value if isinstance(value, list) else [] for value in values]
 
     scores = score_entity_frame(section_profiles, reference=reference)
     section_profiles = pd.concat([section_profiles.reset_index(drop=True), scores.reset_index(drop=True)], axis=1)
@@ -486,6 +528,8 @@ def score_selected_available_listings(
         "avisos_district_per_1000_prev_year",
         "avisos_barrio_per_1000_prev_year",
         "avisos_barrio_share_of_district_prev_year",
+        "top_avisos_district_categories",
+        "top_avisos_barrio_categories",
         "city_rank",
         "city_total_sections",
         "district_rank",
@@ -505,6 +549,9 @@ def score_selected_available_listings(
     metro_features = compute_metro_features(metro_input)
     for column in ["metro_distance_m_start", "metro_access_count_500m_start", "metro_access_count_1000m_start", "missing_metro_distance_start"]:
         enriched[column] = pd.to_numeric(metro_features[column], errors="coerce")
+    for column in ["top_avisos_district_categories", "top_avisos_barrio_categories"]:
+        values = enriched[column] if column in enriched.columns else pd.Series([None] * len(enriched), index=enriched.index, dtype=object)
+        enriched[column] = [value if isinstance(value, list) else [] for value in values]
 
     scores = score_entity_frame(enriched, reference=reference)
     enriched = pd.concat([enriched.reset_index(drop=True), scores.reset_index(drop=True)], axis=1)
@@ -532,15 +579,39 @@ def score_entity_frame(frame: pd.DataFrame, *, reference: dict[str, object]) -> 
     )
 
 
-def build_section_feature_reference(dataset: pd.DataFrame) -> pd.DataFrame:
-    scoped = dataset[["section_key_start", "district_code_start", "barrio_code_start", "first_seen_date", *SECTION_PROFILE_MEDIAN_COLUMNS]].copy()
+def build_section_feature_reference(
+    dataset: pd.DataFrame,
+    *,
+    value_columns: list[str] | None = None,
+) -> pd.DataFrame:
+    normalized = dataset.copy()
+    normalized["section_key_start"] = normalize_section_key_series(
+        normalized.get("section_key_start", pd.Series(pd.NA, index=normalized.index))
+    ).astype("string")
+    normalized["district_code_start"] = normalized.get("district_code_start", pd.Series(pd.NA, index=normalized.index)).map(
+        lambda value: normalize_admin_code(value, width=2)
+    ).astype("string")
+    normalized["barrio_code_start"] = normalized.get("barrio_code_start", pd.Series(pd.NA, index=normalized.index)).map(
+        lambda value: normalize_admin_code(value, width=3)
+    ).astype("string")
+
+    value_columns = value_columns or SECTION_PROFILE_MEDIAN_COLUMNS
+    available_value_columns = [column for column in value_columns if column in normalized.columns]
+    scoped = normalized[["section_key_start", "district_code_start", "barrio_code_start", *available_value_columns]].copy()
+    if "first_seen_date" in normalized.columns:
+        scoped["first_seen_date"] = pd.to_datetime(normalized["first_seen_date"], errors="coerce")
+    else:
+        scoped["first_seen_date"] = pd.to_datetime(
+            normalized.get("first_seen_period", pd.Series(pd.NA, index=normalized.index)).astype("string") + "-01",
+            errors="coerce",
+        )
     scoped = scoped[scoped["section_key_start"].notna()].copy()
 
     recent_cutoff = scoped["first_seen_date"].max() - pd.DateOffset(months=RECENT_LOOKBACK_MONTHS)
     recent = scoped[scoped["first_seen_date"].ge(recent_cutoff)].copy() if scoped["first_seen_date"].notna().any() else scoped.iloc[0:0].copy()
 
-    history_medians = scoped.groupby("section_key_start", dropna=False)[SECTION_PROFILE_MEDIAN_COLUMNS].median(numeric_only=True)
-    recent_medians = recent.groupby("section_key_start", dropna=False)[SECTION_PROFILE_MEDIAN_COLUMNS].median(numeric_only=True)
+    history_medians = scoped.groupby("section_key_start", dropna=False)[available_value_columns].median(numeric_only=True)
+    recent_medians = recent.groupby("section_key_start", dropna=False)[available_value_columns].median(numeric_only=True)
     combined = history_medians.copy()
     combined.update(recent_medians)
 
@@ -549,7 +620,8 @@ def build_section_feature_reference(dataset: pd.DataFrame) -> pd.DataFrame:
         barrio_code=("barrio_code_start", first_valid),
     )
     combined = identity.join(combined, how="outer").reset_index().rename(columns={"section_key_start": "section_key"})
-    fill_section_reference_holes(combined, district_col="district_code", barrio_col="barrio_code")
+    fill_section_reference_holes(combined, district_col="district_code", barrio_col="barrio_code", columns=value_columns)
+    harmonize_section_commercial_context(combined)
     return combined
 
 
@@ -655,7 +727,8 @@ def load_latest_section_panel(path: Path) -> tuple[pd.DataFrame, str | None]:
 
 
 def build_latest_avisos_lookup(section_panel_csv: Path) -> pd.DataFrame:
-    avisos = build_avisos_yearly_features(section_panel_csv=section_panel_csv)
+    raw_manifest = load_raw_manifest()
+    avisos = build_avisos_yearly_features(raw_manifest=raw_manifest, section_panel_csv=section_panel_csv)
     if avisos.empty:
         return pd.DataFrame(columns=[
             "district_code",
@@ -663,6 +736,8 @@ def build_latest_avisos_lookup(section_panel_csv: Path) -> pd.DataFrame:
             "avisos_district_per_1000_prev_year",
             "avisos_barrio_per_1000_prev_year",
             "avisos_barrio_share_of_district_prev_year",
+            "top_avisos_district_categories",
+            "top_avisos_barrio_categories",
         ])
 
     avisos["district_code"] = avisos["district_code"].map(lambda value: normalize_admin_code(value, width=2)).astype("string")
@@ -688,17 +763,144 @@ def build_latest_avisos_lookup(section_panel_csv: Path) -> pd.DataFrame:
             "avisos_district_per_1000_prev_year",
             "avisos_barrio_per_1000_prev_year",
             "avisos_barrio_share_of_district_prev_year",
+            "top_avisos_district_categories",
+            "top_avisos_barrio_categories",
         ])
 
     latest_year = int(pd.to_numeric(avisos.loc[valid_mask, "avisos_year"], errors="coerce").dropna().max())
     latest = avisos[pd.to_numeric(avisos["avisos_year"], errors="coerce").eq(latest_year)].copy()
+    district_categories, barrio_categories = build_latest_avisos_category_lookups(raw_manifest=raw_manifest, latest_year=latest_year)
+    latest = latest.merge(district_categories, how="left", on=["district_code"])
+    latest = latest.merge(barrio_categories, how="left", on=["district_code", "barrio_code"])
+    for column in ["top_avisos_district_categories", "top_avisos_barrio_categories"]:
+        values = latest[column] if column in latest.columns else pd.Series([None] * len(latest), index=latest.index, dtype=object)
+        latest[column] = [value if isinstance(value, list) else [] for value in values]
     return latest[[
         "district_code",
         "barrio_code",
         "avisos_district_per_1000_prev_year",
         "avisos_barrio_per_1000_prev_year",
         "avisos_barrio_share_of_district_prev_year",
+        "top_avisos_district_categories",
+        "top_avisos_barrio_categories",
     ]]
+
+
+def build_latest_avisos_category_lookups(*, raw_manifest: pd.DataFrame, latest_year: int) -> tuple[pd.DataFrame, pd.DataFrame]:
+    selected = raw_manifest[
+        (raw_manifest["source_name"] == "avisos")
+        & (raw_manifest["status"] == "selected")
+        & raw_manifest["selected_relative_path"].notna()
+    ].copy()
+    selected["period_numeric"] = pd.to_numeric(selected["period"], errors="coerce")
+    latest_rows = selected[selected["period_numeric"].eq(latest_year)].copy()
+    if latest_rows.empty:
+        return (
+            pd.DataFrame(columns=["district_code", "top_avisos_district_categories"]),
+            pd.DataFrame(columns=["district_code", "barrio_code", "top_avisos_barrio_categories"]),
+        )
+
+    category_frames: list[pd.DataFrame] = []
+    for row in latest_rows.sort_values("selected_relative_path").itertuples(index=False):
+        frame, _ = read_delimited_file(PROJECT_ROOT / "DB" / str(row.selected_relative_path))
+        normalized = normalize_avisos_category_frame(frame)
+        if not normalized.empty:
+            category_frames.append(normalized)
+
+    if not category_frames:
+        return (
+            pd.DataFrame(columns=["district_code", "top_avisos_district_categories"]),
+            pd.DataFrame(columns=["district_code", "barrio_code", "top_avisos_barrio_categories"]),
+        )
+
+    latest_categories = pd.concat(category_frames, ignore_index=True)
+    district_lookup = build_avisos_top_category_lookup(
+        latest_categories.dropna(subset=["district_code"]),
+        zone_cols=["district_code"],
+        output_col="top_avisos_district_categories",
+    )
+    barrio_lookup = build_avisos_top_category_lookup(
+        latest_categories.dropna(subset=["district_code", "barrio_code"]),
+        zone_cols=["district_code", "barrio_code"],
+        output_col="top_avisos_barrio_categories",
+    )
+    return district_lookup, barrio_lookup
+
+
+def normalize_avisos_category_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    normalized = frame.copy()
+    normalized.columns = [str(column).strip().upper() for column in normalized.columns]
+
+    district_code = normalized.get("DISTRITO_ID", pd.Series(pd.NA, index=normalized.index)).map(
+        lambda value: normalize_admin_code(value, width=2)
+    ).astype("string")
+    barrio_source = normalized.get("BARRIO_ID", pd.Series(pd.NA, index=normalized.index))
+    barrio_code = pd.Series(
+        [normalize_section_barrio_code(district, barrio) for district, barrio in zip(district_code, barrio_source)],
+        index=normalized.index,
+        dtype="string",
+    )
+
+    if "CATEGORIA_NIVEL1" in normalized.columns:
+        category_source = normalized["CATEGORIA_NIVEL1"]
+    elif "SECCION" in normalized.columns:
+        category_source = normalized["SECCION"]
+    elif "CATEGORIA_NIVEL2" in normalized.columns:
+        category_source = normalized["CATEGORIA_NIVEL2"]
+    elif "ANOMALIA" in normalized.columns:
+        category_source = normalized["ANOMALIA"]
+    else:
+        return pd.DataFrame(columns=["district_code", "barrio_code", "category_label"])
+
+    category_label = category_source.astype("string").map(clean_avisos_category_label).astype("string")
+    return pd.DataFrame(
+        {
+            "district_code": district_code,
+            "barrio_code": barrio_code,
+            "category_label": category_label,
+        }
+    ).dropna(subset=["district_code", "category_label"])
+
+
+def build_avisos_top_category_lookup(frame: pd.DataFrame, *, zone_cols: list[str], output_col: str) -> pd.DataFrame:
+    if frame.empty:
+        return pd.DataFrame(columns=[*zone_cols, output_col])
+
+    grouped = (
+        frame.dropna(subset=[*zone_cols, "category_label"])
+        .groupby([*zone_cols, "category_label"], dropna=False)
+        .size()
+        .rename("count")
+        .reset_index()
+    )
+    if grouped.empty:
+        return pd.DataFrame(columns=[*zone_cols, output_col])
+
+    totals = grouped.groupby(zone_cols, dropna=False)["count"].sum().rename("zone_total").reset_index()
+    grouped = grouped.merge(totals, how="left", on=zone_cols)
+    grouped["share_of_zone"] = grouped["count"] / grouped["zone_total"].replace({0: pd.NA})
+    grouped = grouped.sort_values(
+        [*zone_cols, "count", "share_of_zone", "category_label"],
+        ascending=[*[True] * len(zone_cols), False, False, True],
+    )
+
+    rows: list[dict[str, object]] = []
+    for zone_key, part in grouped.groupby(zone_cols, dropna=False, sort=False):
+        zone_values = zone_key if isinstance(zone_key, tuple) else (zone_key,)
+        payload = [
+            {
+                "rank": rank,
+                "label": str(row.category_label),
+                "count": int(row.count),
+                "share_of_zone": serialize_probability(getattr(row, "share_of_zone", None)),
+            }
+            for rank, row in enumerate(part.head(AVISOS_TOP_CATEGORY_COUNT).itertuples(index=False), start=1)
+        ]
+        zone_payload = {column: value for column, value in zip(zone_cols, zone_values)}
+        zone_payload[output_col] = payload
+        rows.append(zone_payload)
+
+    return pd.DataFrame(rows, columns=[*zone_cols, output_col])
 
 
 def load_section_geometry() -> pd.DataFrame:
@@ -1410,8 +1612,10 @@ def fill_section_reference_holes(
     *,
     district_col: str = "district_code",
     barrio_col: str = "barrio_code",
+    columns: list[str] | None = None,
 ) -> None:
-    for column in SECTION_PROFILE_MEDIAN_COLUMNS:
+    columns = columns or SECTION_PROFILE_MEDIAN_COLUMNS
+    for column in columns:
         if column not in frame.columns:
             frame[column] = np.nan
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
@@ -1419,6 +1623,46 @@ def fill_section_reference_holes(
         district_fill = frame.groupby(district_col, dropna=False)[column].transform("median") if district_col in frame.columns else np.nan
         city_fill = float(frame[column].median()) if frame[column].notna().any() else 0.0
         frame[column] = frame[column].fillna(barrio_fill).fillna(district_fill).fillna(city_fill).fillna(0.0)
+
+
+def overwrite_section_reference_columns(
+    base: pd.DataFrame,
+    override: pd.DataFrame,
+    *,
+    columns: list[str],
+) -> pd.DataFrame:
+    if base.empty or override.empty:
+        return base
+
+    available_columns = [column for column in columns if column in base.columns and column in override.columns]
+    if not available_columns:
+        return base
+
+    out = base.merge(
+        override[["section_key", *available_columns]],
+        how="left",
+        on="section_key",
+        suffixes=("", "_override"),
+    )
+    for column in available_columns:
+        override_column = f"{column}_override"
+        out[column] = pd.to_numeric(out.get(override_column), errors="coerce").combine_first(pd.to_numeric(out.get(column), errors="coerce"))
+        out = out.drop(columns=[override_column])
+    return out
+
+
+def harmonize_section_commercial_context(frame: pd.DataFrame) -> None:
+    if "section_local_count_start" not in frame.columns:
+        return
+
+    local_count = pd.to_numeric(frame.get("section_local_count_start"), errors="coerce")
+    frame["section_local_count_start"] = local_count.clip(lower=0.0)
+
+    if "section_unique_activity_category_count_start" in frame.columns:
+        unique_categories = pd.to_numeric(frame.get("section_unique_activity_category_count_start"), errors="coerce").clip(lower=0.0)
+        needs_minimum_category = frame["section_local_count_start"].gt(0) & unique_categories.fillna(0.0).le(0.0)
+        unique_categories = unique_categories.mask(needs_minimum_category, 1.0)
+        frame["section_unique_activity_category_count_start"] = unique_categories
 
 
 def fill_avisos_holes(frame: pd.DataFrame) -> None:
@@ -1465,6 +1709,8 @@ def build_sections_geojson(section_profiles: pd.DataFrame) -> dict[str, object]:
             "metro_access_count_1000m_start": serialize_probability(getattr(row, "metro_access_count_1000m_start", None)),
             "avisos_barrio_per_1000_prev_year": serialize_probability(getattr(row, "avisos_barrio_per_1000_prev_year", None)),
             "avisos_district_per_1000_prev_year": serialize_probability(getattr(row, "avisos_district_per_1000_prev_year", None)),
+            "top_avisos_barrio_categories": serialize_avisos_top_categories(getattr(row, "top_avisos_barrio_categories", [])),
+            "top_avisos_district_categories": serialize_avisos_top_categories(getattr(row, "top_avisos_district_categories", [])),
             "section_local_count_start": serialize_probability(getattr(row, "section_local_count_start", None)),
             "section_unique_activity_category_count_start": serialize_probability(getattr(row, "section_unique_activity_category_count_start", None)),
             "section_turnover_rate_12m_start": serialize_probability(getattr(row, "section_turnover_rate_12m_start", None)),
@@ -1571,6 +1817,8 @@ def build_point_payload(row: object) -> dict[str, object]:
         "metro_access_count_1000m_start": serialize_probability(getattr(row, "metro_access_count_1000m_start", None)),
         "avisos_barrio_per_1000_prev_year": serialize_probability(getattr(row, "avisos_barrio_per_1000_prev_year", None)),
         "avisos_district_per_1000_prev_year": serialize_probability(getattr(row, "avisos_district_per_1000_prev_year", None)),
+        "top_avisos_barrio_categories": serialize_avisos_top_categories(getattr(row, "top_avisos_barrio_categories", [])),
+        "top_avisos_district_categories": serialize_avisos_top_categories(getattr(row, "top_avisos_district_categories", [])),
         "section_local_count_start": serialize_probability(getattr(row, "section_local_count_start", None)),
         "section_unique_activity_category_count_start": serialize_probability(getattr(row, "section_unique_activity_category_count_start", None)),
         "section_turnover_rate_12m_start": serialize_probability(getattr(row, "section_turnover_rate_12m_start", None)),
@@ -1622,6 +1870,15 @@ def clean_place_name(value: object) -> object:
     if not text:
         return pd.NA
     return text.title()
+
+
+def clean_avisos_category_label(value: object) -> object:
+    if value is None or pd.isna(value):
+        return pd.NA
+    text = " ".join(str(value).strip().split())
+    if not text or text.lower() == "nan":
+        return pd.NA
+    return text
 
 
 def normalize_zone_lookup_key(value: object) -> str | None:
@@ -1738,6 +1995,32 @@ def serialize_probability(value: object) -> float | None:
     if value is None or pd.isna(value):
         return None
     return float(value)
+
+
+def serialize_avisos_top_categories(value: object) -> list[dict[str, object]]:
+    if not isinstance(value, list):
+        return []
+
+    rows: list[dict[str, object]] = []
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+
+        label = clean_avisos_category_label(item.get("label"))
+        if label is None or pd.isna(label):
+            continue
+
+        rank = pd.to_numeric(item.get("rank"), errors="coerce")
+        count = pd.to_numeric(item.get("count"), errors="coerce")
+        rows.append(
+            {
+                "rank": int(rank) if pd.notna(rank) else len(rows) + 1,
+                "label": str(label),
+                "count": int(count) if pd.notna(count) else 0,
+                "share_of_zone": serialize_probability(item.get("share_of_zone")),
+            }
+        )
+    return rows
 
 
 def _to_jsonable(value: object) -> object:

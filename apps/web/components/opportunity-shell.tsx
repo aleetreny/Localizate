@@ -5,8 +5,17 @@ import { useEffect, useMemo, useState } from "react";
 import { OpportunityMap } from "@/components/opportunity-map";
 import { ViewTabs } from "@/components/view-tabs";
 import { formatHorizonShortLabel, isFiniteNumber, type Horizon } from "@/lib/horizon";
+import { buildOpportunityBenchmarkContext, type OpportunityBenchmarkContext } from "@/lib/opportunity-insights";
 import { FALLBACK_OPPORTUNITY_ARTIFACTS, loadOpportunityArtifactsFromPublic } from "@/lib/public-data";
-import type { OpportunityActivity, OpportunityArtifacts, OpportunityManualSelection, OpportunityPoint, OpportunitySection } from "@/lib/types";
+import type {
+  OpportunityActivity,
+  OpportunityArtifacts,
+  OpportunityAvisoCategory,
+  OpportunityManualSelection,
+  OpportunityPoint,
+  OpportunitySection,
+  OpportunitySectionFeatureCollection,
+} from "@/lib/types";
 
 type OpportunityShellProps = {
   initialArtifacts?: OpportunityArtifacts;
@@ -20,10 +29,37 @@ type MetricDefinition = {
   value: string;
   summary: string;
   calculation: string;
+  breakdownTitle?: string;
+  breakdownItems?: MetricBreakdownItem[];
+  breakdownEmptyText?: string;
 };
+
+type MetricBreakdownItem = {
+  rank: number;
+  label: string;
+  value: string;
+  detail: string;
+};
+
+type DetailHeaderMetrics = {
+  operation: MetricDefinition | null;
+  price: MetricDefinition | null;
+  area: MetricDefinition | null;
+  opportunityTier: MetricDefinition | null;
+  riskPercentile: MetricDefinition | null;
+};
+
+type RankScope = "city" | "district" | "barrio";
+
+type OpportunityFieldInsight = OpportunityBenchmarkContext["metrics"][keyof OpportunityBenchmarkContext["metrics"]];
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const DEV_ARTIFACT_REVALIDATE_MS = 15000;
+const SECTION_FETCH_CACHE_MODE = process.env.NODE_ENV === "production" ? "force-cache" : "no-store";
+const EMPTY_SECTION_COLLECTION: OpportunitySectionFeatureCollection = {
+  type: "FeatureCollection",
+  features: [],
+};
 
 export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
   const [artifacts, setArtifacts] = useState(initialArtifacts ?? FALLBACK_OPPORTUNITY_ARTIFACTS);
@@ -33,6 +69,7 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
   const [selectedListingId, setSelectedListingId] = useState<string | null>((initialArtifacts ?? FALLBACK_OPPORTUNITY_ARTIFACTS).points[0]?.listing_id ?? null);
   const [manualSelection, setManualSelection] = useState<OpportunityManualSelection | null>(null);
   const [activeMetricId, setActiveMetricId] = useState<string | null>(null);
+  const [sectionUniverse, setSectionUniverse] = useState<OpportunitySectionFeatureCollection>(EMPTY_SECTION_COLLECTION);
   const artifactsSignature = getOpportunityArtifactSignature(artifacts);
 
   useEffect(() => {
@@ -100,6 +137,34 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
     };
   }, [artifactsSignature, initialArtifacts]);
 
+  useEffect(() => {
+    let alive = true;
+
+    async function loadSectionUniverse() {
+      try {
+        const response = await fetch(artifacts.meta.section_geojson_path, { cache: SECTION_FETCH_CACHE_MODE });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const payload = (await response.json()) as OpportunitySectionFeatureCollection;
+        if (alive) {
+          setSectionUniverse(payload);
+        }
+      } catch {
+        if (alive) {
+          setSectionUniverse(EMPTY_SECTION_COLLECTION);
+        }
+      }
+    }
+
+    setSectionUniverse(EMPTY_SECTION_COLLECTION);
+    void loadSectionUniverse();
+
+    return () => {
+      alive = false;
+    };
+  }, [artifacts.meta.section_geojson_path]);
+
   const filteredPoints = useMemo(() => {
     if (operationFilter === "all") {
       return artifacts.points;
@@ -126,11 +191,19 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
 
   const selectedSectionKey = manualSelection?.section.section_key ?? selectedListing?.section_key ?? null;
 
+  const allSections = useMemo(() => {
+    return sectionUniverse.features.map((feature) => feature.properties);
+  }, [sectionUniverse]);
+
+  const opportunityBenchmarks = useMemo(() => {
+    return buildOpportunityBenchmarkContext(allSections, manualSelection?.section ?? selectedListing ?? null);
+  }, [allSections, manualSelection?.section, selectedListing]);
+
   const detailMetrics = useMemo(() => {
     if (manualSelection) {
       const section = manualSelection.section;
       return [
-        ...buildSectionPrimaryMetrics(section, horizon),
+        ...buildSectionPrimaryMetrics(section, horizon, opportunityBenchmarks),
         ...buildContextMetrics({
           scopeId: `section:${section.section_key}`,
           bestActivityLabel: section.best_activity_label,
@@ -142,7 +215,12 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
           shareForeign: section.share_foreign_start,
           shareYoung: section.share_age_15_29_start,
           avisosBarrio: section.avisos_barrio_per_1000_prev_year,
-          avisosDistrict: section.avisos_district_per_1000_prev_year
+          avisosDistrict: section.avisos_district_per_1000_prev_year,
+          topAvisosBarrioCategories: section.top_avisos_barrio_categories,
+          topAvisosDistrictCategories: section.top_avisos_district_categories,
+          benchmarks: opportunityBenchmarks,
+          districtName: section.district_name,
+          barrioName: section.barrio_name,
         })
       ];
     }
@@ -152,7 +230,7 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
     }
 
     return [
-      ...buildPointPrimaryMetrics(selectedListing, horizon),
+      ...buildPointPrimaryMetrics(selectedListing, horizon, opportunityBenchmarks),
       ...buildContextMetrics({
         scopeId: `listing:${selectedListing.listing_id}`,
         bestActivityLabel: selectedListing.best_activity_label,
@@ -164,24 +242,80 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
         shareForeign: selectedListing.share_foreign_start,
         shareYoung: selectedListing.share_age_15_29_start,
         avisosBarrio: selectedListing.avisos_barrio_per_1000_prev_year,
-        avisosDistrict: selectedListing.avisos_district_per_1000_prev_year
+        avisosDistrict: selectedListing.avisos_district_per_1000_prev_year,
+        topAvisosBarrioCategories: selectedListing.top_avisos_barrio_categories,
+        topAvisosDistrictCategories: selectedListing.top_avisos_district_categories,
+        benchmarks: opportunityBenchmarks,
+        districtName: selectedListing.district_name,
+        barrioName: selectedListing.barrio_name,
       })
     ];
-  }, [horizon, manualSelection, selectedListing]);
+  }, [horizon, manualSelection, opportunityBenchmarks, selectedListing]);
 
-  const activeMetric = detailMetrics.find((metric) => metric.id === activeMetricId) ?? null;
+  const headerMetrics = useMemo<DetailHeaderMetrics>(() => {
+    if (manualSelection) {
+      const section = manualSelection.section;
+      const scopeId = `section:${section.section_key}`;
+      return {
+        operation: null,
+        price: null,
+        area: null,
+        opportunityTier: buildOpportunityTierMetric(scopeId, section.opportunity_tier),
+        riskPercentile: buildRiskPercentileMetric(scopeId, section.risk_percentile),
+      };
+    }
+
+    if (!selectedListing) {
+      return {
+        operation: null,
+        price: null,
+        area: null,
+        opportunityTier: null,
+        riskPercentile: null,
+      };
+    }
+
+    const scopeId = `listing:${selectedListing.listing_id}`;
+    return {
+      operation: buildListingOperationMetric(scopeId, selectedListing, artifacts.points),
+      price: buildListingPriceMetric(scopeId, selectedListing, artifacts.points),
+      area: buildListingAreaMetric(scopeId, selectedListing, artifacts.points),
+      opportunityTier: buildOpportunityTierMetric(scopeId, selectedListing.opportunity_tier),
+      riskPercentile: buildRiskPercentileMetric(scopeId, selectedListing.risk_percentile),
+    };
+  }, [artifacts.points, manualSelection, selectedListing]);
+
+  const explainableMetrics = useMemo(() => {
+    return [
+      headerMetrics.operation,
+      headerMetrics.price,
+      headerMetrics.area,
+      headerMetrics.opportunityTier,
+      headerMetrics.riskPercentile,
+      ...detailMetrics,
+    ].filter((metric): metric is MetricDefinition => metric !== null);
+  }, [
+    detailMetrics,
+    headerMetrics.area,
+    headerMetrics.operation,
+    headerMetrics.opportunityTier,
+    headerMetrics.price,
+    headerMetrics.riskPercentile,
+  ]);
+
+  const activeMetric = explainableMetrics.find((metric) => metric.id === activeMetricId) ?? null;
 
   useEffect(() => {
     if (!activeMetricId) {
       return;
     }
 
-    if (detailMetrics.some((metric) => metric.id === activeMetricId)) {
+    if (explainableMetrics.some((metric) => metric.id === activeMetricId)) {
       return;
     }
 
     setActiveMetricId(null);
-  }, [activeMetricId, detailMetrics]);
+  }, [activeMetricId, explainableMetrics]);
 
   const activeStats = useMemo(() => {
     const survivalValues = filteredPoints.map((point) => getPointSurvival(point, horizon)).filter(isFiniteNumber);
@@ -268,14 +402,20 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
           {manualSelection ? (
             <ManualPointDetail
               activeMetricId={activeMetricId}
+              headerMetrics={headerMetrics}
               metrics={detailMetrics}
-              onClear={() => setManualSelection(null)}
               onMetricSelect={setActiveMetricId}
               section={manualSelection.section}
               selection={manualSelection}
             />
           ) : selectedListing ? (
-            <ListingDetail activeMetricId={activeMetricId} metrics={detailMetrics} onMetricSelect={setActiveMetricId} point={selectedListing} />
+            <ListingDetail
+              activeMetricId={activeMetricId}
+              headerMetrics={headerMetrics}
+              metrics={detailMetrics}
+              onMetricSelect={setActiveMetricId}
+              point={selectedListing}
+            />
           ) : (
             <div className="detail-empty">
               <div className="eyebrow">Ficha activa</div>
@@ -328,11 +468,13 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
 
 function ListingDetail({
   point,
+  headerMetrics,
   metrics,
   activeMetricId,
   onMetricSelect
 }: {
   point: OpportunityPoint;
+  headerMetrics: DetailHeaderMetrics;
   metrics: MetricDefinition[];
   activeMetricId: string | null;
   onMetricSelect: (metricId: string | null) => void;
@@ -343,10 +485,11 @@ function ListingDetail({
       <h2>{point.card_title}</h2>
       <p className="detail-location">{point.barrio_name}, {point.district_name}</p>
       <div className="detail-meta">
-        <span className="chip">{point.operation}</span>
-        <span className="chip">{formatCurrency(point.price_eur)}</span>
-        <span className="chip">{formatArea(point.area_m2)}</span>
-        <span className="chip">{point.opportunity_tier}</span>
+        <HeaderMetricChip activeMetricId={activeMetricId} metric={headerMetrics.operation} onMetricSelect={onMetricSelect} />
+        <HeaderMetricChip activeMetricId={activeMetricId} metric={headerMetrics.price} onMetricSelect={onMetricSelect} />
+        <HeaderMetricChip activeMetricId={activeMetricId} metric={headerMetrics.area} onMetricSelect={onMetricSelect} />
+        <HeaderMetricChip activeMetricId={activeMetricId} metric={headerMetrics.opportunityTier} onMetricSelect={onMetricSelect} />
+        <HeaderMetricChip activeMetricId={activeMetricId} metric={headerMetrics.riskPercentile} onMetricSelect={onMetricSelect} />
       </div>
       <MetricGrid activeMetricId={activeMetricId} metrics={metrics} onSelect={onMetricSelect} />
       <a className="inline-link" href={point.listing_url} rel="noreferrer" target="_blank">
@@ -358,39 +501,60 @@ function ListingDetail({
 
 function ManualPointDetail({
   activeMetricId,
+  headerMetrics,
   metrics,
   onMetricSelect,
   section,
   selection,
-  onClear
 }: {
   activeMetricId: string | null;
+  headerMetrics: DetailHeaderMetrics;
   metrics: MetricDefinition[];
   onMetricSelect: (metricId: string | null) => void;
   section: OpportunitySection;
   selection: OpportunityManualSelection;
-  onClear: () => void;
 }) {
   return (
     <>
-      <div className="detail-header-row">
-        <div>
-          <div className="eyebrow">Punto libre</div>
-          <h2>{section.barrio_name}, {section.district_name}</h2>
-        </div>
-        <button className="ghost-button" onClick={onClear} type="button">
-          Limpiar punto
-        </button>
-      </div>
+      <div className="eyebrow">Punto libre</div>
+      <h2>{section.barrio_name}, {section.district_name}</h2>
       <p className="detail-location">Lat {selection.lat.toFixed(5)} · Lon {selection.lng.toFixed(5)} · sección {section.section_key}</p>
       <p className="detail-subtle">El punto que marcas se interpreta con la sección censal que lo contiene, no como una dirección inventada.</p>
       <div className="detail-meta">
-        <span className="chip">{section.opportunity_tier}</span>
-        <span className="chip">{formatRiskPercentile(section.risk_percentile)}</span>
-        <span className="chip">Mejor actividad: {section.best_activity_label || "Sin ranking"}</span>
+        <HeaderMetricChip activeMetricId={activeMetricId} metric={headerMetrics.opportunityTier} onMetricSelect={onMetricSelect} />
+        <HeaderMetricChip activeMetricId={activeMetricId} metric={headerMetrics.riskPercentile} onMetricSelect={onMetricSelect} />
       </div>
       <MetricGrid activeMetricId={activeMetricId} metrics={metrics} onSelect={onMetricSelect} />
     </>
+  );
+}
+
+function HeaderMetricChip({
+  activeMetricId,
+  metric,
+  onMetricSelect,
+}: {
+  activeMetricId: string | null;
+  metric: MetricDefinition | null;
+  onMetricSelect: (metricId: string | null) => void;
+}) {
+  if (!metric) {
+    return null;
+  }
+
+  const isActive = activeMetricId === metric.id;
+
+  return (
+    <button
+      aria-label={`Abrir explicación de ${metric.label}`}
+      aria-pressed={isActive}
+      className="chip chip-button"
+      data-active={isActive}
+      onClick={() => onMetricSelect(isActive ? null : metric.id)}
+      type="button"
+    >
+      {metric.value}
+    </button>
   );
 }
 
@@ -466,6 +630,27 @@ function MetricExplainer({ metric }: { metric: MetricDefinition | null }) {
             <span className="metric-explainer-label">Por qué te ayuda</span>
             <p className="metric-explainer-copy">{buildMetricWhyUseful(metric)}</p>
           </div>
+          {metric.breakdownTitle ? (
+            <div className="metric-explainer-block">
+              <span className="metric-explainer-label">{metric.breakdownTitle}</span>
+              {metric.breakdownItems && metric.breakdownItems.length > 0 ? (
+                <div className="metric-breakdown-list">
+                  {metric.breakdownItems.map((item) => (
+                    <div className="metric-breakdown-item" key={`${metric.id}:${item.rank}:${item.label}`}>
+                      <div className="metric-breakdown-main">
+                        <span className="metric-breakdown-rank">#{item.rank}</span>
+                        <span className="metric-breakdown-name">{item.label}</span>
+                      </div>
+                      <strong className="metric-breakdown-value">{item.value}</strong>
+                      <span className="metric-breakdown-detail">{item.detail}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="metric-explainer-copy">{metric.breakdownEmptyText ?? "Sin desglose disponible para este ámbito."}</p>
+              )}
+            </div>
+          ) : null}
           <div className="metric-explainer-block">
             <span className="metric-explainer-label">Cómo se calcula</span>
             <p className="metric-explainer-copy">{metric.calculation}</p>
@@ -588,6 +773,14 @@ function formatRiskPercentile(value: number) {
   return `P${Math.round(value * 100)}`;
 }
 
+function formatAvisosCount(value: number | null) {
+  if (!isFiniteNumber(value)) {
+    return "Sin conteo";
+  }
+  const amount = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 }).format(value);
+  return `${amount} avisos`;
+}
+
 function formatActivityStabilityValue(value: number | null) {
   if (!isFiniteNumber(value)) {
     return "Sin referencia";
@@ -632,7 +825,80 @@ function buildBestActivitySummary(label: string, risk: number | null, survival24
   return parts.join(" · ");
 }
 
-function buildPointPrimaryMetrics(point: OpportunityPoint, horizon: Horizon): MetricDefinition[] {
+function buildOpportunityTierMetric(scopeId: string, value: string): MetricDefinition {
+  const resolvedTier = value || "Sin lectura";
+  return {
+    id: `${scopeId}:opportunity-tier`,
+    label: "Lectura de oportunidad",
+    value: resolvedTier,
+    summary: buildOpportunityTierSummary(resolvedTier),
+    calculation: "Traducimos el percentil de riesgo de la sección a un tramo cualitativo para lectura rápida. Alta cubre aproximadamente P0-P20, Solida P21-P45, Intermedia P46-P70 y Fragil el tramo restante.",
+    breakdownTitle: "Tramos posibles",
+    breakdownItems: buildOpportunityTierBreakdownItems(resolvedTier),
+  };
+}
+
+function buildRiskPercentileMetric(scopeId: string, value: number | null): MetricDefinition {
+  return {
+    id: `${scopeId}:risk-percentile`,
+    label: "Percentil riesgo",
+    value: formatRiskPercentile(value ?? Number.NaN),
+    summary: "Ubica este entorno dentro de la distribución de riesgo de Madrid. Cuanto más alto, más exigente es el entorno observado.",
+    calculation: "Ordenamos todas las secciones por su score de riesgo. Un P80 significa que el riesgo de esta sección queda por encima de aproximadamente el 80% de las secciones de la ciudad.",
+  };
+}
+
+function buildListingOperationMetric(scopeId: string, point: OpportunityPoint, points: OpportunityPoint[]): MetricDefinition {
+  return {
+    id: `${scopeId}:operation-chip`,
+    label: "Operación",
+    value: point.operation || "Sin dato",
+    summary: `Sitúa este anuncio dentro del mix de ${point.operation || "operación"} frente a alquiler y venta en Madrid, su distrito y su barrio.`,
+    calculation: "Contamos los anuncios disponibles del mismo ámbito y calculamos qué proporción comparte la misma operación que este local.",
+    breakdownTitle: "Distribución venta / alquiler",
+    breakdownItems: buildOperationBreakdownItems(point, points),
+  };
+}
+
+function buildListingPriceMetric(scopeId: string, point: OpportunityPoint, points: OpportunityPoint[]): MetricDefinition {
+  return {
+    id: `${scopeId}:price-chip`,
+    label: "Precio",
+    value: formatCurrency(point.price_eur),
+    summary: "Compara el precio pedido del anuncio con otros locales de la misma operación en Madrid, distrito y barrio.",
+    calculation: "Usamos el precio total anunciado y lo contrastamos contra anuncios de la misma operación dentro de cada ámbito territorial para mostrar medianas y posición relativa.",
+    breakdownTitle: "Comparación de precio",
+    breakdownItems: buildListingValueBreakdownItems({
+      point,
+      points,
+      field: "price_eur",
+      formatValue: formatCurrency,
+      labelSuffix: "comparables",
+      percentileLabel: "precio",
+    }),
+  };
+}
+
+function buildListingAreaMetric(scopeId: string, point: OpportunityPoint, points: OpportunityPoint[]): MetricDefinition {
+  return {
+    id: `${scopeId}:area-chip`,
+    label: "Superficie",
+    value: formatArea(point.area_m2),
+    summary: "Compara la superficie anunciada con otros locales de la misma operación en Madrid, distrito y barrio.",
+    calculation: "Usamos los metros cuadrados anunciados y los contrastamos contra anuncios de la misma operación dentro de cada ámbito territorial para mostrar medianas y posición relativa.",
+    breakdownTitle: "Comparación de superficie",
+    breakdownItems: buildListingValueBreakdownItems({
+      point,
+      points,
+      field: "area_m2",
+      formatValue: formatArea,
+      labelSuffix: "comparables",
+      percentileLabel: "superficie",
+    }),
+  };
+}
+
+function buildPointPrimaryMetrics(point: OpportunityPoint, horizon: Horizon, benchmarks: OpportunityBenchmarkContext | null): MetricDefinition[] {
   const horizonLabel = formatHorizonShortLabel(horizon);
   return [
     {
@@ -643,58 +909,127 @@ function buildPointPrimaryMetrics(point: OpportunityPoint, horizon: Horizon): Me
       calculation: "Partimos del score de riesgo del modelo para la sección donde cae el local y lo transformamos a supervivencia esperada en ese horizonte."
     },
     {
-      id: `listing:${point.listing_id}:risk-percentile`,
-      label: "Percentil riesgo",
-      value: formatRiskPercentile(point.risk_percentile),
-      summary: "Ubica este entorno dentro de la distribución de riesgo de Madrid. Cuanto más alto, más exigente es el entorno observado.",
-      calculation: "Ordenamos todas las secciones por su score de riesgo. Un P80 significa que el riesgo de esta sección queda por encima de aproximadamente el 80% de las secciones de la ciudad."
-    },
-    {
       id: `listing:${point.listing_id}:city-rank`,
       label: "Ranking Madrid",
       value: formatRank(point.city_rank, point.city_total_sections),
       summary: "Mide la posición de esta sección frente a todo Madrid cuando ordenamos por menor riesgo predictivo.",
-      calculation: "Comparamos la sección con el total de secciones candidatas y asignamos el puesto por score de riesgo ascendente. Cuanto más cerca de #1, mejor."
+      calculation: "Comparamos la sección con el total de secciones candidatas y asignamos el puesto por score de riesgo ascendente. Cuanto más cerca de #1, mejor.",
+      breakdownTitle: "Comparación por ámbito",
+      breakdownItems: buildRankBreakdownItems({
+        cityRank: point.city_rank,
+        cityTotal: point.city_total_sections,
+        districtRank: point.district_rank,
+        districtTotal: point.district_total_sections,
+        barrioRank: point.barrio_rank,
+        barrioTotal: point.barrio_total_sections,
+        districtName: point.district_name,
+        barrioName: point.barrio_name,
+        primaryScope: "city",
+      })
     },
     {
       id: `listing:${point.listing_id}:district-rank`,
       label: "Ranking distrito",
       value: formatRank(point.district_rank, point.district_total_sections),
       summary: "Es la posición relativa de la sección dentro de su distrito.",
-      calculation: "Aplicamos el mismo orden por menor riesgo, pero comparando solo contra secciones del mismo distrito."
+      calculation: "Aplicamos el mismo orden por menor riesgo, pero comparando solo contra secciones del mismo distrito.",
+      breakdownTitle: "Comparación por ámbito",
+      breakdownItems: buildRankBreakdownItems({
+        cityRank: point.city_rank,
+        cityTotal: point.city_total_sections,
+        districtRank: point.district_rank,
+        districtTotal: point.district_total_sections,
+        barrioRank: point.barrio_rank,
+        barrioTotal: point.barrio_total_sections,
+        districtName: point.district_name,
+        barrioName: point.barrio_name,
+        primaryScope: "district",
+      })
+    },
+    {
+      id: `listing:${point.listing_id}:barrio-rank`,
+      label: "Ranking barrio",
+      value: formatRank(point.barrio_rank, point.barrio_total_sections),
+      summary: "Es la posición relativa de la sección dentro de su barrio.",
+      calculation: "Aplicamos el mismo orden por menor riesgo, pero comparando solo contra secciones del mismo barrio.",
+      breakdownTitle: "Comparación por ámbito",
+      breakdownItems: buildRankBreakdownItems({
+        cityRank: point.city_rank,
+        cityTotal: point.city_total_sections,
+        districtRank: point.district_rank,
+        districtTotal: point.district_total_sections,
+        barrioRank: point.barrio_rank,
+        barrioTotal: point.barrio_total_sections,
+        districtName: point.district_name,
+        barrioName: point.barrio_name,
+        primaryScope: "barrio",
+      })
     },
     {
       id: `listing:${point.listing_id}:income`,
       label: "Renta sección",
       value: formatCurrency(point.renta_effective_eur),
       summary: "Aproxima la capacidad económica residencial del entorno inmediato.",
-      calculation: "Usamos la renta anual efectiva más reciente disponible para la sección censal. Si la fuente puntual falla, el pipeline conserva el mejor fallback territorial disponible."
+      calculation: "Usamos la renta anual efectiva más reciente disponible para la sección censal. Si la fuente puntual falla, el pipeline conserva el mejor fallback territorial disponible.",
+      breakdownTitle: "Comparación territorial",
+      breakdownItems: buildTerritorialBreakdownItems({
+        benchmark: benchmarks?.metrics.renta_effective_eur,
+        districtName: point.district_name,
+        barrioName: point.barrio_name,
+        formatValue: formatCurrency,
+      })
     },
     {
       id: `listing:${point.listing_id}:metro`,
       label: "Metro más cercano",
       value: formatDistance(point.metro_distance_m_start),
-      summary: "Resume la accesibilidad del local al transporte subterráneo.",
-      calculation: "Medimos en metros la distancia en línea recta desde el local hasta el acceso de metro más cercano."
+      summary: "Resume la accesibilidad del local al transporte subterráneo combinando distancia mínima y densidad de accesos cercanos.",
+      calculation: "Medimos en metros la distancia en línea recta desde el local hasta el acceso de metro más cercano y contamos cuántos accesos caen a 500 m y 1 km.",
+      breakdownTitle: "Lectura de accesibilidad",
+      breakdownItems: buildMetroBreakdownItems({
+        distance: point.metro_distance_m_start,
+        access500: point.metro_access_count_500m_start,
+        access1000: point.metro_access_count_1000m_start,
+        distanceBenchmark: benchmarks?.metrics.metro_distance_m_start,
+        access500Benchmark: benchmarks?.metrics.metro_access_count_500m_start,
+        access1000Benchmark: benchmarks?.metrics.metro_access_count_1000m_start,
+      })
     },
     {
       id: `listing:${point.listing_id}:density`,
       label: "Densidad población",
       value: formatDensity(point.population_density_km2_start),
       summary: "Mide la intensidad residencial del entorno.",
-      calculation: "Dividimos la población total de la sección entre su superficie para obtener habitantes por kilómetro cuadrado."
+      calculation: "Dividimos la población total de la sección entre su superficie para obtener habitantes por kilómetro cuadrado.",
+      breakdownTitle: "Comparación territorial",
+      breakdownItems: buildTerritorialBreakdownItems({
+        benchmark: benchmarks?.metrics.population_density_km2_start,
+        districtName: point.district_name,
+        barrioName: point.barrio_name,
+        formatValue: formatDensity,
+      })
     },
     {
       id: `listing:${point.listing_id}:competition`,
       label: "Competencia local",
       value: formatCompact(point.section_local_count_start),
-      summary: "Cuenta cuántos locales activos compiten por la misma atención en esa sección.",
-      calculation: "Tomamos el stock histórico de locales activos observado en la sección censal usada para puntuar el entorno."
+      summary: "Resume cuántos locales activos hay en la sección y qué parte del stock ya pertenece a la misma macrocategoría que la actividad sugerida.",
+      calculation: "Tomamos el stock histórico de locales activos observado en la sección censal usada para puntuar el entorno y, como lectura complementaria, la cuota de la misma macrocategoría dentro de ese stock en t-1.",
+      breakdownTitle: "Lectura competitiva",
+      breakdownItems: buildCompetitionBreakdownItems({
+        localCount: point.section_local_count_start,
+        sameCategoryShare: point.section_same_activity_category_share_start,
+        uniqueCategories: point.section_unique_activity_category_count_start,
+        bestActivityLabel: point.best_activity_label,
+        localCountBenchmark: benchmarks?.metrics.section_local_count_start,
+        sameCategoryBenchmark: benchmarks?.metrics.section_same_activity_category_share_start,
+        uniqueCategoriesBenchmark: benchmarks?.metrics.section_unique_activity_category_count_start,
+      })
     }
   ];
 }
 
-function buildSectionPrimaryMetrics(section: OpportunitySection, horizon: Horizon): MetricDefinition[] {
+function buildSectionPrimaryMetrics(section: OpportunitySection, horizon: Horizon, benchmarks: OpportunityBenchmarkContext | null): MetricDefinition[] {
   const horizonLabel = formatHorizonShortLabel(horizon);
   return [
     {
@@ -709,49 +1044,118 @@ function buildSectionPrimaryMetrics(section: OpportunitySection, horizon: Horizo
       label: "Ranking Madrid",
       value: formatRank(section.city_rank, section.city_total_sections),
       summary: "Posición de la sección frente al total de Madrid por menor riesgo predictivo.",
-      calculation: "Ordenamos todas las secciones candidatas por score de riesgo ascendente. Cuanto más cerca de #1, más favorable es la lectura."
+      calculation: "Ordenamos todas las secciones candidatas por score de riesgo ascendente. Cuanto más cerca de #1, más favorable es la lectura.",
+      breakdownTitle: "Comparación por ámbito",
+      breakdownItems: buildRankBreakdownItems({
+        cityRank: section.city_rank,
+        cityTotal: section.city_total_sections,
+        districtRank: section.district_rank,
+        districtTotal: section.district_total_sections,
+        barrioRank: section.barrio_rank,
+        barrioTotal: section.barrio_total_sections,
+        districtName: section.district_name,
+        barrioName: section.barrio_name,
+        primaryScope: "city",
+      })
     },
     {
       id: `section:${section.section_key}:district-rank`,
       label: "Ranking distrito",
       value: formatRank(section.district_rank, section.district_total_sections),
       summary: "Posición relativa de la sección dentro de su distrito.",
-      calculation: "Comparamos solo con secciones del mismo distrito y ordenamos por menor riesgo predictivo."
+      calculation: "Comparamos solo con secciones del mismo distrito y ordenamos por menor riesgo predictivo.",
+      breakdownTitle: "Comparación por ámbito",
+      breakdownItems: buildRankBreakdownItems({
+        cityRank: section.city_rank,
+        cityTotal: section.city_total_sections,
+        districtRank: section.district_rank,
+        districtTotal: section.district_total_sections,
+        barrioRank: section.barrio_rank,
+        barrioTotal: section.barrio_total_sections,
+        districtName: section.district_name,
+        barrioName: section.barrio_name,
+        primaryScope: "district",
+      })
     },
     {
       id: `section:${section.section_key}:barrio-rank`,
       label: "Ranking barrio",
       value: formatRank(section.barrio_rank, section.barrio_total_sections),
       summary: "Posición relativa de la sección dentro de su barrio.",
-      calculation: "Comparamos la sección con el resto de secciones del mismo barrio y ordenamos por score de riesgo ascendente."
+      calculation: "Comparamos la sección con el resto de secciones del mismo barrio y ordenamos por score de riesgo ascendente.",
+      breakdownTitle: "Comparación por ámbito",
+      breakdownItems: buildRankBreakdownItems({
+        cityRank: section.city_rank,
+        cityTotal: section.city_total_sections,
+        districtRank: section.district_rank,
+        districtTotal: section.district_total_sections,
+        barrioRank: section.barrio_rank,
+        barrioTotal: section.barrio_total_sections,
+        districtName: section.district_name,
+        barrioName: section.barrio_name,
+        primaryScope: "barrio",
+      })
     },
     {
       id: `section:${section.section_key}:income`,
       label: "Renta sección",
       value: formatCurrency(section.renta_effective_eur),
       summary: "Aproxima la capacidad económica residencial de la sección.",
-      calculation: "Usamos la renta anual efectiva más reciente disponible para la sección censal; si falta, se conserva el mejor fallback territorial del pipeline."
+      calculation: "Usamos la renta anual efectiva más reciente disponible para la sección censal; si falta, se conserva el mejor fallback territorial del pipeline.",
+      breakdownTitle: "Comparación territorial",
+      breakdownItems: buildTerritorialBreakdownItems({
+        benchmark: benchmarks?.metrics.renta_effective_eur,
+        districtName: section.district_name,
+        barrioName: section.barrio_name,
+        formatValue: formatCurrency,
+      })
     },
     {
       id: `section:${section.section_key}:metro`,
       label: "Metro centroide",
       value: formatDistance(section.metro_distance_m_start),
-      summary: "Resume la accesibilidad media de la sección al metro.",
-      calculation: "Medimos en metros la distancia en línea recta desde el centroide de la sección hasta el acceso de metro más cercano."
+      summary: "Resume la accesibilidad media de la sección al metro combinando distancia mínima y densidad de accesos cercanos.",
+      calculation: "Medimos en metros la distancia en línea recta desde el centroide de la sección hasta el acceso de metro más cercano y contamos cuántos accesos caen a 500 m y 1 km.",
+      breakdownTitle: "Lectura de accesibilidad",
+      breakdownItems: buildMetroBreakdownItems({
+        distance: section.metro_distance_m_start,
+        access500: section.metro_access_count_500m_start,
+        access1000: section.metro_access_count_1000m_start,
+        distanceBenchmark: benchmarks?.metrics.metro_distance_m_start,
+        access500Benchmark: benchmarks?.metrics.metro_access_count_500m_start,
+        access1000Benchmark: benchmarks?.metrics.metro_access_count_1000m_start,
+      })
     },
     {
       id: `section:${section.section_key}:density`,
       label: "Densidad población",
       value: formatDensity(section.population_density_km2_start),
       summary: "Mide la intensidad residencial de la sección.",
-      calculation: "Dividimos la población total de la sección entre su superficie para obtener habitantes por kilómetro cuadrado."
+      calculation: "Dividimos la población total de la sección entre su superficie para obtener habitantes por kilómetro cuadrado.",
+      breakdownTitle: "Comparación territorial",
+      breakdownItems: buildTerritorialBreakdownItems({
+        benchmark: benchmarks?.metrics.population_density_km2_start,
+        districtName: section.district_name,
+        barrioName: section.barrio_name,
+        formatValue: formatDensity,
+      })
     },
     {
       id: `section:${section.section_key}:competition`,
       label: "Competencia local",
       value: formatCompact(section.section_local_count_start),
-      summary: "Cuenta cuántos locales activos hay en la sección.",
-      calculation: "Tomamos el stock histórico de locales activos observado para la propia sección censal."
+      summary: "Resume cuántos locales activos hay en la sección y qué parte del stock ya pertenece a la misma macrocategoría que la actividad sugerida.",
+      calculation: "Tomamos el stock histórico de locales activos observado para la propia sección censal y, como lectura complementaria, la cuota de la misma macrocategoría dentro de ese stock en t-1.",
+      breakdownTitle: "Lectura competitiva",
+      breakdownItems: buildCompetitionBreakdownItems({
+        localCount: section.section_local_count_start,
+        sameCategoryShare: section.section_same_activity_category_share_start,
+        uniqueCategories: section.section_unique_activity_category_count_start,
+        bestActivityLabel: section.best_activity_label,
+        localCountBenchmark: benchmarks?.metrics.section_local_count_start,
+        sameCategoryBenchmark: benchmarks?.metrics.section_same_activity_category_share_start,
+        uniqueCategoriesBenchmark: benchmarks?.metrics.section_unique_activity_category_count_start,
+      })
     }
   ];
 }
@@ -767,7 +1171,12 @@ function buildContextMetrics({
   shareForeign,
   shareYoung,
   avisosBarrio,
-  avisosDistrict
+  avisosDistrict,
+  topAvisosBarrioCategories,
+  topAvisosDistrictCategories,
+  benchmarks,
+  districtName,
+  barrioName,
 }: {
   scopeId: string;
   bestActivityLabel: string;
@@ -780,6 +1189,11 @@ function buildContextMetrics({
   shareYoung: number | null;
   avisosBarrio: number | null;
   avisosDistrict: number | null;
+  topAvisosBarrioCategories: OpportunityAvisoCategory[];
+  topAvisosDistrictCategories: OpportunityAvisoCategory[];
+  benchmarks: OpportunityBenchmarkContext | null;
+  districtName: string;
+  barrioName: string;
 }): MetricDefinition[] {
   return [
     {
@@ -803,49 +1217,439 @@ function buildContextMetrics({
       label: "Rotación 12m",
       value: formatShare(turnoverRate12m),
       summary: "Resume cuánto se ha movido el tejido comercial en el último año observado.",
-      calculation: "Dividimos los cambios o salidas observados en los últimos 12 meses entre el stock de locales de la sección."
+      calculation: "Dividimos los cambios o salidas observados en los últimos 12 meses entre el stock de locales de la sección.",
+      breakdownTitle: "Comparación territorial",
+      breakdownItems: buildTerritorialBreakdownItems({
+        benchmark: benchmarks?.metrics.section_turnover_rate_12m_start,
+        districtName,
+        barrioName,
+        formatValue: formatShare,
+      })
     },
     {
       id: `${scopeId}:population`,
       label: "Población",
       value: formatCompact(totalPopulation),
       summary: "Es el tamaño residencial del entorno inmediato.",
-      calculation: "Tomamos la población total más reciente asociada a la sección censal."
+      calculation: "Tomamos la población total más reciente asociada a la sección censal.",
+      breakdownTitle: "Comparación territorial",
+      breakdownItems: buildTerritorialBreakdownItems({
+        benchmark: benchmarks?.metrics.total_population_start,
+        districtName,
+        barrioName,
+        formatValue: formatCompact,
+      })
     },
     {
       id: `${scopeId}:foreign-share`,
       label: "Extranjera",
       value: formatShare(shareForeign),
       summary: "Mide el peso de residentes extranjeros dentro de la sección.",
-      calculation: "Dividimos la población extranjera entre la población total de la sección."
+      calculation: "Dividimos la población extranjera entre la población total de la sección.",
+      breakdownTitle: "Comparación territorial",
+      breakdownItems: buildTerritorialBreakdownItems({
+        benchmark: benchmarks?.metrics.share_foreign_start,
+        districtName,
+        barrioName,
+        formatValue: formatShare,
+      })
     },
     {
       id: `${scopeId}:young-share`,
       label: "Joven 15-29",
       value: formatShare(shareYoung),
       summary: "Aproxima el peso de poblacion joven en el entorno.",
-      calculation: "Dividimos los residentes de 15 a 29 años entre la población total de la sección."
+      calculation: "Dividimos los residentes de 15 a 29 años entre la población total de la sección.",
+      breakdownTitle: "Comparación territorial",
+      breakdownItems: buildTerritorialBreakdownItems({
+        benchmark: benchmarks?.metrics.share_age_15_29_start,
+        districtName,
+        barrioName,
+        formatValue: formatShare,
+      })
     },
     {
       id: `${scopeId}:avisos-barrio`,
       label: "Avisos barrio",
       value: formatRatePerThousandResidents(avisosBarrio),
       summary: "Mide la presion vecinal reciente registrada a escala de barrio.",
-      calculation: "Tomamos el número de avisos del año previo y lo normalizamos por cada 1.000 habitantes del barrio."
+      calculation: "Tomamos el número de avisos del año previo y lo normalizamos por cada 1.000 habitantes del barrio.",
+      breakdownTitle: "Top 3 categorias del barrio",
+      breakdownItems: buildAvisosBreakdownItems(topAvisosBarrioCategories),
+      breakdownEmptyText: "Sin desglose de categorias de avisos disponible para este barrio."
     },
     {
       id: `${scopeId}:avisos-district`,
       label: "Avisos distrito",
       value: formatRatePerThousandResidents(avisosDistrict),
       summary: "Mide la presion vecinal reciente registrada a escala de distrito.",
-      calculation: "Tomamos el número de avisos del año previo y lo normalizamos por cada 1.000 habitantes del distrito."
+      calculation: "Tomamos el número de avisos del año previo y lo normalizamos por cada 1.000 habitantes del distrito.",
+      breakdownTitle: "Top 3 categorias del distrito",
+      breakdownItems: buildAvisosBreakdownItems(topAvisosDistrictCategories),
+      breakdownEmptyText: "Sin desglose de categorias de avisos disponible para este distrito."
     }
   ];
+}
+
+function buildAvisosBreakdownItems(categories: OpportunityAvisoCategory[]): MetricBreakdownItem[] {
+  return categories.slice(0, 3).map((category, index) => ({
+    rank: Number.isFinite(category.rank) ? category.rank : index + 1,
+    label: category.label,
+    value: formatSignalPercent(category.share_of_zone),
+    detail: formatAvisosCount(category.count)
+  }));
+}
+
+function buildTerritorialBreakdownItems({
+  benchmark,
+  districtName,
+  barrioName,
+  formatValue,
+}: {
+  benchmark: OpportunityFieldInsight | null | undefined;
+  districtName: string;
+  barrioName: string;
+  formatValue: (value: number | null) => string;
+}): MetricBreakdownItem[] {
+  return [
+    {
+      rank: 1,
+      label: "Mediana Madrid",
+      value: formatValue(benchmark?.cityMedian ?? null),
+      detail: formatCityPercentileDetail(benchmark?.cityPercentile ?? null),
+    },
+    {
+      rank: 2,
+      label: "Mediana distrito",
+      value: formatValue(benchmark?.districtMedian ?? null),
+      detail: districtName || "Sin distrito",
+    },
+    {
+      rank: 3,
+      label: "Mediana barrio",
+      value: formatValue(benchmark?.barrioMedian ?? null),
+      detail: barrioName || "Sin barrio",
+    },
+  ];
+}
+
+function buildRankBreakdownItems({
+  cityRank,
+  cityTotal,
+  districtRank,
+  districtTotal,
+  barrioRank,
+  barrioTotal,
+  districtName,
+  barrioName,
+  primaryScope,
+}: {
+  cityRank: number | null;
+  cityTotal: number | null;
+  districtRank: number | null;
+  districtTotal: number | null;
+  barrioRank: number | null;
+  barrioTotal: number | null;
+  districtName: string;
+  barrioName: string;
+  primaryScope: RankScope;
+}): MetricBreakdownItem[] {
+  const scopes = {
+    city: {
+      label: "Madrid",
+      rank: cityRank,
+      total: cityTotal,
+      name: "Madrid",
+    },
+    district: {
+      label: "Distrito",
+      rank: districtRank,
+      total: districtTotal,
+      name: districtName || "Distrito actual",
+    },
+    barrio: {
+      label: "Barrio",
+      rank: barrioRank,
+      total: barrioTotal,
+      name: barrioName || "Barrio actual",
+    },
+  } satisfies Record<RankScope, { label: string; rank: number | null; total: number | null; name: string }>;
+
+  const order: RankScope[] = primaryScope === "city"
+    ? ["city", "district", "barrio"]
+    : primaryScope === "district"
+      ? ["district", "city", "barrio"]
+      : ["barrio", "district", "city"];
+
+  return order.map((scope, index) => {
+    const row = scopes[scope];
+    return {
+      rank: index + 1,
+      label: row.label,
+      value: formatRank(row.rank, row.total),
+      detail: scope === "city" ? formatTopBand(row.rank, row.total) : `${row.name} · ${formatTopBand(row.rank, row.total)}`,
+    };
+  });
+}
+
+function buildMetroBreakdownItems({
+  distance,
+  access500,
+  access1000,
+  distanceBenchmark,
+  access500Benchmark,
+  access1000Benchmark,
+}: {
+  distance: number | null;
+  access500: number | null;
+  access1000: number | null;
+  distanceBenchmark: OpportunityFieldInsight | null | undefined;
+  access500Benchmark: OpportunityFieldInsight | null | undefined;
+  access1000Benchmark: OpportunityFieldInsight | null | undefined;
+}): MetricBreakdownItem[] {
+  return [
+    {
+      rank: 1,
+      label: "Accesos a 500 m",
+      value: formatCompact(access500),
+      detail: buildMedianDetail(access500Benchmark?.cityMedian ?? null, formatCompact),
+    },
+    {
+      rank: 2,
+      label: "Accesos a 1 km",
+      value: formatCompact(access1000),
+      detail: buildMedianDetail(access1000Benchmark?.cityMedian ?? null, formatCompact),
+    },
+    {
+      rank: 3,
+      label: "Distancia mínima",
+      value: formatDistance(distance),
+      detail: formatMetroPercentile(distanceBenchmark?.cityPercentile ?? null),
+    },
+  ];
+}
+
+function buildCompetitionBreakdownItems({
+  localCount,
+  sameCategoryShare,
+  uniqueCategories,
+  bestActivityLabel,
+  localCountBenchmark,
+  sameCategoryBenchmark,
+  uniqueCategoriesBenchmark,
+}: {
+  localCount: number | null;
+  sameCategoryShare: number | null;
+  uniqueCategories: number | null;
+  bestActivityLabel: string;
+  localCountBenchmark: OpportunityFieldInsight | null | undefined;
+  sameCategoryBenchmark: OpportunityFieldInsight | null | undefined;
+  uniqueCategoriesBenchmark: OpportunityFieldInsight | null | undefined;
+}): MetricBreakdownItem[] {
+  const sameCategoryMedian = buildMedianDetail(sameCategoryBenchmark?.cityMedian ?? null, formatShare);
+  const sameCategoryDetail = bestActivityLabel
+    ? `Actividad sugerida · ${sameCategoryMedian}`
+    : sameCategoryMedian;
+
+  return [
+    {
+      rank: 1,
+      label: "Locales activos",
+      value: formatCompact(localCount),
+      detail: buildMedianDetail(localCountBenchmark?.cityMedian ?? null, formatCompact),
+    },
+    {
+      rank: 2,
+      label: "Cuota misma macro",
+      value: formatShare(sameCategoryShare),
+      detail: sameCategoryDetail,
+    },
+    {
+      rank: 3,
+      label: "Categorías activas",
+      value: formatCompact(uniqueCategories),
+      detail: buildMedianDetail(uniqueCategoriesBenchmark?.cityMedian ?? null, formatCompact),
+    },
+  ];
+}
+
+function buildOperationBreakdownItems(point: OpportunityPoint, points: OpportunityPoint[]): MetricBreakdownItem[] {
+  return buildListingScopeRows(point, points).map((scope, index) => {
+    const total = scope.points.length;
+    const sameOperation = scope.points.filter((candidate) => candidate.operation === point.operation).length;
+    const share = total > 0 ? sameOperation / total : null;
+
+    return {
+      rank: index + 1,
+      label: scope.label,
+      value: formatOperationShare(point.operation, share),
+      detail: `${scope.detailName} · ${sameOperation} de ${total} anuncios`,
+    };
+  });
+}
+
+function buildListingValueBreakdownItems({
+  point,
+  points,
+  field,
+  formatValue,
+  labelSuffix,
+  percentileLabel,
+}: {
+  point: OpportunityPoint;
+  points: OpportunityPoint[];
+  field: "price_eur" | "area_m2";
+  formatValue: (value: number | null) => string;
+  labelSuffix: string;
+  percentileLabel: string;
+}): MetricBreakdownItem[] {
+  const currentValue = point[field];
+
+  return buildListingScopeRows(point, points).map((scope, index) => {
+    const comparables = scope.points.filter((candidate) => candidate.operation === point.operation);
+    const values = comparables.map((candidate) => candidate[field]).filter(isFiniteNumber).map((value) => Number(value));
+    const percentile = computeDistributionPercentile(values, currentValue);
+
+    return {
+      rank: index + 1,
+      label: scope.label,
+      value: formatValue(median(values)),
+      detail: `${scope.detailName} · ${comparables.length} ${labelSuffix}${formatListingPercentileDetail(percentile, percentileLabel)}`,
+    };
+  });
+}
+
+function buildListingScopeRows(point: OpportunityPoint, points: OpportunityPoint[]) {
+  return [
+    {
+      label: "Madrid",
+      detailName: "Madrid",
+      points,
+    },
+    {
+      label: "Distrito",
+      detailName: point.district_name || "Distrito actual",
+      points: points.filter((candidate) => candidate.district_code === point.district_code),
+    },
+    {
+      label: "Barrio",
+      detailName: point.barrio_name || "Barrio actual",
+      points: points.filter((candidate) => candidate.barrio_code === point.barrio_code),
+    },
+  ];
+}
+
+function buildOpportunityTierSummary(value: string) {
+  if (value === "Alta") {
+    return "La sección cae dentro del tramo más defensivo del mapa de oportunidades. Sigue exigiendo validar local, renta y competencia, pero parte de una lectura comparativamente favorable en Madrid.";
+  }
+  if (value === "Solida") {
+    return "La sección está en un tramo favorable, aunque ya no tan selecto como Alta. Suele combinar una base razonable de contexto con riesgo por debajo de buena parte de la ciudad.";
+  }
+  if (value === "Intermedia") {
+    return "La sección está en una zona media del mapa. No es una mala lectura por sí sola, pero conviene apoyarse más en competencia, metro, demografía y encaje de actividad.";
+  }
+  if (value === "Fragil") {
+    return "La sección cae en el tramo más exigente del mapa. No invalida una apertura, pero sí exige una tesis más fuerte sobre producto, precio, ubicación exacta y demanda.";
+  }
+  return "No hay suficiente señal para ubicar esta sección en un tramo cualitativo de oportunidad.";
+}
+
+function buildOpportunityTierBreakdownItems(activeTier: string): MetricBreakdownItem[] {
+  return [
+    {
+      rank: 1,
+      label: "Alta",
+      value: "P0-P20",
+      detail: activeTier === "Alta" ? "Tu sección cae aquí" : "Tramo más defensivo",
+    },
+    {
+      rank: 2,
+      label: "Solida",
+      value: "P21-P45",
+      detail: activeTier === "Solida" ? "Tu sección cae aquí" : "Lectura favorable",
+    },
+    {
+      rank: 3,
+      label: "Intermedia",
+      value: "P46-P70",
+      detail: activeTier === "Intermedia" ? "Tu sección cae aquí" : "Lectura mixta",
+    },
+    {
+      rank: 4,
+      label: "Fragil",
+      value: "P71-P100",
+      detail: activeTier === "Fragil" ? "Tu sección cae aquí" : "Tramo más exigente",
+    },
+  ];
+}
+
+function buildMedianDetail(value: number | null, formatValue: (value: number | null) => string) {
+  if (!isFiniteNumber(value)) {
+    return "Sin mediana Madrid";
+  }
+  return `Mediana Madrid: ${formatValue(value)}`;
+}
+
+function computeDistributionPercentile(values: number[], currentValue: number | null) {
+  if (!isFiniteNumber(currentValue) || values.length === 0) {
+    return null;
+  }
+
+  const lessOrEqual = values.filter((value) => value <= currentValue).length;
+  return lessOrEqual / values.length;
+}
+
+function formatListingPercentileDetail(value: number | null, label: string) {
+  if (!isFiniteNumber(value)) {
+    return "";
+  }
+  return ` · tu local P${Math.round(value * 100)} por ${label}`;
+}
+
+function formatOperationShare(operation: string, share: number | null) {
+  if (!operation) {
+    return "Sin dato";
+  }
+  if (!isFiniteNumber(share)) {
+    return operation;
+  }
+  return `${Math.round(share * 100)}% ${operation}`;
+}
+
+function formatCityPercentileDetail(value: number | null) {
+  if (!isFiniteNumber(value)) {
+    return "Sin percentil Madrid";
+  }
+  return `Tu sección: P${Math.round(value * 100)} en Madrid`;
+}
+
+function formatMetroPercentile(value: number | null) {
+  if (!isFiniteNumber(value)) {
+    return "Sin percentil Madrid";
+  }
+  return `Más cerca que ${Math.round(value * 100)}% de Madrid`;
+}
+
+function formatTopBand(rank: number | null, total: number | null) {
+  if (!isFiniteNumber(rank) || !isFiniteNumber(total) || total <= 0) {
+    return "Sin tramo";
+  }
+  return `Top ${Math.max(1, Math.round((rank / total) * 100))}%`;
 }
 
 function buildMetricWhyUseful(metric: MetricDefinition) {
   if (metric.id.includes(":survival:")) {
     return "Te sirve para comparar de un vistazo qué entornos aguantan mejor una apertura parecida en el horizonte que estás mirando.";
+  }
+  if (metric.id.endsWith(":operation-chip")) {
+    return "Te ayuda a entender si el entorno se está moviendo más en compra o en alquiler, algo útil para leer liquidez, perfil de demanda y tipo de mercado disponible.";
+  }
+  if (metric.id.endsWith(":price-chip") || metric.id.endsWith(":area-chip")) {
+    return "Te da una referencia rápida de si este anuncio entra pequeño, grande, barato o caro frente a los comparables inmediatos de la misma operación.";
+  }
+  if (metric.id.endsWith(":opportunity-tier")) {
+    return "Condensa el percentil de riesgo en un lenguaje más rápido de leer, útil para filtrar primero y entrar después al detalle de ranking, competencia o demografía.";
   }
   if (metric.id.endsWith(":risk-percentile")) {
     return "Te permite entender si estás en una zona estructuralmente más delicada o más favorable que la media de Madrid sin tener que interpretar el score bruto del modelo.";
@@ -881,6 +1685,18 @@ function buildMetricWhyUseful(metric: MetricDefinition) {
 }
 
 function buildMetricExample(metric: MetricDefinition) {
+  if (metric.id.endsWith(":operation-chip")) {
+    return "Ejemplo: 68% alquiler en el barrio significa que, dentro de los anuncios capturados en ese ámbito, algo más de dos tercios están saliendo al mercado en alquiler y no en venta.";
+  }
+  if (metric.id.endsWith(":price-chip")) {
+    return "Ejemplo: si la mediana del distrito es 320.000 € y tu local cae en P75, significa que está por encima de tres cuartas partes de los comparables de venta del distrito.";
+  }
+  if (metric.id.endsWith(":area-chip")) {
+    return "Ejemplo: si la mediana del barrio es 95 m² y tu local cae en P30, la lectura es que el anuncio es más pequeño que la mayoría de comparables del barrio.";
+  }
+  if (metric.id.endsWith(":opportunity-tier")) {
+    return "Ejemplo: Intermedia no significa que el punto sea malo, sino que cae en la banda central del mapa y necesita más contraste con competencia, actividad sugerida y resto de contexto antes de priorizarlo.";
+  }
   if (metric.id.endsWith(":risk-percentile")) {
     return "Ejemplo: un P85 implica que esta sección tiene más riesgo histórico que aproximadamente el 85% de Madrid y solo mejora frente al 15% restante.";
   }

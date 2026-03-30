@@ -129,6 +129,13 @@ export type OpportunityActivity = {
   supported_for_stats: boolean;
 };
 
+export type OpportunityAvisoCategory = {
+  rank: number;
+  label: string;
+  count: number;
+  share_of_zone: number | null;
+};
+
 export type OpportunityPoint = {
   listing_id: string;
   listing_url: string;
@@ -167,6 +174,8 @@ export type OpportunityPoint = {
   metro_access_count_1000m_start: number | null;
   avisos_barrio_per_1000_prev_year: number | null;
   avisos_district_per_1000_prev_year: number | null;
+  top_avisos_barrio_categories: OpportunityAvisoCategory[];
+  top_avisos_district_categories: OpportunityAvisoCategory[];
   section_local_count_start: number | null;
   section_unique_activity_category_count_start: number | null;
   section_turnover_rate_12m_start: number | null;
@@ -207,6 +216,8 @@ export type OpportunitySection = {
   metro_access_count_1000m_start: number | null;
   avisos_barrio_per_1000_prev_year: number | null;
   avisos_district_per_1000_prev_year: number | null;
+  top_avisos_barrio_categories: OpportunityAvisoCategory[];
+  top_avisos_district_categories: OpportunityAvisoCategory[];
   section_local_count_start: number | null;
   section_unique_activity_category_count_start: number | null;
   section_turnover_rate_12m_start: number | null;
