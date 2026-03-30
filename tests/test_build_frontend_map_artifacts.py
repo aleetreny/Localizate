@@ -71,6 +71,7 @@ class FrontendMapArtifactsTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["support_24m"], 0)
         self.assertIsNone(rows[0]["survival_24m"])
+        self.assertAlmostEqual(rows[0]["avg_risk_primary"], 0.25)
 
     def test_attach_section_geography_backfills_from_coordinates(self) -> None:
         frame = pd.DataFrame(
@@ -157,6 +158,7 @@ class FrontendMapArtifactsTests(unittest.TestCase):
         self.assertEqual(rows[0]["support_24m"], 2)
         self.assertAlmostEqual(rows[0]["survival_12m"] or 0.0, 0.5)
         self.assertAlmostEqual(rows[0]["survival_24m"] or 0.0, 0.5)
+        self.assertAlmostEqual(rows[0]["avg_risk_primary"], 0.4)
         self.assertAlmostEqual(rows[0]["avg_risk_ensemble"], 0.4)
         self.assertAlmostEqual(rows[0]["avg_risk_percentile"], 0.5)
 

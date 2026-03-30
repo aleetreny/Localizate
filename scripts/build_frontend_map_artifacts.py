@@ -36,6 +36,9 @@ MAP_BOUNDS = {
     "min_zoom": 9.8,
     "max_zoom": 15.4,
 }
+PRIMARY_RISK_COLUMN = "risk_cox"
+PRIMARY_RISK_MODEL_KEY = "cox"
+PRIMARY_RISK_MODEL_LABEL = "Cox"
 
 
 def main() -> int:
@@ -75,8 +78,7 @@ def main() -> int:
             "section_key_start",
             "lat_wgs84_start",
             "lon_wgs84_start",
-            "risk_ensemble",
-            "risk_percentile",
+            PRIMARY_RISK_COLUMN,
             "quality_tier",
         ],
         low_memory=False,
@@ -85,11 +87,11 @@ def main() -> int:
     merged = abt.merge(scores, on=["id_local", "h3_cell_start"], how="inner", validate="one_to_one")
     merged = merged[merged["h3_cell_start"].notna()].copy()
     merged["category_code"] = merged["activity_category_code_start"].fillna("__unknown__").astype("string")
-    merged["category_desc"] = merged["activity_category_desc_start"].fillna("Sin categoria").astype("string")
+    merged["category_desc"] = merged["activity_category_desc_start"].fillna("Sin categoría").astype("string")
     merged["duration_months"] = pd.to_numeric(merged["duration_months"], errors="coerce").fillna(0.0)
     merged["event_observed"] = pd.to_numeric(merged["event_observed"], errors="coerce").fillna(0).astype(int)
-    merged["risk_ensemble"] = pd.to_numeric(merged["risk_ensemble"], errors="coerce").fillna(0.0)
-    merged["risk_percentile"] = pd.to_numeric(merged["risk_percentile"], errors="coerce").fillna(0.0)
+    merged["risk_primary"] = pd.to_numeric(merged[PRIMARY_RISK_COLUMN], errors="coerce").fillna(0.0)
+    merged["risk_percentile"] = merged["risk_primary"].rank(method="average", pct=True)
     merged["lat_wgs84_start"] = pd.to_numeric(merged["lat_wgs84_start"], errors="coerce")
     merged["lon_wgs84_start"] = pd.to_numeric(merged["lon_wgs84_start"], errors="coerce")
     merged, geography_stats = attach_section_geography(merged, section_geography=section_geography)
@@ -111,9 +113,11 @@ def main() -> int:
         payload = {
             "meta": {
                 "title": "Madrid Survival Grid",
-                "subtitle": "Mapa H3 minimalista listo para plasmar regiones de prediccion y filtrar por tipo de local.",
+                "subtitle": "Mapa H3 minimalista listo para plasmar regiones de predicción y filtrar por tipo de local.",
                 "generated_at": generated_at,
                 "defaultCategoryCode": "__all__",
+                "risk_model_key": PRIMARY_RISK_MODEL_KEY,
+                "risk_model_label": PRIMARY_RISK_MODEL_LABEL,
                 "map_bounds": MAP_BOUNDS,
             },
             "categories": categories,
@@ -133,7 +137,14 @@ def main() -> int:
     return 0
 
 
+def resolve_primary_risk_column(frame: pd.DataFrame) -> str:
+    if "risk_primary" in frame.columns:
+        return "risk_primary"
+    return "risk_ensemble"
+
+
 def build_hex_aggregates(frame: pd.DataFrame, *, hex_cell_col: str = "h3_cell_start") -> list[dict[str, object]]:
+    primary_risk_col = resolve_primary_risk_column(frame)
     grouped = frame.groupby([hex_cell_col, "category_code", "category_desc"], dropna=False)
     rows: list[dict[str, object]] = []
     for (h3_cell, category_code, category_desc), part in grouped:
@@ -144,6 +155,7 @@ def build_hex_aggregates(frame: pd.DataFrame, *, hex_cell_col: str = "h3_cell_st
         support_12m, survival_12m = compute_horizon_metrics(duration, event, horizon=12.0)
         support_24m, survival_24m = compute_horizon_metrics(duration, event, horizon=24.0)
         quality_tier = quality_mode(part["quality_tier"].astype("string"))
+        avg_risk_primary = float(part[primary_risk_col].mean())
         rows.append(
             {
                 "h3_cell": str(h3_cell),
@@ -154,7 +166,8 @@ def build_hex_aggregates(frame: pd.DataFrame, *, hex_cell_col: str = "h3_cell_st
                 "location_label": build_location_label(barrio_name, district_name),
                 "n_locales": int(len(part)),
                 "n_events": int(event.sum()),
-                "avg_risk_ensemble": float(part["risk_ensemble"].mean()),
+                "avg_risk_primary": avg_risk_primary,
+                "avg_risk_ensemble": avg_risk_primary,
                 "avg_risk_percentile": float(part["risk_percentile"].mean()),
                 "survival_12m": serialize_probability(survival_12m),
                 "survival_24m": serialize_probability(survival_24m),
@@ -210,6 +223,7 @@ def build_zone_payloads(frame: pd.DataFrame) -> dict[str, list[dict[str, object]
 
 
 def build_zone_metrics(frame: pd.DataFrame, *, zone_level: str, zone_code_col: str, zone_name_col: str) -> list[dict[str, object]]:
+    primary_risk_col = resolve_primary_risk_column(frame)
     scoped = frame.copy()
     scoped[zone_name_col] = scoped[zone_name_col].fillna("").astype("string").map(clean_place_name)
     scoped[zone_code_col] = scoped[zone_code_col].fillna("").astype("string")
@@ -227,6 +241,7 @@ def build_zone_metrics(frame: pd.DataFrame, *, zone_level: str, zone_code_col: s
         support_24m, survival_24m = compute_horizon_metrics(duration, event, horizon=24.0)
         n_locales = int(len(part))
         n_events = int(event.sum())
+        avg_risk_primary = float(part[primary_risk_col].mean())
         rows.append(
             {
                 "zone_level": zone_level,
@@ -236,7 +251,8 @@ def build_zone_metrics(frame: pd.DataFrame, *, zone_level: str, zone_code_col: s
                 "category_desc": str(category_desc),
                 "n_locales": n_locales,
                 "n_events": n_events,
-                "avg_risk_ensemble": float(part["risk_ensemble"].mean()),
+            "avg_risk_primary": avg_risk_primary,
+            "avg_risk_ensemble": avg_risk_primary,
                 "avg_risk_percentile": float(part["risk_percentile"].mean()),
                 "event_rate": float(n_events / n_locales) if n_locales > 0 else 0.0,
                 "duration_median_months": float(duration.median()) if duration.notna().any() else 0.0,
@@ -254,7 +270,7 @@ def build_zone_metrics(frame: pd.DataFrame, *, zone_level: str, zone_code_col: s
 
     out = pd.DataFrame(rows)
     out["rank_within_zone_risk"] = (
-        out.sort_values(["zone_code", "avg_risk_ensemble", "avg_risk_percentile", "n_locales"], ascending=[True, True, True, False])
+        out.sort_values(["zone_code", "avg_risk_primary", "avg_risk_percentile", "n_locales"], ascending=[True, True, True, False])
         .groupby("zone_code")
         .cumcount()
         + 1
@@ -284,6 +300,7 @@ def build_zone_metrics(frame: pd.DataFrame, *, zone_level: str, zone_code_col: s
                 "category_desc": str(row.category_desc),
                 "n_locales": int(row.n_locales),
                 "n_events": int(row.n_events),
+                "avg_risk_primary": float(row.avg_risk_primary),
                 "avg_risk_ensemble": float(row.avg_risk_ensemble),
                 "avg_risk_percentile": float(row.avg_risk_percentile),
                 "event_rate": float(row.event_rate),
@@ -313,7 +330,7 @@ def build_category_profile(
 ) -> dict[str, object]:
     if category_code == "__all__":
         return {
-            "definition": "Vista agregada de todos los locales con H3 visible, sin filtrar por macrocategoria.",
+            "definition": "Vista agregada de todos los locales con H3 visible, sin filtrar por macrocategoría.",
             "mapped_epigraphs": glossary_total_epigraphs,
             "historical_coverage_rows": glossary_total_rows,
             "example_labels": common_examples,
@@ -321,7 +338,7 @@ def build_category_profile(
 
     if category_code == "__unknown__":
         return {
-            "definition": "Locales sin macrocategoria normalizada en el ABT actual o sin clasificacion suficiente para entrar en el glosario.",
+            "definition": "Locales sin macrocategoría normalizada en el ABT actual o sin clasificación suficiente para entrar en el glosario.",
             "mapped_epigraphs": None,
             "historical_coverage_rows": None,
             "example_labels": [],
@@ -332,7 +349,7 @@ def build_category_profile(
         return profile
 
     return {
-        "definition": f"Macrocategoria comercial agregada en el ABT historico para {category_desc.lower()}.",
+        "definition": f"Macrocategoría comercial agregada en el ABT histórico para {category_desc.lower()}.",
         "mapped_epigraphs": None,
         "historical_coverage_rows": None,
         "example_labels": [],
@@ -365,13 +382,13 @@ def parse_activity_glossary(path: Path) -> dict[str, dict[str, object]]:
             continue
         if not current_title or not line.startswith("- "):
             continue
-        if line.startswith("- Codigo:"):
+        if line.startswith("- Código:"):
             current["category_code"] = line.split(":", 1)[1].strip()
-        elif line.startswith("- Definicion:"):
+        elif line.startswith("- Definición:"):
             current["definition"] = line.split(":", 1)[1].strip()
-        elif line.startswith("- Epigrafes mapeados:"):
+        elif line.startswith("- Epígrafes mapeados:"):
             current["mapped_epigraphs"] = parse_integer_token(line)
-        elif line.startswith("- Cobertura historica bruta:"):
+        elif line.startswith("- Cobertura histórica bruta:"):
             current["historical_coverage_rows"] = parse_integer_token(line)
         elif line.startswith("- Ejemplos de etiquetas finas:"):
             examples = line.split(":", 1)[1].strip()

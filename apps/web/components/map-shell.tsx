@@ -26,6 +26,11 @@ type ZoneListProps = {
   barrioZones: ZoneAggregate[];
 };
 
+type RiskAggregate = {
+  avg_risk_primary?: number;
+  avg_risk_ensemble: number;
+};
+
 export function MapShell({ initialArtifacts }: MapShellProps) {
   const [artifacts, setArtifacts] = useState(initialArtifacts ?? FALLBACK_MAP_ARTIFACTS);
   const [isLoadingArtifacts, setIsLoadingArtifacts] = useState(!initialArtifacts);
@@ -35,6 +40,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   const [hexSize, setHexSize] = useState<HexSize>(DEFAULT_HEX_SIZE);
   const [selectedHex, setSelectedHex] = useState<HexAggregate | null>(null);
   const [activeMetricId, setActiveMetricId] = useState<string | null>(null);
+  const [isRiskExplainerOpen, setIsRiskExplainerOpen] = useState(false);
   const loadedArtifactsRef = useRef<Partial<Record<HexSize, FrontendArtifacts>>>(
     initialArtifacts ? { [DEFAULT_HEX_SIZE]: initialArtifacts } : {}
   );
@@ -102,6 +108,8 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
     return artifacts.categories.find((item) => item.category_code === selectedCategory) ?? artifacts.categories[0];
   }, [artifacts.categories, selectedCategory]);
 
+  const riskModelLabel = artifacts.meta.risk_model_label ?? "Cox";
+
   const filteredHexes = useMemo(() => {
     return artifacts.hexes.filter((item) => item.category_code === selectedCategory);
   }, [artifacts.hexes, selectedCategory]);
@@ -123,7 +131,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
         hexes: 0,
         hexesWithSupport: 0,
         meanSurvival: null,
-        meanRisk: 0
+        meanRelativeRisk: null
       };
     }
 
@@ -141,14 +149,14 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
       },
       { supportedHexes: 0, supportedLocales: 0, weightedSurvival: 0 }
     );
-    const meanRisk = filteredHexes.reduce((sum, item) => sum + item.n_locales * item.avg_risk_ensemble, 0) / locales;
+    const meanRelativeRisk = filteredHexes.reduce((sum, item) => sum + item.n_locales * item.avg_risk_percentile, 0) / locales;
 
     return {
       locales,
       hexes: filteredHexes.length,
       hexesWithSupport: survivalTotals.supportedHexes,
       meanSurvival: survivalTotals.supportedLocales > 0 ? survivalTotals.weightedSurvival / survivalTotals.supportedLocales : null,
-      meanRisk
+      meanRelativeRisk
     };
   }, [filteredHexes, horizon]);
 
@@ -181,9 +189,10 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
       detailSupport,
       detailSurvival,
       horizon,
-      meanSurvival: activeStats.meanSurvival
+      meanSurvival: activeStats.meanSurvival,
+      riskModelLabel
     });
-  }, [activeStats.meanSurvival, detail, detailRank, detailSupport, detailSurvival, horizon]);
+  }, [activeStats.meanSurvival, detail, detailRank, detailSupport, detailSurvival, horizon, riskModelLabel]);
 
   const activeMetric = detailMetrics.find((metric) => metric.id === activeMetricId) ?? null;
 
@@ -272,8 +281,8 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
             <span className="value">{formatPercent(activeStats.meanSurvival, activeStats.hexes > 0 ? "Sin muestra" : "Sin datos")}</span>
           </div>
           <div className="stat-card">
-            <span className="label">Riesgo medio</span>
-            <span className="value">{activeStats.meanRisk.toFixed(2)}</span>
+            <span className="label">Índice relativo 0-1</span>
+            <span className="value">{formatRelativeRiskIndex(activeStats.meanRelativeRisk)}</span>
           </div>
           <div className="stat-card">
             <span className="label">Locales visibles</span>
@@ -293,15 +302,29 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
         </p>
 
         <section className="info-card">
-          <div className="eyebrow">Ficha categoria</div>
+          <div className="eyebrow">Ficha categoría</div>
           <h2>{selectedCategoryMeta.category_desc}</h2>
           <p>{selectedCategoryMeta.definition ?? buildFallbackCategoryDefinition(selectedCategoryMeta.category_desc)}</p>
         </section>
 
         <section className="info-card">
-          <div className="eyebrow">Zonas destacadas</div>
-          <h3>Menor riesgo medio</h3>
+          <div className="info-card-heading">
+            <div className="info-card-heading-copy">
+              <div className="eyebrow">Zonas destacadas</div>
+              <h3>Menor índice relativo</h3>
+            </div>
+          </div>
           <ZoneList barrioZones={topZones.barrio} districtZones={topZones.district} />
+          <div className="zone-board-footer">
+            <button
+              aria-expanded={isRiskExplainerOpen}
+              className="zone-board-action"
+              onClick={() => setIsRiskExplainerOpen((current) => !current)}
+              type="button"
+            >
+              {isRiskExplainerOpen ? "Ocultar guía" : "Cómo interpretar este ranking"}
+            </button>
+          </div>
         </section>
 
         <section className="detail-card">
@@ -321,14 +344,20 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
           ) : (
             <div className="detail-empty">
               <h3>Selecciona un hexágono</h3>
-              <p>Haz click en el mapa para ver su posición en Madrid, su ranking por riesgo y la diferencia frente a la media de la categoría.</p>
+              <p>Haz clic en el mapa para ver su posición en Madrid, su ranking por riesgo y la diferencia frente a la media de la categoría.</p>
             </div>
           )}
         </section>
       </aside>
 
       <section className="map-panel panel">
-        {activeMetric ? (
+        {isRiskExplainerOpen ? (
+          <div className="map-overlay panel risk-explainer-overlay">
+            <RelativeRiskExplainerBanner onClose={() => setIsRiskExplainerOpen(false)} />
+          </div>
+        ) : null}
+
+        {!isRiskExplainerOpen && activeMetric ? (
           <div className="map-overlay panel metric-banner">
             <MetricExplainer metric={activeMetric} />
           </div>
@@ -425,9 +454,39 @@ function MetricExplainer({ metric }: { metric: MetricDefinition | null }) {
           ) : null}
         </>
       ) : (
-        <p className="metric-explainer-copy">Haz click en una tarjeta del hexágono para ver qué significa, por qué es útil y cómo se calcula.</p>
+        <p className="metric-explainer-copy">Haz clic en una tarjeta del hexágono para ver qué significa, por qué es útil y cómo se calcula.</p>
       )}
     </div>
+  );
+}
+
+function RelativeRiskExplainerBanner({ onClose }: { onClose: () => void }) {
+  return (
+    <section aria-label="Cómo leer el índice relativo 0-1" aria-modal="false" className="explain-banner explain-banner-floating" role="dialog">
+      <div className="explain-banner-header">
+        <div className="explain-banner-headcopy">
+          <span className="explain-banner-kicker">Cómo leer el ranking</span>
+          <strong className="explain-banner-title">Cuanto más bajo, mejor</strong>
+          <span className="explain-banner-summary">
+            Este índice sirve para comparar zonas de un vistazo.
+          </span>
+        </div>
+        <button aria-label="Cerrar explicación" className="explain-banner-close" onClick={onClose} type="button">
+          Cerrar
+        </button>
+      </div>
+      <div className="explain-banner-body">
+        <p className="explain-banner-copy">
+          No es una probabilidad de cierre. Solo resume qué zonas salen mejor o peor para la categoría que estás viendo en Madrid.
+        </p>
+        <div className="explain-banner-example">
+          <span className="explain-banner-example-label">Ejemplo</span>
+          <p className="explain-banner-copy">
+            Si un barrio marca 0,40 y otro 0,70, el de 0,40 tiene menos riesgo. Si ves un 0,20, tiene todavía menos riesgo.
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -484,7 +543,7 @@ function ZoneRankCard({ rank, zone, emptyLabel }: ZoneRankCardProps) {
     <div className="zone-list-item">
       <div className="zone-list-top">
         <span className="zone-list-rank">#{rank}</span>
-        <span className="zone-list-value">{formatRiskValue(zone.avg_risk_ensemble)}</span>
+        <span className="zone-list-value">{formatRelativeRiskIndex(zone.avg_risk_percentile)}</span>
       </div>
       <strong className="zone-list-title">{zone.zone_name}</strong>
       <span className="zone-list-meta">{formatCompact(zone.n_locales)} locales</span>
@@ -514,9 +573,12 @@ function formatHexRank(rank: number, total: number) {
   return `#${rank} de ${total} · top ${topShare}%`;
 }
 
-function formatRiskPercentile(value: number) {
+function formatRelativeRiskIndex(value: number | null, missingLabel = "Sin datos") {
+  if (!isFiniteNumber(value)) {
+    return missingLabel;
+  }
   const clamped = Math.max(0, Math.min(1, value));
-  return `P${Math.round(clamped * 100)}`;
+  return new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(clamped);
 }
 
 function formatRiskValue(value: number) {
@@ -544,7 +606,7 @@ function buildTopZones(zones: ZoneAggregate[]) {
   const source = zones.some((item) => item.supported_for_stats) ? zones.filter((item) => item.supported_for_stats) : zones;
   return [...source]
     .sort((left, right) => {
-      const rawRiskDiff = left.avg_risk_ensemble - right.avg_risk_ensemble;
+      const rawRiskDiff = getPrimaryRiskValue(left) - getPrimaryRiskValue(right);
       if (Math.abs(rawRiskDiff) > 1e-6) {
         return rawRiskDiff;
       }
@@ -566,7 +628,8 @@ function buildHexMetrics({
   detailSupport,
   detailSurvival,
   horizon,
-  meanSurvival
+  meanSurvival,
+  riskModelLabel
 }: {
   detail: HexAggregate;
   detailRank: { rank: number; total: number } | null;
@@ -574,6 +637,7 @@ function buildHexMetrics({
   detailSurvival: number | null;
   horizon: Horizon;
   meanSurvival: number | null;
+  riskModelLabel: string;
 }): MetricDefinition[] {
   const horizonLabel = formatHorizonShortLabel(horizon);
   return [
@@ -586,17 +650,17 @@ function buildHexMetrics({
     },
     {
       id: `hex:${detail.h3_cell}:risk-percentile`,
-      label: "Percentil riesgo",
-      value: formatRiskPercentile(detail.avg_risk_percentile),
-      summary: "Ubica el riesgo del hexágono dentro de la distribución de la categoría en Madrid.",
-      calculation: "Convertimos el riesgo relativo del hexágono a percentil para expresar qué parte del mapa tiene un riesgo igual o menor."
+      label: "Índice relativo 0-1",
+      value: formatRelativeRiskIndex(detail.avg_risk_percentile),
+      summary: "Resume en una escala 0-1 dónde cae el riesgo del hexágono dentro de la distribución de la categoría activa en Madrid.",
+      calculation: "Tomamos el percentil de riesgo del hexágono y lo expresamos directamente como un índice relativo entre 0 y 1, donde los valores bajos indican una posición más defensiva."
     },
     {
       id: `hex:${detail.h3_cell}:risk-value`,
-      label: "Riesgo local",
-      value: formatRiskValue(detail.avg_risk_ensemble),
+      label: `Score bruto ${riskModelLabel}`,
+      value: formatRiskValue(getPrimaryRiskValue(detail)),
       summary: "Es el score bruto medio de riesgo del modelo en este hexágono.",
-      calculation: "Promediamos el score ensemble de los locales históricos de esta categoría que caen dentro del hexágono."
+      calculation: `Promediamos el score ${riskModelLabel} de los locales históricos de esta categoría que caen dentro del hexágono.`
     },
     {
       id: `hex:${detail.h3_cell}:vs-category`,
@@ -641,10 +705,10 @@ function buildMetricWhyUseful(metric: MetricDefinition) {
     return "Te ayuda a priorizar rápido: con una sola cifra ves si este hexágono está entre los mejores o peores de la categoría activa dentro de Madrid.";
   }
   if (metric.id.endsWith(":risk-percentile")) {
-    return "Es útil cuando quieres comparar zonas sin entrar en el detalle técnico del score: te dice si estás en una parte más segura o más delicada del mapa.";
+    return "Es la lectura más fácil de comparar entre zonas: 0,10 se entiende enseguida como mejor posición relativa que 0,70 sin tener que interpretar el score técnico del modelo.";
   }
   if (metric.id.endsWith(":risk-value")) {
-    return "Sirve para comparar intensidad de riesgo con más precisión cuando dos hexágonos tienen percentiles parecidos pero no idénticos.";
+    return "Sirve como señal técnica secundaria cuando quieres entender con más precisión cómo está ordenando el modelo por debajo del índice relativo.";
   }
   if (metric.id.endsWith(":vs-category")) {
     return "Te da contexto relativo: no solo ves cómo rinde el hexágono, sino si está por encima o por debajo del nivel normal de la categoría.";
@@ -666,7 +730,7 @@ function buildMetricExample(metric: MetricDefinition) {
     return "Ejemplo: #45 de 3.200 significa que este hexágono está muy arriba dentro del mapa de esa categoría cuando ordenas por menor riesgo.";
   }
   if (metric.id.endsWith(":risk-percentile")) {
-    return "Ejemplo: P20 indica que el hexágono tiene menos riesgo que aproximadamente el 80% de los hexágonos comparables.";
+    return "Ejemplo: 0,20 indica que el hexágono cae en una franja de riesgo más baja que la mayor parte del mapa; equivale aproximadamente a un P20.";
   }
   if (metric.id.endsWith(":vs-category")) {
     return "Ejemplo: +6 pp significa que la supervivencia del hexágono está 6 puntos porcentuales por encima de la media de la categoría.";
@@ -679,7 +743,7 @@ function buildMetricExample(metric: MetricDefinition) {
 
 function buildHexRanking(hexes: HexAggregate[], detail: HexAggregate, _horizon: Horizon) {
   const sorted = [...hexes].sort((left, right) => {
-    const rawRiskDiff = left.avg_risk_ensemble - right.avg_risk_ensemble;
+    const rawRiskDiff = getPrimaryRiskValue(left) - getPrimaryRiskValue(right);
     if (Math.abs(rawRiskDiff) > 1e-6) {
       return rawRiskDiff;
     }
@@ -699,6 +763,10 @@ function buildHexRanking(hexes: HexAggregate[], detail: HexAggregate, _horizon: 
   }
 
   return { rank: rankIndex + 1, total: sorted.length };
+}
+
+function getPrimaryRiskValue(item: RiskAggregate) {
+  return item.avg_risk_primary ?? item.avg_risk_ensemble;
 }
 
 function buildColorScale(hexes: HexAggregate[], horizon: Horizon): ColorScale {

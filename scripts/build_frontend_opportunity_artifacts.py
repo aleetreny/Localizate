@@ -14,11 +14,14 @@ SRC_DIR = PROJECT_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
+from localizate.activity_survival_cox import fit_activity_survival_cox_scorer  # noqa: E402
+from localizate.activity_taxonomy import classify_macro_category  # noqa: E402
 from localizate.manual_available_locales import MADRID_BBOX  # noqa: E402
 from localizate.section_geography import load_section_geodataframe  # noqa: E402
 from localizate.section_keys import normalize_section_key_series  # noqa: E402
 from localizate.survival_baseline import apply_training_policies, build_feature_frame, compute_linear_risk_score  # noqa: E402
 from localizate.survival_features import build_avisos_yearly_features, compute_metro_features, normalize_admin_code  # noqa: E402
+from localizate.zone_category_survival import confidence_tier  # noqa: E402
 
 
 AVAILABLE_LISTINGS_CSV = PROJECT_ROOT / "data" / "exports" / "manual_available_locales_madrid.csv"
@@ -26,6 +29,8 @@ SELECTED_LISTINGS_CSV = PROJECT_ROOT / "data" / "exports" / "manual_available_lo
 SELECTED_SUMMARY_JSON = PROJECT_ROOT / "data" / "processed" / "manual_available_locales_madrid_selected_summary.json"
 SECTION_PANEL_CSV = PROJECT_ROOT / "data" / "processed" / "section_socioeconomic_panel.csv"
 LOCAL_SURVIVAL_ABT_CSV = PROJECT_ROOT / "data" / "features" / "local_survival_abt.csv"
+ACTIVITY_SURVIVAL_ABT_CSV = PROJECT_ROOT / "data" / "features" / "activity_survival_abt.csv"
+ACTIVITY_MACRO_TAXONOMY_CSV = PROJECT_ROOT / "data" / "processed" / "activity_macro_taxonomy.csv"
 DISTRICT_CATEGORY_CSV = PROJECT_ROOT / "data" / "exports" / "district_category_survival.csv"
 BARRIO_CATEGORY_CSV = PROJECT_ROOT / "data" / "exports" / "barrio_category_survival.csv"
 FRONTEND_OUTPUT_JSON = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-opportunity-artifacts.json"
@@ -36,6 +41,21 @@ SECTION_SIMPLIFY_TOLERANCE_M = 8.0
 RECENT_LOOKBACK_MONTHS = 36
 ACTIVITY_PRIOR_STRENGTH = 25.0
 UNSUPPORTED_ACTIVITY_PENALTY = 0.03
+ACTIVITY_SOURCE_PENALTY_MULTIPLIER = 1.25
+ACTIVITY_UNSUPPORTED_PENALTY_MULTIPLIER = 1.35
+ACTIVITY_SOURCE_SCORE_PENALTIES = {
+    "barrio": 0.0,
+    "district": 0.015,
+    "city": 0.03,
+}
+ACTIVITY_SUPERCATEGORY_REPEAT_PENALTY = 0.05
+ACTIVITY_RECOMMENDATION_COUNT = 5
+ACTIVITY_DISTRICT_MIN_LOCALES = 80
+ACTIVITY_DISTRICT_MIN_EVENTS = 12
+ACTIVITY_BARRIO_MIN_LOCALES = 40
+ACTIVITY_BARRIO_MIN_EVENTS = 8
+ACTIVITY_CITY_MIN_LOCALES = 150
+
 POINT_OUTPUT_COLUMNS = [
     "listing_id",
     "listing_url",
@@ -139,6 +159,71 @@ ABT_USECOLS = [
     "avisos_district_per_1000_prev_year",
     "avisos_barrio_per_1000_prev_year",
     "avisos_barrio_share_of_district_prev_year",
+    "metro_distance_m_start",
+    "metro_access_count_500m_start",
+    "metro_access_count_1000m_start",
+    "missing_metro_distance_start",
+]
+
+ACTIVITY_COX_ABT_USECOLS = list(dict.fromkeys(ABT_USECOLS + [
+    "renta_best_eur_start",
+    "activity_category_code_start",
+]))
+
+ACTIVITY_SECTION_SCORING_COLUMNS = [
+    "section_key",
+    "district_code",
+    "district_name",
+    "barrio_name",
+    "first_seen_period",
+    "h3_cell_start",
+    "renta_effective_eur",
+    "renta_carry_forward_years",
+    "share_foreign_start",
+    "share_male_start",
+    "share_age_00_14_start",
+    "share_age_15_29_start",
+    "share_age_30_44_start",
+    "share_age_45_64_start",
+    "share_age_65_plus_start",
+    "age_mean_start",
+    "total_population_start",
+    "population_density_km2_start",
+    "padron_lag_months_start",
+    "geometry_available_start",
+    "n_divisions_start",
+    "n_epigrafes_start",
+    "n_activity_categories_start",
+    "section_local_count_start",
+    "section_unique_division_count_start",
+    "section_unique_activity_category_count_start",
+    "section_single_division_share_start",
+    "section_same_division_local_count_start",
+    "section_same_division_share_start",
+    "section_same_activity_category_local_count_start",
+    "section_same_activity_category_share_start",
+    "section_entry_count_3m_start",
+    "section_entry_count_6m_start",
+    "section_entry_count_12m_start",
+    "section_exit_count_3m_start",
+    "section_exit_count_6m_start",
+    "section_exit_count_12m_start",
+    "section_entry_rate_12m_start",
+    "section_exit_rate_12m_start",
+    "section_net_flow_12m_start",
+    "section_turnover_rate_12m_start",
+    "section_division_hhi_start",
+    "section_division_top_share_start",
+    "section_activity_category_hhi_start",
+    "section_activity_category_top_share_start",
+    "avisos_district_per_1000_prev_year",
+    "avisos_barrio_per_1000_prev_year",
+    "avisos_barrio_share_of_district_prev_year",
+    "total_population_delta_12m_start",
+    "share_foreign_delta_12m_start",
+    "share_age_15_29_delta_12m_start",
+    "population_density_km2_delta_12m_start",
+    "renta_best_eur_delta_12m_start",
     "metro_distance_m_start",
     "metro_access_count_500m_start",
     "metro_access_count_1000m_start",
@@ -290,7 +375,7 @@ def build_section_profiles(reference: dict[str, object]) -> tuple[pd.DataFrame, 
     section_panel, latest_period = load_latest_section_panel(SECTION_PANEL_CSV)
     sections = load_section_geometry()
     section_reference = reference["section_reference"]
-    activity_recommendations = build_activity_recommendation_lookup()
+    activity_context = build_activity_prediction_context()
     avisos_lookup = build_latest_avisos_lookup(SECTION_PANEL_CSV)
 
     section_profiles = sections.merge(section_panel, how="left", on="section_key", suffixes=("", "_panel"))
@@ -327,27 +412,7 @@ def build_section_profiles(reference: dict[str, object]) -> tuple[pd.DataFrame, 
     section_profiles = pd.concat([section_profiles.reset_index(drop=True), scores.reset_index(drop=True)], axis=1)
     section_profiles = add_section_rankings(section_profiles)
     section_profiles["opportunity_tier"] = section_profiles["risk_percentile"].map(opportunity_tier_from_percentile).astype("string")
-    section_profiles["top_activities"] = [
-        combine_activity_recommendations(
-            lookup_zone_recommendations(
-                activity_recommendations,
-                zone_level="barrio",
-                zone_name=barrio_name,
-            ),
-            lookup_zone_recommendations(
-                activity_recommendations,
-                zone_level="district",
-                zone_code=district_code,
-                zone_name=district_name,
-            ),
-            activity_recommendations["citywide"],
-        )
-        for district_code, district_name, barrio_name in zip(
-            section_profiles["district_code"],
-            section_profiles["district_name"],
-            section_profiles["barrio_name"],
-        )
-    ]
+    section_profiles["top_activities"] = build_predictive_activity_recommendations(section_profiles, activity_context)
     section_profiles["best_activity_label"] = section_profiles["top_activities"].map(
         lambda rows: rows[0]["display_label"] if rows else None
     )
@@ -661,6 +726,399 @@ def load_section_geometry() -> pd.DataFrame:
     sections["centroid_lat"] = centroids.geometry.y
     sections["centroid_lon"] = centroids.geometry.x
     return sections[["section_key", "district_code", "district_name", "barrio_code", "barrio_name", "centroid_lat", "centroid_lon", "geometry"]]
+
+
+def build_activity_prediction_context() -> dict[str, object]:
+    activity_abt = pd.read_csv(ACTIVITY_SURVIVAL_ABT_CSV, low_memory=False)
+    macro_catalog = load_activity_macro_catalog(ACTIVITY_MACRO_TAXONOMY_CSV)
+    district_rows = load_activity_evidence_rows(DISTRICT_CATEGORY_CSV, zone_level="district")
+    barrio_rows = load_activity_evidence_rows(BARRIO_CATEGORY_CSV, zone_level="barrio")
+    scorer = fit_activity_survival_cox_scorer(
+        abt=activity_abt,
+        feature_profile="full",
+    )
+    return {
+        "macro_catalog": macro_catalog,
+        "district_evidence": build_macro_zone_evidence(district_rows, zone_level="district"),
+        "barrio_evidence": build_macro_zone_evidence(barrio_rows, zone_level="barrio"),
+        "city_evidence": build_city_macro_evidence(district_rows),
+        "section_macro_reference": build_section_macro_activity_reference(activity_abt),
+        "calibration": build_activity_score_calibration(activity_abt, scorer),
+        "scorer": scorer,
+    }
+
+
+def load_activity_macro_catalog(path: Path) -> pd.DataFrame:
+    frame = pd.read_csv(path, low_memory=False)
+    frame["investable"] = frame["investable"].fillna(False).astype(bool)
+    frame["source_rows"] = pd.to_numeric(frame.get("source_rows"), errors="coerce").fillna(0.0)
+    frame["macro_category_code"] = frame.get("macro_category_code", pd.Series(pd.NA, index=frame.index)).astype("string")
+    frame["macro_category_name"] = frame.get("macro_category_name", pd.Series(pd.NA, index=frame.index)).astype("string")
+    frame["macro_category_definition"] = frame.get("macro_category_definition", pd.Series(pd.NA, index=frame.index)).astype("string")
+    frame["web_supercategory"] = frame.get("web_supercategory", pd.Series(pd.NA, index=frame.index)).astype("string")
+    frame["web_category"] = frame.get("web_category", pd.Series(pd.NA, index=frame.index)).astype("string")
+
+    investable = frame[
+        frame["investable"]
+        & frame["macro_category_code"].notna()
+        & frame["macro_category_code"].ne("non_priorizable")
+    ].copy()
+    investable = investable.sort_values(["macro_category_code", "source_rows"], ascending=[True, False])
+    catalog = investable.drop_duplicates(subset=["macro_category_code"], keep="first").copy()
+    catalog["display_label"] = catalog["macro_category_name"].fillna(catalog["web_category"]).fillna(catalog["macro_category_code"])
+    return catalog[[
+        "macro_category_code",
+        "display_label",
+        "web_supercategory",
+        "web_category",
+        "macro_category_name",
+        "macro_category_definition",
+    ]].reset_index(drop=True)
+
+
+def load_activity_evidence_rows(path: Path, *, zone_level: str) -> pd.DataFrame:
+    frame = pd.read_csv(
+        path,
+        usecols=["zone_code", "zone_name", "web_supercategory", "web_category", "display_label", "n_locales", "n_events"],
+        low_memory=False,
+    )
+    frame["zone_name"] = frame["zone_name"].map(clean_place_name).astype("string")
+    frame["display_label"] = frame["display_label"].astype("string")
+    frame["web_supercategory"] = frame["web_supercategory"].astype("string")
+    frame["web_category"] = frame["web_category"].astype("string")
+    frame["n_locales"] = pd.to_numeric(frame["n_locales"], errors="coerce").fillna(0.0)
+    frame["n_events"] = pd.to_numeric(frame["n_events"], errors="coerce").fillna(0.0)
+
+    if zone_level == "district":
+        frame["zone_code"] = frame["zone_code"].map(lambda value: normalize_admin_code(value, width=2)).astype("string")
+        frame["zone_lookup_key"] = frame["zone_code"]
+    else:
+        frame["zone_code"] = frame["zone_code"].astype("string")
+        frame["zone_lookup_key"] = frame["zone_name"].map(normalize_zone_lookup_key).astype("string")
+
+    decisions = [
+        classify_macro_category(
+            display_label=str(display_label or ""),
+            web_category=str(web_category or ""),
+            web_supercategory=str(web_supercategory or ""),
+            investable=True,
+        )
+        for display_label, web_category, web_supercategory in zip(
+            frame["display_label"],
+            frame["web_category"],
+            frame["web_supercategory"],
+        )
+    ]
+    frame["macro_category_code"] = [decision.macro_category_code for decision in decisions]
+    frame = frame[frame["macro_category_code"].astype("string").ne("non_priorizable")].copy()
+    return frame[["zone_code", "zone_name", "zone_lookup_key", "macro_category_code", "n_locales", "n_events"]]
+
+
+def build_macro_zone_evidence(frame: pd.DataFrame, *, zone_level: str) -> pd.DataFrame:
+    if frame.empty:
+        return pd.DataFrame(columns=["zone_lookup_key", "macro_category_code", "n_locales", "n_events", "event_rate", "macro_share", "confidence_tier", "supported_for_stats"])
+
+    grouped = frame.groupby(["zone_lookup_key", "macro_category_code"], dropna=False).agg(
+        zone_code=("zone_code", first_valid),
+        zone_name=("zone_name", first_valid),
+        n_locales=("n_locales", "sum"),
+        n_events=("n_events", "sum"),
+    ).reset_index()
+    grouped["event_rate"] = grouped["n_events"] / grouped["n_locales"].replace({0.0: np.nan})
+    grouped["macro_share"] = grouped["n_locales"] / grouped.groupby("zone_lookup_key", dropna=False)["n_locales"].transform("sum").replace({0.0: np.nan})
+    grouped["confidence_tier"] = [
+        confidence_tier(n_locales=int(round(n_locales)), n_events=int(round(n_events)), zone_level=zone_level)
+        for n_locales, n_events in zip(grouped["n_locales"], grouped["n_events"])
+    ]
+    grouped["supported_for_stats"] = [
+        activity_evidence_supported(n_locales=float(n_locales), n_events=float(n_events), zone_level=zone_level)
+        for n_locales, n_events in zip(grouped["n_locales"], grouped["n_events"])
+    ]
+    return grouped
+
+
+def build_city_macro_evidence(frame: pd.DataFrame) -> pd.DataFrame:
+    if frame.empty:
+        return pd.DataFrame(columns=["macro_category_code", "n_locales", "n_events", "event_rate", "macro_share", "confidence_tier", "supported_for_stats"])
+
+    grouped = frame.groupby(["macro_category_code"], dropna=False).agg(
+        n_locales=("n_locales", "sum"),
+        n_events=("n_events", "sum"),
+    ).reset_index()
+    grouped["event_rate"] = grouped["n_events"] / grouped["n_locales"].replace({0.0: np.nan})
+    grouped["macro_share"] = grouped["n_locales"] / grouped["n_locales"].sum()
+    grouped["confidence_tier"] = grouped["n_locales"].map(lambda value: city_confidence_tier(float(value)))
+    grouped["supported_for_stats"] = grouped["n_locales"].ge(ACTIVITY_CITY_MIN_LOCALES)
+    return grouped
+
+
+def build_predictive_activity_recommendations(
+    section_profiles: pd.DataFrame,
+    context: dict[str, object],
+    *,
+    max_rows: int = ACTIVITY_RECOMMENDATION_COUNT,
+) -> pd.Series:
+    if section_profiles.empty:
+        return pd.Series([[] for _ in range(len(section_profiles))], index=section_profiles.index, dtype=object)
+
+    macro_catalog = context["macro_catalog"]
+    scorer = context["scorer"]
+    candidate_base = section_profiles[ACTIVITY_SECTION_SCORING_COLUMNS].copy()
+    candidate_base["barrio_lookup_key"] = candidate_base["barrio_name"].map(normalize_zone_lookup_key).astype("string")
+
+    candidates = candidate_base.merge(macro_catalog, how="cross")
+    candidates["activity_category_code_start"] = candidates["macro_category_code"].astype("string")
+    candidates["n_divisions_start"] = 1.0
+    candidates["n_epigrafes_start"] = 1.0
+    candidates["n_activity_categories_start"] = 1.0
+    candidates = candidates.merge(
+        context["section_macro_reference"],
+        how="left",
+        on=["section_key", "macro_category_code"],
+    )
+    candidates = candidates.merge(
+        context["barrio_evidence"][ ["zone_lookup_key", "macro_category_code", "macro_share"] ].rename(
+            columns={"zone_lookup_key": "barrio_lookup_key", "macro_share": "barrio_macro_share"}
+        ),
+        how="left",
+        on=["barrio_lookup_key", "macro_category_code"],
+    )
+    candidates = candidates.merge(
+        context["district_evidence"][ ["zone_lookup_key", "macro_category_code", "macro_share"] ].rename(
+            columns={"zone_lookup_key": "district_code", "macro_share": "district_macro_share"}
+        ),
+        how="left",
+        on=["district_code", "macro_category_code"],
+    )
+    candidates = candidates.merge(
+        context["city_evidence"][ ["macro_category_code", "macro_share"] ].rename(columns={"macro_share": "city_macro_share"}),
+        how="left",
+        on=["macro_category_code"],
+    )
+    zone_macro_share = (
+        pd.to_numeric(candidates.get("barrio_macro_share"), errors="coerce")
+        .combine_first(pd.to_numeric(candidates.get("district_macro_share"), errors="coerce"))
+        .combine_first(pd.to_numeric(candidates.get("city_macro_share"), errors="coerce"))
+    )
+    section_local_count = pd.to_numeric(candidates.get("section_local_count_start"), errors="coerce")
+    candidates["section_same_activity_category_local_count_start"] = pd.to_numeric(
+        candidates.get("macro_section_same_activity_category_local_count_start"),
+        errors="coerce",
+    ).combine_first((section_local_count * zone_macro_share).clip(lower=0.0))
+    candidates["section_same_activity_category_share_start"] = pd.to_numeric(
+        candidates.get("macro_section_same_activity_category_share_start"),
+        errors="coerce",
+    ).combine_first(zone_macro_share)
+
+    scored = scorer.score_frame(candidates, horizons=(12.0, 24.0))
+    candidates = pd.concat([candidates.reset_index(drop=True), scored.reset_index(drop=True)], axis=1)
+    calibration_rows = [lookup_calibration(context["calibration"], float(score)) for score in candidates["risk_cox"]]
+    candidates["survival_12m"] = [row["survival_12m"] for row in calibration_rows]
+    candidates["survival_24m"] = [row["survival_24m"] for row in calibration_rows]
+    candidates = attach_activity_evidence(candidates, context=context)
+    source_penalty = candidates["source_zone"].map(ACTIVITY_SOURCE_SCORE_PENALTIES).fillna(ACTIVITY_SOURCE_SCORE_PENALTIES["city"])
+    unsupported_penalty = (~candidates["supported_for_stats"].fillna(False)).astype(float) * UNSUPPORTED_ACTIVITY_PENALTY
+    candidates["activity_rank_score"] = (
+        pd.to_numeric(candidates["activity_context_index"], errors="coerce")
+        + ACTIVITY_SOURCE_PENALTY_MULTIPLIER * pd.to_numeric(source_penalty, errors="coerce")
+        + ACTIVITY_UNSUPPORTED_PENALTY_MULTIPLIER * unsupported_penalty
+    )
+    candidates["activity_risk"] = pd.to_numeric(candidates["activity_rank_score"], errors="coerce")
+    candidates["supported_rank"] = (~candidates["supported_for_stats"].fillna(False)).astype(int)
+    candidates["source_priority"] = candidates["source_zone"].map({"barrio": 0, "district": 1, "city": 2}).fillna(3).astype(int)
+
+    top = select_diversified_activity_rows(candidates, max_rows=max_rows)
+    top["rank"] = top.groupby("section_key", dropna=False).cumcount() + 1
+
+    payload_by_section: dict[str, list[dict[str, object]]] = {}
+    for section_key, part in top.groupby("section_key", dropna=False):
+        rows: list[dict[str, object]] = []
+        for row in part.itertuples(index=False):
+            rows.append(
+                {
+                    "rank": int(row.rank),
+                    "source_zone": str(getattr(row, "source_zone", "city") or "city"),
+                    "display_label": str(getattr(row, "display_label", "") or ""),
+                    "web_supercategory": str(getattr(row, "web_supercategory", "") or ""),
+                    "web_category": str(getattr(row, "web_category", "") or ""),
+                    "event_rate": serialize_probability(getattr(row, "event_rate", None)),
+                    "activity_risk": serialize_probability(getattr(row, "activity_risk", None)),
+                    "survival_12m": serialize_probability(getattr(row, "survival_12m", None)),
+                    "survival_24m": serialize_probability(getattr(row, "survival_24m", None)),
+                    "n_locales": int(round(float(getattr(row, "n_locales", 0) or 0))),
+                    "confidence_tier": str(getattr(row, "confidence_tier", "") or ""),
+                    "supported_for_stats": bool(getattr(row, "supported_for_stats", False)),
+                }
+            )
+        payload_by_section[str(section_key)] = rows
+
+    return pd.Series(
+        [payload_by_section.get(str(section_key), []) for section_key in section_profiles["section_key"]],
+        index=section_profiles.index,
+        dtype=object,
+    )
+
+
+def select_diversified_activity_rows(candidates: pd.DataFrame, *, max_rows: int) -> pd.DataFrame:
+    selected_parts: list[pd.DataFrame] = []
+    for _, part in candidates.groupby("section_key", dropna=False):
+        remaining = part.sort_values(
+            ["activity_risk", "risk_percentile", "supported_rank", "source_priority", "n_locales", "display_label"],
+            ascending=[True, True, True, True, False, True],
+            na_position="last",
+        ).copy()
+        picked: list[pd.Series] = []
+        used_supercategories: dict[str, int] = {}
+        while len(picked) < max_rows and not remaining.empty:
+            penalties = remaining["web_supercategory"].astype("string").map(
+                lambda value: used_supercategories.get(str(value), 0) * ACTIVITY_SUPERCATEGORY_REPEAT_PENALTY
+            ).astype(float)
+            adjusted_score = pd.to_numeric(remaining["activity_risk"], errors="coerce") + penalties
+            chosen_index = adjusted_score.idxmin()
+            chosen = remaining.loc[chosen_index]
+            picked.append(chosen)
+            used_supercategories[str(chosen.get("web_supercategory", ""))] = used_supercategories.get(str(chosen.get("web_supercategory", "")), 0) + 1
+            remaining = remaining.drop(index=chosen_index)
+        if picked:
+            selected_parts.append(pd.DataFrame(picked))
+
+    if not selected_parts:
+        return candidates.iloc[0:0].copy()
+    return pd.concat(selected_parts, axis=0, ignore_index=True)
+
+
+def attach_activity_evidence(candidates: pd.DataFrame, *, context: dict[str, object]) -> pd.DataFrame:
+    out = candidates.copy()
+
+    barrio_evidence = context["barrio_evidence"].add_prefix("barrio_")
+    district_evidence = context["district_evidence"].add_prefix("district_")
+    city_evidence = context["city_evidence"].add_prefix("city_")
+
+    out = out.merge(
+        barrio_evidence,
+        how="left",
+        left_on=["barrio_lookup_key", "macro_category_code"],
+        right_on=["barrio_zone_lookup_key", "barrio_macro_category_code"],
+    )
+    out = out.merge(
+        district_evidence,
+        how="left",
+        left_on=["district_code", "macro_category_code"],
+        right_on=["district_zone_lookup_key", "district_macro_category_code"],
+    )
+    out = out.merge(
+        city_evidence,
+        how="left",
+        left_on=["macro_category_code"],
+        right_on=["city_macro_category_code"],
+    )
+
+    barrio_available = out.get("barrio_n_locales", pd.Series(np.nan, index=out.index)).notna()
+    district_available = out.get("district_n_locales", pd.Series(np.nan, index=out.index)).notna()
+    out["source_zone"] = np.select(
+        [barrio_available, district_available],
+        ["barrio", "district"],
+        default="city",
+    )
+
+    out["n_locales"] = (
+        pd.to_numeric(out.get("barrio_n_locales"), errors="coerce")
+        .combine_first(pd.to_numeric(out.get("district_n_locales"), errors="coerce"))
+        .combine_first(pd.to_numeric(out.get("city_n_locales"), errors="coerce"))
+        .fillna(0.0)
+    )
+    out["n_events"] = (
+        pd.to_numeric(out.get("barrio_n_events"), errors="coerce")
+        .combine_first(pd.to_numeric(out.get("district_n_events"), errors="coerce"))
+        .combine_first(pd.to_numeric(out.get("city_n_events"), errors="coerce"))
+        .fillna(0.0)
+    )
+    out["event_rate"] = (
+        pd.to_numeric(out.get("barrio_event_rate"), errors="coerce")
+        .combine_first(pd.to_numeric(out.get("district_event_rate"), errors="coerce"))
+        .combine_first(pd.to_numeric(out.get("city_event_rate"), errors="coerce"))
+    )
+    out["confidence_tier"] = (
+        out.get("barrio_confidence_tier", pd.Series(pd.NA, index=out.index)).astype("string")
+        .combine_first(out.get("district_confidence_tier", pd.Series(pd.NA, index=out.index)).astype("string"))
+        .combine_first(out.get("city_confidence_tier", pd.Series(pd.NA, index=out.index)).astype("string"))
+        .fillna("very_low")
+    )
+    out["supported_for_stats"] = (
+        out.get("barrio_supported_for_stats", pd.Series(pd.NA, index=out.index, dtype="boolean")).astype("boolean")
+        .combine_first(out.get("district_supported_for_stats", pd.Series(pd.NA, index=out.index, dtype="boolean")).astype("boolean"))
+        .combine_first(out.get("city_supported_for_stats", pd.Series(pd.NA, index=out.index, dtype="boolean")).astype("boolean"))
+        .fillna(False)
+        .astype(bool)
+    )
+    return out
+
+
+def build_section_macro_activity_reference(activity_abt: pd.DataFrame) -> pd.DataFrame:
+    frame = activity_abt[[
+        "first_seen_period",
+        "section_key_start",
+        "activity_category_code_start",
+        "section_same_activity_category_local_count_start",
+        "section_same_activity_category_share_start",
+    ]].copy()
+    frame["section_key_start"] = normalize_section_key_series(frame.get("section_key_start", pd.Series(pd.NA, index=frame.index))).astype("string")
+    frame["activity_category_code_start"] = frame.get("activity_category_code_start", pd.Series(pd.NA, index=frame.index)).astype("string")
+    frame["first_seen_date"] = pd.to_datetime(frame["first_seen_period"].astype("string") + "-01", errors="coerce")
+
+    valid = frame[frame["section_key_start"].notna() & frame["activity_category_code_start"].notna()].copy()
+    if valid.empty:
+        return pd.DataFrame(columns=[
+            "section_key",
+            "macro_category_code",
+            "macro_section_same_activity_category_local_count_start",
+            "macro_section_same_activity_category_share_start",
+        ])
+
+    recent_cutoff = valid["first_seen_date"].max() - pd.DateOffset(months=RECENT_LOOKBACK_MONTHS)
+    recent = valid[valid["first_seen_date"].ge(recent_cutoff)].copy() if valid["first_seen_date"].notna().any() else valid.iloc[0:0].copy()
+
+    history = valid.groupby(["section_key_start", "activity_category_code_start"], dropna=False)[[
+        "section_same_activity_category_local_count_start",
+        "section_same_activity_category_share_start",
+    ]].median(numeric_only=True)
+    recent_grouped = recent.groupby(["section_key_start", "activity_category_code_start"], dropna=False)[[
+        "section_same_activity_category_local_count_start",
+        "section_same_activity_category_share_start",
+    ]].median(numeric_only=True)
+    combined = history.copy()
+    combined.update(recent_grouped)
+    return combined.reset_index().rename(columns={
+        "section_key_start": "section_key",
+        "activity_category_code_start": "macro_category_code",
+        "section_same_activity_category_local_count_start": "macro_section_same_activity_category_local_count_start",
+        "section_same_activity_category_share_start": "macro_section_same_activity_category_share_start",
+    })
+
+
+def build_activity_score_calibration(
+    activity_abt: pd.DataFrame,
+    scorer,
+) -> list[dict[str, object]]:
+    score_payload = apply_training_policies(
+        activity_abt,
+        transition_policy="keep_all",
+        renta_max_year=2023,
+    )
+    dataset = score_payload["dataset"].copy()
+    scored = scorer.score_frame(dataset, horizons=(12.0, 24.0))
+    return build_calibration_lookup(
+        score=scored["risk_cox"],
+        duration=dataset["duration_months"],
+        event=dataset["event_observed"],
+        bucket_count=CALIBRATION_BUCKETS,
+    )
+
+
+def activity_evidence_supported(*, n_locales: float, n_events: float, zone_level: str) -> bool:
+    if zone_level == "district":
+        return n_locales >= ACTIVITY_DISTRICT_MIN_LOCALES and n_events >= ACTIVITY_DISTRICT_MIN_EVENTS
+    return n_locales >= ACTIVITY_BARRIO_MIN_LOCALES and n_events >= ACTIVITY_BARRIO_MIN_EVENTS
 
 
 def build_activity_recommendation_lookup() -> dict[str, dict[str, list[dict[str, object]]]]:

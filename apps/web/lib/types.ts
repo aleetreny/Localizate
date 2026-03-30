@@ -12,6 +12,8 @@ export type FrontendMeta = {
   subtitle: string;
   generated_at: string;
   defaultCategoryCode: string;
+  risk_model_key?: string;
+  risk_model_label?: string;
   map_bounds: Bounds;
 };
 
@@ -35,6 +37,7 @@ export type HexAggregate = {
   location_label: string;
   n_locales: number;
   n_events: number;
+  avg_risk_primary?: number;
   avg_risk_ensemble: number;
   avg_risk_percentile: number;
   survival_12m: number | null;
@@ -60,6 +63,7 @@ export type ZoneAggregate = {
   category_desc: string;
   n_locales: number;
   n_events: number;
+  avg_risk_primary?: number;
   avg_risk_ensemble: number;
   avg_risk_percentile: number;
   event_rate: number;

@@ -193,6 +193,109 @@ select {
   line-height: 1.45;
 }
 
+.explain-banner {
+  display: grid;
+  gap: 12px;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  background:
+    linear-gradient(135deg, rgba(30, 107, 97, 0.14), rgba(255, 255, 255, 0.82)),
+    rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(23, 32, 38, 0.08);
+}
+
+.explain-banner-floating {
+  box-shadow: 0 18px 42px rgba(23, 32, 38, 0.18);
+}
+
+.explain-banner-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.explain-banner-title {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.08rem;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.explain-banner-summary,
+.explain-banner-copy,
+.explain-banner-note {
+  line-height: 1.5;
+}
+
+.explain-banner-summary,
+.explain-banner-note {
+  color: var(--muted);
+}
+
+.explain-banner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.explain-banner-headcopy {
+  display: grid;
+  gap: 8px;
+}
+
+.explain-banner-close {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid rgba(23, 32, 38, 0.08);
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--accent-strong);
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.explain-banner-close:hover {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.explain-banner-close:focus-visible {
+  outline: 2px solid rgba(13, 63, 69, 0.45);
+  outline-offset: 2px;
+}
+
+.explain-banner-body {
+  display: grid;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.explain-banner-copy,
+.explain-banner-note {
+  margin: 0;
+}
+
+.explain-banner-example {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(23, 32, 38, 0.08);
+}
+
+.explain-banner-example-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
 .stat-card {
   border-radius: var(--radius-md);
   padding: 14px;
@@ -230,6 +333,18 @@ select {
   margin: 0;
 }
 
+.info-card-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.info-card-heading-copy {
+  display: grid;
+  gap: 4px;
+}
+
 .info-meta {
   display: flex;
   flex-wrap: wrap;
@@ -263,6 +378,34 @@ select {
 .zone-board-body {
   display: grid;
   gap: 8px;
+}
+
+.zone-board-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.zone-board-action {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid rgba(23, 32, 38, 0.08);
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--accent-strong);
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.zone-board-action:hover {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.zone-board-action:focus-visible {
+  outline: 2px solid rgba(13, 63, 69, 0.3);
+  outline-offset: 2px;
 }
 
 .section-title {
@@ -577,9 +720,21 @@ select {
   letter-spacing: -0.04em;
 }
 
-.activity-meta {
-  color: var(--muted);
-  line-height: 1.4;
+.activity-meta-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.activity-meta-item {
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.activity-meta-item::marker {
+  color: var(--text);
 }
 
 .detail-empty {
@@ -690,6 +845,33 @@ select {
   right: auto;
   z-index: 4;
   width: min(430px, calc(100% - 36px));
+}
+
+.risk-explainer-overlay {
+  left: 18px;
+  right: auto;
+  z-index: 4;
+  width: min(430px, calc(100% - 36px));
+}
+
+.risk-explainer-overlay .explain-banner-copy {
+  color: var(--text);
+}
+
+.risk-explainer-overlay .explain-banner-note,
+.risk-explainer-overlay .explain-banner-summary {
+  color: var(--muted);
+}
+
+.risk-explainer-overlay p {
+  margin-top: 0;
+}
+
+.risk-explainer-overlay .explain-banner {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .metric-banner .metric-explainer {
@@ -858,6 +1040,10 @@ select {
   .app-shell {
     padding: 12px;
     gap: 12px;
+  }
+
+  .info-card-heading {
+    flex-direction: column;
   }
 
   .detail-header-row {

@@ -210,7 +210,7 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
 
         <div className="control-group">
           <label className="control-label" htmlFor="operation-filter">
-            Operacion
+            Operación
           </label>
           <select
             className="select"
@@ -261,7 +261,7 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
         <p className="support-note">
           {isLoadingArtifacts
             ? "Cargando el dataset de oportunidades y su contexto espacial. La interfaz aparece primero y los puntos se completan en segundo plano."
-            : "Haz click en un local para abrir su ficha. Si haces click en cualquier otro punto del mapa, la lectura se resuelve sobre la seccion censal que contiene ese punto para comparar riesgo, competencia, renta, metro y avisos en una misma unidad."}
+            : "Haz clic en un local para abrir su ficha. Si haces clic en cualquier otro punto del mapa, la lectura se resuelve sobre la sección censal que contiene ese punto para comparar riesgo, competencia, renta, metro y avisos en una misma unidad."}
         </p>
 
         <section className="detail-card">
@@ -279,11 +279,11 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
           ) : (
             <div className="detail-empty">
               <div className="eyebrow">Ficha activa</div>
-              <h3>{isLoadingArtifacts ? "Cargando oportunidades" : "Sin seleccion"}</h3>
+              <h3>{isLoadingArtifacts ? "Cargando oportunidades" : "Sin selección"}</h3>
               <p>
                 {isLoadingArtifacts
                   ? "La vista está esperando el artefacto de oportunidades y la geometría de secciones para habilitar el detalle."
-                  : "No hay locales visibles con el filtro actual. Cambia la operacion o haz click en el mapa para explorar una seccion."}
+                  : "No hay locales visibles con el filtro actual. Cambia la operación o haz clic en el mapa para explorar una sección."}
               </p>
             </div>
           )}
@@ -291,9 +291,9 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
 
         <section className="info-card">
           <div className="eyebrow">Actividades recomendadas</div>
-          <h3>{manualSelection ? "Ranking por menor riesgo historico de la seccion" : selectedListing ? "Ranking por menor riesgo historico del entorno" : "Selecciona un punto"}</h3>
-          <p className="empty-note">El orden usa un riesgo historico ajustado por muestra para cada actividad.</p>
-          {activeActivities.length > 0 ? <ActivityList activities={activeActivities} /> : <p className="empty-note">Sin ranking historico suficiente para este entorno.</p>}
+          <h3>{manualSelection ? "Actividades con mejor pronóstico en esta sección" : selectedListing ? "Actividades con mejor pronóstico en este entorno" : "Selecciona un punto"}</h3>
+          <p className="empty-note">Las ordenamos de menor a mayor riesgo estimado para esta zona. En cada tarjeta verás una referencia rápida de cuánto suele aguantar esa actividad a 2 años y cuánta muestra parecida tenemos cerca.</p>
+          {activeActivities.length > 0 ? <ActivityList activities={activeActivities} /> : <p className="empty-note">Sin ranking predictivo disponible para este entorno.</p>}
         </section>
       </aside>
 
@@ -382,8 +382,8 @@ function ManualPointDetail({
           Limpiar punto
         </button>
       </div>
-      <p className="detail-location">Lat {selection.lat.toFixed(5)} · Lon {selection.lng.toFixed(5)} · seccion {section.section_key}</p>
-      <p className="detail-subtle">El punto que marcas se interpreta con la seccion censal que lo contiene, no como una direccion inventada.</p>
+      <p className="detail-location">Lat {selection.lat.toFixed(5)} · Lon {selection.lng.toFixed(5)} · sección {section.section_key}</p>
+      <p className="detail-subtle">El punto que marcas se interpreta con la sección censal que lo contiene, no como una dirección inventada.</p>
       <div className="detail-meta">
         <span className="chip">{section.opportunity_tier}</span>
         <span className="chip">{formatRiskPercentile(section.risk_percentile)}</span>
@@ -402,14 +402,15 @@ function ActivityList({ activities }: { activities: OpportunityActivity[] }) {
           <div className="activity-card-top">
             <span className="activity-rank">#{activity.rank}</span>
             <div className="activity-kpi">
-              <span className="activity-kpi-label">Riesgo hist.</span>
-              <span className="activity-value">{formatPercent(activity.activity_risk)}</span>
+              <span className="activity-kpi-label">Riesgo contextual</span>
+              <span className="activity-value">{formatSignalPercent(activity.activity_risk)}</span>
             </div>
           </div>
           <strong>{activity.display_label}</strong>
-          <span className="activity-meta">{activity.web_supercategory} · {activity.web_category}</span>
-          <span className="activity-meta">Supervivencia 24m {formatPercent(activity.survival_24m)}</span>
-          <span className="activity-meta">Fuente {activity.source_zone} · {formatCompact(activity.n_locales)} locales</span>
+          <ul className="activity-meta-list">
+            <li className="activity-meta-item">Locales parecidos cerca: {formatActivitySampleValue(activity.n_locales, activity.source_zone)}</li>
+            <li className="activity-meta-item">Supervivencia (2 años): {formatActivityStabilityValue(activity.survival_24m)}</li>
+          </ul>
         </article>
       ))}
     </div>
@@ -477,7 +478,7 @@ function MetricExplainer({ metric }: { metric: MetricDefinition | null }) {
           ) : null}
         </>
       ) : (
-        <p className="metric-explainer-copy">Haz click en cualquier tarjeta para ver qué significa, por qué es útil y cómo la calcula el producto.</p>
+        <p className="metric-explainer-copy">Haz clic en cualquier tarjeta para ver qué significa, por qué es útil y cómo la calcula el producto.</p>
       )}
     </div>
   );
@@ -500,6 +501,21 @@ function formatPercent(value: number | null) {
     return "Sin datos";
   }
   return `${(value * 100).toFixed(0)}%`;
+}
+
+function formatSignalPercent(value: number | null) {
+  if (!isFiniteNumber(value)) {
+    return "Sin datos";
+  }
+
+  const percent = value * 100;
+  if (Math.abs(percent) < 1e-9 || Math.abs(percent - 100) < 1e-9) {
+    return `${percent.toFixed(0)}%`;
+  }
+
+  const absPercent = Math.abs(percent);
+  const decimals = absPercent < 1 || absPercent > 99 ? 2 : absPercent < 10 || absPercent > 90 ? 1 : 0;
+  return `${percent.toFixed(decimals)}%`;
 }
 
 function formatCurrency(value: number | null) {
@@ -572,6 +588,28 @@ function formatRiskPercentile(value: number) {
   return `P${Math.round(value * 100)}`;
 }
 
+function formatActivityStabilityValue(value: number | null) {
+  if (!isFiniteNumber(value)) {
+    return "Sin referencia";
+  }
+  return formatSignalPercent(value);
+}
+
+function formatActivitySampleValue(nLocales: number | null, sourceZone: OpportunityActivity["source_zone"]) {
+  if (!isFiniteNumber(nLocales)) {
+    return "Sin muestra";
+  }
+
+  const amount = formatCompact(nLocales);
+  if (sourceZone === "city") {
+    return `${amount} en Madrid`;
+  }
+  if (sourceZone === "district") {
+    return `${amount} en la zona`;
+  }
+  return amount;
+}
+
 function formatRank(rank: number | null, total: number | null) {
   if (!isFiniteNumber(rank) || !isFiniteNumber(total) || total <= 0) {
     return "Sin datos";
@@ -581,15 +619,15 @@ function formatRank(rank: number | null, total: number | null) {
 
 function buildBestActivitySummary(label: string, risk: number | null, survival24m: number | null) {
   if (!label) {
-    return "Sin ranking historico suficiente para proponer una actividad.";
+    return "Sin ranking predictivo disponible para proponer una actividad.";
   }
 
   const parts = [label];
   if (isFiniteNumber(risk)) {
-    parts.push(`riesgo historico ${formatPercent(risk)}`);
+    parts.push(`riesgo contextual ${formatSignalPercent(risk)}`);
   }
   if (isFiniteNumber(survival24m)) {
-    parts.push(`supervivencia 24m ${formatPercent(survival24m)}`);
+    parts.push(`supervivencia 24m ${formatSignalPercent(survival24m)}`);
   }
   return parts.join(" · ");
 }
@@ -602,56 +640,56 @@ function buildPointPrimaryMetrics(point: OpportunityPoint, horizon: Horizon): Me
       label: `Supervivencia ${horizonLabel}`,
       value: formatPercent(getPointSurvival(point, horizon)),
       summary: `Es la probabilidad esperada de que un local comparable siga activo dentro de ${horizonLabel} en este entorno.`,
-      calculation: "Partimos del score de riesgo del modelo para la seccion donde cae el local y lo transformamos a supervivencia esperada en ese horizonte."
+      calculation: "Partimos del score de riesgo del modelo para la sección donde cae el local y lo transformamos a supervivencia esperada en ese horizonte."
     },
     {
       id: `listing:${point.listing_id}:risk-percentile`,
       label: "Percentil riesgo",
       value: formatRiskPercentile(point.risk_percentile),
-      summary: "Ubica este entorno dentro de la distribucion de riesgo de Madrid. Cuanto mas alto, mas exigente es el entorno historico.",
-      calculation: "Ordenamos todas las secciones por su score de riesgo. Un P80 significa que el riesgo de esta seccion queda por encima de aproximadamente el 80% de las secciones de la ciudad."
+      summary: "Ubica este entorno dentro de la distribución de riesgo de Madrid. Cuanto más alto, más exigente es el entorno observado.",
+      calculation: "Ordenamos todas las secciones por su score de riesgo. Un P80 significa que el riesgo de esta sección queda por encima de aproximadamente el 80% de las secciones de la ciudad."
     },
     {
       id: `listing:${point.listing_id}:city-rank`,
       label: "Ranking Madrid",
       value: formatRank(point.city_rank, point.city_total_sections),
-      summary: "Mide la posicion de esta seccion frente a todo Madrid cuando ordenamos por menor riesgo historico.",
-      calculation: "Comparamos la seccion con el total de secciones candidatas y asignamos el puesto por score de riesgo ascendente. Cuanto mas cerca de #1, mejor."
+      summary: "Mide la posición de esta sección frente a todo Madrid cuando ordenamos por menor riesgo predictivo.",
+      calculation: "Comparamos la sección con el total de secciones candidatas y asignamos el puesto por score de riesgo ascendente. Cuanto más cerca de #1, mejor."
     },
     {
       id: `listing:${point.listing_id}:district-rank`,
       label: "Ranking distrito",
       value: formatRank(point.district_rank, point.district_total_sections),
-      summary: "Es la posicion relativa de la seccion dentro de su distrito.",
+      summary: "Es la posición relativa de la sección dentro de su distrito.",
       calculation: "Aplicamos el mismo orden por menor riesgo, pero comparando solo contra secciones del mismo distrito."
     },
     {
       id: `listing:${point.listing_id}:income`,
-      label: "Renta seccion",
+      label: "Renta sección",
       value: formatCurrency(point.renta_effective_eur),
-      summary: "Aproxima la capacidad economica residencial del entorno inmediato.",
-      calculation: "Usamos la renta anual efectiva mas reciente disponible para la seccion censal. Si la fuente puntual falla, el pipeline conserva el mejor fallback territorial disponible."
+      summary: "Aproxima la capacidad económica residencial del entorno inmediato.",
+      calculation: "Usamos la renta anual efectiva más reciente disponible para la sección censal. Si la fuente puntual falla, el pipeline conserva el mejor fallback territorial disponible."
     },
     {
       id: `listing:${point.listing_id}:metro`,
-      label: "Metro mas cercano",
+      label: "Metro más cercano",
       value: formatDistance(point.metro_distance_m_start),
-      summary: "Resume la accesibilidad del local al transporte subterraneo.",
-      calculation: "Medimos en metros la distancia en linea recta desde el local hasta el acceso de metro mas cercano."
+      summary: "Resume la accesibilidad del local al transporte subterráneo.",
+      calculation: "Medimos en metros la distancia en línea recta desde el local hasta el acceso de metro más cercano."
     },
     {
       id: `listing:${point.listing_id}:density`,
-      label: "Densidad poblacion",
+      label: "Densidad población",
       value: formatDensity(point.population_density_km2_start),
       summary: "Mide la intensidad residencial del entorno.",
-      calculation: "Dividimos la poblacion total de la seccion entre su superficie para obtener habitantes por kilometro cuadrado."
+      calculation: "Dividimos la población total de la sección entre su superficie para obtener habitantes por kilómetro cuadrado."
     },
     {
       id: `listing:${point.listing_id}:competition`,
       label: "Competencia local",
       value: formatCompact(point.section_local_count_start),
-      summary: "Cuenta cuantos locales activos compiten por la misma atencion en esa seccion.",
-      calculation: "Tomamos el stock historico de locales activos observado en la seccion censal usada para puntuar el entorno."
+      summary: "Cuenta cuántos locales activos compiten por la misma atención en esa sección.",
+      calculation: "Tomamos el stock histórico de locales activos observado en la sección censal usada para puntuar el entorno."
     }
   ];
 }
@@ -663,57 +701,57 @@ function buildSectionPrimaryMetrics(section: OpportunitySection, horizon: Horizo
       id: `section:${section.section_key}:survival:${horizon}`,
       label: `Supervivencia ${horizonLabel}`,
       value: formatPercent(getSectionSurvival(section, horizon)),
-      summary: `Es la probabilidad esperada de que un local comparable siga activo dentro de ${horizonLabel} en esta seccion.`,
-      calculation: "Partimos del score de riesgo agregado de la seccion y lo transformamos a supervivencia esperada para el horizonte seleccionado."
+      summary: `Es la probabilidad esperada de que un local comparable siga activo dentro de ${horizonLabel} en esta sección.`,
+      calculation: "Partimos del score de riesgo agregado de la sección y lo transformamos a supervivencia esperada para el horizonte seleccionado."
     },
     {
       id: `section:${section.section_key}:city-rank`,
       label: "Ranking Madrid",
       value: formatRank(section.city_rank, section.city_total_sections),
-      summary: "Posicion de la seccion frente al total de Madrid por menor riesgo historico.",
-      calculation: "Ordenamos todas las secciones candidatas por score de riesgo ascendente. Cuanto mas cerca de #1, mas favorable es la lectura."
+      summary: "Posición de la sección frente al total de Madrid por menor riesgo predictivo.",
+      calculation: "Ordenamos todas las secciones candidatas por score de riesgo ascendente. Cuanto más cerca de #1, más favorable es la lectura."
     },
     {
       id: `section:${section.section_key}:district-rank`,
       label: "Ranking distrito",
       value: formatRank(section.district_rank, section.district_total_sections),
-      summary: "Posicion relativa de la seccion dentro de su distrito.",
-      calculation: "Comparamos solo con secciones del mismo distrito y ordenamos por menor riesgo historico."
+      summary: "Posición relativa de la sección dentro de su distrito.",
+      calculation: "Comparamos solo con secciones del mismo distrito y ordenamos por menor riesgo predictivo."
     },
     {
       id: `section:${section.section_key}:barrio-rank`,
       label: "Ranking barrio",
       value: formatRank(section.barrio_rank, section.barrio_total_sections),
-      summary: "Posicion relativa de la seccion dentro de su barrio.",
-      calculation: "Comparamos la seccion con el resto de secciones del mismo barrio y ordenamos por score de riesgo ascendente."
+      summary: "Posición relativa de la sección dentro de su barrio.",
+      calculation: "Comparamos la sección con el resto de secciones del mismo barrio y ordenamos por score de riesgo ascendente."
     },
     {
       id: `section:${section.section_key}:income`,
-      label: "Renta seccion",
+      label: "Renta sección",
       value: formatCurrency(section.renta_effective_eur),
-      summary: "Aproxima la capacidad economica residencial de la seccion.",
-      calculation: "Usamos la renta anual efectiva mas reciente disponible para la seccion censal; si falta, se conserva el mejor fallback territorial del pipeline."
+      summary: "Aproxima la capacidad económica residencial de la sección.",
+      calculation: "Usamos la renta anual efectiva más reciente disponible para la sección censal; si falta, se conserva el mejor fallback territorial del pipeline."
     },
     {
       id: `section:${section.section_key}:metro`,
       label: "Metro centroide",
       value: formatDistance(section.metro_distance_m_start),
-      summary: "Resume la accesibilidad media de la seccion al metro.",
-      calculation: "Medimos en metros la distancia en linea recta desde el centroide de la seccion hasta el acceso de metro mas cercano."
+      summary: "Resume la accesibilidad media de la sección al metro.",
+      calculation: "Medimos en metros la distancia en línea recta desde el centroide de la sección hasta el acceso de metro más cercano."
     },
     {
       id: `section:${section.section_key}:density`,
-      label: "Densidad poblacion",
+      label: "Densidad población",
       value: formatDensity(section.population_density_km2_start),
-      summary: "Mide la intensidad residencial de la seccion.",
-      calculation: "Dividimos la poblacion total de la seccion entre su superficie para obtener habitantes por kilometro cuadrado."
+      summary: "Mide la intensidad residencial de la sección.",
+      calculation: "Dividimos la población total de la sección entre su superficie para obtener habitantes por kilómetro cuadrado."
     },
     {
       id: `section:${section.section_key}:competition`,
       label: "Competencia local",
       value: formatCompact(section.section_local_count_start),
-      summary: "Cuenta cuantos locales activos hay en la seccion.",
-      calculation: "Tomamos el stock historico de locales activos observado para la propia seccion censal."
+      summary: "Cuenta cuántos locales activos hay en la sección.",
+      calculation: "Tomamos el stock histórico de locales activos observado para la propia sección censal."
     }
   ];
 }
@@ -750,57 +788,57 @@ function buildContextMetrics({
       value: bestActivityLabel || "Sin ranking",
       summary: bestActivityLabel
         ? `${bestActivityLabel} es la mejor candidata actual para este entorno. ${buildBestActivitySummary(bestActivityLabel, bestActivityRisk, bestActivitySurvival24m)}`
-        : "No hay ranking historico suficiente para proponer una actividad con fiabilidad minima.",
-      calculation: "Ordenamos las actividades por riesgo historico ajustado por muestra. Primero usamos barrio; si falta cobertura suficiente, completamos con distrito y ciudad."
+        : "No hay ranking predictivo suficiente para proponer una actividad con fiabilidad mínima.",
+      calculation: "Puntuamos la sección como si el local abriera en cada macrocategoría priorizable. Para ordenar, combinamos el riesgo absoluto previsto por Cox con la ventaja relativa de esa actividad frente a su propia distribución histórica y añadimos penalizaciones pequeñas cuando la cobertura local es más débil o cuando el top 5 repite demasiadas actividades de una misma supercategoría. La supervivencia 24m se mantiene como lectura secundaria orientativa del horizonte."
     },
     {
       id: `${scopeId}:active-categories`,
-      label: "Categorias activas",
+      label: "Categorías activas",
       value: formatCompact(uniqueActivityCategories),
       summary: "Mide la diversidad comercial real del entorno.",
-      calculation: "Contamos cuantas categorias de actividad distintas aparecen activas en la seccion censal."
+      calculation: "Contamos cuántas categorías de actividad distintas aparecen activas en la sección censal."
     },
     {
       id: `${scopeId}:turnover-12m`,
-      label: "Rotacion 12m",
+      label: "Rotación 12m",
       value: formatShare(turnoverRate12m),
-      summary: "Resume cuanto se ha movido el tejido comercial en el ultimo ano observado.",
-      calculation: "Dividimos los cambios o salidas observados en los ultimos 12 meses entre el stock de locales de la seccion."
+      summary: "Resume cuánto se ha movido el tejido comercial en el último año observado.",
+      calculation: "Dividimos los cambios o salidas observados en los últimos 12 meses entre el stock de locales de la sección."
     },
     {
       id: `${scopeId}:population`,
-      label: "Poblacion",
+      label: "Población",
       value: formatCompact(totalPopulation),
-      summary: "Es el tamano residencial del entorno inmediato.",
-      calculation: "Tomamos la poblacion total mas reciente asociada a la seccion censal."
+      summary: "Es el tamaño residencial del entorno inmediato.",
+      calculation: "Tomamos la población total más reciente asociada a la sección censal."
     },
     {
       id: `${scopeId}:foreign-share`,
       label: "Extranjera",
       value: formatShare(shareForeign),
-      summary: "Mide el peso de residentes extranjeros dentro de la seccion.",
-      calculation: "Dividimos la poblacion extranjera entre la poblacion total de la seccion."
+      summary: "Mide el peso de residentes extranjeros dentro de la sección.",
+      calculation: "Dividimos la población extranjera entre la población total de la sección."
     },
     {
       id: `${scopeId}:young-share`,
       label: "Joven 15-29",
       value: formatShare(shareYoung),
       summary: "Aproxima el peso de poblacion joven en el entorno.",
-      calculation: "Dividimos los residentes de 15 a 29 anos entre la poblacion total de la seccion."
+      calculation: "Dividimos los residentes de 15 a 29 años entre la población total de la sección."
     },
     {
       id: `${scopeId}:avisos-barrio`,
       label: "Avisos barrio",
       value: formatRatePerThousandResidents(avisosBarrio),
       summary: "Mide la presion vecinal reciente registrada a escala de barrio.",
-      calculation: "Tomamos el numero de avisos del ano previo y lo normalizamos por cada 1.000 habitantes del barrio."
+      calculation: "Tomamos el número de avisos del año previo y lo normalizamos por cada 1.000 habitantes del barrio."
     },
     {
       id: `${scopeId}:avisos-district`,
       label: "Avisos distrito",
       value: formatRatePerThousandResidents(avisosDistrict),
       summary: "Mide la presion vecinal reciente registrada a escala de distrito.",
-      calculation: "Tomamos el numero de avisos del ano previo y lo normalizamos por cada 1.000 habitantes del distrito."
+      calculation: "Tomamos el número de avisos del año previo y lo normalizamos por cada 1.000 habitantes del distrito."
     }
   ];
 }
@@ -828,7 +866,7 @@ function buildMetricWhyUseful(metric: MetricDefinition) {
     return "Te orienta sobre cuánta oferta comercial ya existe y si el entorno está más saturado o más diverso.";
   }
   if (metric.id.endsWith(":best-activity")) {
-    return "Resume la actividad que mejor ha resistido históricamente en entornos parecidos, útil para abrir con una hipótesis inicial más defensiva.";
+    return "Resume la actividad que el modelo ve más defensiva para este entorno una vez descuenta parte del sesgo de las categorías que salen bien casi en toda la ciudad.";
   }
   if (metric.id.endsWith(":turnover-12m")) {
     return "Sirve para detectar si el tejido comercial es estable o si cambia mucho de manos y conceptos en poco tiempo.";
@@ -859,7 +897,7 @@ function buildMetricExample(metric: MetricDefinition) {
     return "Ejemplo: 2,40 / 1.000 hab significa que el año anterior hubo 2,4 avisos por cada mil residentes de ese ámbito.";
   }
   if (metric.id.endsWith(":best-activity")) {
-    return "Ejemplo: si aparece 'Farmacia' con riesgo 3% y supervivencia 24m 97%, la lectura es que esa actividad ha aguantado mejor que otras comparables en ese entorno.";
+    return "Ejemplo: si aparece 'Farmacia, óptica y salud retail' con riesgo contextual 14% y supervivencia 24m 86%, la lectura es que el modelo la ve más defensiva que otras macrocategorías en ese entorno después de ajustar por el sesgo de categorías universalmente fuertes.";
   }
   if (metric.id.endsWith(":competition")) {
     return "Ejemplo: 120 locales no significa 120 competidores directos, sino 120 locales activos en la sección que comparten atención y espacio comercial.";

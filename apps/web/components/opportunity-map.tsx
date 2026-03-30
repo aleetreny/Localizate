@@ -76,7 +76,7 @@ export function OpportunityMap({
         }
       } catch (error) {
         if (alive) {
-          setLoadError(error instanceof Error ? error.message : "No se pudo cargar la geometria");
+          setLoadError(error instanceof Error ? error.message : "No se pudo cargar la geometría");
         }
       }
     }
@@ -341,13 +341,13 @@ export function OpportunityMap({
       {!sections && !loadError ? (
         <div className="map-overlay panel">
           <h2>Cargando secciones</h2>
-          <p>La lectura libre por punto se activa cuando termina de descargarse la geometria censal.</p>
+          <p>La lectura libre por punto se activa cuando termina de descargarse la geometría censal.</p>
         </div>
       ) : null}
 
       {loadError ? (
         <div className="map-overlay panel">
-          <h2>Geometria no disponible</h2>
+          <h2>Geometría no disponible</h2>
           <p>No se ha podido cargar el contexto de secciones: {loadError}.</p>
         </div>
       ) : null}
@@ -376,7 +376,7 @@ export function OpportunityMap({
               <strong className="tooltip-value">{formatRiskPercentile(tooltip.point.risk_percentile)}</strong>
             </div>
           </div>
-          <small className="tooltip-note">Haz click para abrir la ficha del local.</small>
+          <small className="tooltip-note">Haz clic para abrir la ficha del local.</small>
         </div>
       ) : null}
     </div>

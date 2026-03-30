@@ -139,11 +139,11 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
               <strong className="tooltip-value">{formatTooltipPercent(getHorizonSurvival(tooltip.object, horizon))}</strong>
             </div>
             <div className="tooltip-item">
-              <span className="tooltip-label">Riesgo medio</span>
-              <strong className="tooltip-value">{tooltip.object.avg_risk_ensemble.toFixed(2)}</strong>
+              <span className="tooltip-label">Índice relativo 0-1</span>
+              <strong className="tooltip-value">{formatRelativeRiskIndex(tooltip.object.avg_risk_percentile)}</strong>
             </div>
           </div>
-          <small className="tooltip-note">Haz click para fijar el hexágono y abrir su ficha completa.</small>
+            <small className="tooltip-note">Haz clic para fijar el hexágono y abrir su ficha completa.</small>
         </div>
       ) : null}
     </div>
@@ -234,6 +234,14 @@ function formatTooltipPercent(value: number | null) {
 function formatTooltipRiskPercentile(value: number) {
   const clamped = Math.max(0, Math.min(1, value));
   return `P${Math.round(clamped * 100)} riesgo`;
+}
+
+function formatRelativeRiskIndex(value: number | null) {
+  if (!isFiniteNumber(value)) {
+    return "Sin datos";
+  }
+  const clamped = Math.max(0, Math.min(1, value));
+  return new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(clamped);
 }
 
 function interpolateColor(left: Color, right: Color, ratio: number): Color {
