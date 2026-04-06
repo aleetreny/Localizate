@@ -3,10 +3,12 @@ import type { OpportunityPoint, OpportunitySection } from "@/lib/types";
 
 export const OPPORTUNITY_BENCHMARK_FIELDS = [
   "renta_effective_eur",
+  "age_mean_start",
   "population_density_km2_start",
   "total_population_start",
   "share_foreign_start",
   "share_age_15_29_start",
+  "share_age_65_plus_start",
   "section_turnover_rate_12m_start",
   "metro_distance_m_start",
   "metro_access_count_500m_start",
@@ -59,10 +61,12 @@ type PercentileMode = "ascending" | "descending";
 
 const FIELD_PERCENTILE_MODE: Record<OpportunityBenchmarkField, PercentileMode> = {
   renta_effective_eur: "ascending",
+  age_mean_start: "ascending",
   population_density_km2_start: "ascending",
   total_population_start: "ascending",
   share_foreign_start: "ascending",
   share_age_15_29_start: "ascending",
+  share_age_65_plus_start: "ascending",
   section_turnover_rate_12m_start: "ascending",
   metro_distance_m_start: "descending",
   metro_access_count_500m_start: "ascending",
@@ -81,7 +85,9 @@ export function buildOpportunityBenchmarkContext(
   }
 
   const districtSections = sections.filter((section) => section.district_code === selected.district_code);
-  const barrioSections = sections.filter((section) => section.barrio_code === selected.barrio_code);
+  const barrioSections = sections.filter(
+    (section) => section.district_code === selected.district_code && section.barrio_code === selected.barrio_code,
+  );
 
   const metrics = Object.fromEntries(
     OPPORTUNITY_BENCHMARK_FIELDS.map((field) => [

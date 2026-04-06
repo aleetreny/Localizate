@@ -530,6 +530,24 @@ select {
   gap: 8px;
 }
 
+.detail-groups {
+  display: grid;
+  gap: 14px;
+}
+
+.detail-group {
+  display: grid;
+  gap: 8px;
+}
+
+.detail-group-title {
+  padding-left: 2px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 240, 232, 0.56);
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -664,6 +682,13 @@ select {
   gap: 8px;
 }
 
+.metric-breakdown-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(220px, 0.8fr);
+  gap: 12px;
+  align-items: start;
+}
+
 .metric-breakdown-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -673,6 +698,31 @@ select {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.metric-breakdown-item-button {
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+
+.metric-breakdown-item-button:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.metric-breakdown-item-button[data-active="true"] {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.metric-breakdown-item-button:focus-visible {
+  outline: 2px solid rgba(245, 240, 232, 0.78);
+  outline-offset: 2px;
 }
 
 .metric-breakdown-main {
@@ -716,6 +766,43 @@ select {
   color: rgba(245, 240, 232, 0.68);
 }
 
+.metric-breakdown-aside {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.metric-breakdown-aside-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 240, 232, 0.56);
+}
+
+.metric-breakdown-aside-list {
+  display: grid;
+  gap: 8px;
+}
+
+.metric-breakdown-aside-item {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f5f0e8;
+  line-height: 1.35;
+}
+
+.metric-breakdown-aside-empty {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(245, 240, 232, 0.68);
+}
+
 .detail-context-row {
   display: grid;
   gap: 4px;
@@ -755,6 +842,23 @@ select {
 .activity-list {
   display: grid;
   gap: 10px;
+}
+
+.activity-list-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.activity-list-action {
+  min-width: 220px;
+  justify-content: center;
+}
+
+.activity-list-action[data-active="true"] {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(13, 63, 69, 0.16);
+  color: var(--accent-strong);
 }
 
 .activity-card {
@@ -1210,6 +1314,10 @@ select {
   }
 
   .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-breakdown-layout {
     grid-template-columns: 1fr;
   }
 

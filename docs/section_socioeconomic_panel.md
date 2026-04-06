@@ -17,7 +17,7 @@ Panel canonico por seccion para enriquecer el censo con demografia, renta y meta
 
 ## Renta
 
-- Fallback `section`: 319,127 filas
-- Fallback `district`: 728 filas
+- Fallback `section`: 319,023 filas
+- Fallback `district`: 832 filas
 - Fallback `city`: 1 filas
 

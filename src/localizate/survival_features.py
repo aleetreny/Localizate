@@ -373,6 +373,7 @@ def load_metro_reference(metro_csv: Path | None = None) -> pd.DataFrame:
             "metro_name": frame.get("name", pd.Series(pd.NA, index=frame.index)).astype("string"),
         }
     )
+    out["metro_display_name"] = out["metro_name"].map(_normalize_metro_display_name).astype("string")
     return out.dropna(subset=["metro_lat", "metro_lon"]).reset_index(drop=True)
 
 
@@ -381,11 +382,21 @@ def compute_metro_features(
     *,
     metro_reference: pd.DataFrame | None = None,
     distance_bands_m: tuple[float, ...] = DEFAULT_METRO_DISTANCE_BANDS_M,
+    include_names: bool = False,
+    max_names_per_band: int = 6,
 ) -> pd.DataFrame:
     features = pd.DataFrame(index=abt.index)
     features["metro_distance_m_start"] = np.nan
     for band in distance_bands_m:
         features[f"metro_access_count_{int(band)}m_start"] = 0.0
+    if include_names:
+        features["metro_nearest_name_start"] = pd.Series(pd.NA, index=abt.index, dtype="string")
+        for band in distance_bands_m:
+            features[f"metro_access_names_{int(band)}m_start"] = pd.Series(
+                [[] for _ in range(len(abt))],
+                index=abt.index,
+                dtype=object,
+            )
 
     lat = pd.to_numeric(abt.get("lat_wgs84_start"), errors="coerce")
     lon = pd.to_numeric(abt.get("lon_wgs84_start"), errors="coerce")
@@ -398,6 +409,7 @@ def compute_metro_features(
 
     metro_radians = np.deg2rad(metro[["metro_lat", "metro_lon"]].to_numpy(dtype=float))
     tree = BallTree(metro_radians, metric="haversine")
+    valid_indices = np.flatnonzero(valid_mask.to_numpy(dtype=bool))
     point_radians = np.deg2rad(
         np.column_stack(
             [
@@ -406,13 +418,74 @@ def compute_metro_features(
             ]
         )
     )
-    nearest_distance, _ = tree.query(point_radians, k=1)
+    nearest_distance, nearest_index = tree.query(point_radians, k=1)
     features.loc[valid_mask, "metro_distance_m_start"] = nearest_distance[:, 0] * EARTH_RADIUS_M
+    if include_names:
+        display_names = metro.get("metro_display_name", metro.get("metro_name", pd.Series(pd.NA, index=metro.index))).astype("string")
+        nearest_names = display_names.iloc[nearest_index[:, 0]].reset_index(drop=True)
+        features.loc[valid_mask, "metro_nearest_name_start"] = nearest_names.astype("string")
 
     for band in distance_bands_m:
         counts = tree.query_radius(point_radians, r=float(band) / EARTH_RADIUS_M, count_only=True)
         features.loc[valid_mask, f"metro_access_count_{int(band)}m_start"] = counts.astype(float)
+        if include_names:
+            indices = tree.query_radius(point_radians, r=float(band) / EARTH_RADIUS_M, return_distance=False)
+            name_column = f"metro_access_names_{int(band)}m_start"
+            for frame_index, metro_indices in zip(valid_indices, indices, strict=False):
+                raw_names = display_names.iloc[metro_indices].tolist()
+                features.at[frame_index, name_column] = _unique_metro_names(raw_names, limit=max_names_per_band)
     return features
+
+
+def _normalize_metro_display_name(value: object) -> str | pd.NA:
+    if value is None or (isinstance(value, float) and np.isnan(value)):
+        return pd.NA
+
+    text = str(value).strip()
+    if not text:
+        return pd.NA
+
+    text = _fix_metro_mojibake(text)
+    text = re.sub(r"\s+", " ", text).strip(" -,")
+    lower_text = text.lower()
+
+    if lower_text.startswith("acceso "):
+        text = text[7:].strip()
+        lower_text = text.lower()
+
+    if "-" in text and (" pares" in lower_text or " impares" in lower_text):
+        text = text.split("-")[-1].strip()
+    elif "," in text and any(token in lower_text for token in [" pabellones", " pares", " impares"]):
+        text = text.split(",")[0].strip()
+
+    text = re.sub(r"\s+", " ", text).strip(" -,")
+    return text or pd.NA
+
+
+def _fix_metro_mojibake(text: str) -> str:
+    if not any(marker in text for marker in ("Ã", "Â", "Ð", "€", "™")):
+        return text
+    try:
+        return text.encode("latin1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return text
+
+
+def _unique_metro_names(names: list[object], *, limit: int) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for raw_name in names:
+        normalized = _normalize_metro_display_name(raw_name)
+        if pd.isna(normalized):
+            continue
+        name = str(normalized)
+        if name in seen:
+            continue
+        seen.add(name)
+        out.append(name)
+        if len(out) >= limit:
+            break
+    return out
 
 
 def attach_metro_features(

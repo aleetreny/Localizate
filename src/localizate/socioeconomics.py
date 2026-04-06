@@ -34,6 +34,10 @@ PADRON_BASE_COLUMNS: tuple[str, ...] = (
     "FX_DATOS_FIN",
 )
 
+SECTION_RENTA_OUTLIER_MIN_SAMPLE = 12
+SECTION_RENTA_OUTLIER_LOW_RATIO = 0.35
+SECTION_RENTA_OUTLIER_MIN_ABS_EUR = 5000.0
+
 
 def normalize_padron_snapshot(
     frame: pd.DataFrame,
@@ -413,11 +417,13 @@ def load_and_normalize_renta_madrid(
     normalized["section_key"] = extract_renta_section_key_series(normalized["Secciones"])
     normalized["reference_year"] = pd.to_numeric(normalized["Periodo"], errors="coerce").astype("Int64")
     normalized["renta_value_eur"] = _parse_renta_amount_series(normalized["Total"])
+    normalized["renta_value_eur_raw"] = normalized["renta_value_eur"]
     normalized["granularity"] = "city"
     normalized.loc[normalized["Distritos"].notna() & normalized["Secciones"].isna(), "granularity"] = "district"
     normalized.loc[normalized["Secciones"].notna(), "granularity"] = "section"
     normalized["district_label"] = normalized["Distritos"].astype("string").str.strip().replace({"": pd.NA})
     normalized["section_label"] = normalized["Secciones"].astype("string").str.strip().replace({"": pd.NA})
+    normalized = sanitize_section_renta_outliers(normalized)
     return normalized[
         [
             "reference_year",
@@ -428,8 +434,52 @@ def load_and_normalize_renta_madrid(
             "district_label",
             "section_label",
             "renta_value_eur",
+            "renta_value_eur_raw",
+            "renta_outlier_flag",
+            "renta_outlier_reason",
         ]
     ].sort_values(["reference_year", "granularity", "district_code", "section_key"]).reset_index(drop=True)
+
+
+def sanitize_section_renta_outliers(frame: pd.DataFrame) -> pd.DataFrame:
+    sanitized = frame.copy()
+    sanitized["renta_outlier_flag"] = False
+    sanitized["renta_outlier_reason"] = pd.Series(pd.NA, index=sanitized.index, dtype="string")
+
+    section_mask = (
+        sanitized["granularity"].eq("section")
+        & sanitized["reference_year"].notna()
+        & sanitized["district_code"].notna()
+    )
+    if not bool(section_mask.any()):
+        return sanitized
+
+    scoped = sanitized.loc[section_mask, ["reference_year", "district_code", "renta_value_eur"]].copy()
+    scoped["renta_value_eur"] = pd.to_numeric(scoped["renta_value_eur"], errors="coerce")
+    scoped = scoped.dropna(subset=["renta_value_eur"])
+    if scoped.empty:
+        return sanitized
+
+    for (_, _), group in scoped.groupby(["reference_year", "district_code"], dropna=False):
+        if len(group) < SECTION_RENTA_OUTLIER_MIN_SAMPLE:
+            continue
+
+        values = group["renta_value_eur"].astype(float)
+        district_median = float(values.median())
+        if pd.isna(district_median) or district_median <= 0:
+            continue
+
+        dynamic_low_floor = max(SECTION_RENTA_OUTLIER_MIN_ABS_EUR, district_median * SECTION_RENTA_OUTLIER_LOW_RATIO)
+        suspicious_low = values < dynamic_low_floor
+        if not bool(suspicious_low.any()):
+            continue
+
+        outlier_index = group.index[suspicious_low]
+        sanitized.loc[outlier_index, "renta_outlier_flag"] = True
+        sanitized.loc[outlier_index, "renta_outlier_reason"] = "section_low_outlier"
+        sanitized.loc[outlier_index, "renta_value_eur"] = pd.NA
+
+    return sanitized
 
 
 def attach_renta_features(
@@ -457,9 +507,24 @@ def attach_renta_features(
         .rename(columns={"reference_year": "renta_reference_year", "renta_value_eur": "renta_district_eur"})
     )
     section = (
-        renta_madrid[renta_madrid["granularity"] == "section"][["reference_year", "section_key", "renta_value_eur"]]
+        renta_madrid[renta_madrid["granularity"] == "section"][[
+            "reference_year",
+            "section_key",
+            "renta_value_eur",
+            "renta_value_eur_raw",
+            "renta_outlier_flag",
+            "renta_outlier_reason",
+        ]]
         .drop_duplicates()
-        .rename(columns={"reference_year": "renta_reference_year", "renta_value_eur": "renta_section_eur"})
+        .rename(
+            columns={
+                "reference_year": "renta_reference_year",
+                "renta_value_eur": "renta_section_eur",
+                "renta_value_eur_raw": "renta_section_raw_eur",
+                "renta_outlier_flag": "renta_section_outlier_flag",
+                "renta_outlier_reason": "renta_section_outlier_reason",
+            }
+        )
     )
 
     enriched = enriched.merge(city, on="renta_reference_year", how="left")
@@ -469,6 +534,8 @@ def attach_renta_features(
     enriched["renta_best_eur"] = (
         enriched["renta_section_eur"].fillna(enriched["renta_district_eur"]).fillna(enriched["renta_city_eur"])
     )
+    renta_outlier_flag = enriched.get("renta_section_outlier_flag", pd.Series(False, index=enriched.index))
+    enriched["renta_outlier_adjusted"] = renta_outlier_flag.map(lambda value: bool(value) if pd.notna(value) else False).astype(bool)
     enriched["renta_granularity_used"] = "missing"
     enriched.loc[enriched["renta_city_eur"].notna(), "renta_granularity_used"] = "city"
     enriched.loc[enriched["renta_district_eur"].notna(), "renta_granularity_used"] = "district"
@@ -489,7 +556,8 @@ def attach_section_geography_features(panel: pd.DataFrame, section_metadata: pd.
         .reset_index()
     )
     enriched = enriched.merge(geography, on="section_key", how="left")
-    enriched["geometry_available"] = enriched["geometry_available"].fillna(False)
+    geometry_available = enriched.get("geometry_available", pd.Series(False, index=enriched.index))
+    enriched["geometry_available"] = geometry_available.map(lambda value: bool(value) if pd.notna(value) else False).astype(bool)
     enriched["population_density_km2"] = (
         enriched["total_population"] / (enriched["section_area_m2"] / 1_000_000)
     ).where(enriched["section_area_m2"].fillna(0) > 0)
@@ -640,6 +708,7 @@ def _parse_padron_age_series(series: pd.Series) -> pd.Series:
 
 
 def _parse_renta_amount_series(series: pd.Series) -> pd.Series:
+    numeric = pd.to_numeric(series, errors="coerce")
     cleaned = (
         series.astype("string")
         .str.strip()
@@ -647,7 +716,9 @@ def _parse_renta_amount_series(series: pd.Series) -> pd.Series:
         .str.replace(".", "", regex=False)
         .str.replace(",", ".", regex=False)
     )
-    return pd.to_numeric(cleaned, errors="coerce")
+    parsed = pd.to_numeric(cleaned, errors="coerce")
+    scaled_numeric = (numeric * 1000).round()
+    return parsed.where(~numeric.notna().fillna(False), scaled_numeric.where(numeric < 1000, numeric))
 
 
 def _resolve_reference_period(target_period: str, available_periods: list[str]) -> str | pd.NA:

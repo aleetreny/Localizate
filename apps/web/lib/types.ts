@@ -136,6 +136,34 @@ export type OpportunityAvisoCategory = {
   share_of_zone: number | null;
 };
 
+export type FacilityCategory = {
+  category: string;
+  label: string;
+  count_200m: number;
+  count_500m: number;
+  count_1000m: number;
+};
+
+export type VulnerabilidadEsfera = {
+  key: string;
+  label: string;
+  valor: number | null;
+  media_ciudad: number | null;
+};
+
+export type InspeccionEpigrafe = {
+  label: string;
+  count: number;
+  share: number;
+};
+
+export type IndicadorDistrito = {
+  id: string;
+  label: string;
+  valor: number | null;
+  media_ciudad: number | null;
+};
+
 export type OpportunityPoint = {
   listing_id: string;
   listing_url: string;
@@ -164,14 +192,21 @@ export type OpportunityPoint = {
   barrio_rank: number;
   barrio_total_sections: number;
   renta_effective_eur: number | null;
+  renta_reference_year: number | null;
+  renta_granularity_used: string;
+  renta_outlier_adjusted: boolean;
   total_population_start: number | null;
   population_density_km2_start: number | null;
   age_mean_start: number | null;
   share_foreign_start: number | null;
   share_age_15_29_start: number | null;
+  share_age_65_plus_start: number | null;
   metro_distance_m_start: number | null;
   metro_access_count_500m_start: number | null;
   metro_access_count_1000m_start: number | null;
+  metro_nearest_name_start: string;
+  metro_access_names_500m_start: string[];
+  metro_access_names_1000m_start: string[];
   avisos_barrio_per_1000_prev_year: number | null;
   avisos_district_per_1000_prev_year: number | null;
   top_avisos_barrio_categories: OpportunityAvisoCategory[];
@@ -184,6 +219,18 @@ export type OpportunityPoint = {
   best_activity_risk: number | null;
   best_activity_survival_24m: number | null;
   top_activities: OpportunityActivity[];
+  facilities_tier: string;
+  facilities_200m: number;
+  facilities_500m: number;
+  facilities_1000m: number;
+  facilities_by_category: FacilityCategory[];
+  vulnerabilidad_global: number | null;
+  vulnerabilidad_global_media_ciudad: number | null;
+  vulnerabilidad_esferas: VulnerabilidadEsfera[];
+  inspecciones_distrito_total: number | null;
+  inspecciones_ciudad_media: number | null;
+  inspecciones_top_epigrafes: InspeccionEpigrafe[];
+  indicadores_distrito: IndicadorDistrito[];
 };
 
 export type OpportunitySection = {
@@ -206,14 +253,21 @@ export type OpportunitySection = {
   barrio_rank: number;
   barrio_total_sections: number;
   renta_effective_eur: number | null;
+  renta_reference_year: number | null;
+  renta_granularity_used: string;
+  renta_outlier_adjusted: boolean;
   total_population_start: number | null;
   population_density_km2_start: number | null;
   age_mean_start: number | null;
   share_foreign_start: number | null;
   share_age_15_29_start: number | null;
+  share_age_65_plus_start: number | null;
   metro_distance_m_start: number | null;
   metro_access_count_500m_start: number | null;
   metro_access_count_1000m_start: number | null;
+  metro_nearest_name_start: string;
+  metro_access_names_500m_start: string[];
+  metro_access_names_1000m_start: string[];
   avisos_barrio_per_1000_prev_year: number | null;
   avisos_district_per_1000_prev_year: number | null;
   top_avisos_barrio_categories: OpportunityAvisoCategory[];
@@ -226,6 +280,18 @@ export type OpportunitySection = {
   best_activity_risk: number | null;
   best_activity_survival_24m: number | null;
   top_activities: OpportunityActivity[];
+  facilities_tier: string;
+  facilities_200m: number;
+  facilities_500m: number;
+  facilities_1000m: number;
+  facilities_by_category: FacilityCategory[];
+  vulnerabilidad_global: number | null;
+  vulnerabilidad_global_media_ciudad: number | null;
+  vulnerabilidad_esferas: VulnerabilidadEsfera[];
+  inspecciones_distrito_total: number | null;
+  inspecciones_ciudad_media: number | null;
+  inspecciones_top_epigrafes: InspeccionEpigrafe[];
+  indicadores_distrito: IndicadorDistrito[];
 };
 
 export type OpportunitySectionFeature = {

@@ -26,6 +26,11 @@ from localizate.survival_features import build_avisos_yearly_features, compute_m
 from localizate.zone_category_survival import confidence_tier  # noqa: E402
 
 
+UNIFIED_EQUIPAMIENTOS_CSV = PROJECT_ROOT / "data" / "external" / "processed" / "unified_equipamientos_geo.csv"
+INSPECCIONES_CSV = PROJECT_ROOT / "data" / "external" / "processed" / "inspecciones_consumo.csv"
+IGUALA_GLOBAL_XLSX = PROJECT_ROOT / "data" / "external" / "iguala_global_distritos.xlsx"
+PANEL_INDICADORES_CSV = PROJECT_ROOT / "data" / "external" / "panel_indicadores_2020_2025.csv"
+
 AVAILABLE_LISTINGS_CSV = PROJECT_ROOT / "data" / "exports" / "manual_available_locales_madrid.csv"
 SELECTED_LISTINGS_CSV = PROJECT_ROOT / "data" / "exports" / "manual_available_locales_madrid_selected.csv"
 SELECTED_SUMMARY_JSON = PROJECT_ROOT / "data" / "processed" / "manual_available_locales_madrid_selected_summary.json"
@@ -58,6 +63,51 @@ ACTIVITY_BARRIO_MIN_LOCALES = 40
 ACTIVITY_BARRIO_MIN_EVENTS = 8
 ACTIVITY_CITY_MIN_LOCALES = 150
 AVISOS_TOP_CATEGORY_COUNT = 3
+
+EQUIPMENT_CATEGORY_LABELS = {
+    "bicimad": "BiciMAD",
+    "instalaciones_deportivas": "Inst. deportivas",
+    "colegios": "Colegios",
+    "parques": "Parques",
+    "centros_culturales": "Centros culturales",
+    "centros_mayores": "Centros mayores",
+    "polideportivos": "Polideportivos",
+    "bibliotecas": "Bibliotecas",
+    "mercados": "Mercados",
+    "servicios_sociales": "Servicios sociales",
+    "mercadillos": "Mercadillos",
+    "aparcamientos": "Aparcamientos",
+}
+EQUIPMENT_RADII_M = [200, 500, 1000]
+EQUIPMENT_TIER_THRESHOLDS = [(16, "Abundantes"), (6, "Medias"), (0, "Escasas")]
+INSPECCIONES_TOP_COUNT = 5
+IGUALA_SPHERE_COLUMNS = [
+    ("Índice de Vulnerabilidad Bienestar Social e Igualdad", "bienestar", "Bienestar social"),
+    ("Índice de Vulnerabilidad Medio Ambiente Urbano y Movilidad", "medio_ambiente", "Medio ambiente"),
+    ("Índice de Vulnerabilidad Educación y Cultura", "educacion", "Educación y cultura"),
+    ("Índice de Vulnerabilidad Economía y Empleo", "economia", "Economía y empleo"),
+    ("Índice de Vulnerabilidad Salud", "salud", "Salud"),
+]
+PANEL_INDICATOR_PICKS = [
+    ("Número de locales dados de alta abiertos", "locales_abiertos", "Locales abiertos"),
+    ("Número de locales dados de alta cerrados", "locales_cerrados", "Locales cerrados"),
+    ("Tasa absoluta de paro registrado (febrero)", "tasa_paro", "Tasa de paro (%)"),
+    ("Número habitantes", "habitantes_distrito", "Habitantes"),
+    ("Edad media de la población", "edad_media_distrito", "Edad media"),
+    ("Índice de dependencia (población de 0-15 + población 65 años y más / pob. 16-64)", "indice_dependencia", "Índice de dependencia"),
+    ("Proporción de personas migrantes (personas extranjeras menos UE y resto países de OCDE / población total)", "proporcion_migrantes", "Proporción migrante"),
+    ("Población densidad (hab./ha.)", "densidad_distrito", "Densidad del distrito"),
+    ("Superficie de zonas verdes y parques de distrito (ha.) entre número de habitantes *10.000", "zonas_verdes_por_10k", "Zonas verdes por 10.000 hab."),
+    ("Mercados municipales", "mercados_municipales", "Mercados municipales"),
+    ("Bibliotecas municipales", "bibliotecas_municipales", "Bibliotecas municipales"),
+    ("Centros y espacios culturales", "centros_culturales_distrito", "Centros culturales"),
+    ("Centros deportivos municipales", "centros_deportivos_municipales", "Centros deportivos"),
+    ("Instalaciones deportivas básicas", "instalaciones_deportivas_basicas", "Instalaciones deportivas básicas"),
+    ("Centros municipales de mayores", "centros_municipales_mayores", "Centros de mayores"),
+    ("Apartamentos municipales para mayores", "apartamentos_municipales_mayores", "Apartamentos para mayores"),
+    ("Personas socias de los centros municipales de mayores", "socios_centros_mayores", "Personas socias centros mayores"),
+    ("Valor catastral medio por inmueble de uso residencial", "valor_catastral", "Valor catastral medio (€)"),
+]
 
 POINT_OUTPUT_COLUMNS = [
     "listing_id",
@@ -92,9 +142,13 @@ POINT_OUTPUT_COLUMNS = [
     "age_mean_start",
     "share_foreign_start",
     "share_age_15_29_start",
+    "share_age_65_plus_start",
     "metro_distance_m_start",
     "metro_access_count_500m_start",
     "metro_access_count_1000m_start",
+    "metro_nearest_name_start",
+    "metro_access_names_500m_start",
+    "metro_access_names_1000m_start",
     "avisos_barrio_per_1000_prev_year",
     "avisos_district_per_1000_prev_year",
     "section_local_count_start",
@@ -280,11 +334,355 @@ SECTION_CONTEXT_OVERRIDE_USECOLS = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# External data loaders
+# ---------------------------------------------------------------------------
+
+
+def load_equipment_points() -> pd.DataFrame:
+    if not UNIFIED_EQUIPAMIENTOS_CSV.exists():
+        print("  [WARN] Equipment file not found, skipping facility proximity")
+        return pd.DataFrame(columns=["category", "lat", "lon"])
+    df = pd.read_csv(UNIFIED_EQUIPAMIENTOS_CSV)
+    df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
+    df["lon"] = pd.to_numeric(df["lon"], errors="coerce")
+    return df.dropna(subset=["lat", "lon"]).reset_index(drop=True)
+
+
+def _haversine_matrix(lats: np.ndarray, lons: np.ndarray, eq_lats: np.ndarray, eq_lons: np.ndarray) -> np.ndarray:
+    """Return distance matrix (n_points, n_eq) in metres using vectorised haversine."""
+    R = 6_371_000.0
+    lat1 = np.radians(lats[:, np.newaxis])
+    lon1 = np.radians(lons[:, np.newaxis])
+    lat2 = np.radians(eq_lats[np.newaxis, :])
+    lon2 = np.radians(eq_lons[np.newaxis, :])
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = np.sin(dlat / 2.0) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2.0) ** 2
+    return R * 2.0 * np.arcsin(np.sqrt(np.clip(a, 0.0, 1.0)))
+
+
+def _empty_facilities_result() -> dict:
+    return {
+        "facilities_tier": "Sin datos",
+        "facilities_200m": 0,
+        "facilities_500m": 0,
+        "facilities_1000m": 0,
+        "facilities_by_category": [],
+    }
+
+
+def compute_equipment_proximity_batch(
+    lats: pd.Series,
+    lons: pd.Series,
+    equipment: pd.DataFrame,
+) -> list[dict]:
+    """For each point compute equipment counts per category at each radius."""
+    if equipment.empty:
+        return [_empty_facilities_result() for _ in range(len(lats))]
+
+    lats_arr = lats.to_numpy(dtype=float, na_value=np.nan)
+    lons_arr = lons.to_numpy(dtype=float, na_value=np.nan)
+    valid = ~(np.isnan(lats_arr) | np.isnan(lons_arr))
+    n = len(lats_arr)
+
+    eq_lats = equipment["lat"].to_numpy(dtype=float)
+    eq_lons = equipment["lon"].to_numpy(dtype=float)
+    eq_cats = equipment["category"].to_numpy()
+    categories = sorted(EQUIPMENT_CATEGORY_LABELS.keys())
+    cat_index = {c: i for i, c in enumerate(categories)}
+
+    results: list[dict] = [_empty_facilities_result()] * n
+
+    valid_idx = np.where(valid)[0]
+    if len(valid_idx) == 0:
+        return results
+
+    dist = _haversine_matrix(lats_arr[valid_idx], lons_arr[valid_idx], eq_lats, eq_lons)
+
+    for pos, gi in enumerate(valid_idx):
+        row_dist = dist[pos]
+        breakdown = []
+        totals = {}
+        for radius in EQUIPMENT_RADII_M:
+            mask = row_dist <= radius
+            totals[radius] = int(mask.sum())
+            cats_in = eq_cats[mask]
+            cat_counts = {}
+            for cat in categories:
+                cat_counts[cat] = int((cats_in == cat).sum())
+            for cat in categories:
+                if pos == 0 or radius == EQUIPMENT_RADII_M[0]:
+                    pass
+            for cat in categories:
+                existing = next((b for b in breakdown if b["category"] == cat), None)
+                if existing is None:
+                    entry = {"category": cat, "label": EQUIPMENT_CATEGORY_LABELS.get(cat, cat)}
+                    entry[f"count_{radius}m"] = cat_counts[cat]
+                    breakdown.append(entry)
+                else:
+                    existing[f"count_{radius}m"] = cat_counts[cat]
+
+        breakdown.sort(key=lambda x: x.get("count_1000m", 0), reverse=True)
+        total_500 = totals.get(500, 0)
+        tier = "Escasas"
+        for threshold, label in EQUIPMENT_TIER_THRESHOLDS:
+            if total_500 >= threshold:
+                tier = label
+                break
+
+        results[gi] = {
+            "facilities_tier": tier,
+            "facilities_200m": totals.get(200, 0),
+            "facilities_500m": totals.get(500, 0),
+            "facilities_1000m": totals.get(1000, 0),
+            "facilities_by_category": breakdown,
+        }
+
+    return results
+
+
+def load_iguala_vulnerability() -> dict[str, dict]:
+    """Return {district_code_2digit: {global, city_avg, spheres: [...]}} from latest IGUALA year."""
+    if not IGUALA_GLOBAL_XLSX.exists():
+        print("  [WARN] IGUALA file not found, skipping vulnerability")
+        return {}
+    try:
+        import openpyxl
+    except ModuleNotFoundError:
+        print("  [WARN] openpyxl not available, skipping vulnerability")
+        return {}
+
+    wb = openpyxl.load_workbook(IGUALA_GLOBAL_XLSX, read_only=True)
+    ws = wb["Vul. esferas distritos"]
+    rows = list(ws.iter_rows(values_only=True))
+    wb.close()
+    if len(rows) < 2:
+        return {}
+
+    header = rows[0]
+    data_rows = rows[1:]
+    latest_year = max(r[2] for r in data_rows if r[2] is not None)
+    latest = [r for r in data_rows if r[2] == latest_year]
+
+    lookup: dict[str, dict] = {}
+    city_avg = latest[0][4] if latest else None
+    for r in latest:
+        code = str(int(r[0])).zfill(2)
+        spheres = []
+        for col_name, key, display_label in IGUALA_SPHERE_COLUMNS:
+            idx = next((i for i, h in enumerate(header) if h and col_name in str(h)), None)
+            if idx is not None and idx < len(r):
+                val = r[idx]
+                avg_idx = idx + 1
+                avg = r[avg_idx] if avg_idx < len(r) else None
+                spheres.append({"key": key, "label": display_label, "valor": _safe_float(val), "media_ciudad": _safe_float(avg)})
+        lookup[code] = {
+            "vulnerabilidad_global": _safe_float(r[3]),
+            "vulnerabilidad_global_media_ciudad": _safe_float(city_avg),
+            "vulnerabilidad_esferas": spheres,
+        }
+    return lookup
+
+
+def load_inspecciones_by_district() -> dict[str, dict]:
+    """Return {district_code_2digit: {total, city_avg, top_epigrafes: [...]}}."""
+    if not INSPECCIONES_CSV.exists():
+        print("  [WARN] Inspecciones file not found, skipping")
+        return {}
+    df = pd.read_csv(INSPECCIONES_CSV, low_memory=False)
+    if "DISTRITO" not in df.columns:
+        return {}
+
+    df["district_code"] = df["DISTRITO"].map(lambda v: str(v).strip().split(" - ")[0].strip().zfill(2) if pd.notna(v) else None)
+    total_by_dist = df.groupby("district_code").size()
+    city_avg = float(total_by_dist.mean()) if not total_by_dist.empty else 0.0
+
+    lookup: dict[str, dict] = {}
+    for code, group in df.groupby("district_code"):
+        total = len(group)
+        epig_col = "EPIGRAFE" if "EPIGRAFE" in df.columns else None
+        top_epigrafes = []
+        if epig_col:
+            cleaned = group[epig_col].map(_clean_epigrafe_label).dropna()
+            counts = cleaned.value_counts().head(INSPECCIONES_TOP_COUNT)
+            for label, count in counts.items():
+                top_epigrafes.append({"label": str(label), "count": int(count), "share": round(int(count) / total, 3) if total else 0})
+        lookup[str(code)] = {
+            "inspecciones_distrito_total": total,
+            "inspecciones_ciudad_media": round(city_avg, 1),
+            "inspecciones_top_epigrafes": top_epigrafes,
+        }
+    return lookup
+
+
+def _clean_epigrafe_label(raw: str) -> str | None:
+    """Clean raw inspection epigraph labels and drop unresolved buckets."""
+    parts = raw.split(" - ", 1)
+    text = parts[-1].strip() if len(parts) > 1 else raw.strip()
+    text = text.replace("SITUADOS:", "").strip(" :")
+    if not text:
+        return None
+    if text.upper() == "SIN DETERMINAR":
+        return None
+    return text.capitalize()
+
+
+def load_panel_indicators_by_district() -> dict[str, list[dict]]:
+    """Return {district_code_2digit: [{id, label, valor, media_ciudad}, ...]} for picked indicators."""
+    if not PANEL_INDICADORES_CSV.exists():
+        print("  [WARN] Panel indicadores file not found, skipping")
+        return {}
+    df = pd.read_csv(PANEL_INDICADORES_CSV, sep=";", low_memory=False, encoding="utf-8")
+
+    indicator_col = None
+    for c in df.columns:
+        if "indicador_completo" in c.lower() or "indicador_completo" in c:
+            indicator_col = c
+            break
+    if indicator_col is None:
+        return {}
+
+    value_col = None
+    for c in df.columns:
+        if "valor_indicador" in c.lower() or "valor_indicador" in c:
+            value_col = c
+            break
+    if value_col is None:
+        return {}
+
+    dist_col = None
+    for c in df.columns:
+        if "cod_distrito" in c.lower() or "cod_distrito" in c:
+            dist_col = c
+            break
+    if dist_col is None:
+        return {}
+
+    period_col = None
+    for c in df.columns:
+        if "periodo panel" in c.lower() or "Periodo panel" in c:
+            period_col = c
+            break
+
+    indicator_names_in_data = set(df[indicator_col].dropna().unique())
+
+    matched_picks = []
+    for raw_name, key, label in PANEL_INDICATOR_PICKS:
+        matches = [n for n in indicator_names_in_data if _fuzzy_indicator_match(raw_name, n)]
+        if matches:
+            matched_picks.append((matches[0], key, label))
+
+    if not matched_picks:
+        return {}
+
+    latest_period = str(df[period_col].dropna().max()) if period_col else None
+    if latest_period and period_col:
+        period_df = df[df[period_col].astype(str) == latest_period]
+    else:
+        period_df = df
+
+    lookup: dict[str, list[dict]] = {}
+    for matched_name, key, label in matched_picks:
+        subset = period_df[period_df[indicator_col] == matched_name].copy()
+        subset["_val"] = pd.to_numeric(subset[value_col].astype(str).str.replace(",", "."), errors="coerce")
+        subset["_dc"] = pd.to_numeric(subset[dist_col], errors="coerce").fillna(0).astype(int).astype(str).str.zfill(2)
+        barrio_col = next((c for c in df.columns if "cod_barrio" in c.lower()), None)
+        if barrio_col is not None:
+            district_level = subset[subset[barrio_col].isna() | (subset[barrio_col].astype(str).str.strip() == "")]
+        else:
+            district_level = subset
+        if district_level.empty:
+            district_level = subset.groupby("_dc")["_val"].mean().reset_index()
+            district_level.columns = ["_dc", "_val"]
+
+        district_level = district_level[district_level["_dc"] != "00"].copy()
+        if district_level.empty:
+            continue
+
+        city_mean = float(district_level["_val"].mean()) if not district_level.empty else None
+
+        for _, row_data in district_level.iterrows():
+            code = str(row_data["_dc"])
+            val = _safe_float(row_data["_val"])
+            lookup.setdefault(code, []).append({
+                "id": key,
+                "label": label,
+                "valor": val,
+                "media_ciudad": round(city_mean, 1) if city_mean is not None else None,
+            })
+
+    return lookup
+
+
+def _fuzzy_indicator_match(target: str, candidate: str) -> bool:
+    t = target.lower().replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
+    c = candidate.lower().replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
+    c = c.replace("ß", "a").replace("¾", "o").replace("¬", "a").replace("·", "u").replace("Ý", "i").replace("ú", "u")
+    return t[:40] in c or c[:40] in t
+
+
+def _safe_float(value: object) -> float | None:
+    if value is None or (isinstance(value, float) and np.isnan(value)):
+        return None
+    try:
+        return round(float(value), 2)
+    except (ValueError, TypeError):
+        return None
+
+
+def enrich_frame_with_external_district_data(
+    frame: pd.DataFrame,
+    district_code_col: str,
+    vulnerability: dict[str, dict],
+    inspecciones: dict[str, dict],
+    panel: dict[str, list[dict]],
+) -> None:
+    """Add vulnerability, inspecciones, and panel columns to frame in-place by district code."""
+    codes = frame[district_code_col].astype(str).str.strip().str.zfill(2)
+
+    frame["vulnerabilidad_global"] = codes.map(lambda c: (vulnerability.get(c) or {}).get("vulnerabilidad_global"))
+    frame["vulnerabilidad_global_media_ciudad"] = codes.map(lambda c: (vulnerability.get(c) or {}).get("vulnerabilidad_global_media_ciudad"))
+    frame["vulnerabilidad_esferas"] = codes.map(lambda c: (vulnerability.get(c) or {}).get("vulnerabilidad_esferas", []))
+
+    frame["inspecciones_distrito_total"] = codes.map(lambda c: (inspecciones.get(c) or {}).get("inspecciones_distrito_total"))
+    frame["inspecciones_ciudad_media"] = codes.map(lambda c: (inspecciones.get(c) or {}).get("inspecciones_ciudad_media"))
+    frame["inspecciones_top_epigrafes"] = codes.map(lambda c: (inspecciones.get(c) or {}).get("inspecciones_top_epigrafes", []))
+
+    frame["indicadores_distrito"] = codes.map(lambda c: panel.get(c, []))
+
+
+def enrich_frame_with_facilities(frame: pd.DataFrame, lat_col: str, lon_col: str, equipment: pd.DataFrame) -> None:
+    """Add facilities proximity columns to frame in-place."""
+    prox = compute_equipment_proximity_batch(frame[lat_col], frame[lon_col], equipment)
+    frame["facilities_tier"] = [p["facilities_tier"] for p in prox]
+    frame["facilities_200m"] = [p["facilities_200m"] for p in prox]
+    frame["facilities_500m"] = [p["facilities_500m"] for p in prox]
+    frame["facilities_1000m"] = [p["facilities_1000m"] for p in prox]
+    frame["facilities_by_category"] = [p["facilities_by_category"] for p in prox]
+
+
 def main() -> int:
+    print("Loading external data sources...")
+    equipment = load_equipment_points()
+    vulnerability = load_iguala_vulnerability()
+    inspecciones = load_inspecciones_by_district()
+    panel = load_panel_indicators_by_district()
+    print(f"  Equipment points: {len(equipment):,}")
+    print(f"  Vulnerability districts: {len(vulnerability)}")
+    print(f"  Inspecciones districts: {len(inspecciones)}")
+    print(f"  Panel indicator districts: {len(panel)}")
+    external = {
+        "equipment": equipment,
+        "vulnerability": vulnerability,
+        "inspecciones": inspecciones,
+        "panel": panel,
+    }
+
     selected_listings, filter_summary = build_selected_available_listings(AVAILABLE_LISTINGS_CSV)
     reference = build_reference_inputs(LOCAL_SURVIVAL_ABT_CSV)
-    section_profiles, sections_geojson = build_section_profiles(reference)
-    selected_scored = score_selected_available_listings(selected_listings, section_profiles, reference)
+    section_profiles, sections_geojson = build_section_profiles(reference, external)
+    selected_scored = score_selected_available_listings(selected_listings, section_profiles, reference, external)
 
     SELECTED_LISTINGS_CSV.parent.mkdir(parents=True, exist_ok=True)
     selected_scored[POINT_OUTPUT_COLUMNS].to_csv(SELECTED_LISTINGS_CSV, index=False)
@@ -409,7 +807,7 @@ def build_reference_inputs(abt_path: Path) -> dict[str, object]:
     }
 
 
-def build_section_profiles(reference: dict[str, object]) -> tuple[pd.DataFrame, dict[str, object]]:
+def build_section_profiles(reference: dict[str, object], external: dict[str, object]) -> tuple[pd.DataFrame, dict[str, object]]:
     section_panel, latest_period = load_latest_section_panel(SECTION_PANEL_CSV)
     sections = load_section_geometry()
     section_reference = reference["section_reference"]
@@ -440,7 +838,7 @@ def build_section_profiles(reference: dict[str, object]) -> tuple[pd.DataFrame, 
     metro_input = section_profiles[["centroid_lat", "centroid_lon"]].rename(
         columns={"centroid_lat": "lat_wgs84_start", "centroid_lon": "lon_wgs84_start"}
     )
-    metro_features = compute_metro_features(metro_input)
+    metro_features = compute_metro_features(metro_input, include_names=True)
     section_profiles = pd.concat([section_profiles.reset_index(drop=True), metro_features.reset_index(drop=True)], axis=1)
 
     fill_section_reference_holes(section_profiles)
@@ -465,6 +863,14 @@ def build_section_profiles(reference: dict[str, object]) -> tuple[pd.DataFrame, 
         lambda rows: rows[0]["survival_24m"] if rows else None
     )
 
+    print("  Enriching sections with external data...")
+    enrich_frame_with_external_district_data(
+        section_profiles, "district_code",
+        external["vulnerability"], external["inspecciones"], external["panel"],
+    )
+    enrich_frame_with_facilities(section_profiles, "centroid_lat", "centroid_lon", external["equipment"])
+    print(f"  Sections enriched: {len(section_profiles):,}")
+
     geojson = build_sections_geojson(section_profiles)
     return section_profiles, geojson
 
@@ -473,6 +879,7 @@ def score_selected_available_listings(
     selected_listings: pd.DataFrame,
     section_profiles: pd.DataFrame,
     reference: dict[str, object],
+    external: dict[str, object],
 ) -> pd.DataFrame:
     required_columns = [
         "section_key",
@@ -481,6 +888,9 @@ def score_selected_available_listings(
         "barrio_code",
         "barrio_name",
         "renta_effective_eur",
+        "renta_reference_year",
+        "renta_granularity_used",
+        "renta_outlier_adjusted",
         "renta_carry_forward_years",
         "share_foreign_start",
         "share_age_00_14_start",
@@ -494,6 +904,9 @@ def score_selected_available_listings(
         "population_density_km2_start",
         "padron_lag_months_start",
         "geometry_available_start",
+        "metro_nearest_name_start",
+        "metro_access_names_500m_start",
+        "metro_access_names_1000m_start",
         "n_divisions_start",
         "n_epigrafes_start",
         "n_activity_categories_start",
@@ -540,18 +953,41 @@ def score_selected_available_listings(
         "best_activity_label",
         "best_activity_risk",
         "best_activity_survival_24m",
+        "vulnerabilidad_global",
+        "vulnerabilidad_global_media_ciudad",
+        "vulnerabilidad_esferas",
+        "inspecciones_distrito_total",
+        "inspecciones_ciudad_media",
+        "inspecciones_top_epigrafes",
+        "indicadores_distrito",
+        "facilities_tier",
+        "facilities_200m",
+        "facilities_500m",
+        "facilities_1000m",
+        "facilities_by_category",
     ]
     enriched = selected_listings.merge(section_profiles[required_columns], how="left", on="section_key", suffixes=("", "_section"))
+    enriched["district_code"] = coalesce_strings(enriched.get("district_code_section"), enriched.get("district_code"))
+    enriched["district_name"] = coalesce_strings(enriched.get("district_name_section"), enriched.get("district_name"))
+    enriched["barrio_code"] = coalesce_strings(enriched.get("barrio_code_section"), enriched.get("barrio_code"))
+    enriched["barrio_name"] = coalesce_strings(enriched.get("barrio_name_section"), enriched.get("barrio_name"))
     enriched["first_seen_period"] = section_profiles["first_seen_period"].iloc[0] if not section_profiles.empty else reference["latest_period"]
     enriched["h3_cell_start"] = enriched.get("h3_cell", pd.Series(pd.NA, index=enriched.index)).astype("string")
 
     metro_input = enriched[["lat_wgs84", "lon_wgs84"]].rename(columns={"lat_wgs84": "lat_wgs84_start", "lon_wgs84": "lon_wgs84_start"})
-    metro_features = compute_metro_features(metro_input)
+    metro_features = compute_metro_features(metro_input, include_names=True)
     for column in ["metro_distance_m_start", "metro_access_count_500m_start", "metro_access_count_1000m_start", "missing_metro_distance_start"]:
         enriched[column] = pd.to_numeric(metro_features[column], errors="coerce")
+    nearest_name_values = metro_features["metro_nearest_name_start"] if "metro_nearest_name_start" in metro_features.columns else pd.Series(pd.NA, index=enriched.index)
+    enriched["metro_nearest_name_start"] = nearest_name_values.astype("string")
+    for column in ["metro_access_names_500m_start", "metro_access_names_1000m_start"]:
+        values = metro_features[column] if column in metro_features.columns else pd.Series([None] * len(enriched), index=enriched.index, dtype=object)
+        enriched[column] = [value if isinstance(value, list) else [] for value in values]
     for column in ["top_avisos_district_categories", "top_avisos_barrio_categories"]:
         values = enriched[column] if column in enriched.columns else pd.Series([None] * len(enriched), index=enriched.index, dtype=object)
         enriched[column] = [value if isinstance(value, list) else [] for value in values]
+
+    enrich_frame_with_facilities(enriched, "lat_wgs84", "lon_wgs84", external["equipment"])
 
     scores = score_entity_frame(enriched, reference=reference)
     enriched = pd.concat([enriched.reset_index(drop=True), scores.reset_index(drop=True)], axis=1)
@@ -640,6 +1076,9 @@ def load_latest_section_panel(path: Path) -> tuple[pd.DataFrame, str | None]:
             "age_mean",
             "renta_best_eur",
             "renta_lag_years",
+            "renta_reference_year",
+            "renta_granularity_used",
+            "renta_outlier_adjusted",
             "share_foreign",
             "share_male",
             "share_age_00_14",
@@ -660,6 +1099,15 @@ def load_latest_section_panel(path: Path) -> tuple[pd.DataFrame, str | None]:
     panel["district_name"] = panel["district_name"].map(clean_place_name).astype("string")
     panel["barrio_name"] = panel["barrio_name"].map(clean_place_name).astype("string")
     panel["target_date"] = pd.to_datetime(panel["target_date"], errors="coerce")
+    panel["renta_reference_year"] = pd.to_numeric(panel.get("renta_reference_year"), errors="coerce")
+    panel["renta_reference_year"] = panel["renta_reference_year"].fillna(
+        panel["target_date"].dt.year - pd.to_numeric(panel.get("renta_lag_years"), errors="coerce")
+    )
+    panel["renta_granularity_used"] = panel.get("renta_granularity_used", pd.Series(pd.NA, index=panel.index)).astype("string")
+    renta_outlier_raw = panel.get("renta_outlier_adjusted", pd.Series(False, index=panel.index))
+    panel["renta_outlier_adjusted"] = renta_outlier_raw.map(
+        lambda value: str(value).strip().lower() in {"1", "true", "yes"} if pd.notna(value) else False
+    ).astype(bool)
 
     previous = panel[["section_key", "target_date", "total_population", "share_foreign", "share_age_15_29", "population_density_km2", "renta_best_eur"]].copy()
     previous["target_date"] = previous["target_date"] + pd.DateOffset(months=12)
@@ -1569,8 +2017,9 @@ def add_section_rankings(frame: pd.DataFrame) -> pd.DataFrame:
     ranked["city_rank"] = ranked["risk_score"].rank(method="min", ascending=True).astype(int)
     ranked["district_total_sections"] = ranked.groupby("district_code", dropna=False)["section_key"].transform("size").astype(int)
     ranked["district_rank"] = ranked.groupby("district_code", dropna=False)["risk_score"].rank(method="min", ascending=True).astype(int)
-    ranked["barrio_total_sections"] = ranked.groupby("barrio_code", dropna=False)["section_key"].transform("size").astype(int)
-    ranked["barrio_rank"] = ranked.groupby("barrio_code", dropna=False)["risk_score"].rank(method="min", ascending=True).astype(int)
+    barrio_scope = ["district_code", "barrio_code"]
+    ranked["barrio_total_sections"] = ranked.groupby(barrio_scope, dropna=False)["section_key"].transform("size").astype(int)
+    ranked["barrio_rank"] = ranked.groupby(barrio_scope, dropna=False)["risk_score"].rank(method="min", ascending=True).astype(int)
     return ranked
 
 
@@ -1699,14 +2148,21 @@ def build_sections_geojson(section_profiles: pd.DataFrame) -> dict[str, object]:
             "barrio_rank": int(row.barrio_rank),
             "barrio_total_sections": int(row.barrio_total_sections),
             "renta_effective_eur": serialize_probability(getattr(row, "renta_effective_eur", None)),
+            "renta_reference_year": serialize_probability(getattr(row, "renta_reference_year", None)),
+            "renta_granularity_used": str(getattr(row, "renta_granularity_used", "") or ""),
+            "renta_outlier_adjusted": bool(getattr(row, "renta_outlier_adjusted", False)),
             "total_population_start": serialize_probability(getattr(row, "total_population_start", None)),
             "population_density_km2_start": serialize_probability(getattr(row, "population_density_km2_start", None)),
             "age_mean_start": serialize_probability(getattr(row, "age_mean_start", None)),
             "share_foreign_start": serialize_probability(getattr(row, "share_foreign_start", None)),
             "share_age_15_29_start": serialize_probability(getattr(row, "share_age_15_29_start", None)),
+            "share_age_65_plus_start": serialize_probability(getattr(row, "share_age_65_plus_start", None)),
             "metro_distance_m_start": serialize_probability(getattr(row, "metro_distance_m_start", None)),
             "metro_access_count_500m_start": serialize_probability(getattr(row, "metro_access_count_500m_start", None)),
             "metro_access_count_1000m_start": serialize_probability(getattr(row, "metro_access_count_1000m_start", None)),
+            "metro_nearest_name_start": serialize_optional_text(getattr(row, "metro_nearest_name_start", None)),
+            "metro_access_names_500m_start": serialize_optional_text_list(getattr(row, "metro_access_names_500m_start", [])),
+            "metro_access_names_1000m_start": serialize_optional_text_list(getattr(row, "metro_access_names_1000m_start", [])),
             "avisos_barrio_per_1000_prev_year": serialize_probability(getattr(row, "avisos_barrio_per_1000_prev_year", None)),
             "avisos_district_per_1000_prev_year": serialize_probability(getattr(row, "avisos_district_per_1000_prev_year", None)),
             "top_avisos_barrio_categories": serialize_avisos_top_categories(getattr(row, "top_avisos_barrio_categories", [])),
@@ -1719,6 +2175,18 @@ def build_sections_geojson(section_profiles: pd.DataFrame) -> dict[str, object]:
             "best_activity_risk": serialize_probability(getattr(row, "best_activity_risk", None)),
             "best_activity_survival_24m": serialize_probability(getattr(row, "best_activity_survival_24m", None)),
             "top_activities": getattr(row, "top_activities", []),
+            "facilities_tier": str(getattr(row, "facilities_tier", "Sin datos") or "Sin datos"),
+            "facilities_200m": int(getattr(row, "facilities_200m", 0) or 0),
+            "facilities_500m": int(getattr(row, "facilities_500m", 0) or 0),
+            "facilities_1000m": int(getattr(row, "facilities_1000m", 0) or 0),
+            "facilities_by_category": getattr(row, "facilities_by_category", []) or [],
+            "vulnerabilidad_global": serialize_probability(getattr(row, "vulnerabilidad_global", None)),
+            "vulnerabilidad_global_media_ciudad": serialize_probability(getattr(row, "vulnerabilidad_global_media_ciudad", None)),
+            "vulnerabilidad_esferas": getattr(row, "vulnerabilidad_esferas", []) or [],
+            "inspecciones_distrito_total": serialize_probability(getattr(row, "inspecciones_distrito_total", None)),
+            "inspecciones_ciudad_media": serialize_probability(getattr(row, "inspecciones_ciudad_media", None)),
+            "inspecciones_top_epigrafes": getattr(row, "inspecciones_top_epigrafes", []) or [],
+            "indicadores_distrito": getattr(row, "indicadores_distrito", []) or [],
         }
         features.append(
             {
@@ -1736,7 +2204,7 @@ def build_selected_summary(selected_scored: pd.DataFrame, filter_summary: dict[s
         "filter_summary": filter_summary,
         "selected_listings": int(len(selected_scored)),
         "districts": int(selected_scored["district_code"].dropna().nunique()),
-        "barrios": int(selected_scored["barrio_code"].dropna().nunique()),
+        "barrios": count_unique_barrio_scopes(selected_scored),
         "operations": {
             str(key): int(value) for key, value in selected_scored["operation"].astype("string").value_counts(dropna=False).to_dict().items()
         },
@@ -1752,7 +2220,7 @@ def build_frontend_artifacts(selected_scored: pd.DataFrame, filter_summary: dict
     stats = {
         "selected_listings": int(len(selected_scored)),
         "districts": int(selected_scored["district_code"].dropna().nunique()),
-        "barrios": int(selected_scored["barrio_code"].dropna().nunique()),
+        "barrios": count_unique_barrio_scopes(selected_scored),
         "median_survival_24m": serialize_probability(pd.to_numeric(selected_scored["expected_survival_24m"], errors="coerce").median()),
         "median_price_per_m2": serialize_probability(pd.to_numeric(selected_scored["price_per_m2_eur"], errors="coerce").median()),
     }
@@ -1807,14 +2275,21 @@ def build_point_payload(row: object) -> dict[str, object]:
         "barrio_rank": int(getattr(row, "barrio_rank")),
         "barrio_total_sections": int(getattr(row, "barrio_total_sections")),
         "renta_effective_eur": serialize_probability(getattr(row, "renta_effective_eur", None)),
+        "renta_reference_year": serialize_probability(getattr(row, "renta_reference_year", None)),
+        "renta_granularity_used": str(getattr(row, "renta_granularity_used", "") or ""),
+        "renta_outlier_adjusted": bool(getattr(row, "renta_outlier_adjusted", False)),
         "total_population_start": serialize_probability(getattr(row, "total_population_start", None)),
         "population_density_km2_start": serialize_probability(getattr(row, "population_density_km2_start", None)),
         "age_mean_start": serialize_probability(getattr(row, "age_mean_start", None)),
         "share_foreign_start": serialize_probability(getattr(row, "share_foreign_start", None)),
         "share_age_15_29_start": serialize_probability(getattr(row, "share_age_15_29_start", None)),
+        "share_age_65_plus_start": serialize_probability(getattr(row, "share_age_65_plus_start", None)),
         "metro_distance_m_start": serialize_probability(getattr(row, "metro_distance_m_start", None)),
         "metro_access_count_500m_start": serialize_probability(getattr(row, "metro_access_count_500m_start", None)),
         "metro_access_count_1000m_start": serialize_probability(getattr(row, "metro_access_count_1000m_start", None)),
+        "metro_nearest_name_start": serialize_optional_text(getattr(row, "metro_nearest_name_start", None)),
+        "metro_access_names_500m_start": serialize_optional_text_list(getattr(row, "metro_access_names_500m_start", [])),
+        "metro_access_names_1000m_start": serialize_optional_text_list(getattr(row, "metro_access_names_1000m_start", [])),
         "avisos_barrio_per_1000_prev_year": serialize_probability(getattr(row, "avisos_barrio_per_1000_prev_year", None)),
         "avisos_district_per_1000_prev_year": serialize_probability(getattr(row, "avisos_district_per_1000_prev_year", None)),
         "top_avisos_barrio_categories": serialize_avisos_top_categories(getattr(row, "top_avisos_barrio_categories", [])),
@@ -1827,6 +2302,18 @@ def build_point_payload(row: object) -> dict[str, object]:
         "best_activity_risk": serialize_probability(getattr(row, "best_activity_risk", None)),
         "best_activity_survival_24m": serialize_probability(getattr(row, "best_activity_survival_24m", None)),
         "top_activities": top_activities,
+        "facilities_tier": str(getattr(row, "facilities_tier", "Sin datos") or "Sin datos"),
+        "facilities_200m": int(getattr(row, "facilities_200m", 0) or 0),
+        "facilities_500m": int(getattr(row, "facilities_500m", 0) or 0),
+        "facilities_1000m": int(getattr(row, "facilities_1000m", 0) or 0),
+        "facilities_by_category": getattr(row, "facilities_by_category", []) or [],
+        "vulnerabilidad_global": serialize_probability(getattr(row, "vulnerabilidad_global", None)),
+        "vulnerabilidad_global_media_ciudad": serialize_probability(getattr(row, "vulnerabilidad_global_media_ciudad", None)),
+        "vulnerabilidad_esferas": getattr(row, "vulnerabilidad_esferas", []) or [],
+        "inspecciones_distrito_total": serialize_probability(getattr(row, "inspecciones_distrito_total", None)),
+        "inspecciones_ciudad_media": serialize_probability(getattr(row, "inspecciones_ciudad_media", None)),
+        "inspecciones_top_epigrafes": getattr(row, "inspecciones_top_epigrafes", []) or [],
+        "indicadores_distrito": getattr(row, "indicadores_distrito", []) or [],
     }
 
 
@@ -1886,6 +2373,39 @@ def normalize_zone_lookup_key(value: object) -> str | None:
         return None
     text = str(value).strip().lower()
     return text or None
+
+
+def serialize_optional_text(value: object) -> str:
+    if value is None or pd.isna(value):
+        return ""
+    text = str(value).strip()
+    if not text or text == "<NA>" or text.lower() == "nan":
+        return ""
+    return text
+
+
+def serialize_optional_text_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    cleaned = [serialize_optional_text(item) for item in value]
+    return [item for item in cleaned if item]
+
+
+def count_unique_barrio_scopes(frame: pd.DataFrame) -> int:
+    if frame.empty or "district_code" not in frame.columns or "barrio_code" not in frame.columns:
+        return 0
+
+    scoped_keys = pd.Series(
+        [
+            f"{district}:{barrio}"
+            if pd.notna(district) and pd.notna(barrio) and str(district).strip() and str(barrio).strip()
+            else pd.NA
+            for district, barrio in zip(frame["district_code"], frame["barrio_code"])
+        ],
+        index=frame.index,
+        dtype="string",
+    )
+    return int(scoped_keys.dropna().nunique())
 
 
 def normalize_section_barrio_code(district_code: object, barrio_code: object) -> str | None:
