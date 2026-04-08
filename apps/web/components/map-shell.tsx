@@ -489,7 +489,7 @@ function MetricGrid({
           >
             <span className="detail-metric-label">{metric.label}</span>
             <strong className="detail-metric-value">{metric.value}</strong>
-            <span className="detail-metric-hint">Qué es, para qué sirve y cómo se calcula</span>
+            <span className="detail-metric-hint">Entender el dato</span>
           </button>
         );
       })}
@@ -500,7 +500,7 @@ function MetricGrid({
 function MetricExplainer({ metric }: { metric: MetricDefinition | null }) {
   return (
     <div className="metric-explainer" data-empty={metric ? "false" : "true"}>
-      <div className="eyebrow">Definición de métrica</div>
+      <div className="eyebrow">Qué significa este dato</div>
       {metric ? (
         <>
           <h3>{metric.label}</h3>
@@ -524,7 +524,7 @@ function MetricExplainer({ metric }: { metric: MetricDefinition | null }) {
           ) : null}
         </>
       ) : (
-        <p className="metric-explainer-copy">Haz clic en una tarjeta del hexágono para ver qué significa, por qué es útil y cómo se calcula.</p>
+        <p className="metric-explainer-copy">Haz clic en cualquier tarjeta para ver qué significa, por qué es útil y cómo la calcula el producto.</p>
       )}
     </div>
   );
@@ -822,56 +822,56 @@ function buildHexMetrics({
       id: `hex:${detail.h3_cell}:city-rank`,
       label: "Ranking Madrid",
       value: detailRank ? formatHexRank(detailRank.rank, detailRank.total) : "-",
-      summary: "Posición del hexágono frente al resto de hexágonos visibles de la categoría cuando ordenas por menor riesgo.",
-      calculation: "Ordenamos todos los hexágonos visibles por riesgo medio ascendente y asignamos la posición relativa del hexágono seleccionado."
+      summary: "Te dice en qué puesto queda este hexágono dentro de Madrid para la categoría activa cuando ordenas de menor a mayor riesgo.",
+      calculation: "Ordenamos todos los hexágonos visibles de esta categoría por riesgo medio. El puesto #1 es el que sale mejor en esa comparación."
     },
     {
       id: `hex:${detail.h3_cell}:risk-percentile`,
       label: "Índice relativo 0-1",
       value: formatRelativeRiskIndex(detail.avg_risk_percentile),
-      summary: "Resume en una escala 0-1 dónde cae el riesgo del hexágono dentro de la distribución de la categoría activa en Madrid.",
-      calculation: "Tomamos el percentil de riesgo del hexágono y lo expresamos directamente como un índice relativo entre 0 y 1, donde los valores bajos indican una posición más defensiva."
+      summary: "Es la lectura principal del mapa. Cuanto más cerca de 0, mejor posición relativa tiene esta zona dentro de la categoría activa.",
+      calculation: "Convertimos el riesgo del hexágono en un índice entre 0 y 1 comparándolo con el resto de hexágonos de la misma categoría en Madrid. Los valores bajos salen mejor; los altos, peor."
     },
     {
       id: `hex:${detail.h3_cell}:risk-value`,
       label: `Score bruto ${riskModelLabel}`,
       value: formatRiskValue(getPrimaryRiskValue(detail)),
-      summary: "Es el score bruto medio de riesgo del modelo en este hexágono.",
+      summary: "Muestra la señal técnica media del modelo en este hexágono antes de pasarla al índice relativo.",
       calculation: `Promediamos el score ${riskModelLabel} de los locales históricos de esta categoría que caen dentro del hexágono.`
     },
     {
       id: `hex:${detail.h3_cell}:vs-category`,
       label: `Vs media ${horizonLabel}`,
       value: formatSignedPercent(computeSurvivalDelta(detailSurvival, meanSurvival), detailSupport > 0 && isFiniteNumber(meanSurvival) ? "Sin datos" : "Sin muestra"),
-      summary: "Mide cuánto mejor o peor rinde este hexágono frente a la media de la categoría activa.",
+      summary: "Compara esta zona con el nivel normal de la categoría activa: positivo es mejor que la media; negativo, peor.",
       calculation: `Restamos la supervivencia media de la categoría a la supervivencia del hexágono en ${horizonLabel} y expresamos la diferencia en puntos porcentuales.`
     },
     {
       id: `hex:${detail.h3_cell}:survival:${horizon}`,
       label: `Supervivencia ${horizonLabel}`,
       value: formatPercent(detailSurvival, detailSupport > 0 ? "Sin datos" : "Sin muestra"),
-      summary: `Es la supervivencia observada de la categoría en este hexágono para ${horizonLabel}.`,
-      calculation: `Usamos solo locales con soporte suficiente en ${horizonLabel} y calculamos la supervivencia observada agregada para este hexágono.`
+      summary: `Muestra qué parte de los locales comparables sigue activa en este hexágono al llegar a ${horizonLabel}.`,
+      calculation: `Tomamos los locales de esta categoría con observación suficiente en ${horizonLabel} y calculamos su supervivencia observada agregada en este hexágono.`
     },
     {
       id: `hex:${detail.h3_cell}:support:${horizon}`,
       label: `Soporte ${horizonLabel}`,
       value: formatSupport(detailSupport, detail.n_locales),
-      summary: "Indica cuántos locales realmente sostienen la métrica del horizonte frente al total visible en el hexágono.",
+      summary: "Te dice cuántos locales sostienen de verdad la métrica frente al total visible en el hexágono.",
       calculation: `El numerador cuenta los locales con observación válida en ${horizonLabel}; el denominador es el total de locales agregados del hexágono.`
     },
     {
       id: `hex:${detail.h3_cell}:barrio-name`,
       label: "Barrio",
       value: detail.barrio_name || "Sin asignar",
-      summary: "Nombre aproximado del barrio al que pertenece la mayor parte del hexágono.",
+      summary: "Sitúa el hexágono en un nombre reconocible de barrio para leer el mapa más rápido.",
       calculation: "Se infiere a partir de la geografía censal enlazada al hexágono y se usa como referencia interpretativa, no como límite exacto del polígono H3."
     },
     {
       id: `hex:${detail.h3_cell}:district-name`,
       label: "Distrito",
       value: detail.district_name || "Sin asignar",
-      summary: "Distrito administrativo asociado al hexágono para facilitar lectura territorial rápida.",
+      summary: "Añade la referencia administrativa más útil para ubicar la zona de un vistazo.",
       calculation: "Se recupera desde la mejor asignación geográfica disponible entre las secciones históricas y el hexágono H3."
     }
   ];
@@ -882,19 +882,19 @@ function buildMetricWhyUseful(metric: MetricDefinition) {
     return "Te ayuda a priorizar rápido: con una sola cifra ves si este hexágono está entre los mejores o peores de la categoría activa dentro de Madrid.";
   }
   if (metric.id.endsWith(":risk-percentile")) {
-    return "Es la lectura más fácil de comparar entre zonas: 0,10 se entiende enseguida como mejor posición relativa que 0,70 sin tener que interpretar el score técnico del modelo.";
+    return "Es la lectura más fácil de comparar entre zonas: 0,10 se entiende enseguida como mejor posición relativa que 0,70 sin tener que entrar en el score técnico del modelo.";
   }
   if (metric.id.endsWith(":risk-value")) {
-    return "Sirve como señal técnica secundaria cuando quieres entender con más precisión cómo está ordenando el modelo por debajo del índice relativo.";
+    return "Sirve como lectura técnica secundaria cuando quieres auditar mejor cómo está ordenando el modelo por debajo del índice relativo.";
   }
   if (metric.id.endsWith(":vs-category")) {
-    return "Te da contexto relativo: no solo ves cómo rinde el hexágono, sino si está por encima o por debajo del nivel normal de la categoría.";
+    return "Te da contexto relativo: no solo ves cómo rinde el hexágono, sino si está por encima o por debajo del comportamiento normal de la categoría.";
   }
   if (metric.id.includes(":survival:")) {
-    return "Es la señal más directa para entender qué probabilidad histórica tiene esa categoría de aguantar en esta zona durante el horizonte elegido.";
+    return "Convierte el mapa en una pregunta de negocio muy directa: qué continuidad histórica ha tenido esta categoría aquí en el horizonte elegido.";
   }
   if (metric.id.includes(":support:")) {
-    return "Evita sobreinterpretar celdas con poca base histórica: cuanto mayor es el soporte, más robusta suele ser la lectura.";
+    return "Te protege de falsas certezas: una cifra buena con poco soporte vale menos que una lectura parecida con más base histórica.";
   }
   if (metric.id.endsWith(":barrio-name") || metric.id.endsWith(":district-name")) {
     return "Te orienta territorialmente y hace más fácil relacionar el hexágono con zonas reconocibles de Madrid sin tener que leer un identificador H3.";
@@ -904,10 +904,10 @@ function buildMetricWhyUseful(metric: MetricDefinition) {
 
 function buildMetricExample(metric: MetricDefinition) {
   if (metric.id.endsWith(":city-rank")) {
-    return "Ejemplo: #45 de 3.200 significa que este hexágono está muy arriba dentro del mapa de esa categoría cuando ordenas por menor riesgo.";
+    return "Ejemplo: #45 de 3.200 significa que este hexágono sale muy arriba dentro del mapa de esa categoría cuando ordenas por menor riesgo.";
   }
   if (metric.id.endsWith(":risk-percentile")) {
-    return "Ejemplo: 0,20 indica que el hexágono cae en una franja de riesgo más baja que la mayor parte del mapa; equivale aproximadamente a un P20.";
+    return "Ejemplo: 0,20 indica que el hexágono cae en una franja mejor que buena parte del mapa; equivale aproximadamente a un P20.";
   }
   if (metric.id.endsWith(":vs-category")) {
     return "Ejemplo: +6 pp significa que la supervivencia del hexágono está 6 puntos porcentuales por encima de la media de la categoría.";

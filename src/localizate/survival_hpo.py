@@ -72,6 +72,7 @@ def run_activity_survival_hpo(
     final_rsf_estimators: int = 300,
     final_gbsa_estimators: int = 300,
     random_seed: int = 20260326,
+    feature_profile: str = "activity_survival_pruned",
     progress_callback: ProgressCallback | None = None,
 ) -> SurvivalHpoResult:
     resolved_abt = abt_csv or (DATA_DIR / "features" / "activity_survival_abt.csv")
@@ -93,6 +94,7 @@ def run_activity_survival_hpo(
         quantiles=quantiles,
         min_valid_events=min_valid_events,
         min_test_events=min_test_events,
+        feature_profile=feature_profile,
     )
     baseline_payload = _load_json_if_exists(resolved_baseline)
     rng = np.random.default_rng(random_seed)
@@ -210,6 +212,7 @@ def run_activity_survival_hpo(
             "checkpoint_json": str(resolved_checkpoint),
         },
         "search_config": {
+            "feature_profile": feature_profile,
             "transition_policy_train": transition_policy_train,
             "renta_max_year": int(renta_max_year),
             "quantiles": [float(value) for value in quantiles],
@@ -272,6 +275,7 @@ def _build_context(
     quantiles: tuple[float, ...],
     min_valid_events: int,
     min_test_events: int,
+    feature_profile: str,
 ) -> HpoContext:
     abt = pd.read_csv(abt_csv, low_memory=False)
     payload = apply_training_policies(abt, transition_policy=transition_policy_train, renta_max_year=renta_max_year)
@@ -279,7 +283,7 @@ def _build_context(
     dataset["first_seen_period"] = dataset["first_seen_period"].astype("string")
     dataset["event_observed"] = pd.to_numeric(dataset["event_observed"], errors="coerce").fillna(0).astype(int)
     dataset["duration_months"] = pd.to_numeric(dataset["duration_months"], errors="coerce").fillna(0).astype(float)
-    feature_frame = build_feature_frame(dataset, feature_profile="activity_survival_pruned")
+    feature_frame = build_feature_frame(dataset, feature_profile=feature_profile)
     cutoffs = derive_event_quantile_cutoffs(dataset, quantiles=quantiles)
     folds = build_walk_forward_folds(
         dataset,

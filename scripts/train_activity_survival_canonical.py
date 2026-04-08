@@ -25,7 +25,16 @@ def parse_args() -> argparse.Namespace:
         default=PROJECT_ROOT / "models" / "run_progress_survival_activity_canonical.json",
     )
     parser.add_argument("--quick", action="store_true")
+    parser.add_argument("--feature-profile", default="activity_survival_pruned")
+    parser.add_argument("--output-tag", default="")
     return parser.parse_args()
+
+
+def _tag_path(path: Path, tag: str) -> Path:
+    clean_tag = str(tag).strip()
+    if not clean_tag:
+        return path
+    return path.with_name(f"{path.stem}__{clean_tag}{path.suffix}")
 
 
 class ProgressTracker:
@@ -61,13 +70,13 @@ def main() -> int:
     rsf_chunk_size = min(args.rsf_chunk_size, rsf_estimators) if args.quick else args.rsf_chunk_size
     gbsa_chunk_size = min(args.gbsa_chunk_size, gbsa_estimators) if args.quick else args.gbsa_chunk_size
 
-    tracker = ProgressTracker(args.progress_file)
+    tracker = ProgressTracker(_tag_path(args.progress_file, args.output_tag))
     result = train_canonical_survival_models(
         abt_csv=PROJECT_ROOT / "data" / "features" / "activity_survival_abt.csv",
-        metrics_json=PROJECT_ROOT / "models" / "survival_activity_canonical_metrics.json",
-        report_md=PROJECT_ROOT / "docs" / "survival_activity_canonical.md",
-        map_export_csv=PROJECT_ROOT / "data" / "exports" / "activity_survival_map_export.csv",
-        feature_profile="activity_survival_pruned",
+        metrics_json=_tag_path(PROJECT_ROOT / "models" / "survival_activity_canonical_metrics.json", args.output_tag),
+        report_md=_tag_path(PROJECT_ROOT / "docs" / "survival_activity_canonical.md", args.output_tag),
+        map_export_csv=_tag_path(PROJECT_ROOT / "data" / "exports" / "activity_survival_map_export.csv", args.output_tag),
+        feature_profile=args.feature_profile,
         transition_policy_train="exclude_transition",
         renta_max_year=2023,
         rsf_n_estimators=rsf_estimators,

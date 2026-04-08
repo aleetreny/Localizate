@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { OpportunityMap } from "@/components/opportunity-map";
 import { ViewTabs } from "@/components/view-tabs";
@@ -771,40 +771,50 @@ function MetricGrid({
 function MetricExplainer({ metric }: { metric: MetricDefinition | null }) {
   const breakdownItems = metric?.breakdownItems ?? [];
   const asideEnabled = breakdownItems.some(hasBreakdownAside);
-  const defaultAsideKey = breakdownItems.find(hasBreakdownAside)
-    ? buildBreakdownItemKey(breakdownItems.find(hasBreakdownAside) as MetricBreakdownItem)
-    : null;
-  const [activeBreakdownKey, setActiveBreakdownKey] = useState<string | null>(defaultAsideKey);
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  const [activeBreakdownKey, setActiveBreakdownKey] = useState<string | null>(null);
+  const [hoverPanelTop, setHoverPanelTop] = useState(0);
 
   useEffect(() => {
-    setActiveBreakdownKey(defaultAsideKey);
-  }, [defaultAsideKey, metric?.id]);
+    setActiveBreakdownKey(null);
+    setHoverPanelTop(0);
+  }, [metric?.id]);
+
+  function activateBreakdown(itemKey: string, element?: HTMLElement | null) {
+    setActiveBreakdownKey(itemKey);
+    if (!element || !shellRef.current) {
+      return;
+    }
+
+    const shellRect = shellRef.current.getBoundingClientRect();
+    const elementRect = element.getBoundingClientRect();
+    setHoverPanelTop(Math.max(0, elementRect.top - shellRect.top));
+  }
 
   const activeBreakdown = asideEnabled
     ? breakdownItems.find((item) => buildBreakdownItemKey(item) === activeBreakdownKey && hasBreakdownAside(item))
-      ?? breakdownItems.find(hasBreakdownAside)
       ?? null
     : null;
 
   return (
-    <div className="metric-explainer" data-empty={metric ? "false" : "true"}>
-      <div className="eyebrow">Qué significa este dato</div>
-      {metric ? (
-        <>
-          <h3>{metric.label}</h3>
-          <div className="metric-explainer-block">
-            <span className="metric-explainer-label">Qué significa</span>
-            <p className="metric-explainer-copy">{metric.summary}</p>
-          </div>
-          <div className="metric-explainer-block">
-            <span className="metric-explainer-label">Por qué te ayuda</span>
-            <p className="metric-explainer-copy">{buildMetricWhyUseful(metric)}</p>
-          </div>
-          {metric.breakdownTitle ? (
+    <div className="metric-explainer-shell" ref={shellRef}>
+      <div className="metric-explainer" data-empty={metric ? "false" : "true"}>
+        <div className="eyebrow">Qué significa este dato</div>
+        {metric ? (
+          <>
+            <h3>{metric.label}</h3>
             <div className="metric-explainer-block">
-              <span className="metric-explainer-label">{metric.breakdownTitle}</span>
-              {metric.breakdownItems && metric.breakdownItems.length > 0 ? (
-                <div className={asideEnabled ? "metric-breakdown-layout" : undefined}>
+              <span className="metric-explainer-label">Qué significa</span>
+              <p className="metric-explainer-copy">{metric.summary}</p>
+            </div>
+            <div className="metric-explainer-block">
+              <span className="metric-explainer-label">Por qué te ayuda</span>
+              <p className="metric-explainer-copy">{buildMetricWhyUseful(metric)}</p>
+            </div>
+            {metric.breakdownTitle ? (
+              <div className="metric-explainer-block">
+                <span className="metric-explainer-label">{metric.breakdownTitle}</span>
+                {metric.breakdownItems && metric.breakdownItems.length > 0 ? (
                   <div className="metric-breakdown-list">
                     {metric.breakdownItems.map((item) => {
                       const itemKey = buildBreakdownItemKey(item);
@@ -816,9 +826,9 @@ function MetricExplainer({ metric }: { metric: MetricDefinition | null }) {
                             className="metric-breakdown-item metric-breakdown-item-button"
                             data-active={isAsideActive}
                             key={`${metric.id}:${item.rank}:${item.label}`}
-                            onClick={() => setActiveBreakdownKey(itemKey)}
-                            onFocus={() => setActiveBreakdownKey(itemKey)}
-                            onMouseEnter={() => setActiveBreakdownKey(itemKey)}
+                            onClick={(event) => activateBreakdown(itemKey, event.currentTarget)}
+                            onFocus={(event) => activateBreakdown(itemKey, event.currentTarget)}
+                            onMouseEnter={(event) => activateBreakdown(itemKey, event.currentTarget)}
                             type="button"
                           >
                             <div className="metric-breakdown-main">
@@ -843,42 +853,43 @@ function MetricExplainer({ metric }: { metric: MetricDefinition | null }) {
                       );
                     })}
                   </div>
-                  {asideEnabled && activeBreakdown ? (
-                    <aside className="metric-breakdown-aside">
-                      <span className="metric-breakdown-aside-label">{activeBreakdown.asideTitle ?? activeBreakdown.label}</span>
-                      {activeBreakdown.asideItems && activeBreakdown.asideItems.length > 0 ? (
-                        <div className="metric-breakdown-aside-list">
-                          {activeBreakdown.asideItems.map((item) => (
-                            <span className="metric-breakdown-aside-item" key={`${activeBreakdown.label}:${item}`}>
-                              {item}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="metric-breakdown-aside-empty">{activeBreakdown.asideEmptyText ?? "Sin detalle adicional para este bloque."}</p>
-                      )}
-                    </aside>
-                  ) : null}
-                </div>
-              ) : (
-                <p className="metric-explainer-copy">{metric.breakdownEmptyText ?? "Sin desglose disponible para este ámbito."}</p>
-              )}
-            </div>
-          ) : null}
-          <div className="metric-explainer-block">
-            <span className="metric-explainer-label">Cómo se calcula</span>
-            <p className="metric-explainer-copy">{metric.calculation}</p>
-          </div>
-          {buildMetricExample(metric) ? (
+                ) : (
+                  <p className="metric-explainer-copy">{metric.breakdownEmptyText ?? "Sin desglose disponible para este ámbito."}</p>
+                )}
+              </div>
+            ) : null}
             <div className="metric-explainer-block">
-              <span className="metric-explainer-label">Ejemplo rápido</span>
-              <p className="metric-explainer-copy">{buildMetricExample(metric)}</p>
+              <span className="metric-explainer-label">Cómo se calcula</span>
+              <p className="metric-explainer-copy">{metric.calculation}</p>
             </div>
-          ) : null}
-        </>
-      ) : (
-        <p className="metric-explainer-copy">Haz clic en cualquier tarjeta para ver qué significa, por qué es útil y cómo la calcula el producto.</p>
-      )}
+            {buildMetricExample(metric) ? (
+              <div className="metric-explainer-block">
+                <span className="metric-explainer-label">Ejemplo rápido</span>
+                <p className="metric-explainer-copy">{buildMetricExample(metric)}</p>
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <p className="metric-explainer-copy">Haz clic en cualquier tarjeta para ver qué significa, por qué es útil y cómo la calcula el producto.</p>
+        )}
+      </div>
+      {asideEnabled && activeBreakdown ? (
+        <aside className="metric-breakdown-hover-panel" style={{ top: `${hoverPanelTop}px` }}>
+          <span className="metric-breakdown-hover-kicker">Metro de Madrid</span>
+          <span className="metric-breakdown-hover-title">{activeBreakdown.asideTitle ?? activeBreakdown.label}</span>
+          {activeBreakdown.asideItems && activeBreakdown.asideItems.length > 0 ? (
+            <div className="metric-breakdown-aside-list">
+              {activeBreakdown.asideItems.map((item) => (
+                <span className="metric-breakdown-aside-item" key={`${activeBreakdown.label}:${item}`}>
+                  {item}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="metric-breakdown-aside-empty">{activeBreakdown.asideEmptyText ?? "Sin detalle adicional para este bloque."}</p>
+          )}
+        </aside>
+      ) : null}
     </div>
   );
 }
@@ -1234,28 +1245,30 @@ function buildMetroMetric({
   summarySubject,
   calculationSubject,
   distance,
-  access500,
-  access1000,
+  station500,
+  station1000,
   nearestName,
-  accessNames500,
-  accessNames1000,
+  nearestStationName,
+  stationNames500,
+  stationNames1000,
   distanceBenchmark,
-  access500Benchmark,
-  access1000Benchmark,
+  station500Benchmark,
+  station1000Benchmark,
 }: {
   scopeId: string;
   label: string;
   summarySubject: string;
   calculationSubject: string;
   distance: number | null;
-  access500: number | null;
-  access1000: number | null;
+  station500: number | null;
+  station1000: number | null;
   nearestName: string;
-  accessNames500: string[];
-  accessNames1000: string[];
+  nearestStationName: string;
+  stationNames500: string[];
+  stationNames1000: string[];
   distanceBenchmark: OpportunityFieldInsight | null | undefined;
-  access500Benchmark: OpportunityFieldInsight | null | undefined;
-  access1000Benchmark: OpportunityFieldInsight | null | undefined;
+  station500Benchmark: OpportunityFieldInsight | null | undefined;
+  station1000Benchmark: OpportunityFieldInsight | null | undefined;
 }): MetricDefinition {
   return {
     id: `${scopeId}:metro`,
@@ -1264,23 +1277,25 @@ function buildMetroMetric({
     summary: buildMetroSummary({
       subject: summarySubject,
       distance,
-      access500,
-      access1000,
+      station500,
+      station1000,
       nearestName,
+      nearestStationName,
       cityPercentile: distanceBenchmark?.cityPercentile ?? null,
     }),
-    calculation: `Medimos en metros la distancia en línea recta desde ${calculationSubject} hasta el acceso de metro más cercano y contamos cuántos accesos caen a 500 m y a 1 km.`,
-    breakdownTitle: "Cercanía y accesos",
+    calculation: `Medimos en metros la distancia en línea recta desde ${calculationSubject} hasta el acceso de metro más cercano. Después agrupamos todos los accesos cercanos por estación oficial para contar cuántas paradas únicas hay a 500 m y a 1 km usando la malla principal de Metro de Madrid.`,
+    breakdownTitle: "Cercanía y paradas",
     breakdownItems: buildMetroBreakdownItems({
       distance,
-      access500,
-      access1000,
+      station500,
+      station1000,
       nearestName,
-      accessNames500,
-      accessNames1000,
+      nearestStationName,
+      stationNames500,
+      stationNames1000,
       distanceBenchmark,
-      access500Benchmark,
-      access1000Benchmark,
+      station500Benchmark,
+      station1000Benchmark,
     }),
   };
 }
@@ -1446,14 +1461,15 @@ function buildPointPrimaryMetrics(point: OpportunityPoint, horizon: Horizon, ben
       summarySubject: "el local",
       calculationSubject: "el local",
       distance: point.metro_distance_m_start,
-      access500: point.metro_access_count_500m_start,
-      access1000: point.metro_access_count_1000m_start,
+      station500: point.metro_station_count_500m_start,
+      station1000: point.metro_station_count_1000m_start,
       nearestName: point.metro_nearest_name_start,
-      accessNames500: point.metro_access_names_500m_start,
-      accessNames1000: point.metro_access_names_1000m_start,
+      nearestStationName: point.metro_nearest_station_name_start,
+      stationNames500: point.metro_station_names_500m_start,
+      stationNames1000: point.metro_station_names_1000m_start,
       distanceBenchmark: benchmarks?.metrics.metro_distance_m_start,
-      access500Benchmark: benchmarks?.metrics.metro_access_count_500m_start,
-      access1000Benchmark: benchmarks?.metrics.metro_access_count_1000m_start,
+      station500Benchmark: benchmarks?.metrics.metro_station_count_500m_start,
+      station1000Benchmark: benchmarks?.metrics.metro_station_count_1000m_start,
     }),
     buildCompetitionMetric({
       scopeId: `listing:${point.listing_id}`,
@@ -1532,14 +1548,15 @@ function buildSectionPrimaryMetrics(section: OpportunitySection, horizon: Horizo
       summarySubject: "la sección",
       calculationSubject: "el centroide de la sección",
       distance: section.metro_distance_m_start,
-      access500: section.metro_access_count_500m_start,
-      access1000: section.metro_access_count_1000m_start,
+      station500: section.metro_station_count_500m_start,
+      station1000: section.metro_station_count_1000m_start,
       nearestName: section.metro_nearest_name_start,
-      accessNames500: section.metro_access_names_500m_start,
-      accessNames1000: section.metro_access_names_1000m_start,
+      nearestStationName: section.metro_nearest_station_name_start,
+      stationNames500: section.metro_station_names_500m_start,
+      stationNames1000: section.metro_station_names_1000m_start,
       distanceBenchmark: benchmarks?.metrics.metro_distance_m_start,
-      access500Benchmark: benchmarks?.metrics.metro_access_count_500m_start,
-      access1000Benchmark: benchmarks?.metrics.metro_access_count_1000m_start,
+      station500Benchmark: benchmarks?.metrics.metro_station_count_500m_start,
+      station1000Benchmark: benchmarks?.metrics.metro_station_count_1000m_start,
     }),
     buildCompetitionMetric({
       scopeId: `section:${section.section_key}`,
@@ -1863,26 +1880,30 @@ function buildTerritorialMedianSummary(
 function buildMetroSummary({
   subject,
   distance,
-  access500,
-  access1000,
+  station500,
+  station1000,
   nearestName,
+  nearestStationName,
   cityPercentile,
 }: {
   subject: string;
   distance: number | null;
-  access500: number | null;
-  access1000: number | null;
+  station500: number | null;
+  station1000: number | null;
   nearestName: string;
+  nearestStationName: string;
   cityPercentile: number | null;
 }) {
   if (!isFiniteNumber(distance)) {
     return `No hay una lectura fiable de cercanía al metro para ${subject}.`;
   }
 
-  const intro = nearestName
-    ? `El acceso más cercano para ${subject} es ${nearestName}, a ${formatDistance(distance)}.`
-    : `El acceso de metro más cercano para ${subject} está a ${formatDistance(distance)}.`;
-  const counts = `Hay ${formatCompact(access500)} accesos a 500 m y ${formatCompact(access1000)} a 1 km.`;
+  const intro = nearestStationName
+    ? `La estación más cercana para ${subject} es ${nearestStationName}; el acceso más próximo queda a ${formatDistance(distance)}.`
+    : nearestName
+      ? `El acceso más cercano para ${subject} es ${nearestName}, a ${formatDistance(distance)}.`
+      : `El acceso de metro más cercano para ${subject} está a ${formatDistance(distance)}.`;
+  const counts = `Hay ${formatCompact(station500)} paradas oficiales únicas a 500 m y ${formatCompact(station1000)} a 1 km.`;
   const cityRead = buildMetroPercentileNarrative(cityPercentile);
 
   return [intro, counts, cityRead].filter(Boolean).join(" ");
@@ -1893,7 +1914,7 @@ function buildMetroAccessDetail(cityMedian: number | null, names: string[], form
   if (names.length === 0) {
     return base;
   }
-  const identified = names.length === 1 ? "1 acceso identificado" : `${names.length} accesos identificados`;
+  const identified = names.length === 1 ? "1 parada oficial" : `${names.length} paradas oficiales`;
   return `${base} · ${identified}`;
 }
 
@@ -2298,54 +2319,58 @@ function buildRankBreakdownItems({
 
 function buildMetroBreakdownItems({
   distance,
-  access500,
-  access1000,
+  station500,
+  station1000,
   nearestName,
-  accessNames500,
-  accessNames1000,
+  nearestStationName,
+  stationNames500,
+  stationNames1000,
   distanceBenchmark,
-  access500Benchmark,
-  access1000Benchmark,
+  station500Benchmark,
+  station1000Benchmark,
 }: {
   distance: number | null;
-  access500: number | null;
-  access1000: number | null;
+  station500: number | null;
+  station1000: number | null;
   nearestName: string;
-  accessNames500: string[];
-  accessNames1000: string[];
+  nearestStationName: string;
+  stationNames500: string[];
+  stationNames1000: string[];
   distanceBenchmark: OpportunityFieldInsight | null | undefined;
-  access500Benchmark: OpportunityFieldInsight | null | undefined;
-  access1000Benchmark: OpportunityFieldInsight | null | undefined;
+  station500Benchmark: OpportunityFieldInsight | null | undefined;
+  station1000Benchmark: OpportunityFieldInsight | null | undefined;
 }): MetricBreakdownItem[] {
   return [
     {
       rank: 1,
-      label: "Accesos a 500 m",
-      value: formatCompact(access500),
-      detail: buildMetroAccessDetail(access500Benchmark?.cityMedian ?? null, accessNames500, formatCompact),
-      asideTitle: "Accesos identificados a 500 m",
-      asideItems: accessNames500,
-      asideEmptyText: "No hay accesos de metro identificados dentro de 500 m.",
+      label: "Paradas a 500 m",
+      value: formatCompact(station500),
+      detail: buildMetroAccessDetail(station500Benchmark?.cityMedian ?? null, stationNames500, formatCompact),
+      asideTitle: "Paradas oficiales a 500 m",
+      asideItems: stationNames500,
+      asideEmptyText: "No hay paradas oficiales de metro identificadas dentro de 500 m.",
     },
     {
       rank: 2,
-      label: "Accesos a 1 km",
-      value: formatCompact(access1000),
-      detail: buildMetroAccessDetail(access1000Benchmark?.cityMedian ?? null, accessNames1000, formatCompact),
-      asideTitle: "Accesos identificados a 1 km",
-      asideItems: accessNames1000,
-      asideEmptyText: "No hay accesos de metro identificados dentro de 1 km.",
+      label: "Paradas a 1 km",
+      value: formatCompact(station1000),
+      detail: buildMetroAccessDetail(station1000Benchmark?.cityMedian ?? null, stationNames1000, formatCompact),
+      asideTitle: "Paradas oficiales a 1 km",
+      asideItems: stationNames1000,
+      asideEmptyText: "No hay paradas oficiales de metro identificadas dentro de 1 km.",
     },
     {
       rank: 3,
-      label: "Acceso más cercano",
+      label: "Parada más cercana",
       value: formatDistance(distance),
-      detail: nearestName
-        ? `${nearestName} · ${formatMetroPercentile(distanceBenchmark?.cityPercentile ?? null)}`
-        : formatMetroPercentile(distanceBenchmark?.cityPercentile ?? null),
-      asideTitle: "Acceso más cercano",
-      asideItems: nearestName ? [nearestName] : [],
-      asideEmptyText: "No hay nombre legible disponible para el acceso más cercano.",
+      detail: nearestStationName
+        ? `${nearestStationName} · ${formatMetroPercentile(distanceBenchmark?.cityPercentile ?? null)}`
+        : nearestName
+          ? `${nearestName} · ${formatMetroPercentile(distanceBenchmark?.cityPercentile ?? null)}`
+          : formatMetroPercentile(distanceBenchmark?.cityPercentile ?? null),
+      asideTitle: "Parada oficial más cercana",
+      asideItems: nearestStationName ? [nearestStationName] : [],
+      asideEmptyText: "No hay una parada oficial legible disponible para este punto.",
     },
   ];
 }

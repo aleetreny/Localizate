@@ -71,6 +71,7 @@ def run_activity_survival_rolling_backtest(
     gbsa_n_estimators: int = 120,
     gbsa_chunk_size: int = 20,
     fit_max_rows: int | None = 25_000,
+    feature_profile: str = "activity_survival_pruned",
     progress_callback: ProgressCallback | None = None,
 ) -> RollingBacktestResult:
     resolved_abt = abt_csv or (DATA_DIR / "features" / "activity_survival_abt.csv")
@@ -93,7 +94,7 @@ def run_activity_survival_rolling_backtest(
     dataset["first_seen_period"] = dataset["first_seen_period"].astype("string")
     dataset["event_observed"] = pd.to_numeric(dataset["event_observed"], errors="coerce").fillna(0).astype(int)
     dataset["duration_months"] = pd.to_numeric(dataset["duration_months"], errors="coerce").fillna(0).astype(float)
-    feature_frame = build_feature_frame(dataset, feature_profile="activity_survival_pruned")
+    feature_frame = build_feature_frame(dataset, feature_profile=feature_profile)
     comparison_metrics = _load_json_if_exists(resolved_comparison)
 
     cutoffs = derive_event_quantile_cutoffs(dataset, quantiles=quantiles)
@@ -138,6 +139,7 @@ def run_activity_survival_rolling_backtest(
             "comparison_metrics_json": str(resolved_comparison),
         },
         "training_run": {
+            "feature_profile": feature_profile,
             "rsf_n_estimators": int(rsf_n_estimators),
             "rsf_chunk_size": int(rsf_chunk_size),
             "gbsa_n_estimators": int(gbsa_n_estimators),

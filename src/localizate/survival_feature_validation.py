@@ -27,6 +27,7 @@ def validate_survival_feature_frame(
     report_md: Path | None = None,
     transition_policy: str = "exclude_transition",
     renta_max_year: int = 2023,
+    feature_profile: str = "full",
 ) -> SurvivalFeatureValidationResult:
     resolved_abt = abt_csv or (DATA_DIR / "features" / "local_survival_abt.csv")
     resolved_metrics = metrics_json or (PROJECT_ROOT / "models" / "survival_feature_validation.json")
@@ -38,8 +39,8 @@ def validate_survival_feature_frame(
     abt = pd.read_csv(resolved_abt, low_memory=False)
     policy = apply_training_policies(abt, transition_policy=transition_policy, renta_max_year=renta_max_year)
     dataset = policy["dataset"].copy()
-    raw_features = build_feature_frame(dataset, fill_missing=False)
-    features = build_feature_frame(dataset, fill_missing=True)
+    raw_features = build_feature_frame(dataset, fill_missing=False, feature_profile=feature_profile)
+    features = build_feature_frame(dataset, fill_missing=True, feature_profile=feature_profile)
 
     event = pd.to_numeric(dataset["event_observed"], errors="coerce").fillna(0).astype(int)
     event_mask = event.eq(1)
@@ -98,6 +99,7 @@ def validate_survival_feature_frame(
 
     payload = {
         "policy": policy["policy"],
+        "feature_profile": feature_profile,
         "rows": int(len(dataset)),
         "event_rate": float(event.mean()) if len(event) else 0.0,
         "feature_count": int(len(summary_df)),
@@ -129,6 +131,7 @@ def render_survival_feature_validation_report(payload: dict[str, object]) -> str
     lines.append("")
     lines.append("## Resumen")
     lines.append("")
+    lines.append(f"- Perfil de features: `{payload.get('feature_profile', 'full')}`")
     lines.append(f"- Filas analizadas: {int(payload.get('rows', 0)):,}")
     lines.append(f"- Event rate: {float(payload.get('event_rate', 0.0)):.4f}")
     lines.append(f"- Variables analizadas: {int(payload.get('feature_count', 0))}")

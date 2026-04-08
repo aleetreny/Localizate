@@ -10,6 +10,7 @@ requests>=2.32
 tqdm>=4.67
 charset-normalizer>=3.4
 pypdf>=5.3
+ftfy>=6.3
 
 # Geoespacial
 geopandas>=1.0

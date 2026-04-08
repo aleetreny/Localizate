@@ -11,7 +11,12 @@ import pandas as pd
 from .activity_taxonomy import build_macro_activity_taxonomy, render_macro_glossary
 from .censo import load_raw_manifest
 from .paths import DATA_DIR, DOCS_DIR, PROJECT_ROOT
-from .survival_features import attach_avisos_features, attach_metro_features, attach_section_reference_fallbacks
+from .survival_features import (
+    attach_avisos_features,
+    attach_external_district_features,
+    attach_metro_features,
+    attach_section_reference_fallbacks,
+)
 
 
 PLACEHOLDER_ACTIVITY_CODES = frozenset({"", "0", "-1", "PT", "NA", "N/A", "NULL"})
@@ -1057,6 +1062,7 @@ def build_local_survival_abt(
     abt = attach_section_reference_fallbacks(abt)
     abt = attach_avisos_features(abt, raw_manifest=raw_manifest, section_panel_csv=resolved_section_panel)
     abt = attach_metro_features(abt)
+    abt = attach_external_district_features(abt)
 
     abt.to_csv(resolved_output_csv, index=False)
     parquet_written = True

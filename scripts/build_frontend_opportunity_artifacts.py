@@ -146,9 +146,14 @@ POINT_OUTPUT_COLUMNS = [
     "metro_distance_m_start",
     "metro_access_count_500m_start",
     "metro_access_count_1000m_start",
+    "metro_station_count_500m_start",
+    "metro_station_count_1000m_start",
     "metro_nearest_name_start",
+    "metro_nearest_station_name_start",
     "metro_access_names_500m_start",
     "metro_access_names_1000m_start",
+    "metro_station_names_500m_start",
+    "metro_station_names_1000m_start",
     "avisos_barrio_per_1000_prev_year",
     "avisos_district_per_1000_prev_year",
     "section_local_count_start",
@@ -905,8 +910,13 @@ def score_selected_available_listings(
         "padron_lag_months_start",
         "geometry_available_start",
         "metro_nearest_name_start",
+        "metro_nearest_station_name_start",
+        "metro_station_count_500m_start",
+        "metro_station_count_1000m_start",
         "metro_access_names_500m_start",
         "metro_access_names_1000m_start",
+        "metro_station_names_500m_start",
+        "metro_station_names_1000m_start",
         "n_divisions_start",
         "n_epigrafes_start",
         "n_activity_categories_start",
@@ -976,11 +986,25 @@ def score_selected_available_listings(
 
     metro_input = enriched[["lat_wgs84", "lon_wgs84"]].rename(columns={"lat_wgs84": "lat_wgs84_start", "lon_wgs84": "lon_wgs84_start"})
     metro_features = compute_metro_features(metro_input, include_names=True)
-    for column in ["metro_distance_m_start", "metro_access_count_500m_start", "metro_access_count_1000m_start", "missing_metro_distance_start"]:
+    for column in [
+        "metro_distance_m_start",
+        "metro_access_count_500m_start",
+        "metro_access_count_1000m_start",
+        "metro_station_count_500m_start",
+        "metro_station_count_1000m_start",
+        "missing_metro_distance_start",
+    ]:
         enriched[column] = pd.to_numeric(metro_features[column], errors="coerce")
     nearest_name_values = metro_features["metro_nearest_name_start"] if "metro_nearest_name_start" in metro_features.columns else pd.Series(pd.NA, index=enriched.index)
     enriched["metro_nearest_name_start"] = nearest_name_values.astype("string")
-    for column in ["metro_access_names_500m_start", "metro_access_names_1000m_start"]:
+    nearest_station_name_values = metro_features["metro_nearest_station_name_start"] if "metro_nearest_station_name_start" in metro_features.columns else pd.Series(pd.NA, index=enriched.index)
+    enriched["metro_nearest_station_name_start"] = nearest_station_name_values.astype("string")
+    for column in [
+        "metro_access_names_500m_start",
+        "metro_access_names_1000m_start",
+        "metro_station_names_500m_start",
+        "metro_station_names_1000m_start",
+    ]:
         values = metro_features[column] if column in metro_features.columns else pd.Series([None] * len(enriched), index=enriched.index, dtype=object)
         enriched[column] = [value if isinstance(value, list) else [] for value in values]
     for column in ["top_avisos_district_categories", "top_avisos_barrio_categories"]:
@@ -2160,9 +2184,14 @@ def build_sections_geojson(section_profiles: pd.DataFrame) -> dict[str, object]:
             "metro_distance_m_start": serialize_probability(getattr(row, "metro_distance_m_start", None)),
             "metro_access_count_500m_start": serialize_probability(getattr(row, "metro_access_count_500m_start", None)),
             "metro_access_count_1000m_start": serialize_probability(getattr(row, "metro_access_count_1000m_start", None)),
+            "metro_station_count_500m_start": serialize_probability(getattr(row, "metro_station_count_500m_start", None)),
+            "metro_station_count_1000m_start": serialize_probability(getattr(row, "metro_station_count_1000m_start", None)),
             "metro_nearest_name_start": serialize_optional_text(getattr(row, "metro_nearest_name_start", None)),
+            "metro_nearest_station_name_start": serialize_optional_text(getattr(row, "metro_nearest_station_name_start", None)),
             "metro_access_names_500m_start": serialize_optional_text_list(getattr(row, "metro_access_names_500m_start", [])),
             "metro_access_names_1000m_start": serialize_optional_text_list(getattr(row, "metro_access_names_1000m_start", [])),
+            "metro_station_names_500m_start": serialize_optional_text_list(getattr(row, "metro_station_names_500m_start", [])),
+            "metro_station_names_1000m_start": serialize_optional_text_list(getattr(row, "metro_station_names_1000m_start", [])),
             "avisos_barrio_per_1000_prev_year": serialize_probability(getattr(row, "avisos_barrio_per_1000_prev_year", None)),
             "avisos_district_per_1000_prev_year": serialize_probability(getattr(row, "avisos_district_per_1000_prev_year", None)),
             "top_avisos_barrio_categories": serialize_avisos_top_categories(getattr(row, "top_avisos_barrio_categories", [])),
@@ -2287,9 +2316,14 @@ def build_point_payload(row: object) -> dict[str, object]:
         "metro_distance_m_start": serialize_probability(getattr(row, "metro_distance_m_start", None)),
         "metro_access_count_500m_start": serialize_probability(getattr(row, "metro_access_count_500m_start", None)),
         "metro_access_count_1000m_start": serialize_probability(getattr(row, "metro_access_count_1000m_start", None)),
+        "metro_station_count_500m_start": serialize_probability(getattr(row, "metro_station_count_500m_start", None)),
+        "metro_station_count_1000m_start": serialize_probability(getattr(row, "metro_station_count_1000m_start", None)),
         "metro_nearest_name_start": serialize_optional_text(getattr(row, "metro_nearest_name_start", None)),
+        "metro_nearest_station_name_start": serialize_optional_text(getattr(row, "metro_nearest_station_name_start", None)),
         "metro_access_names_500m_start": serialize_optional_text_list(getattr(row, "metro_access_names_500m_start", [])),
         "metro_access_names_1000m_start": serialize_optional_text_list(getattr(row, "metro_access_names_1000m_start", [])),
+        "metro_station_names_500m_start": serialize_optional_text_list(getattr(row, "metro_station_names_500m_start", [])),
+        "metro_station_names_1000m_start": serialize_optional_text_list(getattr(row, "metro_station_names_1000m_start", [])),
         "avisos_barrio_per_1000_prev_year": serialize_probability(getattr(row, "avisos_barrio_per_1000_prev_year", None)),
         "avisos_district_per_1000_prev_year": serialize_probability(getattr(row, "avisos_district_per_1000_prev_year", None)),
         "top_avisos_barrio_categories": serialize_avisos_top_categories(getattr(row, "top_avisos_barrio_categories", [])),

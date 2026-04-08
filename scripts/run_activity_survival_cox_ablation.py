@@ -18,12 +18,22 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--fit-max-rows", type=int, default=None)
     parser.add_argument("--alpha", type=float, default=None)
     parser.add_argument("--ties", choices=["breslow", "efron"], default=None)
+    parser.add_argument("--feature-profile", default="full")
+    parser.add_argument("--output-tag", default="")
+    parser.add_argument("--hpo-json", type=Path, default=PROJECT_ROOT / "models" / "activity_survival_hpo.json")
     parser.add_argument(
         "--progress-file",
         type=Path,
         default=PROJECT_ROOT / "models" / "run_progress_activity_survival_cox_ablation.json",
     )
     return parser.parse_args()
+
+
+def _tag_path(path: Path, tag: str) -> Path:
+    clean_tag = str(tag).strip()
+    if not clean_tag:
+        return path
+    return path.with_name(f"{path.stem}__{clean_tag}{path.suffix}")
 
 
 class ProgressTracker:
@@ -53,15 +63,16 @@ def main() -> int:
     from localizate.survival_ablation import run_activity_survival_cox_ablation
 
     args = parse_args()
-    tracker = ProgressTracker(args.progress_file)
+    tracker = ProgressTracker(_tag_path(args.progress_file, args.output_tag))
     result = run_activity_survival_cox_ablation(
         abt_csv=PROJECT_ROOT / "data" / "features" / "activity_survival_abt.csv",
-        hpo_json=PROJECT_ROOT / "models" / "activity_survival_hpo.json",
-        metrics_json=PROJECT_ROOT / "models" / "activity_survival_cox_ablation.json",
-        report_md=PROJECT_ROOT / "docs" / "activity_survival_cox_ablation.md",
+        hpo_json=args.hpo_json,
+        metrics_json=_tag_path(PROJECT_ROOT / "models" / "activity_survival_cox_ablation.json", args.output_tag),
+        report_md=_tag_path(PROJECT_ROOT / "docs" / "activity_survival_cox_ablation.md", args.output_tag),
         fit_max_rows=args.fit_max_rows,
         alpha=args.alpha,
         ties=args.ties,
+        feature_profile=args.feature_profile,
         progress_callback=tracker,
     )
     print(f"Wrote ablation metrics: {result.metrics_json}")

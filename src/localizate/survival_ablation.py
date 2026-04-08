@@ -43,6 +43,7 @@ def run_activity_survival_cox_ablation(
     fit_max_rows: int | None = None,
     alpha: float | None = None,
     ties: str | None = None,
+    feature_profile: str = "full",
     progress_callback: ProgressCallback | None = None,
 ) -> CoxAblationResult:
     resolved_abt = abt_csv or (DATA_DIR / "features" / "activity_survival_abt.csv")
@@ -61,7 +62,7 @@ def run_activity_survival_cox_ablation(
     dataset["first_seen_period"] = dataset["first_seen_period"].astype("string")
     dataset["event_observed"] = pd.to_numeric(dataset["event_observed"], errors="coerce").fillna(0).astype(int)
     dataset["duration_months"] = pd.to_numeric(dataset["duration_months"], errors="coerce").fillna(0).astype(float)
-    feature_frame = build_feature_frame(dataset)
+    feature_frame = build_feature_frame(dataset, feature_profile=feature_profile)
 
     cox_params = _resolve_cox_params(hpo_json=resolved_hpo, alpha=alpha, ties=ties)
     blocks = build_activity_cox_feature_blocks(feature_frame.columns)
@@ -128,6 +129,7 @@ def run_activity_survival_cox_ablation(
             "rows": int(len(dataset)),
             "fold_count": int(len(folds)),
             "cutoffs": list(cutoffs),
+            "feature_profile": feature_profile,
             "transition_policy": transition_policy_train,
             "renta_max_year": int(renta_max_year),
             "fit_max_rows": int(fit_max_rows) if fit_max_rows is not None else None,
@@ -167,6 +169,8 @@ def build_activity_cox_feature_blocks(feature_columns: pd.Index | list[str] | tu
         "zone_dynamics": ("zone_dynamics", "Dinamica de zona"),
         "avisos": ("avisos", "Avisos"),
         "metro": ("metro", "Accesibilidad metro"),
+        "external_panel": ("external_panel", "Panel distrital externo"),
+        "external_vulnerability": ("external_vulnerability", "Vulnerabilidad IGUALA"),
         "temporal": ("temporal", "Temporalidad de entrada"),
     }
 

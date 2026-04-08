@@ -25,7 +25,17 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=PROJECT_ROOT / "models" / "run_progress_activity_survival_rolling_backtest.json",
     )
+    parser.add_argument("--feature-profile", default="activity_survival_pruned")
+    parser.add_argument("--output-tag", default="")
+    parser.add_argument("--comparison-metrics-json", type=Path, default=PROJECT_ROOT / "models" / "survival_activity_canonical_metrics.json")
     return parser.parse_args()
+
+
+def _tag_path(path: Path, tag: str) -> Path:
+    clean_tag = str(tag).strip()
+    if not clean_tag:
+        return path
+    return path.with_name(f"{path.stem}__{clean_tag}{path.suffix}")
 
 
 class ProgressTracker:
@@ -55,13 +65,17 @@ def main() -> int:
     from localizate.survival_rolling_backtest import run_activity_survival_rolling_backtest
 
     args = parse_args()
-    tracker = ProgressTracker(args.progress_file)
+    tracker = ProgressTracker(_tag_path(args.progress_file, args.output_tag))
     result = run_activity_survival_rolling_backtest(
+        comparison_metrics_json=args.comparison_metrics_json,
+        metrics_json=_tag_path(PROJECT_ROOT / "models" / "activity_survival_rolling_backtest.json", args.output_tag),
+        report_md=_tag_path(PROJECT_ROOT / "docs" / "activity_survival_rolling_backtest.md", args.output_tag),
         rsf_n_estimators=args.rsf_estimators,
         gbsa_n_estimators=args.gbsa_estimators,
         rsf_chunk_size=args.rsf_chunk_size,
         gbsa_chunk_size=args.gbsa_chunk_size,
         fit_max_rows=args.fit_max_rows,
+        feature_profile=args.feature_profile,
         progress_callback=tracker,
     )
     print(f"Wrote rolling metrics: {result.metrics_json}")

@@ -74,9 +74,14 @@ select {
 }
 
 .eyebrow {
+  display: block;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.16em;
+  line-height: 1.34;
+  padding-block: 0.08em 0.22em;
+  padding-inline-start: 0.14em;
+  overflow: visible;
   text-transform: uppercase;
   color: var(--accent);
 }
@@ -642,6 +647,10 @@ select {
   gap: 10px;
 }
 
+.metric-explainer-shell {
+  position: relative;
+}
+
 .metric-explainer {
   display: grid;
   gap: 8px;
@@ -801,6 +810,37 @@ select {
   font-size: 12px;
   line-height: 1.45;
   color: rgba(245, 240, 232, 0.68);
+}
+
+.metric-breakdown-hover-panel {
+  position: absolute;
+  left: calc(100% + 16px);
+  z-index: 5;
+  width: min(320px, calc(100vw - 64px));
+  max-height: min(360px, calc(100dvh - 120px));
+  display: grid;
+  gap: 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 22px 50px rgba(13, 18, 21, 0.24);
+}
+
+.metric-breakdown-hover-kicker {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 240, 232, 0.56);
+}
+
+.metric-breakdown-hover-title {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.02rem;
+  letter-spacing: -0.03em;
+  color: #f5f0e8;
 }
 
 .detail-context-row {
@@ -1060,9 +1100,7 @@ select {
   z-index: 4;
   width: min(430px, calc(100% - 36px));
   max-height: calc(100% - 36px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
+  overflow: visible;
 }
 
 .risk-explainer-overlay,
@@ -1126,10 +1164,36 @@ select {
   padding: 0;
   background: transparent;
   border: 0;
+  max-height: calc(100dvh - 120px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 4px;
 }
 
 .metric-banner .metric-explainer[data-empty="true"] {
   background: transparent;
+}
+
+.metric-banner .metric-breakdown-hover-panel {
+  background: rgba(255, 250, 242, 0.98);
+  border-color: rgba(23, 32, 38, 0.12);
+  box-shadow: 0 24px 60px rgba(23, 32, 38, 0.18);
+}
+
+.metric-banner .metric-breakdown-hover-kicker,
+.metric-banner .metric-breakdown-aside-empty {
+  color: var(--muted);
+}
+
+.metric-banner .metric-breakdown-hover-title {
+  color: var(--text);
+}
+
+.metric-banner .metric-breakdown-aside-item {
+  background: rgba(23, 32, 38, 0.05);
+  border: 1px solid rgba(23, 32, 38, 0.08);
+  color: var(--text);
 }
 
 .metric-banner .metric-explainer h3 {
@@ -1296,6 +1360,23 @@ select {
   .map-panel {
     min-height: 68vh;
     height: 68vh;
+  }
+
+  .metric-banner {
+    max-height: none;
+  }
+
+  .metric-banner .metric-explainer {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .metric-banner .metric-breakdown-hover-panel {
+    position: static;
+    width: 100%;
+    max-height: none;
+    margin-top: 12px;
   }
 }
 

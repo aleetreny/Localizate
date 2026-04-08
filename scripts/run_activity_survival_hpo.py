@@ -29,12 +29,22 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--final-rsf-estimators", type=int, default=300)
     parser.add_argument("--final-gbsa-estimators", type=int, default=300)
     parser.add_argument("--random-seed", type=int, default=20260326)
+    parser.add_argument("--feature-profile", default="activity_survival_pruned")
+    parser.add_argument("--output-tag", default="")
+    parser.add_argument("--rolling-baseline-json", type=Path, default=PROJECT_ROOT / "models" / "activity_survival_rolling_backtest.json")
     parser.add_argument(
         "--progress-file",
         type=Path,
         default=PROJECT_ROOT / "models" / "run_progress_activity_survival_hpo.json",
     )
     return parser.parse_args()
+
+
+def _tag_path(path: Path, tag: str) -> Path:
+    clean_tag = str(tag).strip()
+    if not clean_tag:
+        return path
+    return path.with_name(f"{path.stem}__{clean_tag}{path.suffix}")
 
 
 class ProgressTracker:
@@ -64,8 +74,12 @@ def main() -> int:
     from localizate.survival_hpo import run_activity_survival_hpo
 
     args = parse_args()
-    tracker = ProgressTracker(args.progress_file)
+    tracker = ProgressTracker(_tag_path(args.progress_file, args.output_tag))
     result = run_activity_survival_hpo(
+        rolling_baseline_json=args.rolling_baseline_json,
+        metrics_json=_tag_path(PROJECT_ROOT / "models" / "activity_survival_hpo.json", args.output_tag),
+        report_md=_tag_path(PROJECT_ROOT / "docs" / "activity_survival_hpo.md", args.output_tag),
+        checkpoint_json=_tag_path(PROJECT_ROOT / "models" / "activity_survival_hpo_checkpoint.json", args.output_tag),
         cox_screen_trials=args.cox_screen_trials,
         ensemble_screen_trials=args.ensemble_screen_trials,
         confirm_top_k=args.confirm_top_k,
@@ -80,6 +94,7 @@ def main() -> int:
         final_rsf_estimators=args.final_rsf_estimators,
         final_gbsa_estimators=args.final_gbsa_estimators,
         random_seed=args.random_seed,
+        feature_profile=args.feature_profile,
         progress_callback=tracker,
     )
     print(f"Wrote HPO metrics: {result.metrics_json}")
