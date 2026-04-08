@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { OpportunityMap } from "@/components/opportunity-map";
 import { ViewTabs } from "@/components/view-tabs";
@@ -772,29 +772,65 @@ function MetricExplainer({ metric }: { metric: MetricDefinition | null }) {
   const breakdownItems = metric?.breakdownItems ?? [];
   const asideEnabled = breakdownItems.some(hasBreakdownAside);
   const shellRef = useRef<HTMLDivElement | null>(null);
+  const hoverPanelRef = useRef<HTMLElement | null>(null);
+  const activeBreakdownTriggerRef = useRef<HTMLElement | null>(null);
   const [activeBreakdownKey, setActiveBreakdownKey] = useState<string | null>(null);
   const [hoverPanelTop, setHoverPanelTop] = useState(0);
 
   useEffect(() => {
+    activeBreakdownTriggerRef.current = null;
     setActiveBreakdownKey(null);
     setHoverPanelTop(0);
   }, [metric?.id]);
 
   function activateBreakdown(itemKey: string, element?: HTMLElement | null) {
     setActiveBreakdownKey(itemKey);
-    if (!element || !shellRef.current) {
+    if (element) {
+      activeBreakdownTriggerRef.current = element;
+    }
+
+    if (!activeBreakdownTriggerRef.current || !shellRef.current) {
       return;
     }
 
     const shellRect = shellRef.current.getBoundingClientRect();
-    const elementRect = element.getBoundingClientRect();
-    setHoverPanelTop(Math.max(0, elementRect.top - shellRect.top));
+    const elementRect = activeBreakdownTriggerRef.current.getBoundingClientRect();
+    const panelHeight = hoverPanelRef.current?.getBoundingClientRect().height ?? 0;
+    setHoverPanelTop(computeBreakdownHoverPanelTop({ shellRect, elementRect, panelHeight }));
   }
 
   const activeBreakdown = asideEnabled
     ? breakdownItems.find((item) => buildBreakdownItemKey(item) === activeBreakdownKey && hasBreakdownAside(item))
       ?? null
     : null;
+
+  useLayoutEffect(() => {
+    if (!activeBreakdown || !activeBreakdownTriggerRef.current || !shellRef.current) {
+      return;
+    }
+
+    function syncHoverPanelTop() {
+      if (!activeBreakdownTriggerRef.current || !shellRef.current) {
+        return;
+      }
+
+      const shellRect = shellRef.current.getBoundingClientRect();
+      const elementRect = activeBreakdownTriggerRef.current.getBoundingClientRect();
+      const panelHeight = hoverPanelRef.current?.getBoundingClientRect().height ?? 0;
+      setHoverPanelTop(computeBreakdownHoverPanelTop({ shellRect, elementRect, panelHeight }));
+    }
+
+    syncHoverPanelTop();
+
+    const visualViewport = window.visualViewport;
+    window.addEventListener("resize", syncHoverPanelTop);
+    visualViewport?.addEventListener("resize", syncHoverPanelTop);
+
+    return () => {
+      window.removeEventListener("resize", syncHoverPanelTop);
+      visualViewport?.removeEventListener("resize", syncHoverPanelTop);
+    };
+  }, [activeBreakdown, metric?.id]);
 
   return (
     <div className="metric-explainer-shell" ref={shellRef}>
@@ -874,7 +910,7 @@ function MetricExplainer({ metric }: { metric: MetricDefinition | null }) {
         )}
       </div>
       {asideEnabled && activeBreakdown ? (
-        <aside className="metric-breakdown-hover-panel" style={{ top: `${hoverPanelTop}px` }}>
+        <aside className="metric-breakdown-hover-panel" ref={hoverPanelRef} style={{ top: `${hoverPanelTop}px` }}>
           <span className="metric-breakdown-hover-kicker">Metro de Madrid</span>
           <span className="metric-breakdown-hover-title">{activeBreakdown.asideTitle ?? activeBreakdown.label}</span>
           {activeBreakdown.asideItems && activeBreakdown.asideItems.length > 0 ? (
@@ -892,6 +928,32 @@ function MetricExplainer({ metric }: { metric: MetricDefinition | null }) {
       ) : null}
     </div>
   );
+}
+
+function computeBreakdownHoverPanelTop({
+  shellRect,
+  elementRect,
+  panelHeight,
+  viewportPadding = 16,
+}: {
+  shellRect: DOMRect;
+  elementRect: DOMRect;
+  panelHeight: number;
+  viewportPadding?: number;
+}) {
+  const baseTop = Math.max(0, elementRect.top - shellRect.top);
+
+  if (panelHeight <= 0) {
+    return baseTop;
+  }
+
+  const visualViewport = window.visualViewport;
+  const viewportTop = visualViewport?.offsetTop ?? 0;
+  const viewportHeight = visualViewport?.height ?? window.innerHeight;
+  const minTop = Math.max(0, viewportTop + viewportPadding - shellRect.top);
+  const maxTop = Math.max(minTop, viewportTop + viewportHeight - viewportPadding - shellRect.top - panelHeight);
+
+  return Math.min(Math.max(baseTop, minTop), maxTop);
 }
 
 function getPointSurvival(point: OpportunityPoint, horizon: Horizon) {

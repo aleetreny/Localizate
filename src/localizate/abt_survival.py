@@ -293,8 +293,11 @@ def build_local_survival_abt(
         macro_taxonomy.to_csv(resolved_activity_taxonomy_csv, index=False)
         resolved_glossary_md.write_text(render_macro_glossary(macro_taxonomy), encoding="utf-8")
 
-        con.register("division_lookup_df", division_lookup)
-        con.register("epigrafe_lookup_df", epigrafe_lookup)
+        division_lookup_by_raw_code = _collapse_activity_lookup_by_raw_code(division_lookup)
+        epigrafe_lookup_by_raw_code = _collapse_activity_lookup_by_raw_code(epigrafe_lookup)
+
+        con.register("division_lookup_df", division_lookup_by_raw_code)
+        con.register("epigrafe_lookup_df", epigrafe_lookup_by_raw_code)
         con.register(
             "macro_lookup_df",
             macro_taxonomy[["epigrafe_code", "macro_category_code", "macro_category_name", "macro_category_definition"]].drop_duplicates(),
@@ -363,9 +366,9 @@ def build_local_survival_abt(
             SELECT
                 CAST(id_local AS BIGINT) AS id_local,
                 CAST(snapshot_period AS VARCHAR) AS period,
-                COALESCE(TRIM(CAST(id_division AS VARCHAR)), '') AS division_raw_code,
+                COALESCE(TRIM(UPPER(CAST(id_division AS VARCHAR))), '') AS division_raw_code,
                 COALESCE(TRIM(CAST(desc_division AS VARCHAR)), '') AS division_raw_desc,
-                COALESCE(TRIM(CAST(id_epigrafe AS VARCHAR)), '') AS epigrafe_raw_code,
+                COALESCE(TRIM(UPPER(CAST(id_epigrafe AS VARCHAR))), '') AS epigrafe_raw_code,
                 COALESCE(TRIM(CAST(desc_epigrafe AS VARCHAR)), '') AS epigrafe_raw_desc
             FROM read_csv_auto(?, union_by_name=true)
             WHERE id_local IS NOT NULL AND snapshot_period IS NOT NULL
@@ -393,104 +396,13 @@ def build_local_survival_abt(
             FROM activity_rows r
             LEFT JOIN division_lookup_df d
                 ON r.division_raw_code = d.raw_code
-               AND r.division_raw_desc = d.raw_desc
             LEFT JOIN epigrafe_lookup_df e
                 ON r.epigrafe_raw_code = e.raw_code
-               AND r.epigrafe_raw_desc = e.raw_desc
             LEFT JOIN macro_lookup_df m
                 ON e.clean_code = m.epigrafe_code
             """
         )
-        con.execute(
-            """
-            CREATE OR REPLACE TABLE activity_period_divisions AS
-            WITH distinct_divisions AS (
-                SELECT DISTINCT
-                    id_local,
-                    period,
-                    division_code,
-                    division_desc
-                FROM activities_clean
-                WHERE division_valid
-            )
-            SELECT
-                id_local,
-                period,
-                string_agg(division_code, '|' ORDER BY division_code) AS division_sig,
-                string_agg(division_desc, ' | ' ORDER BY division_desc) AS division_desc_sig,
-                COUNT(*) AS n_divisions
-            FROM distinct_divisions
-            GROUP BY 1, 2
-            """
-        )
-        con.execute(
-            """
-            CREATE OR REPLACE TABLE activity_period_epigrafes AS
-            WITH distinct_epigrafes AS (
-                SELECT DISTINCT
-                    id_local,
-                    period,
-                    epigrafe_code,
-                    epigrafe_desc
-                FROM activities_clean
-                WHERE division_valid AND epigrafe_valid
-            )
-            SELECT
-                id_local,
-                period,
-                string_agg(epigrafe_code, '|' ORDER BY epigrafe_code) AS epigrafe_sig,
-                string_agg(epigrafe_desc, ' | ' ORDER BY epigrafe_desc) AS epigrafe_desc_sig,
-                COUNT(*) AS n_epigrafes
-            FROM distinct_epigrafes
-            GROUP BY 1, 2
-            """
-        )
-        con.execute(
-            """
-            CREATE OR REPLACE TABLE activity_period_macro_categories AS
-            WITH distinct_macro_categories AS (
-                SELECT DISTINCT
-                    id_local,
-                    period,
-                    macro_category_code,
-                    macro_category_name
-                FROM activities_clean
-                WHERE division_valid AND epigrafe_valid AND macro_category_code IS NOT NULL
-            )
-            SELECT
-                id_local,
-                period,
-                string_agg(macro_category_code, '|' ORDER BY macro_category_code) AS macro_category_sig,
-                string_agg(macro_category_name, ' | ' ORDER BY macro_category_name) AS macro_category_desc_sig,
-                COUNT(*) AS n_macro_categories
-            FROM distinct_macro_categories
-            GROUP BY 1, 2
-            """
-        )
-        con.execute(
-            """
-            CREATE OR REPLACE TABLE activity_periods AS
-            SELECT
-                d.id_local,
-                d.period,
-                d.division_sig,
-                d.division_desc_sig,
-                d.n_divisions,
-                e.epigrafe_sig,
-                e.epigrafe_desc_sig,
-                COALESCE(e.n_epigrafes, 0) AS n_epigrafes,
-                m.macro_category_sig,
-                m.macro_category_desc_sig,
-                COALESCE(m.n_macro_categories, 0) AS n_macro_categories
-            FROM activity_period_divisions d
-            LEFT JOIN activity_period_epigrafes e
-                ON d.id_local = e.id_local
-               AND d.period = e.period
-            LEFT JOIN activity_period_macro_categories m
-                ON d.id_local = m.id_local
-               AND d.period = m.period
-            """
-        )
+        _materialize_activity_period_tables(con)
         con.execute(
             """
             CREATE OR REPLACE TABLE local_activity_enriched AS
@@ -1380,6 +1292,129 @@ def _build_activity_lookup(
             "mapping_reason",
         ]
     ].copy()
+
+
+def _collapse_activity_lookup_by_raw_code(lookup: pd.DataFrame) -> pd.DataFrame:
+    if lookup.empty:
+        return lookup.copy()
+
+    frame = lookup.copy()
+    frame["raw_code"] = frame["raw_code"].fillna("").astype("string")
+    frame = frame[frame["raw_code"].str.strip().ne("")].copy()
+    if frame.empty:
+        return lookup.head(0).copy()
+
+    frame["n"] = pd.to_numeric(frame.get("n"), errors="coerce").fillna(0)
+    frame["code_valid_sort"] = frame["code_valid"].fillna(False).astype(int)
+    frame = frame.sort_values(["raw_code", "code_valid_sort", "n", "mapping_reason"], ascending=[True, False, False, True])
+    frame = frame.drop_duplicates(subset=["raw_code"], keep="first")
+    return frame.drop(columns=["code_valid_sort"])
+
+
+def _materialize_activity_period_tables(con) -> None:
+    con.execute(
+        """
+        CREATE OR REPLACE TABLE activity_period_divisions AS
+        WITH distinct_divisions AS (
+            SELECT DISTINCT
+                id_local,
+                period,
+                division_code,
+                division_desc
+            FROM activities_clean
+            WHERE division_valid
+        )
+        SELECT
+            id_local,
+            period,
+            string_agg(division_code, '|' ORDER BY division_code) AS division_sig,
+            string_agg(division_desc, ' | ' ORDER BY division_desc) AS division_desc_sig,
+            COUNT(*) AS n_divisions
+        FROM distinct_divisions
+        GROUP BY 1, 2
+        """
+    )
+    con.execute(
+        """
+        CREATE OR REPLACE TABLE activity_period_epigrafes AS
+        WITH distinct_epigrafes AS (
+            SELECT DISTINCT
+                id_local,
+                period,
+                epigrafe_code,
+                epigrafe_desc
+            FROM activities_clean
+            WHERE epigrafe_valid
+        )
+        SELECT
+            id_local,
+            period,
+            string_agg(epigrafe_code, '|' ORDER BY epigrafe_code) AS epigrafe_sig,
+            string_agg(epigrafe_desc, ' | ' ORDER BY epigrafe_desc) AS epigrafe_desc_sig,
+            COUNT(*) AS n_epigrafes
+        FROM distinct_epigrafes
+        GROUP BY 1, 2
+        """
+    )
+    con.execute(
+        """
+        CREATE OR REPLACE TABLE activity_period_macro_categories AS
+        WITH distinct_macro_categories AS (
+            SELECT DISTINCT
+                id_local,
+                period,
+                macro_category_code,
+                macro_category_name
+            FROM activities_clean
+            WHERE epigrafe_valid AND macro_category_code IS NOT NULL
+        )
+        SELECT
+            id_local,
+            period,
+            string_agg(macro_category_code, '|' ORDER BY macro_category_code) AS macro_category_sig,
+            string_agg(macro_category_name, ' | ' ORDER BY macro_category_name) AS macro_category_desc_sig,
+            COUNT(*) AS n_macro_categories
+        FROM distinct_macro_categories
+        GROUP BY 1, 2
+        """
+    )
+    con.execute(
+        """
+        CREATE OR REPLACE TABLE activity_period_keys AS
+        SELECT id_local, period FROM activity_period_divisions
+        UNION
+        SELECT id_local, period FROM activity_period_epigrafes
+        UNION
+        SELECT id_local, period FROM activity_period_macro_categories
+        """
+    )
+    con.execute(
+        """
+        CREATE OR REPLACE TABLE activity_periods AS
+        SELECT
+            k.id_local,
+            k.period,
+            d.division_sig,
+            d.division_desc_sig,
+            COALESCE(d.n_divisions, 0) AS n_divisions,
+            e.epigrafe_sig,
+            e.epigrafe_desc_sig,
+            COALESCE(e.n_epigrafes, 0) AS n_epigrafes,
+            m.macro_category_sig,
+            m.macro_category_desc_sig,
+            COALESCE(m.n_macro_categories, 0) AS n_macro_categories
+        FROM activity_period_keys k
+        LEFT JOIN activity_period_divisions d
+            ON k.id_local = d.id_local
+           AND k.period = d.period
+        LEFT JOIN activity_period_epigrafes e
+            ON k.id_local = e.id_local
+           AND k.period = e.period
+        LEFT JOIN activity_period_macro_categories m
+            ON k.id_local = m.id_local
+           AND k.period = m.period
+        """
+    )
 
 
 def _candidate_code_from_numeric(

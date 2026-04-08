@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { HexCategoryComposition, type HexCategoryCompositionItem } from "@/components/hex-category-composition";
 import { MadridMap } from "@/components/madrid-map";
 import { ViewTabs } from "@/components/view-tabs";
 import { DEFAULT_HEX_SIZE, formatHexSizeLabel, HEX_SIZE_OPTIONS, type HexSize } from "@/lib/hex-size";
@@ -67,6 +68,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   const loadedArtifactsRef = useRef<Partial<Record<HexSize, FrontendArtifacts>>>(
     initialArtifacts ? { [DEFAULT_HEX_SIZE]: initialArtifacts } : {}
   );
+  const mapPanelRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -186,6 +188,14 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   const detail = selectedHex;
   const detailSurvival = detail ? getHorizonSurvival(detail, horizon) : null;
   const detailSupport = detail ? getHorizonSupport(detail, horizon) : 0;
+
+  const detailCategoryComposition = useMemo(() => {
+    if (!detail || selectedCategory !== "__all__") {
+      return [];
+    }
+
+    return buildHexCategoryComposition(artifacts.hexes, detail);
+  }, [artifacts.hexes, detail, selectedCategory]);
 
   const detailRank = useMemo(() => {
     if (!detail) {
@@ -413,9 +423,20 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
             </div>
           )}
         </section>
+
+        {selectedCategory === "__all__" ? (
+          <section className="info-card info-card-hex-category-composition">
+            <div className="eyebrow">Mezcla del hexágono</div>
+            {detail ? (
+              <HexCategoryComposition items={detailCategoryComposition} overlayBoundsRef={mapPanelRef} totalLocales={detail.n_locales} />
+            ) : (
+              <p className="empty-note">Selecciona un hexágono para ver cómo se reparten sus locales históricos entre las distintas categorías.</p>
+            )}
+          </section>
+        ) : null}
       </aside>
 
-      <section className="map-panel panel">
+      <section className="map-panel panel" ref={mapPanelRef}>
         {isRiskExplainerOpen ? (
           <div className="map-overlay panel risk-explainer-overlay">
             <RelativeRiskExplainerBanner onClose={() => setIsRiskExplainerOpen(false)} />
@@ -940,6 +961,76 @@ function buildHexRanking(hexes: HexAggregate[], detail: HexAggregate, _horizon: 
   }
 
   return { rank: rankIndex + 1, total: sorted.length };
+}
+
+function buildHexCategoryComposition(hexes: HexAggregate[], detail: HexAggregate): HexCategoryCompositionItem[] {
+  const totalLocales = detail.n_locales;
+  if (totalLocales <= 0) {
+    return [];
+  }
+
+  return hexes
+    .filter((item) => item.h3_cell === detail.h3_cell && item.category_code !== "__all__" && item.n_locales > 0)
+    .sort((left, right) => {
+      if (right.n_locales !== left.n_locales) {
+        return right.n_locales - left.n_locales;
+      }
+      return left.category_desc.localeCompare(right.category_desc, "es");
+    })
+    .map((item) => ({
+      categoryCode: item.category_code,
+      categoryDesc: item.category_desc,
+      nLocales: item.n_locales,
+      share: item.n_locales / totalLocales,
+      color: colorForCategoryCode(item.category_code),
+    }));
+}
+
+function colorForCategoryCode(categoryCode: string) {
+  const palette = [
+    "#d7c8a2",
+    "#b8d5d8",
+    "#c5bfe3",
+    "#d8b9d3",
+    "#b8d7c1",
+    "#ecc6b6",
+    "#c9d6a9",
+    "#a7c7da",
+    "#d8cea8",
+    "#baa6d3",
+    "#dcbcae",
+    "#95c4bf",
+    "#9aaad7",
+    "#b8cb93",
+    "#8eafbc",
+    "#cbaed8",
+    "#e3d6b6",
+    "#a5c6d3",
+    "#c3d8b7",
+    "#e3c0b1",
+    "#bdb2df",
+    "#9bb8cc",
+    "#c8d5a7",
+    "#d7bfd2",
+    "#a8cec4",
+    "#dbcfc1",
+    "#a9bedf",
+    "#d0c0e7",
+    "#d0d9af",
+    "#ddb8af",
+    "#a7c4c8",
+    "#c9b4d4",
+  ];
+
+  return palette[hashString(categoryCode) % palette.length];
+}
+
+function hashString(value: string) {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  }
+  return hash;
 }
 
 function getPrimaryRiskValue(item: RiskAggregate) {

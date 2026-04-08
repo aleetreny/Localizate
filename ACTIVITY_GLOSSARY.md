@@ -67,7 +67,7 @@ Glosario de macrocategorías comerciales usadas para el nuevo target de superviv
 - Definición: Autoescuelas, idiomas y formación no reglada.
 - Epígrafes mapeados: 17
 - Cobertura histórica bruta: 523,916 filas
-- Ejemplos de etiquetas finas: Autoescuela, Educación y formación, Formación no reglada, Idiomas
+- Ejemplos de etiquetas finas: Autoescuela, Educación y formacion, Formación no reglada, Idiomas
 
 ## Carnicería y proteína fresca
 
@@ -83,7 +83,7 @@ Glosario de macrocategorías comerciales usadas para el nuevo target de superviv
 - Definición: Farmacias, ópticas, herbolarios y retail sanitario de alta recurrencia.
 - Epígrafes mapeados: 6
 - Cobertura histórica bruta: 458,712 filas
-- Ejemplos de etiquetas finas: Farmacia, Herbolario, Óptica, Salud retail
+- Ejemplos de etiquetas finas: Farmacia, Herbolario, Salud retail, Óptica
 
 ## Tienda de alimentación
 

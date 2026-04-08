@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import unittest
 
+import duckdb
 import pandas as pd
 
 from localizate.abt_survival import (
+    _materialize_activity_period_tables,
     _build_activity_lookup,
     next_period,
     normalize_activity_code,
@@ -62,6 +64,51 @@ class AbtSurvivalTests(unittest.TestCase):
         self.assertTrue(bool(remapped["code_valid"]))
         self.assertEqual(placeholder["mapping_reason"], "placeholder")
         self.assertFalse(bool(placeholder["code_valid"]))
+
+    def test_activity_periods_keep_macro_when_epigrafe_is_valid_but_division_is_not(self) -> None:
+        activities_clean = pd.DataFrame(
+            {
+                "id_local": [1, 2],
+                "period": ["2024-01", "2024-01"],
+                "division_code": [None, "47"],
+                "division_desc": [None, "COMERCIO AL POR MENOR"],
+                "division_valid": [False, True],
+                "epigrafe_code": ["561005", "561006"],
+                "epigrafe_desc": ["BAR CON COCINA", "CAFETERIA"],
+                "epigrafe_valid": [True, True],
+                "macro_category_code": ["bar_cafe", "bar_cafe"],
+                "macro_category_name": ["Bar y cafetería", "Bar y cafetería"],
+            }
+        )
+
+        con = duckdb.connect()
+        try:
+            con.register("activities_clean_df", activities_clean)
+            con.execute("CREATE OR REPLACE TABLE activities_clean AS SELECT * FROM activities_clean_df")
+            _materialize_activity_period_tables(con)
+            periods = con.execute(
+                """
+                SELECT id_local, period, n_divisions, n_epigrafes, n_macro_categories, macro_category_sig
+                FROM activity_periods
+                ORDER BY id_local
+                """
+            ).df()
+        finally:
+            con.close()
+
+        first = periods.iloc[0]
+        second = periods.iloc[1]
+
+        self.assertEqual(first["id_local"], 1)
+        self.assertEqual(first["n_divisions"], 0)
+        self.assertEqual(first["n_epigrafes"], 1)
+        self.assertEqual(first["n_macro_categories"], 1)
+        self.assertEqual(first["macro_category_sig"], "bar_cafe")
+
+        self.assertEqual(second["id_local"], 2)
+        self.assertEqual(second["n_divisions"], 1)
+        self.assertEqual(second["n_epigrafes"], 1)
+        self.assertEqual(second["n_macro_categories"], 1)
 
     def test_resolve_survival_target_prioritizes_earliest_change_event(self) -> None:
         resolved = resolve_survival_target(
