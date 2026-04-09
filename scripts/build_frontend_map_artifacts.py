@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 import sys
 
+import duckdb
 import h3
 import pandas as pd
 
@@ -14,6 +15,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = PROJECT_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
+
+
+import localizate.abt_survival as activity_abt_survival
 
 
 DEFAULT_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-map-artifacts.json"
@@ -39,6 +43,39 @@ MAP_BOUNDS = {
 PRIMARY_RISK_COLUMN = "risk_cox"
 PRIMARY_RISK_MODEL_KEY = "cox"
 PRIMARY_RISK_MODEL_LABEL = "Cox"
+HIDDEN_SELECTOR_STATUS_CATEGORY_CODES = frozenset(
+    {
+        "__status_no_activity__",
+        "__status_missing_snapshot__",
+        "__status_pending_coding__",
+    }
+)
+UNKNOWN_ACTIVITY_CATEGORY_METADATA = {
+    "__status_multi_activity__": {
+        "desc": "Multiactividad",
+        "definition": "El local arranca con varias macrocategorias simultaneas en el mismo periodo. No se fuerza una unica categoria porque distorsionaria la lectura historica.",
+    },
+    "__status_no_activity__": {
+        "desc": "Sin actividad declarada",
+        "definition": "La fuente historica marca el local como sin actividad en su periodo inicial, asi que no existe una categoria comercial activa que mostrar.",
+    },
+    "__status_uncoded_activity__": {
+        "desc": "Actividad no informada",
+        "definition": "Existe fila de actividad en origen, pero sin un epigrafe utilizable o con valor nulo. No se puede asignar una macrocategoria fiable con los datos actuales.",
+    },
+    "__status_pending_coding__": {
+        "desc": "Actividad pendiente de codificar",
+        "definition": "La fuente conserva el local, pero deja su actividad pendiente de codificar. Se mantiene aparte hasta disponer de un epigrafe valido.",
+    },
+    "__status_missing_snapshot__": {
+        "desc": "Mes sin fichero de actividad",
+        "definition": "Falta el fichero mensual de actividad para el periodo inicial del local. Es un hueco puntual de fuente, no una categoria comercial.",
+    },
+    "__status_unmapped_activity__": {
+        "desc": "Actividad fuera de taxonomia",
+        "definition": "La actividad tiene un epigrafe valido, pero todavia no cae en una macrocategoria del glosario historico. Es una señal de cobertura pendiente, no de cierre.",
+    },
+}
 
 
 def main() -> int:
@@ -62,6 +99,7 @@ def main() -> int:
         PROJECT_ROOT / "data" / "features" / "activity_survival_abt.csv",
         usecols=[
             "id_local",
+            "first_seen_period",
             "h3_cell_start",
             "duration_months",
             "event_observed",
@@ -86,8 +124,7 @@ def main() -> int:
 
     merged = abt.merge(scores, on=["id_local", "h3_cell_start"], how="inner", validate="one_to_one")
     merged = merged[merged["h3_cell_start"].notna()].copy()
-    merged["category_code"] = merged["activity_category_code_start"].fillna("__unknown__").astype("string")
-    merged["category_desc"] = merged["activity_category_desc_start"].fillna("Sin categoría").astype("string")
+    merged = apply_frontend_activity_categories(merged)
     merged["duration_months"] = pd.to_numeric(merged["duration_months"], errors="coerce").fillna(0.0)
     merged["event_observed"] = pd.to_numeric(merged["event_observed"], errors="coerce").fillna(0).astype(int)
     merged["risk_primary"] = pd.to_numeric(merged[PRIMARY_RISK_COLUMN], errors="coerce").fillna(0.0)
@@ -135,6 +172,156 @@ def main() -> int:
     print(f"Coordinate geography backfills: {geography_stats['backfilled_from_coordinates']:,}")
     print(f"Rows still missing geography: {geography_stats['remaining_missing_geography']:,}")
     return 0
+
+
+def apply_frontend_activity_categories(frame: pd.DataFrame) -> pd.DataFrame:
+    result = frame.copy()
+    result["category_code"] = result["activity_category_code_start"].astype("string")
+    result["category_desc"] = result["activity_category_desc_start"].astype("string")
+
+    unknown_mask = result["category_code"].isna() | result["category_desc"].isna()
+    if unknown_mask.any():
+        unknown_targets = result.loc[unknown_mask, ["id_local", "first_seen_period"]].drop_duplicates().copy()
+        derived = classify_unknown_activity_categories(unknown_targets)
+        if not derived.empty:
+            result = result.merge(derived, on=["id_local", "first_seen_period"], how="left")
+            result["category_code"] = result["category_code"].fillna(result["derived_category_code"])
+            result["category_desc"] = result["category_desc"].fillna(result["derived_category_desc"])
+            result = result.drop(columns=["derived_category_code", "derived_category_desc"], errors="ignore")
+
+    fallback = UNKNOWN_ACTIVITY_CATEGORY_METADATA["__status_uncoded_activity__"]
+    result["category_code"] = result["category_code"].fillna("__status_uncoded_activity__").astype("string")
+    result["category_desc"] = result["category_desc"].fillna(str(fallback["desc"])).astype("string")
+    return result
+
+
+def classify_unknown_activity_categories(targets: pd.DataFrame) -> pd.DataFrame:
+    if targets.empty:
+        return pd.DataFrame(columns=["id_local", "first_seen_period", "derived_category_code", "derived_category_desc"])
+
+    audit = pd.read_csv(PROJECT_ROOT / "data" / "processed" / "activity_code_normalization_audit.csv", low_memory=False)
+    epigrafe_lookup = activity_abt_survival._collapse_activity_lookup_by_raw_code(
+        audit[audit["taxonomy"] == "epigrafe"].copy()
+    )
+    for column in ["raw_code", "clean_code"]:
+        epigrafe_lookup[column] = epigrafe_lookup[column].fillna("").astype(str).str.upper().str.strip()
+
+    macro_lookup = pd.read_csv(
+        PROJECT_ROOT / "data" / "processed" / "activity_macro_taxonomy.csv",
+        usecols=["epigrafe_code", "macro_category_code", "macro_category_name"],
+        dtype="string",
+        low_memory=False,
+    ).dropna(subset=["epigrafe_code", "macro_category_code", "macro_category_name"])
+    macro_lookup["epigrafe_code"] = macro_lookup["epigrafe_code"].astype("string").str.upper().str.strip()
+    macro_lookup["macro_category_code"] = macro_lookup["macro_category_code"].astype("string").str.strip()
+    macro_lookup["macro_category_name"] = macro_lookup["macro_category_name"].astype("string").str.strip()
+    macro_lookup = macro_lookup.drop_duplicates()
+
+    prepared_targets = targets.copy()
+    prepared_targets["id_local"] = pd.to_numeric(prepared_targets["id_local"], errors="coerce").astype("Int64")
+    prepared_targets["first_seen_period"] = prepared_targets["first_seen_period"].astype("string")
+    prepared_targets = prepared_targets.dropna(subset=["id_local", "first_seen_period"])
+    if prepared_targets.empty:
+        return pd.DataFrame(columns=["id_local", "first_seen_period", "derived_category_code", "derived_category_desc"])
+
+    con = duckdb.connect()
+    con.execute("PRAGMA disable_progress_bar")
+    con.register("targets_df", prepared_targets[["id_local", "first_seen_period"]])
+    con.register("epigrafe_lookup_df", epigrafe_lookup[["raw_code", "clean_code", "code_valid"]])
+    con.register("macro_lookup_df", macro_lookup)
+
+    activities_glob = str(PROJECT_ROOT / "data" / "intermediate" / "censo_snapshots" / "actividades" / "*.csv.gz")
+    summary = con.execute(
+        """
+        WITH raw_activity AS (
+            SELECT
+                t.id_local,
+                t.first_seen_period,
+                CASE WHEN a.id_local IS NULL THEN 0 ELSE 1 END AS matched_row,
+                COALESCE(TRIM(UPPER(CAST(a.id_epigrafe AS VARCHAR))), '') AS epigrafe_raw_code,
+                COALESCE(TRIM(UPPER(CAST(a.desc_epigrafe AS VARCHAR))), '') AS epigrafe_raw_desc
+            FROM targets_df t
+            LEFT JOIN read_csv_auto(?, union_by_name=true) a
+              ON CAST(a.id_local AS BIGINT) = t.id_local
+             AND CAST(a.snapshot_period AS VARCHAR) = t.first_seen_period
+        ),
+        enriched AS (
+            SELECT
+                r.*,
+                CAST(COALESCE(e.code_valid, FALSE) AS BOOLEAN) AS epigrafe_valid,
+                COALESCE(m.macro_category_code, '') AS macro_category_code,
+                COALESCE(m.macro_category_name, '') AS macro_category_desc
+            FROM raw_activity r
+            LEFT JOIN epigrafe_lookup_df e
+              ON r.epigrafe_raw_code = e.raw_code
+            LEFT JOIN macro_lookup_df m
+              ON e.clean_code = m.epigrafe_code
+        )
+        SELECT
+            id_local,
+            first_seen_period,
+            SUM(matched_row) AS raw_rows,
+            SUM(CASE WHEN epigrafe_valid THEN 1 ELSE 0 END) AS valid_epigrafe_rows,
+            COUNT(DISTINCT CASE WHEN macro_category_code <> '' THEN macro_category_code END) AS macro_count,
+            MIN(CASE WHEN macro_category_code <> '' THEN macro_category_code END) AS single_macro_code,
+            MIN(CASE WHEN macro_category_desc <> '' THEN macro_category_desc END) AS single_macro_desc,
+            MAX(CASE WHEN matched_row = 1 AND (epigrafe_raw_code IN ('000000', '0', '0.0') OR epigrafe_raw_desc = 'LOCAL SIN ACTIVIDAD') THEN 1 ELSE 0 END) AS has_no_activity_marker,
+            MAX(CASE WHEN matched_row = 1 AND (epigrafe_raw_code LIKE 'PTE%' OR epigrafe_raw_desc LIKE 'PTE.%') THEN 1 ELSE 0 END) AS has_pending_coding_marker,
+            MAX(CASE WHEN matched_row = 1 AND epigrafe_raw_code = '' AND epigrafe_raw_desc = '' THEN 1 ELSE 0 END) AS has_blank_marker,
+            MAX(CASE WHEN matched_row = 1 AND (epigrafe_raw_code = '-1' OR epigrafe_raw_desc = 'VALOR NULO EN ORIGEN') THEN 1 ELSE 0 END) AS has_null_origin_marker
+        FROM enriched
+        GROUP BY 1, 2
+        """,
+        [activities_glob],
+    ).df()
+    con.close()
+
+    if summary.empty:
+        return pd.DataFrame(columns=["id_local", "first_seen_period", "derived_category_code", "derived_category_desc"])
+
+    derived = summary.apply(
+        lambda row: pd.Series(infer_unknown_activity_category(row.to_dict())),
+        axis=1,
+    )
+    derived.columns = ["derived_category_code", "derived_category_desc"]
+    return pd.concat([summary[["id_local", "first_seen_period"]], derived], axis=1)
+
+
+def infer_unknown_activity_category(record: dict[str, object]) -> tuple[str, str]:
+    raw_rows = int(record.get("raw_rows") or 0)
+    macro_count = int(record.get("macro_count") or 0)
+    valid_epigrafe_rows = int(record.get("valid_epigrafe_rows") or 0)
+    single_macro_code = str(record.get("single_macro_code") or "").strip()
+    single_macro_desc = str(record.get("single_macro_desc") or "").strip()
+
+    if raw_rows == 0:
+        return status_category_payload("__status_missing_snapshot__")
+    if macro_count == 1 and single_macro_code and single_macro_desc:
+        return single_macro_code, single_macro_desc
+    if macro_count >= 2:
+        return status_category_payload("__status_multi_activity__")
+    if bool(record.get("has_no_activity_marker")):
+        return status_category_payload("__status_no_activity__")
+    if bool(record.get("has_pending_coding_marker")):
+        return status_category_payload("__status_pending_coding__")
+    if valid_epigrafe_rows > 0:
+        return status_category_payload("__status_unmapped_activity__")
+    if bool(record.get("has_blank_marker")) or bool(record.get("has_null_origin_marker")):
+        return status_category_payload("__status_uncoded_activity__")
+    return status_category_payload("__status_uncoded_activity__")
+
+
+def status_category_payload(category_code: str) -> tuple[str, str]:
+    metadata = UNKNOWN_ACTIVITY_CATEGORY_METADATA[category_code]
+    return category_code, str(metadata["desc"])
+
+
+def is_status_category_code(category_code: str) -> bool:
+    return category_code in UNKNOWN_ACTIVITY_CATEGORY_METADATA
+
+
+def should_include_in_category_selector(category_code: str) -> bool:
+    return category_code not in HIDDEN_SELECTOR_STATUS_CATEGORY_CODES
 
 
 def resolve_primary_risk_column(frame: pd.DataFrame) -> str:
@@ -194,7 +381,7 @@ def build_category_options(hexes: list[dict[str, object]], glossary_profiles: di
     common_examples = [
         str(item["category_desc"])
         for item in sorted(rows, key=lambda item: (-int(item["n_locales"]), str(item["category_desc"])))
-        if str(item["category_code"]) not in {"__all__", "__unknown__"}
+        if str(item["category_code"]) not in {"__all__", "__unknown__"} and not is_status_category_code(str(item["category_code"]))
     ][:5]
 
     for item in rows:
@@ -211,7 +398,15 @@ def build_category_options(hexes: list[dict[str, object]], glossary_profiles: di
             )
         )
 
-    rows.sort(key=lambda item: (item["category_code"] != "__all__", -int(item["n_locales"]), item["category_desc"]))
+    rows = [item for item in rows if should_include_in_category_selector(str(item["category_code"]))]
+
+    rows.sort(
+        key=lambda item: (
+            0 if str(item["category_code"]) == "__all__" else 2 if is_status_category_code(str(item["category_code"])) else 1,
+            -int(item["n_locales"]),
+            item["category_desc"],
+        )
+    )
     return rows
 
 
@@ -339,6 +534,15 @@ def build_category_profile(
     if category_code == "__unknown__":
         return {
             "definition": "Locales sin macrocategoría normalizada en el ABT actual o sin clasificación suficiente para entrar en el glosario.",
+            "mapped_epigraphs": None,
+            "historical_coverage_rows": None,
+            "example_labels": [],
+        }
+
+    if is_status_category_code(category_code):
+        metadata = UNKNOWN_ACTIVITY_CATEGORY_METADATA[category_code]
+        return {
+            "definition": str(metadata["definition"]),
             "mapped_epigraphs": None,
             "historical_coverage_rows": None,
             "example_labels": [],

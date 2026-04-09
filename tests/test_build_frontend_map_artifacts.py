@@ -9,10 +9,12 @@ import pandas as pd
 from scripts.build_frontend_map_artifacts import (
     attach_section_geography,
     build_hex_aggregates,
+    build_category_options,
     build_hex_size_specs,
     build_zone_metrics,
     compute_horizon_metrics,
     detect_h3_resolution,
+    infer_unknown_activity_category,
     roll_up_hex_frame,
 )
 
@@ -161,6 +163,52 @@ class FrontendMapArtifactsTests(unittest.TestCase):
         self.assertAlmostEqual(rows[0]["avg_risk_primary"], 0.4)
         self.assertAlmostEqual(rows[0]["avg_risk_ensemble"], 0.4)
         self.assertAlmostEqual(rows[0]["avg_risk_percentile"], 0.5)
+
+    def test_infer_unknown_activity_category_recovers_single_macro(self) -> None:
+        category_code, category_desc = infer_unknown_activity_category(
+            {
+                "raw_rows": 1,
+                "macro_count": 1,
+                "valid_epigrafe_rows": 1,
+                "single_macro_code": "bar_cafe",
+                "single_macro_desc": "Bar y cafetería",
+            }
+        )
+
+        self.assertEqual(category_code, "bar_cafe")
+        self.assertEqual(category_desc, "Bar y cafetería")
+
+    def test_infer_unknown_activity_category_marks_multi_activity_before_placeholders(self) -> None:
+        category_code, category_desc = infer_unknown_activity_category(
+            {
+                "raw_rows": 2,
+                "macro_count": 2,
+                "valid_epigrafe_rows": 2,
+                "has_no_activity_marker": 1,
+            }
+        )
+
+        self.assertEqual(category_code, "__status_multi_activity__")
+        self.assertEqual(category_desc, "Multiactividad")
+
+    def test_build_category_options_hides_residual_statuses_from_selector(self) -> None:
+        categories = build_category_options(
+            [
+                {"h3_cell": "a", "category_code": "__status_uncoded_activity__", "category_desc": "Actividad no informada", "n_locales": 100},
+                {"h3_cell": "a", "category_code": "__status_multi_activity__", "category_desc": "Multiactividad", "n_locales": 60},
+                {"h3_cell": "a", "category_code": "__status_no_activity__", "category_desc": "Sin actividad declarada", "n_locales": 20},
+                {"h3_cell": "a", "category_code": "__status_missing_snapshot__", "category_desc": "Mes sin fichero de actividad", "n_locales": 10},
+                {"h3_cell": "a", "category_code": "__status_pending_coding__", "category_desc": "Actividad pendiente de codificar", "n_locales": 5},
+                {"h3_cell": "b", "category_code": "bar_cafe", "category_desc": "Bar y cafetería", "n_locales": 10},
+                {"h3_cell": "c", "category_code": "__all__", "category_desc": "Todos los locales", "n_locales": 110},
+            ],
+            glossary_profiles={},
+        )
+
+        self.assertEqual(
+            [item["category_code"] for item in categories],
+            ["__all__", "bar_cafe", "__status_uncoded_activity__", "__status_multi_activity__"],
+        )
 
 
 if __name__ == "__main__":
