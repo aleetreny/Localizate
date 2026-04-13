@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { HexCategoryComposition, type HexCategoryCompositionItem } from "@/components/hex-category-composition";
+import { HistoricalEvolutionBanner } from "@/components/historical-evolution-banner";
 import { MadridMap } from "@/components/madrid-map";
 import { ViewTabs } from "@/components/view-tabs";
 import { DEFAULT_HEX_SIZE, formatHexSizeLabel, HEX_SIZE_OPTIONS, type HexSize } from "@/lib/hex-size";
 import { formatHorizonLongLabel, formatHorizonShortLabel, getHorizonSupport, getHorizonSurvival, isFiniteNumber, type Horizon } from "@/lib/horizon";
-import { FALLBACK_MAP_ARTIFACTS, loadMapArtifactsFromPublic } from "@/lib/public-data";
-import type { ColorScale, FrontendArtifacts, HexAggregate, ZoneAggregate } from "@/lib/types";
+import { FALLBACK_MAP_ARTIFACTS, loadHistoricalRankingsFromPublic, loadMapArtifactsFromPublic } from "@/lib/public-data";
+import type { ColorScale, FrontendArtifacts, HexAggregate, HistoricalRankingArtifacts, HistoricalZoneLevel, ZoneAggregate } from "@/lib/types";
 
 type MapShellProps = {
   initialArtifacts?: FrontendArtifacts;
@@ -65,10 +66,25 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   const [activeMetricId, setActiveMetricId] = useState<string | null>(null);
   const [isRiskExplainerOpen, setIsRiskExplainerOpen] = useState(false);
   const [activeZoneInsight, setActiveZoneInsight] = useState<ZoneActivityInsight | null>(null);
+  const [historicalRankingArtifacts, setHistoricalRankingArtifacts] = useState<HistoricalRankingArtifacts | null>(null);
+  const [historicalZoneLevel, setHistoricalZoneLevel] = useState<HistoricalZoneLevel>("district");
+  const [isHistoricalEvolutionOpen, setIsHistoricalEvolutionOpen] = useState(false);
+  const [isLoadingHistoricalRankings, setIsLoadingHistoricalRankings] = useState(false);
   const loadedArtifactsRef = useRef<Partial<Record<HexSize, FrontendArtifacts>>>(
     initialArtifacts ? { [DEFAULT_HEX_SIZE]: initialArtifacts } : {}
   );
   const mapPanelRef = useRef<HTMLElement | null>(null);
+
+  async function ensureHistoricalRankingsLoaded() {
+    if (historicalRankingArtifacts || isLoadingHistoricalRankings) {
+      return;
+    }
+
+    setIsLoadingHistoricalRankings(true);
+    const nextArtifacts = await loadHistoricalRankingsFromPublic();
+    setHistoricalRankingArtifacts(nextArtifacts);
+    setIsLoadingHistoricalRankings(false);
+  }
 
   useEffect(() => {
     let alive = true;
@@ -368,6 +384,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
               });
 
               setIsRiskExplainerOpen(false);
+              setIsHistoricalEvolutionOpen(false);
               setActiveMetricId(null);
               setActiveZoneInsight((current) => {
                 if (!nextInsight) {
@@ -380,17 +397,41 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
               });
             }}
           />
-          <div className="zone-board-footer">
+          <div className="zone-board-footer zone-board-footer-group">
             <button
               aria-expanded={isRiskExplainerOpen}
               className="zone-board-action"
               onClick={() => {
+                setIsHistoricalEvolutionOpen(false);
                 setActiveZoneInsight(null);
                 setIsRiskExplainerOpen((current) => !current);
               }}
               type="button"
             >
               {isRiskExplainerOpen ? "Ocultar guía" : "Cómo interpretar este ranking"}
+            </button>
+            <button
+              aria-expanded={isHistoricalEvolutionOpen}
+              className="zone-board-action"
+              onClick={() => {
+                const nextOpen = !isHistoricalEvolutionOpen;
+                setIsRiskExplainerOpen(false);
+                setActiveZoneInsight(null);
+                setActiveMetricId(null);
+                setIsHistoricalEvolutionOpen(nextOpen);
+                if (nextOpen) {
+                  void ensureHistoricalRankingsLoaded();
+                }
+              }}
+              onFocus={() => {
+                void ensureHistoricalRankingsLoaded();
+              }}
+              onMouseEnter={() => {
+                void ensureHistoricalRankingsLoaded();
+              }}
+              type="button"
+            >
+              {isHistoricalEvolutionOpen ? "Ocultar evolución histórica" : "Evolución histórica"}
             </button>
           </div>
         </section>
@@ -411,6 +452,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
                 metrics={detailMetrics}
                 onSelect={(metricId) => {
                   setActiveZoneInsight(null);
+                  setIsHistoricalEvolutionOpen(false);
                   setActiveMetricId(metricId);
                 }}
               />
@@ -437,7 +479,19 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
       </aside>
 
       <section className="map-panel panel" ref={mapPanelRef}>
-        {isRiskExplainerOpen ? (
+        {isHistoricalEvolutionOpen ? (
+          <div className="map-overlay panel historical-evolution-overlay">
+            <HistoricalEvolutionBanner
+              artifacts={historicalRankingArtifacts}
+              categoryCode={selectedCategory}
+              categoryDesc={selectedCategoryMeta.category_desc}
+              isLoading={isLoadingHistoricalRankings}
+              onClose={() => setIsHistoricalEvolutionOpen(false)}
+              onSelectZoneLevel={setHistoricalZoneLevel}
+              zoneLevel={historicalZoneLevel}
+            />
+          </div>
+        ) : isRiskExplainerOpen ? (
           <div className="map-overlay panel risk-explainer-overlay">
             <RelativeRiskExplainerBanner onClose={() => setIsRiskExplainerOpen(false)} />
           </div>
@@ -458,6 +512,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
           hexes={filteredHexes}
           onSelectHex={(hex) => {
             setActiveZoneInsight(null);
+            setIsHistoricalEvolutionOpen(false);
             setSelectedHex(hex);
           }}
           selectedHex={selectedHex}
@@ -569,6 +624,9 @@ function RelativeRiskExplainerBanner({ onClose }: { onClose: () => void }) {
       <div className="explain-banner-body">
         <p className="explain-banner-copy">
           No es una probabilidad de cierre. Solo resume qué zonas salen mejor o peor para la categoría que estás viendo en Madrid.
+        </p>
+        <p className="explain-banner-copy">
+          Este ranking principal sigue usando el índice relativo 0-1 del modelo actual. La evolución histórica del banner superior adapta la métrica al caso: para categorías concretas ordena por especialización frente a Madrid, suavizada por tamaño de zona; para Todos los locales ordena por la ganancia o pérdida de peso de cada zona dentro del total comercial de Madrid desde el inicio de la serie.
         </p>
         <div className="explain-banner-example">
           <span className="explain-banner-example-label">Ejemplo</span>
@@ -969,60 +1027,47 @@ function buildHexCategoryComposition(hexes: HexAggregate[], detail: HexAggregate
     return [];
   }
 
-  return hexes
+  const orderedItems = hexes
     .filter((item) => item.h3_cell === detail.h3_cell && item.category_code !== "__all__" && item.n_locales > 0)
     .sort((left, right) => {
       if (right.n_locales !== left.n_locales) {
         return right.n_locales - left.n_locales;
       }
       return left.category_desc.localeCompare(right.category_desc, "es");
-    })
-    .map((item) => ({
-      categoryCode: item.category_code,
-      categoryDesc: item.category_desc,
-      nLocales: item.n_locales,
-      share: item.n_locales / totalLocales,
-      color: colorForCategoryCode(item.category_code),
-    }));
+    });
+
+  return orderedItems.map((item, position) => ({
+    categoryCode: item.category_code,
+    categoryDesc: item.category_desc,
+    nLocales: item.n_locales,
+    share: item.n_locales / totalLocales,
+    color: colorForCategoryPosition(position, item.category_code),
+  }));
 }
 
-function colorForCategoryCode(categoryCode: string) {
-  const palette = [
-    "#d7c8a2",
-    "#b8d5d8",
-    "#c5bfe3",
-    "#d8b9d3",
-    "#b8d7c1",
-    "#ecc6b6",
-    "#c9d6a9",
-    "#a7c7da",
-    "#d8cea8",
-    "#baa6d3",
-    "#dcbcae",
-    "#95c4bf",
-    "#9aaad7",
-    "#b8cb93",
-    "#8eafbc",
-    "#cbaed8",
-    "#e3d6b6",
-    "#a5c6d3",
-    "#c3d8b7",
-    "#e3c0b1",
-    "#bdb2df",
-    "#9bb8cc",
-    "#c8d5a7",
-    "#d7bfd2",
-    "#a8cec4",
-    "#dbcfc1",
-    "#a9bedf",
-    "#d0c0e7",
-    "#d0d9af",
-    "#ddb8af",
-    "#a7c4c8",
-    "#c9b4d4",
-  ];
+// Alternate hue families so adjacent donut slices stay visually distinct without leaving the pastel theme.
+const HEX_COMPOSITION_COLOR_HUES = [42, 222, 318, 138, 278, 82, 248, 18, 168, 344, 198];
+const HEX_COMPOSITION_COLOR_TONES = [
+  { saturation: 52, lightness: 72 },
+  { saturation: 44, lightness: 79 },
+  { saturation: 56, lightness: 67 },
+];
 
-  return palette[hashString(categoryCode) % palette.length];
+function colorForCategoryPosition(position: number, categoryCode: string) {
+  const seed = hashString(categoryCode);
+  const baseHue = HEX_COMPOSITION_COLOR_HUES[position % HEX_COMPOSITION_COLOR_HUES.length];
+  const tone = HEX_COMPOSITION_COLOR_TONES[
+    Math.floor(position / HEX_COMPOSITION_COLOR_HUES.length) % HEX_COMPOSITION_COLOR_TONES.length
+  ];
+  const hueShift = ((seed % 3) - 1) * 4;
+  const saturation = clamp(tone.saturation + (((seed >>> 3) % 3) - 1) * 2, 38, 60);
+  const lightness = clamp(tone.lightness + (((seed >>> 5) % 3) - 1), 64, 82);
+
+  return `hsl(${normalizeHue(baseHue + hueShift)} ${saturation}% ${lightness}%)`;
+}
+
+function normalizeHue(value: number) {
+  return ((value % 360) + 360) % 360;
 }
 
 function hashString(value: string) {

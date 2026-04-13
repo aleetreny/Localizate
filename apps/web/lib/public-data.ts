@@ -1,5 +1,5 @@
 import { DEFAULT_HEX_SIZE, type HexSize } from "@/lib/hex-size";
-import type { FrontendArtifacts, OpportunityArtifacts } from "@/lib/types";
+import type { FrontendArtifacts, HistoricalRankingArtifacts, OpportunityArtifacts } from "@/lib/types";
 
 export const MAP_ARTIFACTS_PATHS: Record<HexSize, string> = {
   small: "/data/frontend-map-artifacts.json",
@@ -7,6 +7,7 @@ export const MAP_ARTIFACTS_PATHS: Record<HexSize, string> = {
   large: "/data/frontend-map-artifacts-large.json"
 };
 export const OPPORTUNITY_ARTIFACTS_PATH = "/data/frontend-opportunity-artifacts.json";
+export const HISTORICAL_RANKING_ARTIFACTS_PATH = "/data/frontend-historical-rankings.json";
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 export const FALLBACK_MAP_ARTIFACTS: FrontendArtifacts = {
@@ -72,8 +73,39 @@ export const FALLBACK_OPPORTUNITY_ARTIFACTS: OpportunityArtifacts = {
   points: []
 };
 
+export const FALLBACK_HISTORICAL_RANKING_ARTIFACTS: HistoricalRankingArtifacts = {
+  meta: {
+    title: "Madrid Historical Category Ranking",
+    subtitle: "Artefacto temporal pendiente de materializar.",
+    generated_at: new Date(0).toISOString(),
+    metric_key: "specialization_index",
+    metric_label: "Indice de especializacion",
+    metric_short_label: "Especializacion vs Madrid",
+    metric_definition: "Cuota suavizada de la categoria en la zona comparada con la cuota de esa categoria en Madrid.",
+    metric_direction: "higher_better",
+    smoothing_weight: 12,
+    years: [],
+    latest_period_by_year: {},
+    latest_year: 0,
+    latest_period: "",
+    latest_year_is_partial: false,
+    current_series_limit: 4,
+    series_limit: 9,
+    rank_focus_limit: 9,
+    zone_totals: {
+      district: 0,
+      barrio: 0,
+    }
+  },
+  zones: {
+    district: [],
+    barrio: []
+  }
+};
+
 const mapArtifactsPromises = new Map<HexSize, Promise<FrontendArtifacts>>();
 let opportunityArtifactsPromise: Promise<OpportunityArtifacts> | null = null;
+let historicalRankingArtifactsPromise: Promise<HistoricalRankingArtifacts> | null = null;
 
 export function loadMapArtifactsFromPublic(hexSize: HexSize = DEFAULT_HEX_SIZE) {
   const path = MAP_ARTIFACTS_PATHS[hexSize];
@@ -98,6 +130,18 @@ export function loadOpportunityArtifactsFromPublic() {
   }
   opportunityArtifactsPromise ??= fetchPublicJson(OPPORTUNITY_ARTIFACTS_PATH, FALLBACK_OPPORTUNITY_ARTIFACTS);
   return opportunityArtifactsPromise;
+}
+
+export function loadHistoricalRankingsFromPublic() {
+  if (!IS_PRODUCTION) {
+    return fetchPublicJson(HISTORICAL_RANKING_ARTIFACTS_PATH, FALLBACK_HISTORICAL_RANKING_ARTIFACTS);
+  }
+
+  historicalRankingArtifactsPromise ??= fetchPublicJson(
+    HISTORICAL_RANKING_ARTIFACTS_PATH,
+    FALLBACK_HISTORICAL_RANKING_ARTIFACTS
+  );
+  return historicalRankingArtifactsPromise;
 }
 
 export function prefetchArtifactsForView(href: string) {

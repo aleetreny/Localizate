@@ -89,6 +89,61 @@ export type FrontendArtifacts = {
   };
 };
 
+export type HistoricalZoneLevel = "district" | "barrio";
+
+export type HistoricalRankingMeta = {
+  title: string;
+  subtitle: string;
+  generated_at: string;
+  metric_key: string;
+  metric_label: string;
+  metric_short_label: string;
+  metric_definition: string;
+  metric_direction: "higher_better" | "lower_better";
+  smoothing_weight: number;
+  years: number[];
+  latest_period_by_year: Record<string, string>;
+  latest_year: number;
+  latest_period: string;
+  latest_year_is_partial: boolean;
+  current_series_limit: number;
+  series_limit: number;
+  rank_focus_limit: number;
+  zone_totals: {
+    district: number;
+    barrio: number;
+  };
+};
+
+export type HistoricalZoneRankingRecord = {
+  zone_level: HistoricalZoneLevel;
+  category_code: string;
+  category_desc: string;
+  year: number;
+  period: string;
+  zone_key: string;
+  zone_code: string;
+  zone_name: string;
+  zone_context_name: string | null;
+  n_locales: number;
+  zone_total_locales: number;
+  share_of_zone: number | null;
+  smoothed_share_of_zone: number | null;
+  city_share: number | null;
+  city_category_locales: number;
+  city_total_locales: number;
+  metric_value: number | null;
+  rank: number;
+};
+
+export type HistoricalRankingArtifacts = {
+  meta: HistoricalRankingMeta;
+  zones: {
+    district: HistoricalZoneRankingRecord[];
+    barrio: HistoricalZoneRankingRecord[];
+  };
+};
+
 export type OpportunityMeta = {
   title: string;
   subtitle: string;

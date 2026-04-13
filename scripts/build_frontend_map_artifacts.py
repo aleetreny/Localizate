@@ -23,7 +23,12 @@ import localizate.abt_survival as activity_abt_survival
 DEFAULT_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-map-artifacts.json"
 MEDIUM_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-map-artifacts-medium.json"
 LARGE_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-map-artifacts-large.json"
+HISTORICAL_RANKING_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-historical-rankings.json"
 ACTIVITY_GLOSSARY = PROJECT_ROOT / "ACTIVITY_GLOSSARY.md"
+ACTIVITY_NORMALIZATION_AUDIT = PROJECT_ROOT / "data" / "processed" / "activity_code_normalization_audit.csv"
+ACTIVITY_MACRO_TAXONOMY = PROJECT_ROOT / "data" / "processed" / "activity_macro_taxonomy.csv"
+HISTORICAL_LOCALES_DIR = PROJECT_ROOT / "data" / "processed" / "censo_geospatial" / "locales"
+HISTORICAL_ACTIVITIES_DIR = PROJECT_ROOT / "data" / "intermediate" / "censo_snapshots" / "actividades"
 SPATIAL_FALLBACK_CRS = "EPSG:25830"
 SPATIAL_NEAREST_MAX_DISTANCE_M = 75.0
 GEOGRAPHY_COLUMNS = ("district_code", "district_name", "barrio_code", "barrio_name")
@@ -43,6 +48,18 @@ MAP_BOUNDS = {
 PRIMARY_RISK_COLUMN = "risk_cox"
 PRIMARY_RISK_MODEL_KEY = "cox"
 PRIMARY_RISK_MODEL_LABEL = "Cox"
+HISTORICAL_METRIC_KEY = "specialization_index"
+HISTORICAL_METRIC_LABEL = "Indice de especializacion"
+HISTORICAL_METRIC_SHORT_LABEL = "Especializacion vs Madrid"
+HISTORICAL_METRIC_DEFINITION = (
+    "Cuota suavizada de la categoria en cada zona comparada con la cuota de esa misma categoria en Madrid para el mismo ano. "
+    "Valores por encima de 1 indican que la categoria pesa mas en esa zona que en el conjunto de la ciudad."
+)
+HISTORICAL_METRIC_DIRECTION = "higher_better"
+HISTORICAL_SMOOTHING_WEIGHT = 12.0
+HISTORICAL_CURRENT_SERIES_LIMIT = 4
+HISTORICAL_SERIES_LIMIT = 9
+HISTORICAL_RANK_FOCUS_LIMIT = 9
 HIDDEN_SELECTOR_STATUS_CATEGORY_CODES = frozenset(
     {
         "__status_no_activity__",
@@ -142,6 +159,16 @@ def main() -> int:
     zones = build_zone_payloads(merged)
     generated_at = pd.Timestamp.utcnow().isoformat()
     base_h3_resolution = detect_h3_resolution(merged["h3_cell_start"])
+    historical_payload = build_historical_ranking_artifacts(generated_at=generated_at)
+
+    HISTORICAL_RANKING_OUTPUT.write_text(
+        json.dumps(historical_payload, ensure_ascii=False, indent=2, allow_nan=False),
+        encoding="utf-8",
+    )
+    print(
+        f"Wrote historical ranking artifacts: {HISTORICAL_RANKING_OUTPUT} "
+        f"(district_rows={len(historical_payload['zones']['district']):,}, barrio_rows={len(historical_payload['zones']['barrio']):,})"
+    )
 
     for spec in build_hex_size_specs(base_h3_resolution):
         sized_frame = roll_up_hex_frame(merged, target_resolution=int(spec["h3_resolution"]))
@@ -607,6 +634,511 @@ def parse_integer_token(text: str) -> int | None:
     if not match:
         return None
     return int(match.group(1).replace(",", ""))
+
+
+def build_historical_ranking_artifacts(*, generated_at: str) -> dict[str, object]:
+    common_periods = select_latest_periods_by_year(
+        sorted(set(list_snapshot_periods(HISTORICAL_LOCALES_DIR)).intersection(list_snapshot_periods(HISTORICAL_ACTIVITIES_DIR)))
+    )
+
+    if not common_periods:
+        return {
+            "meta": {
+                "title": "Madrid Historical Category Ranking",
+                "subtitle": "Ranking anual por especializacion relativa de cada categoria usando el ultimo mes disponible de cada ano.",
+                "generated_at": generated_at,
+                "metric_key": HISTORICAL_METRIC_KEY,
+                "metric_label": HISTORICAL_METRIC_LABEL,
+                "metric_short_label": HISTORICAL_METRIC_SHORT_LABEL,
+                "metric_definition": HISTORICAL_METRIC_DEFINITION,
+                "metric_direction": HISTORICAL_METRIC_DIRECTION,
+                "smoothing_weight": int(HISTORICAL_SMOOTHING_WEIGHT),
+                "years": [],
+                "latest_period_by_year": {},
+                "latest_year": 0,
+                "latest_period": "",
+                "latest_year_is_partial": False,
+                "current_series_limit": HISTORICAL_CURRENT_SERIES_LIMIT,
+                "series_limit": HISTORICAL_SERIES_LIMIT,
+                "rank_focus_limit": HISTORICAL_RANK_FOCUS_LIMIT,
+                "zone_totals": {"district": 0, "barrio": 0},
+            },
+            "zones": {"district": [], "barrio": []},
+        }
+
+    epigrafe_lookup, macro_lookup = load_snapshot_activity_lookups()
+    district_rows: list[dict[str, object]] = []
+    barrio_rows: list[dict[str, object]] = []
+
+    for period in common_periods:
+        year = int(period.split("-", 1)[0])
+        locales_frame = load_locales_snapshot_frame(period)
+        if locales_frame.empty:
+            continue
+
+        activity_frame = load_activity_snapshot_frame(period)
+        activity_categories = summarize_snapshot_activity_categories(
+            activity_frame,
+            epigrafe_lookup=epigrafe_lookup,
+            macro_lookup=macro_lookup,
+        )
+        merged = locales_frame.merge(
+            activity_categories,
+            on=["id_local", "snapshot_period"],
+            how="left",
+            validate="one_to_one",
+        )
+        missing_code, missing_desc = status_category_payload("__status_missing_snapshot__")
+        merged["category_code"] = merged["category_code"].fillna(missing_code).astype("string")
+        merged["category_desc"] = merged["category_desc"].fillna(missing_desc).astype("string")
+
+        combined = build_snapshot_category_frame(merged)
+        district_rows.extend(build_zone_history_records(combined, zone_level="district", year=year, period=period))
+        barrio_rows.extend(build_zone_history_records(combined, zone_level="barrio", year=year, period=period))
+
+    district_rows = finalize_historical_metric_records(district_rows)
+    barrio_rows = finalize_historical_metric_records(barrio_rows)
+
+    latest_period = common_periods[-1]
+    latest_year = int(latest_period.split("-", 1)[0])
+    years = [int(period.split("-", 1)[0]) for period in common_periods]
+
+    return {
+        "meta": {
+            "title": "Madrid Historical Category Ranking",
+            "subtitle": "Ranking anual por especializacion relativa de cada categoria usando el ultimo mes disponible de cada ano.",
+            "generated_at": generated_at,
+            "metric_key": HISTORICAL_METRIC_KEY,
+            "metric_label": HISTORICAL_METRIC_LABEL,
+            "metric_short_label": HISTORICAL_METRIC_SHORT_LABEL,
+            "metric_definition": HISTORICAL_METRIC_DEFINITION,
+            "metric_direction": HISTORICAL_METRIC_DIRECTION,
+            "smoothing_weight": int(HISTORICAL_SMOOTHING_WEIGHT),
+            "years": years,
+            "latest_period_by_year": {str(int(period.split("-", 1)[0])): period for period in common_periods},
+            "latest_year": latest_year,
+            "latest_period": latest_period,
+            "latest_year_is_partial": not latest_period.endswith("-12"),
+            "current_series_limit": HISTORICAL_CURRENT_SERIES_LIMIT,
+            "series_limit": HISTORICAL_SERIES_LIMIT,
+            "rank_focus_limit": HISTORICAL_RANK_FOCUS_LIMIT,
+            "zone_totals": {
+                "district": len({row["zone_key"] for row in district_rows if row["category_code"] == "__all__"}),
+                "barrio": len({row["zone_key"] for row in barrio_rows if row["category_code"] == "__all__"}),
+            },
+        },
+        "zones": {
+            "district": district_rows,
+            "barrio": barrio_rows,
+        },
+    }
+
+
+def list_snapshot_periods(directory: Path) -> list[str]:
+    if not directory.exists():
+        return []
+
+    periods: list[str] = []
+    for path in directory.glob("*.csv.gz"):
+        period = path.name.removesuffix(".csv.gz")
+        if re.fullmatch(r"\d{4}-\d{2}", period):
+            periods.append(period)
+    return sorted(set(periods))
+
+
+def select_latest_periods_by_year(periods: list[str]) -> list[str]:
+    latest_by_year: dict[int, str] = {}
+    for period in sorted(periods):
+        if not re.fullmatch(r"\d{4}-\d{2}", period):
+            continue
+        latest_by_year[int(period[:4])] = period
+    return [latest_by_year[year] for year in sorted(latest_by_year)]
+
+
+def load_snapshot_activity_lookups() -> tuple[pd.DataFrame, pd.DataFrame]:
+    audit = pd.read_csv(ACTIVITY_NORMALIZATION_AUDIT, low_memory=False)
+    epigrafe_lookup = activity_abt_survival._collapse_activity_lookup_by_raw_code(
+        audit[audit["taxonomy"] == "epigrafe"].copy()
+    )
+    epigrafe_lookup["raw_code"] = epigrafe_lookup["raw_code"].fillna("").astype(str).str.upper().str.strip()
+    epigrafe_lookup["clean_code"] = epigrafe_lookup["clean_code"].fillna("").astype(str).str.upper().str.strip()
+    epigrafe_lookup["code_valid"] = epigrafe_lookup["code_valid"].astype("boolean").fillna(False).astype(bool)
+    epigrafe_lookup = epigrafe_lookup[["raw_code", "clean_code", "code_valid"]].drop_duplicates(subset=["raw_code"])
+
+    macro_lookup = pd.read_csv(
+        ACTIVITY_MACRO_TAXONOMY,
+        usecols=["epigrafe_code", "macro_category_code", "macro_category_name"],
+        dtype="string",
+        low_memory=False,
+    )
+    macro_lookup["epigrafe_code"] = macro_lookup["epigrafe_code"].fillna("").astype("string").str.upper().str.strip()
+    macro_lookup["macro_category_code"] = macro_lookup["macro_category_code"].fillna("").astype("string").str.strip()
+    macro_lookup["macro_category_name"] = macro_lookup["macro_category_name"].fillna("").astype("string").str.strip()
+    macro_lookup = macro_lookup[macro_lookup["epigrafe_code"].ne("")].drop_duplicates(subset=["epigrafe_code"])
+    return epigrafe_lookup, macro_lookup
+
+
+def load_activity_snapshot_frame(period: str) -> pd.DataFrame:
+    frame = pd.read_csv(
+        HISTORICAL_ACTIVITIES_DIR / f"{period}.csv.gz",
+        usecols=["id_local", "snapshot_period", "id_epigrafe", "desc_epigrafe"],
+        low_memory=False,
+    )
+    frame["id_local"] = pd.to_numeric(frame["id_local"], errors="coerce").astype("Int64")
+    frame["snapshot_period"] = frame["snapshot_period"].fillna(period).astype("string")
+    frame["raw_epigrafe_code"] = frame["id_epigrafe"].fillna("").astype(str).str.upper().str.strip()
+    frame["raw_epigrafe_desc"] = frame["desc_epigrafe"].fillna("").astype(str).str.upper().str.strip()
+    return frame[["id_local", "snapshot_period", "raw_epigrafe_code", "raw_epigrafe_desc"]]
+
+
+def load_locales_snapshot_frame(period: str) -> pd.DataFrame:
+    frame = pd.read_csv(
+        HISTORICAL_LOCALES_DIR / f"{period}.csv.gz",
+        usecols=[
+            "id_local",
+            "snapshot_period",
+            "id_distrito_local",
+            "desc_distrito_local",
+            "id_barrio_local",
+            "desc_barrio_local",
+        ],
+        low_memory=False,
+    )
+    frame["id_local"] = pd.to_numeric(frame["id_local"], errors="coerce").astype("Int64")
+    frame["snapshot_period"] = frame["snapshot_period"].fillna(period).astype("string")
+    frame["district_code"] = frame["id_distrito_local"].map(lambda value: normalize_admin_code_value(value, width=2)).astype("string")
+    frame["district_name"] = frame["desc_distrito_local"].map(clean_place_name).astype("string")
+    frame["barrio_code"] = [
+        normalize_snapshot_barrio_code(district_value, barrio_value)
+        for district_value, barrio_value in zip(frame["id_distrito_local"], frame["id_barrio_local"])
+    ]
+    frame["barrio_code"] = pd.Series(frame["barrio_code"], index=frame.index, dtype="string")
+    frame["barrio_name"] = frame["desc_barrio_local"].map(clean_place_name).astype("string")
+    frame["barrio_context_name"] = frame["district_name"]
+    frame["barrio_key"] = [
+        build_barrio_zone_key(district_code, barrio_code, barrio_name)
+        for district_code, barrio_code, barrio_name in zip(
+            frame["district_code"],
+            frame["barrio_code"],
+            frame["barrio_name"],
+        )
+    ]
+    frame["barrio_key"] = pd.Series(frame["barrio_key"], index=frame.index, dtype="string")
+    frame = frame.dropna(subset=["id_local"]).drop_duplicates(subset=["id_local", "snapshot_period"], keep="first")
+    return frame[
+        [
+            "id_local",
+            "snapshot_period",
+            "district_code",
+            "district_name",
+            "barrio_code",
+            "barrio_name",
+            "barrio_context_name",
+            "barrio_key",
+        ]
+    ]
+
+
+def normalize_snapshot_barrio_code(district_value: object, barrio_value: object) -> str:
+    district_code = normalize_admin_code_value(district_value, width=2)
+    if pd.isna(barrio_value):
+        return ""
+    text = str(barrio_value).strip()
+    if not text or text.casefold() in {"nan", "<na>"}:
+        return ""
+    if text.endswith(".0"):
+        text = text[:-2]
+    digits = "".join(char for char in text if char.isdigit())
+    if not digits:
+        return ""
+    if len(digits) <= 3 and district_code:
+        return f"{district_code}{digits.zfill(3)}"
+    if len(digits) <= 4:
+        return digits.zfill(4)
+    return digits
+
+
+def build_barrio_zone_key(district_code: object, barrio_code: object, barrio_name: object) -> str:
+    barrio_code_text = str(barrio_code or "").strip()
+    if barrio_code_text:
+        return barrio_code_text
+    clean_name = clean_place_name(barrio_name)
+    if not clean_name:
+        return ""
+    slug = re.sub(r"[^a-z0-9]+", "-", clean_name.casefold()).strip("-")
+    district_code_text = str(district_code or "").strip()
+    if district_code_text and slug:
+        return f"{district_code_text}:{slug}"
+    return slug
+
+
+def summarize_snapshot_activity_categories(
+    activity_frame: pd.DataFrame,
+    *,
+    epigrafe_lookup: pd.DataFrame,
+    macro_lookup: pd.DataFrame,
+) -> pd.DataFrame:
+    empty = pd.DataFrame(columns=["id_local", "snapshot_period", "category_code", "category_desc"])
+    if activity_frame.empty:
+        return empty
+
+    working = activity_frame.dropna(subset=["id_local"]).copy()
+    if working.empty:
+        return empty
+
+    working = working.merge(
+        epigrafe_lookup.rename(columns={"raw_code": "raw_epigrafe_code"}),
+        on="raw_epigrafe_code",
+        how="left",
+        validate="many_to_one",
+    )
+    working = working.merge(
+        macro_lookup.rename(columns={"epigrafe_code": "clean_code"}),
+        on="clean_code",
+        how="left",
+        validate="many_to_one",
+    )
+    working["code_valid"] = working["code_valid"].astype("boolean").fillna(False).astype(bool)
+    working["macro_category_code"] = working["macro_category_code"].fillna("").astype("string")
+    working["macro_category_name"] = working["macro_category_name"].fillna("").astype("string")
+    working["has_no_activity_marker"] = (
+        working["raw_epigrafe_code"].isin({"000000", "0", "0.0"})
+        | working["raw_epigrafe_desc"].eq("LOCAL SIN ACTIVIDAD")
+    )
+    working["has_pending_coding_marker"] = (
+        working["raw_epigrafe_code"].str.startswith("PTE")
+        | working["raw_epigrafe_desc"].str.startswith("PTE.")
+    )
+    working["has_blank_marker"] = working["raw_epigrafe_code"].eq("") & working["raw_epigrafe_desc"].eq("")
+    working["has_null_origin_marker"] = (
+        working["raw_epigrafe_code"].eq("-1")
+        | working["raw_epigrafe_desc"].eq("VALOR NULO EN ORIGEN")
+    )
+
+    summary = (
+        working.groupby(["id_local", "snapshot_period"], dropna=False)
+        .agg(
+            raw_rows=("id_local", "size"),
+            valid_epigrafe_rows=("code_valid", "sum"),
+            macro_count=("macro_category_code", count_non_empty_unique),
+            single_macro_code=("macro_category_code", first_non_empty_text),
+            single_macro_desc=("macro_category_name", first_non_empty_text),
+            has_no_activity_marker=("has_no_activity_marker", "max"),
+            has_pending_coding_marker=("has_pending_coding_marker", "max"),
+            has_blank_marker=("has_blank_marker", "max"),
+            has_null_origin_marker=("has_null_origin_marker", "max"),
+        )
+        .reset_index()
+    )
+    summary["category_code"] = pd.Series(pd.NA, index=summary.index, dtype="string")
+    summary["category_desc"] = pd.Series(pd.NA, index=summary.index, dtype="string")
+
+    single_macro_mask = (
+        summary["macro_count"].eq(1)
+        & summary["single_macro_code"].astype("string").ne("")
+        & summary["single_macro_desc"].astype("string").ne("")
+    )
+    summary.loc[single_macro_mask, "category_code"] = summary.loc[single_macro_mask, "single_macro_code"].astype("string")
+    summary.loc[single_macro_mask, "category_desc"] = summary.loc[single_macro_mask, "single_macro_desc"].astype("string")
+
+    apply_status_category(summary, summary["macro_count"].ge(2), "__status_multi_activity__")
+    apply_status_category(summary, summary["has_no_activity_marker"].astype(bool), "__status_no_activity__")
+    apply_status_category(summary, summary["has_pending_coding_marker"].astype(bool), "__status_pending_coding__")
+    apply_status_category(summary, summary["valid_epigrafe_rows"].gt(0), "__status_unmapped_activity__")
+    apply_status_category(
+        summary,
+        summary["has_blank_marker"].astype(bool) | summary["has_null_origin_marker"].astype(bool),
+        "__status_uncoded_activity__",
+    )
+
+    fallback = UNKNOWN_ACTIVITY_CATEGORY_METADATA["__status_uncoded_activity__"]
+    summary["category_code"] = summary["category_code"].fillna("__status_uncoded_activity__").astype("string")
+    summary["category_desc"] = summary["category_desc"].fillna(str(fallback["desc"])).astype("string")
+    return summary[["id_local", "snapshot_period", "category_code", "category_desc"]]
+
+
+def apply_status_category(frame: pd.DataFrame, mask: pd.Series, category_code: str) -> None:
+    pending_mask = mask & frame["category_code"].isna()
+    if not bool(pending_mask.any()):
+        return
+    frame.loc[pending_mask, "category_code"] = category_code
+    frame.loc[pending_mask, "category_desc"] = str(UNKNOWN_ACTIVITY_CATEGORY_METADATA[category_code]["desc"])
+
+
+def count_non_empty_unique(series: pd.Series) -> int:
+    cleaned = series.fillna("").astype("string").str.strip()
+    return int(cleaned[cleaned.ne("")].nunique())
+
+
+def first_non_empty_text(series: pd.Series) -> str:
+    cleaned = series.fillna("").astype("string").str.strip()
+    values = cleaned[cleaned.ne("")].drop_duplicates().sort_values()
+    if values.empty:
+        return ""
+    return str(values.iloc[0])
+
+
+def build_snapshot_category_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    scoped = frame[
+        [
+            "id_local",
+            "snapshot_period",
+            "district_code",
+            "district_name",
+            "barrio_code",
+            "barrio_name",
+            "barrio_context_name",
+            "barrio_key",
+            "category_code",
+            "category_desc",
+        ]
+    ].copy()
+    all_rows = scoped[
+        [
+            "id_local",
+            "snapshot_period",
+            "district_code",
+            "district_name",
+            "barrio_code",
+            "barrio_name",
+            "barrio_context_name",
+            "barrio_key",
+        ]
+    ].copy()
+    all_rows["category_code"] = "__all__"
+    all_rows["category_desc"] = "Todos los locales"
+    return pd.concat([all_rows, scoped], ignore_index=True)
+
+
+def build_zone_history_records(frame: pd.DataFrame, *, zone_level: str, year: int, period: str) -> list[dict[str, object]]:
+    if frame.empty:
+        return []
+
+    if zone_level == "district":
+        scoped = frame.assign(
+            zone_key=frame["district_code"],
+            zone_code=frame["district_code"],
+            zone_name=frame["district_name"],
+            zone_context_name=pd.Series("", index=frame.index, dtype="string"),
+        ).copy()
+    else:
+        scoped = frame.assign(
+            zone_key=frame["barrio_key"],
+            zone_code=frame["barrio_code"],
+            zone_name=frame["barrio_name"],
+            zone_context_name=frame["barrio_context_name"],
+        ).copy()
+
+    scoped["zone_key"] = scoped["zone_key"].fillna("").astype("string").str.strip()
+    scoped["zone_code"] = scoped["zone_code"].fillna("").astype("string").str.strip()
+    scoped["zone_name"] = scoped["zone_name"].fillna("").astype("string").map(clean_place_name)
+    scoped["zone_context_name"] = scoped["zone_context_name"].fillna("").astype("string").map(clean_place_name)
+    scoped = scoped[scoped["id_local"].notna() & scoped["zone_key"].ne("") & scoped["zone_name"].ne("")].copy()
+    if scoped.empty:
+        return []
+
+    zone_keys = ["zone_key", "zone_code", "zone_name", "zone_context_name"]
+    zone_totals = (
+        scoped[scoped["category_code"].eq("__all__")]
+        .groupby(zone_keys, dropna=False)
+        .agg(zone_total_locales=("id_local", "nunique"))
+        .reset_index()
+    )
+    counts = (
+        scoped.groupby(["category_code", "category_desc", *zone_keys], dropna=False)
+        .agg(n_locales=("id_local", "nunique"))
+        .reset_index()
+    )
+    counts = counts.merge(zone_totals, on=zone_keys, how="left", validate="many_to_one")
+    counts["share_of_zone"] = counts["n_locales"] / counts["zone_total_locales"]
+    city_total_locales = float(zone_totals["zone_total_locales"].sum())
+    counts["city_category_locales"] = counts.groupby("category_code")["n_locales"].transform("sum")
+    counts["city_total_locales"] = city_total_locales
+    counts["city_share"] = counts["city_category_locales"] / city_total_locales if city_total_locales > 0 else pd.NA
+    counts["smoothed_share_of_zone"] = (
+        counts["n_locales"] + HISTORICAL_SMOOTHING_WEIGHT * counts["city_share"]
+    ) / (counts["zone_total_locales"] + HISTORICAL_SMOOTHING_WEIGHT)
+    counts["metric_value"] = counts["smoothed_share_of_zone"] / counts["city_share"]
+    counts = counts.sort_values(
+        ["category_code", "metric_value", "share_of_zone", "n_locales", "zone_name", "zone_context_name"],
+        ascending=[True, False, False, False, True, True],
+    ).reset_index(drop=True)
+    counts["rank"] = counts.groupby("category_code").cumcount() + 1
+
+    records: list[dict[str, object]] = []
+    for row in counts.itertuples(index=False):
+        records.append(
+            {
+                "zone_level": zone_level,
+                "category_code": str(row.category_code),
+                "category_desc": str(row.category_desc),
+                "year": int(year),
+                "period": str(period),
+                "zone_key": str(row.zone_key),
+                "zone_code": str(row.zone_code),
+                "zone_name": str(row.zone_name),
+                "zone_context_name": str(row.zone_context_name) if str(row.zone_context_name).strip() else None,
+                "n_locales": int(row.n_locales),
+                "zone_total_locales": int(row.zone_total_locales),
+                "share_of_zone": serialize_probability(row.share_of_zone),
+                "smoothed_share_of_zone": serialize_probability(row.smoothed_share_of_zone),
+                "city_share": serialize_probability(row.city_share),
+                "city_category_locales": int(row.city_category_locales),
+                "city_total_locales": int(row.city_total_locales),
+                "metric_value": serialize_probability(row.metric_value),
+                "rank": int(row.rank),
+            }
+        )
+    return records
+
+
+def finalize_historical_metric_records(records: list[dict[str, object]]) -> list[dict[str, object]]:
+    if not records:
+        return []
+
+    finalized = [dict(record) for record in records]
+    base_year = min(int(record["year"]) for record in finalized)
+    base_share_by_zone: dict[str, float] = {}
+
+    for record in finalized:
+        if str(record["category_code"]) != "__all__" or int(record["year"]) != base_year:
+            continue
+        city_total = float(record.get("city_total_locales") or 0)
+        if city_total <= 0:
+            continue
+        base_share_by_zone[str(record["zone_key"])] = float(record.get("n_locales") or 0) / city_total
+
+    for record in finalized:
+        if str(record["category_code"]) != "__all__":
+            continue
+        city_total = float(record.get("city_total_locales") or 0)
+        if city_total <= 0:
+            record["metric_value"] = None
+            continue
+        current_share_of_city = float(record.get("n_locales") or 0) / city_total
+        base_share_of_city = base_share_by_zone.get(str(record["zone_key"]), 0.0)
+        record["metric_value"] = current_share_of_city - base_share_of_city
+
+    grouped: dict[tuple[int, str], list[dict[str, object]]] = {}
+    for record in finalized:
+        key = (int(record["year"]), str(record["category_code"]))
+        grouped.setdefault(key, []).append(record)
+
+    for key, group in grouped.items():
+        group.sort(
+            key=lambda item: (
+                -float(item["metric_value"]) if item.get("metric_value") is not None else float("inf"),
+                -(float(item.get("share_of_zone") or 0.0)),
+                -(int(item.get("n_locales") or 0)),
+                str(item.get("zone_name") or ""),
+                str(item.get("zone_context_name") or ""),
+            )
+        )
+        for rank, item in enumerate(group, start=1):
+            item["rank"] = rank
+
+    finalized.sort(key=lambda item: (str(item["zone_level"]), str(item["category_code"]), int(item["year"]), int(item["rank"]), str(item["zone_name"])))
+    return finalized
 
 
 def build_hex_size_specs(base_h3_resolution: int) -> list[dict[str, object]]:

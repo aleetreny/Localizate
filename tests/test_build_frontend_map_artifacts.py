@@ -9,13 +9,17 @@ import pandas as pd
 from scripts.build_frontend_map_artifacts import (
     attach_section_geography,
     build_hex_aggregates,
+    build_zone_history_records,
     build_category_options,
     build_hex_size_specs,
     build_zone_metrics,
     compute_horizon_metrics,
     detect_h3_resolution,
+    finalize_historical_metric_records,
     infer_unknown_activity_category,
     roll_up_hex_frame,
+    select_latest_periods_by_year,
+    summarize_snapshot_activity_categories,
 )
 
 
@@ -209,6 +213,217 @@ class FrontendMapArtifactsTests(unittest.TestCase):
             [item["category_code"] for item in categories],
             ["__all__", "bar_cafe", "__status_uncoded_activity__", "__status_multi_activity__"],
         )
+
+    def test_select_latest_periods_by_year_uses_last_available_cut(self) -> None:
+        periods = ["2015-01", "2015-11", "2015-12", "2016-03", "2016-09", "2016-12", "2026-01", "2026-03"]
+
+        selected = select_latest_periods_by_year(periods)
+
+        self.assertEqual(selected, ["2015-12", "2016-12", "2026-03"])
+
+    def test_summarize_snapshot_activity_categories_collapses_snapshot_rows(self) -> None:
+        activity_frame = pd.DataFrame(
+            {
+                "id_local": pd.Series([1, 1, 2, 3, 4, 4], dtype="Int64"),
+                "snapshot_period": pd.Series(["2024-12"] * 6, dtype="string"),
+                "raw_epigrafe_code": pd.Series(["561006.0", "563004.0", "0.0", "", "561001.0", "472401.0"], dtype="string"),
+                "raw_epigrafe_desc": pd.Series(
+                    [
+                        "CAFETERIA",
+                        "TABERNA",
+                        "LOCAL SIN ACTIVIDAD",
+                        "",
+                        "RESTAURANTE",
+                        "PANADERIA",
+                    ],
+                    dtype="string",
+                ),
+            }
+        )
+        epigrafe_lookup = pd.DataFrame(
+            {
+                "raw_code": ["561006.0", "563004.0", "561001.0", "472401.0"],
+                "clean_code": ["561006", "563004", "561001", "472401"],
+                "code_valid": [True, True, True, True],
+            }
+        )
+        macro_lookup = pd.DataFrame(
+            {
+                "epigrafe_code": ["561006", "563004", "561001", "472401"],
+                "macro_category_code": ["bar_cafe", "bar_cafe", "restaurant", "bakery_pastry"],
+                "macro_category_name": ["Bar y cafeteria", "Bar y cafeteria", "Restaurante", "Panaderia y pasteleria"],
+            }
+        )
+
+        summary = summarize_snapshot_activity_categories(
+            activity_frame,
+            epigrafe_lookup=epigrafe_lookup,
+            macro_lookup=macro_lookup,
+        )
+
+        resolved = summary.sort_values("id_local").reset_index(drop=True)
+        self.assertEqual(
+            resolved[["category_code", "category_desc"]].to_dict(orient="records"),
+            [
+                {"category_code": "bar_cafe", "category_desc": "Bar y cafeteria"},
+                {"category_code": "__status_no_activity__", "category_desc": "Sin actividad declarada"},
+                {"category_code": "__status_uncoded_activity__", "category_desc": "Actividad no informada"},
+                {"category_code": "__status_multi_activity__", "category_desc": "Multiactividad"},
+            ],
+        )
+
+    def test_build_zone_history_records_ranks_each_category_within_year(self) -> None:
+        frame = pd.DataFrame(
+            {
+                "id_local": pd.Series([1, 2, 3, 4, 5, 6], dtype="Int64"),
+                "snapshot_period": pd.Series(["2024-12"] * 6, dtype="string"),
+                "district_code": pd.Series(["01", "01", "01", "02", "02", "02"], dtype="string"),
+                "district_name": pd.Series(["Centro", "Centro", "Centro", "Salamanca", "Salamanca", "Salamanca"], dtype="string"),
+                "barrio_code": pd.Series(["01001", "01001", "01001", "02001", "02001", "02001"], dtype="string"),
+                "barrio_name": pd.Series(["Sol", "Sol", "Sol", "Recoletos", "Recoletos", "Recoletos"], dtype="string"),
+                "barrio_context_name": pd.Series(["Centro", "Centro", "Centro", "Salamanca", "Salamanca", "Salamanca"], dtype="string"),
+                "barrio_key": pd.Series(["01001", "01001", "01001", "02001", "02001", "02001"], dtype="string"),
+                "category_code": pd.Series(["__all__", "bar_cafe", "bar_cafe", "__all__", "bar_cafe", "restaurant"], dtype="string"),
+                "category_desc": pd.Series(["Todos los locales", "Bar", "Bar", "Todos los locales", "Bar", "Restaurante"], dtype="string"),
+            }
+        )
+
+        rows = build_zone_history_records(frame, zone_level="district", year=2024, period="2024-12")
+        bar_rows = [row for row in rows if row["category_code"] == "bar_cafe"]
+
+        self.assertEqual([row["zone_name"] for row in bar_rows], ["Centro", "Salamanca"])
+        self.assertEqual([row["rank"] for row in bar_rows], [1, 2])
+        self.assertEqual([row["n_locales"] for row in bar_rows], [2, 1])
+
+    def test_build_zone_history_records_ranks_by_specialization_not_raw_stock(self) -> None:
+        rows: list[dict[str, object]] = []
+
+        for local_id in range(1, 101):
+            rows.append(
+                {
+                    "id_local": local_id,
+                    "snapshot_period": "2024-12",
+                    "district_code": "01",
+                    "district_name": "Centro",
+                    "barrio_code": "01001",
+                    "barrio_name": "Sol",
+                    "barrio_context_name": "Centro",
+                    "barrio_key": "01001",
+                    "category_code": "__all__",
+                    "category_desc": "Todos los locales",
+                }
+            )
+        for local_id in range(1, 21):
+            rows.append(
+                {
+                    "id_local": local_id,
+                    "snapshot_period": "2024-12",
+                    "district_code": "01",
+                    "district_name": "Centro",
+                    "barrio_code": "01001",
+                    "barrio_name": "Sol",
+                    "barrio_context_name": "Centro",
+                    "barrio_key": "01001",
+                    "category_code": "pet_retail",
+                    "category_desc": "Mascotas",
+                }
+            )
+
+        for local_id in range(101, 121):
+            rows.append(
+                {
+                    "id_local": local_id,
+                    "snapshot_period": "2024-12",
+                    "district_code": "02",
+                    "district_name": "Arganzuela",
+                    "barrio_code": "02001",
+                    "barrio_name": "Palos de la Frontera",
+                    "barrio_context_name": "Arganzuela",
+                    "barrio_key": "02001",
+                    "category_code": "__all__",
+                    "category_desc": "Todos los locales",
+                }
+            )
+        for local_id in range(101, 111):
+            rows.append(
+                {
+                    "id_local": local_id,
+                    "snapshot_period": "2024-12",
+                    "district_code": "02",
+                    "district_name": "Arganzuela",
+                    "barrio_code": "02001",
+                    "barrio_name": "Palos de la Frontera",
+                    "barrio_context_name": "Arganzuela",
+                    "barrio_key": "02001",
+                    "category_code": "pet_retail",
+                    "category_desc": "Mascotas",
+                }
+            )
+
+        frame = pd.DataFrame(rows)
+
+        records = build_zone_history_records(frame, zone_level="district", year=2024, period="2024-12")
+        pet_rows = [row for row in records if row["category_code"] == "pet_retail"]
+
+        self.assertEqual([row["zone_name"] for row in pet_rows], ["Arganzuela", "Centro"])
+        self.assertGreater(pet_rows[0]["metric_value"], pet_rows[1]["metric_value"])
+        self.assertEqual([row["n_locales"] for row in pet_rows], [10, 20])
+
+    def test_finalize_historical_metric_records_ranks_all_locales_by_share_change(self) -> None:
+        rows_2020: list[dict[str, object]] = []
+        rows_2024: list[dict[str, object]] = []
+
+        zone_specs = [
+            ("01", "Centro", 100, 120),
+            ("02", "Salamanca", 60, 100),
+            ("03", "Chamberi", 40, 80),
+        ]
+
+        next_local_id = 1
+        for district_code, district_name, count_2020, count_2024 in zone_specs:
+            for _ in range(count_2020):
+                rows_2020.append(
+                    {
+                        "id_local": next_local_id,
+                        "snapshot_period": "2020-12",
+                        "district_code": district_code,
+                        "district_name": district_name,
+                        "barrio_code": f"{district_code}001",
+                        "barrio_name": f"Barrio {district_name}",
+                        "barrio_context_name": district_name,
+                        "barrio_key": f"{district_code}001",
+                        "category_code": "__all__",
+                        "category_desc": "Todos los locales",
+                    }
+                )
+                next_local_id += 1
+
+            for _ in range(count_2024):
+                rows_2024.append(
+                    {
+                        "id_local": next_local_id,
+                        "snapshot_period": "2024-12",
+                        "district_code": district_code,
+                        "district_name": district_name,
+                        "barrio_code": f"{district_code}001",
+                        "barrio_name": f"Barrio {district_name}",
+                        "barrio_context_name": district_name,
+                        "barrio_key": f"{district_code}001",
+                        "category_code": "__all__",
+                        "category_desc": "Todos los locales",
+                    }
+                )
+                next_local_id += 1
+
+        records = build_zone_history_records(pd.DataFrame(rows_2020), zone_level="district", year=2020, period="2020-12")
+        records.extend(build_zone_history_records(pd.DataFrame(rows_2024), zone_level="district", year=2024, period="2024-12"))
+
+        finalized = finalize_historical_metric_records(records)
+        latest_rows = [row for row in finalized if row["category_code"] == "__all__" and row["year"] == 2024]
+
+        self.assertEqual([row["zone_name"] for row in latest_rows], ["Chamberi", "Salamanca", "Centro"])
+        self.assertGreater(latest_rows[0]["metric_value"], latest_rows[1]["metric_value"])
+        self.assertGreater(latest_rows[1]["metric_value"], latest_rows[2]["metric_value"])
 
 
 if __name__ == "__main__":
