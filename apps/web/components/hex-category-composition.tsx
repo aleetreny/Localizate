@@ -15,6 +15,10 @@ type HexCategoryCompositionProps = {
   items: HexCategoryCompositionItem[];
   totalLocales: number;
   overlayBoundsRef: RefObject<HTMLElement | null>;
+  selectedYear: number;
+  minYear: number;
+  maxYear: number;
+  onYearChange: (year: number) => void;
 };
 
 type DonutSegment = HexCategoryCompositionItem & {
@@ -33,7 +37,15 @@ const DONUT_CENTER = DONUT_SIZE / 2;
 const DONUT_OUTER_RADIUS = 82;
 const DONUT_INNER_RADIUS = 52;
 
-export function HexCategoryComposition({ items, totalLocales, overlayBoundsRef }: HexCategoryCompositionProps) {
+export function HexCategoryComposition({
+  items,
+  totalLocales,
+  overlayBoundsRef,
+  selectedYear,
+  minYear,
+  maxYear,
+  onYearChange,
+}: HexCategoryCompositionProps) {
   const [activeCategoryCode, setActiveCategoryCode] = useState<string | null>(null);
   const [floatingPanelLayout, setFloatingPanelLayout] = useState<FloatingPanelLayout | null>(null);
   const chartShellRef = useRef<HTMLDivElement | null>(null);
@@ -148,7 +160,7 @@ export function HexCategoryComposition({ items, totalLocales, overlayBoundsRef }
       <div aria-label="Reparto histórico por categoría dentro del hexágono seleccionado" className="hex-category-composition">
       <div className="hex-category-composition-header">
         <p className="hex-category-composition-copy">
-          Reparte los {formatInteger(totalLocales)} locales del hexágono entre las categorías históricas observadas. Pasa por cada color del círculo para abrir el detalle al lado.
+          Reparte los {formatInteger(totalLocales)} locales del hexágono en {selectedYear} entre las categorías históricas observadas. Pasa por cada color del círculo para abrir el detalle al lado.
         </p>
       </div>
 
@@ -205,9 +217,35 @@ export function HexCategoryComposition({ items, totalLocales, overlayBoundsRef }
         </div>
       ) : (
         <p className="hex-category-composition-empty">
-          Este hexágono no conserva desglose histórico por categoría aunque figure dentro de Todos los locales.
+          Este hexágono no conserva desglose histórico por categoría para {selectedYear} aunque figure dentro de Todos los locales.
         </p>
       )}
+
+      <div className="hex-category-composition-year-control">
+        <div className="hex-category-composition-year-header">
+          <span className="hex-category-composition-year-label">Año</span>
+          <strong className="hex-category-composition-year-value">{selectedYear}</strong>
+        </div>
+        <input
+          aria-label="Seleccionar año de la mezcla del hexágono"
+          className="hex-category-composition-year-slider"
+          max={maxYear}
+          min={minYear}
+          onChange={(event) => {
+            const nextYear = Number.parseInt(event.target.value, 10);
+            if (Number.isFinite(nextYear)) {
+              onYearChange(nextYear);
+            }
+          }}
+          step={1}
+          type="range"
+          value={selectedYear}
+        />
+        <div className="hex-category-composition-year-range">
+          <span>{minYear}</span>
+          <span>{maxYear}</span>
+        </div>
+      </div>
       </div>
 
       {activeItem && typeof document !== "undefined"

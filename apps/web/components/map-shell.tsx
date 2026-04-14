@@ -9,8 +9,18 @@ import { ViewTabs } from "@/components/view-tabs";
 import { ZoneComparisonBanner } from "@/components/zone-comparison-banner";
 import { DEFAULT_HEX_SIZE, formatHexSizeLabel, HEX_SIZE_OPTIONS, type HexSize } from "@/lib/hex-size";
 import { formatHorizonLongLabel, formatHorizonShortLabel, getHorizonSupport, getHorizonSurvival, isFiniteNumber, type Horizon } from "@/lib/horizon";
-import { FALLBACK_MAP_ARTIFACTS, loadHistoricalRankingsFromPublic, loadMapArtifactsFromPublic } from "@/lib/public-data";
-import type { ColorScale, FrontendArtifacts, HexAggregate, HistoricalRankingArtifacts, HistoricalZoneLevel, HistoricalZoneRankingRecord, ZoneAggregate } from "@/lib/types";
+import { FALLBACK_MAP_ARTIFACTS, loadHexCompositionHistoryFromPublic, loadHistoricalRankingsFromPublic, loadMapArtifactsFromPublic } from "@/lib/public-data";
+import type {
+  ColorScale,
+  FrontendArtifacts,
+  HexAggregate,
+  HexCompositionHistoryArtifacts,
+  HexCompositionHistoryRecord,
+  HistoricalRankingArtifacts,
+  HistoricalZoneLevel,
+  HistoricalZoneRankingRecord,
+  ZoneAggregate,
+} from "@/lib/types";
 
 type MapShellProps = {
   initialArtifacts?: FrontendArtifacts;
@@ -45,6 +55,12 @@ type ZoneActivityRankingItem = {
   support: number;
 };
 
+type ZoneActivityRankingRow = Omit<ZoneActivityRankingItem, "rank"> & {
+  globalRank: number;
+  activityRisk: number;
+  eventRate: number | null;
+};
+
 type ZoneActivityInsight = {
   zoneLevel: ZoneAggregate["zone_level"];
   zoneCode: string;
@@ -68,6 +84,15 @@ type PickerOption = {
   value: string;
 };
 
+const HEX_COMPOSITION_YEAR_MIN = 2015;
+const HEX_COMPOSITION_YEAR_MAX = 2026;
+const MIN_UNSUPPORTED_BARRIO_LOCALES = 5;
+const MIN_UNSUPPORTED_DISTRICT_LOCALES = 10;
+const ZONE_ACTIVITY_VISIBLE_LIMIT = 5;
+const ZONE_ACTIVITY_PRIOR_STRENGTH = 25;
+const ZONE_ACTIVITY_UNSUPPORTED_PENALTY = 0.03;
+const ZONE_ACTIVITY_DEFAULT_PRIOR_EVENT_RATE = 0.15;
+
 export function MapShell({ initialArtifacts }: MapShellProps) {
   const [artifacts, setArtifacts] = useState(initialArtifacts ?? FALLBACK_MAP_ARTIFACTS);
   const [isLoadingArtifacts, setIsLoadingArtifacts] = useState(!initialArtifacts);
@@ -80,6 +105,8 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   const [isRiskExplainerOpen, setIsRiskExplainerOpen] = useState(false);
   const [activeZoneInsight, setActiveZoneInsight] = useState<ZoneActivityInsight | null>(null);
   const [historicalRankingArtifacts, setHistoricalRankingArtifacts] = useState<HistoricalRankingArtifacts | null>(null);
+  const [hexCompositionHistoryArtifacts, setHexCompositionHistoryArtifacts] = useState<HexCompositionHistoryArtifacts | null>(null);
+  const [hexCompositionYear, setHexCompositionYear] = useState(HEX_COMPOSITION_YEAR_MAX);
   const [historicalZoneLevel, setHistoricalZoneLevel] = useState<HistoricalZoneLevel>("district");
   const [isHistoricalEvolutionOpen, setIsHistoricalEvolutionOpen] = useState(false);
   const [comparisonZoneLevel, setComparisonZoneLevel] = useState<HistoricalZoneLevel>("district");
@@ -91,6 +118,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
     initialArtifacts ? { [DEFAULT_HEX_SIZE]: initialArtifacts } : {}
   );
   const historicalRankingsRequestRef = useRef<Promise<HistoricalRankingArtifacts> | null>(null);
+  const hexCompositionHistoryRequestRef = useRef<Promise<HexCompositionHistoryArtifacts> | null>(null);
   const mapPanelRef = useRef<HTMLElement | null>(null);
 
   const ensureHistoricalRankingsLoaded = useCallback(async () => {
@@ -120,6 +148,32 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   useEffect(() => {
     void ensureHistoricalRankingsLoaded();
   }, [ensureHistoricalRankingsLoaded]);
+
+  const ensureHexCompositionHistoryLoaded = useCallback(async () => {
+    if (hexCompositionHistoryArtifacts) {
+      return hexCompositionHistoryArtifacts;
+    }
+
+    if (hexCompositionHistoryRequestRef.current) {
+      return hexCompositionHistoryRequestRef.current;
+    }
+
+    const request = loadHexCompositionHistoryFromPublic()
+      .then((nextArtifacts) => {
+        setHexCompositionHistoryArtifacts(nextArtifacts);
+        return nextArtifacts;
+      })
+      .finally(() => {
+        hexCompositionHistoryRequestRef.current = null;
+      });
+
+    hexCompositionHistoryRequestRef.current = request;
+    return request;
+  }, [hexCompositionHistoryArtifacts]);
+
+  useEffect(() => {
+    void ensureHexCompositionHistoryLoaded();
+  }, [ensureHexCompositionHistoryLoaded]);
 
   useEffect(() => {
     let alive = true;
@@ -238,13 +292,74 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   const detailSurvival = detail ? getHorizonSurvival(detail, horizon) : null;
   const detailSupport = detail ? getHorizonSupport(detail, horizon) : 0;
 
-  const detailCategoryComposition = useMemo(() => {
-    if (!detail || selectedCategory !== "__all__") {
-      return [];
+  const hasHexCompositionHistory = (hexCompositionHistoryArtifacts?.meta.years.length ?? 0) > 0;
+
+  const hexCompositionHistoryIndex = useMemo(() => {
+    const index = new Map<string, HexCompositionHistoryRecord[]>();
+    if (!hexCompositionHistoryArtifacts) {
+      return index;
     }
 
-    return buildHexCategoryComposition(artifacts.hexes, detail);
-  }, [artifacts.hexes, detail, selectedCategory]);
+    for (const row of hexCompositionHistoryArtifacts.hexes) {
+      const key = `${row.year}::${row.h3_cell}`;
+      const bucket = index.get(key);
+      if (bucket) {
+        bucket.push(row);
+      } else {
+        index.set(key, [row]);
+      }
+    }
+
+    return index;
+  }, [hexCompositionHistoryArtifacts]);
+
+  useEffect(() => {
+    if (!hasHexCompositionHistory) {
+      return;
+    }
+
+    const availableYears = new Set(
+      (hexCompositionHistoryArtifacts?.meta.years ?? []).filter(
+        (year) => year >= HEX_COMPOSITION_YEAR_MIN && year <= HEX_COMPOSITION_YEAR_MAX
+      )
+    );
+    if (availableYears.size === 0) {
+      return;
+    }
+
+    setHexCompositionYear((currentYear) => {
+      if (availableYears.has(currentYear)) {
+        return currentYear;
+      }
+
+      for (let year = HEX_COMPOSITION_YEAR_MAX; year >= HEX_COMPOSITION_YEAR_MIN; year -= 1) {
+        if (availableYears.has(year)) {
+          return year;
+        }
+      }
+
+      return currentYear;
+    });
+  }, [hasHexCompositionHistory, hexCompositionHistoryArtifacts]);
+
+  const detailCategoryCompositionState = useMemo(() => {
+    if (!detail || selectedCategory !== "__all__") {
+      return { items: [], totalLocales: 0 };
+    }
+
+    if (!hasHexCompositionHistory) {
+      return {
+        items: buildHexCategoryComposition(artifacts.hexes, detail),
+        totalLocales: detail.n_locales,
+      };
+    }
+
+    const historyRows = hexCompositionHistoryIndex.get(`${hexCompositionYear}::${detail.h3_cell}`) ?? [];
+    return buildHexCategoryCompositionForYear(historyRows);
+  }, [artifacts.hexes, detail, hasHexCompositionHistory, hexCompositionHistoryIndex, hexCompositionYear, selectedCategory]);
+
+  const detailCategoryComposition = detailCategoryCompositionState.items;
+  const detailCategoryCompositionTotalLocales = detailCategoryCompositionState.totalLocales;
 
   const detailRank = useMemo(() => {
     if (!detail) {
@@ -299,9 +414,6 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   const comparisonMetricNote = selectedCategory === "__all__"
     ? "Comparamos puesto, número de locales y peso en Madrid. Son lecturas fáciles y con cambio real en el tiempo."
     : "Comparamos puesto, número de locales y peso de la categoría en la zona. Son lecturas más claras que supervivencia o rotación.";
-  const comparisonSeriesMeta = historicalRankingArtifacts
-    ? `Serie anual ${historicalRankingArtifacts.meta.years[0]}-${historicalRankingArtifacts.meta.latest_year}`
-    : "Serie histórica no disponible todavía.";
 
   useEffect(() => {
     if (!activeMetricId) {
@@ -517,9 +629,6 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
             <h3>Dos trayectorias cara a cara</h3>
           </div>
           <p className="comparison-note">{comparisonMetricNote}</p>
-          <div className="info-meta">
-            <span className="chip chip-light">{comparisonSeriesMeta}</span>
-          </div>
 
           <div className="control-group">
             <span className="control-label">Ámbito</span>
@@ -640,7 +749,15 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
           <section className="info-card info-card-hex-category-composition">
             <div className="eyebrow">Mezcla del hexágono</div>
             {detail ? (
-              <HexCategoryComposition items={detailCategoryComposition} overlayBoundsRef={mapPanelRef} totalLocales={detail.n_locales} />
+              <HexCategoryComposition
+                items={detailCategoryComposition}
+                maxYear={HEX_COMPOSITION_YEAR_MAX}
+                minYear={HEX_COMPOSITION_YEAR_MIN}
+                onYearChange={setHexCompositionYear}
+                overlayBoundsRef={mapPanelRef}
+                selectedYear={hexCompositionYear}
+                totalLocales={detailCategoryCompositionTotalLocales}
+              />
             ) : (
               <p className="empty-note">Selecciona un hexágono para ver cómo se reparten sus locales históricos entre las distintas categorías.</p>
             )}
@@ -1121,7 +1238,7 @@ function ZoneActivityExplainer({ insight, onClose }: { insight: ZoneActivityInsi
       </div>
       <div className="explain-banner-body">
         <p className="explain-banner-copy">
-          Ordenamos las macrocategorías de este {scopeLabel} por menor índice relativo. Cuanto más bajo sale el valor, más defensiva es la lectura histórica dentro de ese ámbito.
+          Ordenamos las macrocategorías de este {scopeLabel} por menor riesgo contextual, con el mismo criterio de Oportunidades: combinamos tasa de eventos, tamaño de muestra y una penalización suave cuando la evidencia local es débil.
         </p>
         <div className="metric-breakdown-list">
           {insight.items.map((item) => (
@@ -1208,8 +1325,23 @@ function buildFallbackCategoryDefinition(categoryDesc: string) {
 }
 
 function buildTopZones(zones: ZoneAggregate[]) {
-  const source = zones.some((item) => item.supported_for_stats) ? zones.filter((item) => item.supported_for_stats) : zones;
-  return sortZonesByRisk(source).slice(0, 3);
+  if (zones.length === 0) {
+    return [];
+  }
+
+  const rankedSupported = sortZonesByRisk(zones.filter((item) => item.supported_for_stats));
+  if (rankedSupported.length >= 3) {
+    return rankedSupported.slice(0, 3);
+  }
+
+  const minUnsupportedLocales = zones[0].zone_level === "district"
+    ? MIN_UNSUPPORTED_DISTRICT_LOCALES
+    : MIN_UNSUPPORTED_BARRIO_LOCALES;
+  const unsupported = zones.filter((item) => !item.supported_for_stats);
+  const unsupportedWithFloor = unsupported.filter((item) => item.n_locales >= minUnsupportedLocales);
+  const rankedUnsupported = sortZonesByRisk(unsupportedWithFloor.length > 0 ? unsupportedWithFloor : unsupported);
+
+  return [...rankedSupported, ...rankedUnsupported].slice(0, 3);
 }
 
 function buildZoneActivityInsight({
@@ -1223,37 +1355,121 @@ function buildZoneActivityInsight({
   currentCategoryCode: string;
   horizon: Horizon;
 }): ZoneActivityInsight | null {
-  const matchingZones = zonePool.filter((item) => item.zone_code === zone.zone_code);
+  const matchingZones = zonePool.filter(
+    (item) => item.zone_code === zone.zone_code && item.category_code !== "__all__" && !item.category_code.startsWith("__status_")
+  );
   if (matchingZones.length === 0) {
     return null;
   }
 
-  const scopedZones = matchingZones.some((item) => item.supported_for_stats)
-    ? matchingZones.filter((item) => item.supported_for_stats)
-    : matchingZones;
+  const priorEventRate = resolveZoneActivityPriorEventRate(matchingZones);
 
-  const sorted = sortZonesByRisk(scopedZones).map((item, index) => ({
-    rank: index + 1,
-    categoryCode: item.category_code,
-    categoryDesc: item.category_desc,
-    riskIndex: item.avg_risk_percentile,
-    survival: horizon === "24m" ? item.survival_24m : item.survival_12m,
-    support: horizon === "24m" ? item.support_24m : item.support_12m,
-    nLocales: item.n_locales,
+  const rankedActivities: ZoneActivityRankingRow[] = sortZoneActivitiesByOpportunityMethod(
+    matchingZones.map((item) => {
+      const eventRate = isFiniteNumber(item.event_rate) ? item.event_rate : null;
+      const activityRisk = computeZoneActivityContextualRisk({
+        eventRate,
+        nLocales: item.n_locales,
+        priorEventRate,
+        supportedForStats: item.supported_for_stats,
+      });
+      return {
+        globalRank: 0,
+        categoryCode: item.category_code,
+        categoryDesc: item.category_desc,
+        riskIndex: activityRisk,
+        survival: horizon === "24m" ? item.survival_24m : item.survival_12m,
+        support: horizon === "24m" ? item.support_24m : item.support_12m,
+        nLocales: item.n_locales,
+        activityRisk,
+        eventRate,
+      };
+    })
+  ).map((item, index) => ({
+    ...item,
+    globalRank: index + 1,
   }));
 
-  const currentCategoryRank = sorted.find((item) => item.categoryCode === currentCategoryCode)?.rank ?? null;
+  const visibleActivities = rankedActivities.slice(0, ZONE_ACTIVITY_VISIBLE_LIMIT);
+  const currentCategoryRow = currentCategoryCode === "__all__"
+    ? null
+    : rankedActivities.find((item) => item.categoryCode === currentCategoryCode) ?? null;
+  const currentCategoryRank = currentCategoryRow?.globalRank ?? null;
 
   return {
     zoneLevel: zone.zone_level,
     zoneCode: zone.zone_code,
     zoneName: zone.zone_name,
     horizon,
-    totalActivities: sorted.length,
-    currentCategoryDesc: zone.category_desc,
+    totalActivities: rankedActivities.length,
+    currentCategoryDesc: currentCategoryRow?.categoryDesc ?? zone.category_desc,
     currentCategoryRank,
-    items: sorted.slice(0, 5),
+    items: visibleActivities.map(({ globalRank: _globalRank, ...item }, index) => ({
+      ...item,
+      rank: index + 1,
+    })),
   };
+}
+
+function resolveZoneActivityPriorEventRate(zones: ZoneAggregate[]) {
+  const supportedRates = zones
+    .filter((item) => item.supported_for_stats)
+    .map((item) => item.event_rate)
+    .filter(isFiniteNumber);
+  const fallbackRates = zones.map((item) => item.event_rate).filter(isFiniteNumber);
+  const baseRates = supportedRates.length > 0 ? supportedRates : fallbackRates;
+  if (baseRates.length === 0) {
+    return ZONE_ACTIVITY_DEFAULT_PRIOR_EVENT_RATE;
+  }
+  return quantile([...baseRates].sort((left, right) => left - right), 0.5);
+}
+
+function computeZoneActivityContextualRisk({
+  eventRate,
+  nLocales,
+  priorEventRate,
+  supportedForStats,
+}: {
+  eventRate: number | null;
+  nLocales: number;
+  priorEventRate: number;
+  supportedForStats: boolean;
+}) {
+  const resolvedEventRate = clamp(eventRate ?? priorEventRate, 0, 1);
+  const resolvedSupport = Math.max(0, nLocales);
+  const shrunk = ((resolvedEventRate * resolvedSupport) + (priorEventRate * ZONE_ACTIVITY_PRIOR_STRENGTH))
+    / (resolvedSupport + ZONE_ACTIVITY_PRIOR_STRENGTH);
+  const withSupportPenalty = supportedForStats ? shrunk : shrunk + ZONE_ACTIVITY_UNSUPPORTED_PENALTY;
+  return clamp(withSupportPenalty, 0, 1);
+}
+
+function sortZoneActivitiesByOpportunityMethod(activities: ZoneActivityRankingRow[]) {
+  return [...activities].sort((left, right) => {
+    const contextualRiskDiff = left.activityRisk - right.activityRisk;
+    if (Math.abs(contextualRiskDiff) > 1e-6) {
+      return contextualRiskDiff;
+    }
+
+    const leftEventRate = left.eventRate ?? Number.POSITIVE_INFINITY;
+    const rightEventRate = right.eventRate ?? Number.POSITIVE_INFINITY;
+    const eventRateDiff = leftEventRate - rightEventRate;
+    if (Math.abs(eventRateDiff) > 1e-6) {
+      return eventRateDiff;
+    }
+
+    const leftSurvival = left.survival ?? Number.NEGATIVE_INFINITY;
+    const rightSurvival = right.survival ?? Number.NEGATIVE_INFINITY;
+    const survivalDiff = rightSurvival - leftSurvival;
+    if (Math.abs(survivalDiff) > 1e-6) {
+      return survivalDiff;
+    }
+
+    if (right.nLocales !== left.nLocales) {
+      return right.nLocales - left.nLocales;
+    }
+
+    return left.categoryDesc.localeCompare(right.categoryDesc, "es");
+  });
 }
 
 function buildZoneActivityInsightSummary(insight: ZoneActivityInsight) {
@@ -1464,6 +1680,41 @@ function buildHexCategoryComposition(hexes: HexAggregate[], detail: HexAggregate
     share: item.n_locales / totalLocales,
     color: colorForCategoryPosition(position, item.category_code),
   }));
+}
+
+function buildHexCategoryCompositionForYear(
+  rows: HexCompositionHistoryRecord[]
+): { items: HexCategoryCompositionItem[]; totalLocales: number } {
+  if (rows.length === 0) {
+    return { items: [], totalLocales: 0 };
+  }
+
+  const totalRow = rows.find((item) => item.category_code === "__all__") ?? null;
+  const fallbackTotal = rows.reduce((maxTotal, item) => Math.max(maxTotal, item.hex_total_locales), 0);
+  const totalLocales = Math.max(totalRow?.n_locales ?? fallbackTotal, 0);
+  if (totalLocales <= 0) {
+    return { items: [], totalLocales: 0 };
+  }
+
+  const orderedItems = rows
+    .filter((item) => item.category_code !== "__all__" && item.n_locales > 0)
+    .sort((left, right) => {
+      if (right.n_locales !== left.n_locales) {
+        return right.n_locales - left.n_locales;
+      }
+      return left.category_desc.localeCompare(right.category_desc, "es");
+    });
+
+  return {
+    totalLocales,
+    items: orderedItems.map((item, position) => ({
+      categoryCode: item.category_code,
+      categoryDesc: item.category_desc,
+      nLocales: item.n_locales,
+      share: item.share_in_hex ?? item.n_locales / totalLocales,
+      color: colorForCategoryPosition(position, item.category_code),
+    })),
+  };
 }
 
 // Alternate hue families so adjacent donut slices stay visually distinct without leaving the pastel theme.

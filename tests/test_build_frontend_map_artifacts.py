@@ -9,6 +9,7 @@ import pandas as pd
 from scripts.build_frontend_map_artifacts import (
     attach_section_geography,
     build_hex_aggregates,
+    build_hex_composition_history_records,
     build_zone_history_records,
     build_category_options,
     build_hex_size_specs,
@@ -368,6 +369,66 @@ class FrontendMapArtifactsTests(unittest.TestCase):
         self.assertEqual([row["zone_name"] for row in pet_rows], ["Arganzuela", "Centro"])
         self.assertGreater(pet_rows[0]["metric_value"], pet_rows[1]["metric_value"])
         self.assertEqual([row["n_locales"] for row in pet_rows], [10, 20])
+
+    def test_build_hex_composition_history_records_builds_per_hex_shares(self) -> None:
+        frame = pd.DataFrame(
+            {
+                "id_local": pd.Series([1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 5, 6], dtype="Int64"),
+                "snapshot_period": pd.Series(["2024-12"] * 12, dtype="string"),
+                "h3_cell": pd.Series(["8a1", "8a1", "8a1", "8a1", "8a2", "8a2", "8a2", "8a1", "8a1", "8a1", "8a2", "8a2"], dtype="string"),
+                "district_code": pd.Series(["01"] * 12, dtype="string"),
+                "district_name": pd.Series(["Centro"] * 12, dtype="string"),
+                "barrio_code": pd.Series(["01001"] * 12, dtype="string"),
+                "barrio_name": pd.Series(["Sol"] * 12, dtype="string"),
+                "barrio_context_name": pd.Series(["Centro"] * 12, dtype="string"),
+                "barrio_key": pd.Series(["01001"] * 12, dtype="string"),
+                "category_code": pd.Series([
+                    "__all__",
+                    "__all__",
+                    "__all__",
+                    "__all__",
+                    "__all__",
+                    "__all__",
+                    "__all__",
+                    "bar_cafe",
+                    "bar_cafe",
+                    "restaurant",
+                    "restaurant",
+                    "restaurant",
+                ], dtype="string"),
+                "category_desc": pd.Series([
+                    "Todos los locales",
+                    "Todos los locales",
+                    "Todos los locales",
+                    "Todos los locales",
+                    "Todos los locales",
+                    "Todos los locales",
+                    "Todos los locales",
+                    "Bar",
+                    "Bar",
+                    "Restaurante",
+                    "Restaurante",
+                    "Restaurante",
+                ], dtype="string"),
+            }
+        )
+
+        records = build_hex_composition_history_records(frame, year=2024, period="2024-12")
+        hex_8a1 = [row for row in records if row["h3_cell"] == "8a1" and row["category_code"] != "__all__"]
+        hex_8a2_restaurant = [
+            row for row in records if row["h3_cell"] == "8a2" and row["category_code"] == "restaurant"
+        ]
+
+        self.assertEqual(len(hex_8a1), 2)
+        self.assertEqual([row["category_code"] for row in hex_8a1], ["bar_cafe", "restaurant"])
+        self.assertEqual([row["n_locales"] for row in hex_8a1], [2, 1])
+        self.assertEqual([row["hex_total_locales"] for row in hex_8a1], [4, 4])
+        self.assertAlmostEqual(hex_8a1[0]["share_in_hex"] or 0.0, 0.5)
+        self.assertAlmostEqual(hex_8a1[1]["share_in_hex"] or 0.0, 0.25)
+        self.assertEqual(len(hex_8a2_restaurant), 1)
+        self.assertEqual(hex_8a2_restaurant[0]["n_locales"], 2)
+        self.assertEqual(hex_8a2_restaurant[0]["hex_total_locales"], 3)
+        self.assertAlmostEqual(hex_8a2_restaurant[0]["share_in_hex"] or 0.0, 2.0 / 3.0)
 
     def test_finalize_historical_metric_records_ranks_all_locales_by_share_change(self) -> None:
         rows_2020: list[dict[str, object]] = []

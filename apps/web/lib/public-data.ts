@@ -1,5 +1,5 @@
 import { DEFAULT_HEX_SIZE, type HexSize } from "@/lib/hex-size";
-import type { FrontendArtifacts, HistoricalRankingArtifacts, OpportunityArtifacts } from "@/lib/types";
+import type { FrontendArtifacts, HexCompositionHistoryArtifacts, HistoricalRankingArtifacts, OpportunityArtifacts } from "@/lib/types";
 
 export const MAP_ARTIFACTS_PATHS: Record<HexSize, string> = {
   small: "/data/frontend-map-artifacts.json",
@@ -8,6 +8,7 @@ export const MAP_ARTIFACTS_PATHS: Record<HexSize, string> = {
 };
 export const OPPORTUNITY_ARTIFACTS_PATH = "/data/frontend-opportunity-artifacts.json";
 export const HISTORICAL_RANKING_ARTIFACTS_PATH = "/data/frontend-historical-rankings.json";
+export const HEX_COMPOSITION_HISTORY_ARTIFACTS_PATH = "/data/frontend-hex-composition-history.json";
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 export const FALLBACK_MAP_ARTIFACTS: FrontendArtifacts = {
@@ -103,9 +104,24 @@ export const FALLBACK_HISTORICAL_RANKING_ARTIFACTS: HistoricalRankingArtifacts =
   }
 };
 
+export const FALLBACK_HEX_COMPOSITION_HISTORY_ARTIFACTS: HexCompositionHistoryArtifacts = {
+  meta: {
+    title: "Madrid Historical Hex Composition",
+    subtitle: "Artefacto temporal pendiente de materializar.",
+    generated_at: new Date(0).toISOString(),
+    years: [],
+    latest_period_by_year: {},
+    latest_year: 0,
+    latest_period: "",
+    latest_year_is_partial: false,
+  },
+  hexes: [],
+};
+
 const mapArtifactsPromises = new Map<HexSize, Promise<FrontendArtifacts>>();
 let opportunityArtifactsPromise: Promise<OpportunityArtifacts> | null = null;
 let historicalRankingArtifactsPromise: Promise<HistoricalRankingArtifacts> | null = null;
+let hexCompositionHistoryArtifactsPromise: Promise<HexCompositionHistoryArtifacts> | null = null;
 
 export function loadMapArtifactsFromPublic(hexSize: HexSize = DEFAULT_HEX_SIZE) {
   const path = MAP_ARTIFACTS_PATHS[hexSize];
@@ -142,6 +158,18 @@ export function loadHistoricalRankingsFromPublic() {
     FALLBACK_HISTORICAL_RANKING_ARTIFACTS
   );
   return historicalRankingArtifactsPromise;
+}
+
+export function loadHexCompositionHistoryFromPublic() {
+  if (!IS_PRODUCTION) {
+    return fetchPublicJson(HEX_COMPOSITION_HISTORY_ARTIFACTS_PATH, FALLBACK_HEX_COMPOSITION_HISTORY_ARTIFACTS);
+  }
+
+  hexCompositionHistoryArtifactsPromise ??= fetchPublicJson(
+    HEX_COMPOSITION_HISTORY_ARTIFACTS_PATH,
+    FALLBACK_HEX_COMPOSITION_HISTORY_ARTIFACTS
+  );
+  return hexCompositionHistoryArtifactsPromise;
 }
 
 export function prefetchArtifactsForView(href: string) {

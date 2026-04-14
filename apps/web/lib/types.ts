@@ -144,6 +144,33 @@ export type HistoricalRankingArtifacts = {
   };
 };
 
+export type HexCompositionHistoryMeta = {
+  title: string;
+  subtitle: string;
+  generated_at: string;
+  years: number[];
+  latest_period_by_year: Record<string, string>;
+  latest_year: number;
+  latest_period: string;
+  latest_year_is_partial: boolean;
+};
+
+export type HexCompositionHistoryRecord = {
+  year: number;
+  period: string;
+  h3_cell: string;
+  category_code: string;
+  category_desc: string;
+  n_locales: number;
+  hex_total_locales: number;
+  share_in_hex: number | null;
+};
+
+export type HexCompositionHistoryArtifacts = {
+  meta: HexCompositionHistoryMeta;
+  hexes: HexCompositionHistoryRecord[];
+};
+
 export type OpportunityMeta = {
   title: string;
   subtitle: string;

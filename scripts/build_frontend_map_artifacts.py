@@ -24,6 +24,7 @@ DEFAULT_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-m
 MEDIUM_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-map-artifacts-medium.json"
 LARGE_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-map-artifacts-large.json"
 HISTORICAL_RANKING_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-historical-rankings.json"
+HEX_COMPOSITION_HISTORY_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-hex-composition-history.json"
 ACTIVITY_GLOSSARY = PROJECT_ROOT / "ACTIVITY_GLOSSARY.md"
 ACTIVITY_NORMALIZATION_AUDIT = PROJECT_ROOT / "data" / "processed" / "activity_code_normalization_audit.csv"
 ACTIVITY_MACRO_TAXONOMY = PROJECT_ROOT / "data" / "processed" / "activity_macro_taxonomy.csv"
@@ -60,6 +61,8 @@ HISTORICAL_SMOOTHING_WEIGHT = 12.0
 HISTORICAL_CURRENT_SERIES_LIMIT = 4
 HISTORICAL_SERIES_LIMIT = 12
 HISTORICAL_RANK_FOCUS_LIMIT = 12
+HEX_COMPOSITION_HISTORY_YEAR_MIN = 2015
+HEX_COMPOSITION_HISTORY_YEAR_MAX = 2026
 HIDDEN_SELECTOR_STATUS_CATEGORY_CODES = frozenset(
     {
         "__status_no_activity__",
@@ -168,6 +171,16 @@ def main() -> int:
     print(
         f"Wrote historical ranking artifacts: {HISTORICAL_RANKING_OUTPUT} "
         f"(district_rows={len(historical_payload['zones']['district']):,}, barrio_rows={len(historical_payload['zones']['barrio']):,})"
+    )
+
+    hex_composition_payload = build_hex_composition_history_artifacts(generated_at=generated_at)
+    HEX_COMPOSITION_HISTORY_OUTPUT.write_text(
+        json.dumps(hex_composition_payload, ensure_ascii=False, indent=2, allow_nan=False),
+        encoding="utf-8",
+    )
+    print(
+        f"Wrote hex composition history artifacts: {HEX_COMPOSITION_HISTORY_OUTPUT} "
+        f"(rows={len(hex_composition_payload['hexes']):,}, years={len(hex_composition_payload['meta']['years']):,})"
     )
 
     for spec in build_hex_size_specs(base_h3_resolution):
@@ -734,6 +747,86 @@ def build_historical_ranking_artifacts(*, generated_at: str) -> dict[str, object
     }
 
 
+def build_hex_composition_history_artifacts(*, generated_at: str) -> dict[str, object]:
+    common_periods = select_latest_periods_by_year(
+        sorted(set(list_snapshot_periods(HISTORICAL_LOCALES_DIR)).intersection(list_snapshot_periods(HISTORICAL_ACTIVITIES_DIR)))
+    )
+    common_periods = [
+        period
+        for period in common_periods
+        if HEX_COMPOSITION_HISTORY_YEAR_MIN <= int(period.split("-", 1)[0]) <= HEX_COMPOSITION_HISTORY_YEAR_MAX
+    ]
+
+    if not common_periods:
+        return {
+            "meta": {
+                "title": "Madrid Historical Hex Composition",
+                "subtitle": "Mezcla anual por categoria dentro de cada hexagono usando el ultimo mes disponible de cada ano.",
+                "generated_at": generated_at,
+                "years": [],
+                "latest_period_by_year": {},
+                "latest_year": 0,
+                "latest_period": "",
+                "latest_year_is_partial": False,
+            },
+            "hexes": [],
+        }
+
+    epigrafe_lookup, macro_lookup = load_snapshot_activity_lookups()
+    rows: list[dict[str, object]] = []
+
+    for period in common_periods:
+        year = int(period.split("-", 1)[0])
+        locales_frame = load_locales_snapshot_frame(period)
+        if locales_frame.empty:
+            continue
+
+        activity_frame = load_activity_snapshot_frame(period)
+        activity_categories = summarize_snapshot_activity_categories(
+            activity_frame,
+            epigrafe_lookup=epigrafe_lookup,
+            macro_lookup=macro_lookup,
+        )
+        merged = locales_frame.merge(
+            activity_categories,
+            on=["id_local", "snapshot_period"],
+            how="left",
+            validate="one_to_one",
+        )
+        missing_code, missing_desc = status_category_payload("__status_missing_snapshot__")
+        merged["category_code"] = merged["category_code"].fillna(missing_code).astype("string")
+        merged["category_desc"] = merged["category_desc"].fillna(missing_desc).astype("string")
+
+        combined = build_snapshot_category_frame(merged)
+        rows.extend(build_hex_composition_history_records(combined, year=year, period=period))
+
+    rows.sort(
+        key=lambda item: (
+            str(item.get("h3_cell") or ""),
+            int(item.get("year") or 0),
+            str(item.get("category_code") or ""),
+        )
+    )
+
+    latest_period = common_periods[-1]
+    latest_year = int(latest_period.split("-", 1)[0])
+    years = [int(period.split("-", 1)[0]) for period in common_periods]
+
+    return {
+        "meta": {
+            "title": "Madrid Historical Hex Composition",
+            "subtitle": "Mezcla anual por categoria dentro de cada hexagono usando el ultimo mes disponible de cada ano.",
+            "generated_at": generated_at,
+            "years": years,
+            "latest_period_by_year": {str(int(period.split("-", 1)[0])): period for period in common_periods},
+            "latest_year": latest_year,
+            "latest_period": latest_period,
+            "latest_year_is_partial": not latest_period.endswith("-12"),
+        },
+        "hexes": rows,
+    }
+
+
 def list_snapshot_periods(directory: Path) -> list[str]:
     if not directory.exists():
         return []
@@ -794,18 +887,21 @@ def load_activity_snapshot_frame(period: str) -> pd.DataFrame:
 def load_locales_snapshot_frame(period: str) -> pd.DataFrame:
     frame = pd.read_csv(
         HISTORICAL_LOCALES_DIR / f"{period}.csv.gz",
-        usecols=[
+        usecols=lambda column: column
+        in {
             "id_local",
             "snapshot_period",
             "id_distrito_local",
             "desc_distrito_local",
             "id_barrio_local",
             "desc_barrio_local",
-        ],
+            "h3_cell",
+        },
         low_memory=False,
     )
     frame["id_local"] = pd.to_numeric(frame["id_local"], errors="coerce").astype("Int64")
     frame["snapshot_period"] = frame["snapshot_period"].fillna(period).astype("string")
+    frame["h3_cell"] = frame.get("h3_cell", pd.Series(pd.NA, index=frame.index)).astype("string").str.lower().str.strip()
     frame["district_code"] = frame["id_distrito_local"].map(lambda value: normalize_admin_code_value(value, width=2)).astype("string")
     frame["district_name"] = frame["desc_distrito_local"].map(clean_place_name).astype("string")
     frame["barrio_code"] = [
@@ -829,6 +925,7 @@ def load_locales_snapshot_frame(period: str) -> pd.DataFrame:
         [
             "id_local",
             "snapshot_period",
+            "h3_cell",
             "district_code",
             "district_name",
             "barrio_code",
@@ -983,6 +1080,7 @@ def build_snapshot_category_frame(frame: pd.DataFrame) -> pd.DataFrame:
         [
             "id_local",
             "snapshot_period",
+            "h3_cell",
             "district_code",
             "district_name",
             "barrio_code",
@@ -997,6 +1095,7 @@ def build_snapshot_category_frame(frame: pd.DataFrame) -> pd.DataFrame:
         [
             "id_local",
             "snapshot_period",
+            "h3_cell",
             "district_code",
             "district_name",
             "barrio_code",
@@ -1008,6 +1107,60 @@ def build_snapshot_category_frame(frame: pd.DataFrame) -> pd.DataFrame:
     all_rows["category_code"] = "__all__"
     all_rows["category_desc"] = "Todos los locales"
     return pd.concat([all_rows, scoped], ignore_index=True)
+
+
+def build_hex_composition_history_records(frame: pd.DataFrame, *, year: int, period: str) -> list[dict[str, object]]:
+    if frame.empty:
+        return []
+
+    scoped = frame.copy()
+    scoped["h3_cell"] = scoped["h3_cell"].fillna("").astype("string").str.lower().str.strip()
+    scoped["category_code"] = scoped["category_code"].fillna("").astype("string").str.strip()
+    scoped["category_desc"] = scoped["category_desc"].fillna("").astype("string").str.strip()
+    scoped = scoped[scoped["id_local"].notna() & scoped["h3_cell"].ne("") & scoped["category_code"].ne("")].copy()
+    if scoped.empty:
+        return []
+
+    hex_totals = (
+        scoped[scoped["category_code"].eq("__all__")]
+        .groupby("h3_cell", dropna=False)
+        .agg(hex_total_locales=("id_local", "nunique"))
+        .reset_index()
+    )
+    if hex_totals.empty:
+        return []
+
+    counts = (
+        scoped.groupby(["h3_cell", "category_code", "category_desc"], dropna=False)
+        .agg(n_locales=("id_local", "nunique"))
+        .reset_index()
+    )
+    counts = counts.merge(hex_totals, on="h3_cell", how="left", validate="many_to_one")
+    counts = counts[counts["hex_total_locales"].fillna(0).astype(float) > 0].copy()
+    if counts.empty:
+        return []
+
+    counts["share_in_hex"] = counts["n_locales"] / counts["hex_total_locales"]
+    counts = counts.sort_values(
+        ["h3_cell", "n_locales", "category_desc"],
+        ascending=[True, False, True],
+    ).reset_index(drop=True)
+
+    records: list[dict[str, object]] = []
+    for row in counts.itertuples(index=False):
+        records.append(
+            {
+                "year": int(year),
+                "period": str(period),
+                "h3_cell": str(row.h3_cell),
+                "category_code": str(row.category_code),
+                "category_desc": str(row.category_desc),
+                "n_locales": int(row.n_locales),
+                "hex_total_locales": int(row.hex_total_locales),
+                "share_in_hex": serialize_probability(row.share_in_hex),
+            }
+        )
+    return records
 
 
 def build_zone_history_records(frame: pd.DataFrame, *, zone_level: str, year: int, period: str) -> list[dict[str, object]]:

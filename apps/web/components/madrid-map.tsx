@@ -3,7 +3,7 @@
 import type { Color, PickingInfo } from "@deck.gl/core";
 import { H3HexagonLayer } from "@deck.gl/geo-layers";
 import { MapboxOverlay } from "@deck.gl/mapbox";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Map, { NavigationControl, useControl, type ViewState } from "react-map-gl/maplibre";
 
 import { formatHorizonShortLabel, getHorizonSurvival, isFiniteNumber, type Horizon } from "@/lib/horizon";
@@ -36,6 +36,10 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
   const [tooltipPosition, setTooltipPosition] = useState<{ left: number; top: number } | null>(null);
   const [hoveredHexCell, setHoveredHexCell] = useState<string | null>(null);
   const minZoom = getMinZoom(bounds);
+  const clearHoverState = useCallback(() => {
+    setTooltip(null);
+    setHoveredHexCell(null);
+  }, []);
 
   useLayoutEffect(() => {
     if (!tooltip) {
@@ -92,8 +96,7 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
         },
         onHover: (info: PickingInfo<HexAggregate>) => {
           if (!info.object || info.x === undefined || info.y === undefined) {
-            setTooltip(null);
-            setHoveredHexCell(null);
+            clearHoverState();
             return;
           }
           setTooltip({ x: info.x, y: info.y, object: info.object });
@@ -104,10 +107,10 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
         }
       })
     ];
-  }, [colorScale.high, colorScale.low, colorScale.max, colorScale.mid, colorScale.min, hexes, horizon, onSelectHex, selectedHex?.h3_cell, hoveredHexCell]);
+  }, [clearHoverState, colorScale.high, colorScale.low, colorScale.max, colorScale.mid, colorScale.min, hexes, horizon, onSelectHex, selectedHex?.h3_cell, hoveredHexCell]);
 
   return (
-    <div className="map-canvas" ref={containerRef}>
+    <div className="map-canvas" onPointerLeave={clearHoverState} ref={containerRef}>
       <Map
         key={buildBoundsKey(bounds)}
         initialViewState={buildInitialViewState(bounds, minZoom)}

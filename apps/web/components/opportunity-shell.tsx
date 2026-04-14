@@ -27,6 +27,17 @@ type OpportunityShellProps = {
 
 type OperationFilter = "all" | "venta" | "alquiler";
 
+type PickerOption = {
+  label: string;
+  value: string;
+};
+
+const OPERATION_FILTER_OPTIONS: PickerOption[] = [
+  { label: "Todos los locales filtrados", value: "all" },
+  { label: "Solo venta", value: "venta" },
+  { label: "Solo alquiler", value: "alquiler" }
+];
+
 type MetricDefinition = {
   id: string;
   label: string;
@@ -385,22 +396,18 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
         <p className="lede">{artifacts.meta.subtitle}</p>
 
         <div className="control-group">
-          <label className="control-label" htmlFor="operation-filter">
+          <span className="control-label" id="operation-filter-label">
             Operación
-          </label>
-          <select
-            className="select"
-            id="operation-filter"
-            value={operationFilter}
-            onChange={(event) => {
+          </span>
+          <SimplePicker
+            labelledBy="operation-filter-label"
+            onChange={(nextValue) => {
               setManualSelection(null);
-              setOperationFilter(event.target.value as OperationFilter);
+              setOperationFilter(nextValue as OperationFilter);
             }}
-          >
-            <option value="all">Todos los locales filtrados</option>
-            <option value="venta">Solo venta</option>
-            <option value="alquiler">Solo alquiler</option>
-          </select>
+            options={OPERATION_FILTER_OPTIONS}
+            value={operationFilter}
+          />
         </div>
 
         <div className="control-group">
@@ -516,6 +523,115 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
         />
       </section>
     </main>
+  );
+}
+
+function SimplePicker({
+  disabled = false,
+  labelledBy,
+  onChange,
+  options,
+  placeholder = "Selecciona una opción",
+  value,
+}: {
+  disabled?: boolean;
+  labelledBy: string;
+  onChange: (value: string) => void;
+  options: PickerOption[];
+  placeholder?: string;
+  value: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
+  const pickerRef = useRef<HTMLDivElement | null>(null);
+  const selectedOption = options.find((option) => option.value === value) ?? null;
+  const triggerLabel = selectedOption?.label ?? placeholder;
+
+  useEffect(() => {
+    if (!isOpen || !pickerRef.current) {
+      return;
+    }
+    const triggerRect = pickerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - triggerRect.bottom;
+    const spaceAbove = triggerRect.top;
+    const nextOpenUpward = spaceBelow < 280 && spaceAbove > spaceBelow;
+    setOpenUpward(nextOpenUpward);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (pickerRef.current && event.target instanceof Node && !pickerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className="category-picker" ref={pickerRef}>
+      <button
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-labelledby={labelledBy}
+        className="category-picker-trigger"
+        disabled={disabled}
+        onClick={() => {
+          if (disabled) {
+            return;
+          }
+          setIsOpen((current) => !current);
+        }}
+        type="button"
+      >
+        <span className="category-picker-trigger-copy">
+          <strong className="category-picker-trigger-title">{triggerLabel}</strong>
+        </span>
+        <span aria-hidden="true" className="category-picker-trigger-icon">
+          {isOpen ? "˄" : "˅"}
+        </span>
+      </button>
+
+      {isOpen && !disabled ? (
+        <div className={`category-picker-menu${openUpward ? " category-picker-menu-up" : ""}`} role="listbox">
+          {options.map((option) => {
+            const isActive = option.value === value;
+            return (
+              <button
+                aria-selected={isActive}
+                className="category-picker-option"
+                data-active={isActive}
+                key={option.value}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                role="option"
+                type="button"
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
