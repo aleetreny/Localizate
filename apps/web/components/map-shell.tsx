@@ -84,6 +84,10 @@ type PickerOption = {
   value: string;
 };
 
+type HexCategoryColorStats = {
+  nLocales: number;
+};
+
 const HEX_COMPOSITION_YEAR_MIN = 2015;
 const HEX_COMPOSITION_YEAR_MAX = 2026;
 const MIN_UNSUPPORTED_BARRIO_LOCALES = 5;
@@ -293,6 +297,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   const detailSupport = detail ? getHorizonSupport(detail, horizon) : 0;
 
   const hasHexCompositionHistory = (hexCompositionHistoryArtifacts?.meta.years.length ?? 0) > 0;
+  const hexCategoryColorMap = useMemo(() => buildHexCategoryColorMap(artifacts.hexes), [artifacts.hexes]);
 
   const hexCompositionHistoryIndex = useMemo(() => {
     const index = new Map<string, HexCompositionHistoryRecord[]>();
@@ -349,14 +354,14 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
 
     if (!hasHexCompositionHistory) {
       return {
-        items: buildHexCategoryComposition(artifacts.hexes, detail),
+        items: buildHexCategoryComposition(artifacts.hexes, detail, hexCategoryColorMap),
         totalLocales: detail.n_locales,
       };
     }
 
     const historyRows = hexCompositionHistoryIndex.get(`${hexCompositionYear}::${detail.h3_cell}`) ?? [];
-    return buildHexCategoryCompositionForYear(historyRows);
-  }, [artifacts.hexes, detail, hasHexCompositionHistory, hexCompositionHistoryIndex, hexCompositionYear, selectedCategory]);
+    return buildHexCategoryCompositionForYear(historyRows, hexCategoryColorMap);
+  }, [artifacts.hexes, detail, hasHexCompositionHistory, hexCategoryColorMap, hexCompositionHistoryIndex, hexCompositionYear, selectedCategory]);
 
   const detailCategoryComposition = detailCategoryCompositionState.items;
   const detailCategoryCompositionTotalLocales = detailCategoryCompositionState.totalLocales;
@@ -1123,7 +1128,7 @@ function MetricExplainer({ metric }: { metric: MetricDefinition | null }) {
 
 function RelativeRiskExplainerBanner({ onClose }: { onClose: () => void }) {
   return (
-    <section aria-label="Cómo leer el índice relativo 0-1" aria-modal="false" className="explain-banner explain-banner-floating" role="dialog">
+    <section aria-label="Cómo leer el ranking de zonas destacadas" aria-modal="false" className="explain-banner explain-banner-floating" role="dialog">
       <div className="explain-banner-header">
         <div className="explain-banner-headcopy">
           <span className="explain-banner-kicker">Cómo leer el ranking</span>
@@ -1138,10 +1143,10 @@ function RelativeRiskExplainerBanner({ onClose }: { onClose: () => void }) {
       </div>
       <div className="explain-banner-body">
         <p className="explain-banner-copy">
-          No es una probabilidad de cierre. Solo resume qué zonas salen mejor o peor para la categoría que estás viendo en Madrid.
+          El ranking principal de Zonas destacadas usa el índice relativo 0-1 del modelo para ordenar barrios y distritos. Cuanto más bajo, mejor.
         </p>
         <p className="explain-banner-copy">
-          Este ranking principal sigue usando el índice relativo 0-1 del modelo actual. La evolución histórica del banner superior adapta la métrica al caso: para categorías concretas ordena por especialización frente a Madrid, suavizada por tamaño de zona; para Todos los locales ordena por la ganancia o pérdida de peso de cada zona dentro del total comercial de Madrid desde el inicio de la serie.
+          Al entrar en un barrio o distrito, el ranking interno de categorías se ordena con un índice contextual más robusto (el mismo enfoque de Oportunidades), que combina tasa de eventos, tamaño de muestra y penalización por soporte débil. Ahí mostramos solo el puesto de cada categoría para evitar mezclar escalas numéricas distintas.
         </p>
         <div className="explain-banner-example">
           <span className="explain-banner-example-label">Ejemplo</span>
@@ -1247,7 +1252,6 @@ function ZoneActivityExplainer({ insight, onClose }: { insight: ZoneActivityInsi
                 <span className="metric-breakdown-rank">#{item.rank}</span>
                 <span className="metric-breakdown-name">{item.categoryDesc}</span>
               </div>
-              <strong className="metric-breakdown-value">{formatRelativeRiskIndex(item.riskIndex)}</strong>
               <span className="metric-breakdown-detail">{formatZoneActivityDetail(item, insight.horizon)}</span>
             </div>
           ))}
@@ -1488,13 +1492,13 @@ function formatZoneActivityDetail(item: ZoneActivityRankingItem, horizon: Horizo
 
 function sortZonesByRisk(zones: ZoneAggregate[]) {
   return [...zones].sort((left, right) => {
-    const rawRiskDiff = getPrimaryRiskValue(left) - getPrimaryRiskValue(right);
-    if (Math.abs(rawRiskDiff) > 1e-6) {
-      return rawRiskDiff;
-    }
     const riskDiff = left.avg_risk_percentile - right.avg_risk_percentile;
     if (Math.abs(riskDiff) > 1e-6) {
       return riskDiff;
+    }
+    const rawRiskDiff = getPrimaryRiskValue(left) - getPrimaryRiskValue(right);
+    if (Math.abs(rawRiskDiff) > 1e-6) {
+      return rawRiskDiff;
     }
     if (right.n_locales !== left.n_locales) {
       return right.n_locales - left.n_locales;
@@ -1658,7 +1662,11 @@ function buildHexRanking(hexes: HexAggregate[], detail: HexAggregate, _horizon: 
   return { rank: rankIndex + 1, total: sorted.length };
 }
 
-function buildHexCategoryComposition(hexes: HexAggregate[], detail: HexAggregate): HexCategoryCompositionItem[] {
+function buildHexCategoryComposition(
+  hexes: HexAggregate[],
+  detail: HexAggregate,
+  categoryColorMap: Map<string, string>
+): HexCategoryCompositionItem[] {
   const totalLocales = detail.n_locales;
   if (totalLocales <= 0) {
     return [];
@@ -1673,17 +1681,18 @@ function buildHexCategoryComposition(hexes: HexAggregate[], detail: HexAggregate
       return left.category_desc.localeCompare(right.category_desc, "es");
     });
 
-  return orderedItems.map((item, position) => ({
+  return orderedItems.map((item) => ({
     categoryCode: item.category_code,
     categoryDesc: item.category_desc,
     nLocales: item.n_locales,
     share: item.n_locales / totalLocales,
-    color: colorForCategoryPosition(position, item.category_code),
+    color: colorForCategoryCode(item.category_code, categoryColorMap),
   }));
 }
 
 function buildHexCategoryCompositionForYear(
-  rows: HexCompositionHistoryRecord[]
+  rows: HexCompositionHistoryRecord[],
+  categoryColorMap: Map<string, string>
 ): { items: HexCategoryCompositionItem[]; totalLocales: number } {
   if (rows.length === 0) {
     return { items: [], totalLocales: 0 };
@@ -1707,34 +1716,186 @@ function buildHexCategoryCompositionForYear(
 
   return {
     totalLocales,
-    items: orderedItems.map((item, position) => ({
+    items: orderedItems.map((item) => ({
       categoryCode: item.category_code,
       categoryDesc: item.category_desc,
       nLocales: item.n_locales,
       share: item.share_in_hex ?? item.n_locales / totalLocales,
-      color: colorForCategoryPosition(position, item.category_code),
+      color: colorForCategoryCode(item.category_code, categoryColorMap),
     })),
   };
 }
 
-// Alternate hue families so adjacent donut slices stay visually distinct without leaving the pastel theme.
-const HEX_COMPOSITION_COLOR_HUES = [42, 222, 318, 138, 278, 82, 248, 18, 168, 344, 198];
+const HEX_COMPOSITION_COLOR_HUES = [16, 198, 332, 92, 258, 44, 172, 286, 8, 218, 126, 308, 64, 238, 152, 348, 106, 266, 186, 28, 138, 324];
 const HEX_COMPOSITION_COLOR_TONES = [
-  { saturation: 52, lightness: 72 },
-  { saturation: 44, lightness: 79 },
-  { saturation: 56, lightness: 67 },
+  { saturation: 58, lightness: 67 },
+  { saturation: 50, lightness: 75 },
 ];
+const HEX_COMPOSITION_STATUS_COLORS: Record<string, string> = {
+  __status_multi_activity__: "hsl(18 30% 69%)",
+  __status_no_activity__: "hsl(8 20% 74%)",
+  __status_uncoded_activity__: "hsl(28 28% 66%)",
+  __status_pending_coding__: "hsl(12 18% 78%)",
+  __status_missing_snapshot__: "hsl(35 20% 80%)",
+  __status_unmapped_activity__: "hsl(24 24% 72%)",
+};
+const HEX_COMPOSITION_COLOR_PALETTE = buildHexCompositionPalette();
 
-function colorForCategoryPosition(position: number, categoryCode: string) {
+function buildHexCompositionPalette() {
+  const colors: string[] = [];
+  for (const tone of HEX_COMPOSITION_COLOR_TONES) {
+    for (const hue of HEX_COMPOSITION_COLOR_HUES) {
+      colors.push(`hsl(${hue} ${tone.saturation}% ${tone.lightness}%)`);
+    }
+  }
+  return colors;
+}
+
+function buildHexCategoryColorMap(hexes: HexAggregate[]) {
+  const categoryColorMap = new Map<string, string>();
+  for (const [statusCode, statusColor] of Object.entries(HEX_COMPOSITION_STATUS_COLORS)) {
+    categoryColorMap.set(statusCode, statusColor);
+  }
+
+  const categoryStats = new Map<string, HexCategoryColorStats>();
+  const categoriesByHex = new Map<string, Array<{ categoryCode: string; nLocales: number }>>();
+
+  for (const item of hexes) {
+    if (item.category_code === "__all__" || item.n_locales <= 0 || item.category_code.startsWith("__status_")) {
+      continue;
+    }
+
+    const currentStats = categoryStats.get(item.category_code) ?? { nLocales: 0 };
+    currentStats.nLocales += item.n_locales;
+    categoryStats.set(item.category_code, currentStats);
+
+    const currentHexRows = categoriesByHex.get(item.h3_cell);
+    if (currentHexRows) {
+      currentHexRows.push({ categoryCode: item.category_code, nLocales: item.n_locales });
+    } else {
+      categoriesByHex.set(item.h3_cell, [{ categoryCode: item.category_code, nLocales: item.n_locales }]);
+    }
+  }
+
+  if (categoryStats.size === 0) {
+    return categoryColorMap;
+  }
+
+  const adjacency = new Map<string, Map<string, number>>();
+  for (const entries of categoriesByHex.values()) {
+    const sortedEntries = [...entries]
+      .sort((left, right) => {
+        if (right.nLocales !== left.nLocales) {
+          return right.nLocales - left.nLocales;
+        }
+        return left.categoryCode.localeCompare(right.categoryCode, "es");
+      })
+      .slice(0, 10);
+
+    for (let leftIndex = 0; leftIndex < sortedEntries.length; leftIndex += 1) {
+      for (let rightIndex = leftIndex + 1; rightIndex < sortedEntries.length; rightIndex += 1) {
+        const leftCategory = sortedEntries[leftIndex];
+        const rightCategory = sortedEntries[rightIndex];
+        const weight = Math.min(leftCategory.nLocales, rightCategory.nLocales);
+        addCategoryAdjacency(adjacency, leftCategory.categoryCode, rightCategory.categoryCode, weight);
+      }
+    }
+  }
+
+  const orderedCategories = [...categoryStats.entries()]
+    .sort((left, right) => {
+      if (right[1].nLocales !== left[1].nLocales) {
+        return right[1].nLocales - left[1].nLocales;
+      }
+      return left[0].localeCompare(right[0], "es");
+    })
+    .map(([categoryCode]) => categoryCode);
+
+  const assignedPaletteIndexes = new Map<string, number>();
+  const paletteUsageCounts = new Array(HEX_COMPOSITION_COLOR_PALETTE.length).fill(0);
+  const hueFamilyUsageCounts = new Array(HEX_COMPOSITION_COLOR_HUES.length).fill(0);
+
+  for (const categoryCode of orderedCategories) {
+    let bestPaletteIndex = 0;
+    let bestScore = Number.POSITIVE_INFINITY;
+
+    for (let paletteIndex = 0; paletteIndex < HEX_COMPOSITION_COLOR_PALETTE.length; paletteIndex += 1) {
+      let conflictScore = 0;
+      const neighbors = adjacency.get(categoryCode);
+      if (neighbors) {
+        for (const [neighborCode, edgeWeight] of neighbors.entries()) {
+          const neighborPaletteIndex = assignedPaletteIndexes.get(neighborCode);
+          if (typeof neighborPaletteIndex !== "number") {
+            continue;
+          }
+
+          const hueDistance = paletteHueDistanceSteps(paletteIndex, neighborPaletteIndex, HEX_COMPOSITION_COLOR_HUES.length);
+          if (hueDistance === 0) {
+            conflictScore += edgeWeight * 1.2;
+          } else if (hueDistance === 1) {
+            conflictScore += edgeWeight * 0.4;
+          } else if (hueDistance === 2) {
+            conflictScore += edgeWeight * 0.12;
+          }
+        }
+      }
+
+      const exactReusePenalty = paletteUsageCounts[paletteIndex] * 0.08;
+      const hueFamilyPenalty = hueFamilyUsageCounts[paletteIndex % HEX_COMPOSITION_COLOR_HUES.length] * 0.03;
+      const score = conflictScore + exactReusePenalty + hueFamilyPenalty;
+      if (score < bestScore) {
+        bestScore = score;
+        bestPaletteIndex = paletteIndex;
+      }
+    }
+
+    assignedPaletteIndexes.set(categoryCode, bestPaletteIndex);
+    paletteUsageCounts[bestPaletteIndex] += 1;
+    hueFamilyUsageCounts[bestPaletteIndex % HEX_COMPOSITION_COLOR_HUES.length] += 1;
+    categoryColorMap.set(categoryCode, HEX_COMPOSITION_COLOR_PALETTE[bestPaletteIndex]);
+  }
+
+  return categoryColorMap;
+}
+
+function addCategoryAdjacency(
+  adjacency: Map<string, Map<string, number>>,
+  leftCategoryCode: string,
+  rightCategoryCode: string,
+  weight: number,
+) {
+  if (leftCategoryCode === rightCategoryCode || weight <= 0) {
+    return;
+  }
+
+  const leftNeighbors = adjacency.get(leftCategoryCode) ?? new Map<string, number>();
+  leftNeighbors.set(rightCategoryCode, (leftNeighbors.get(rightCategoryCode) ?? 0) + weight);
+  adjacency.set(leftCategoryCode, leftNeighbors);
+
+  const rightNeighbors = adjacency.get(rightCategoryCode) ?? new Map<string, number>();
+  rightNeighbors.set(leftCategoryCode, (rightNeighbors.get(leftCategoryCode) ?? 0) + weight);
+  adjacency.set(rightCategoryCode, rightNeighbors);
+}
+
+function paletteHueDistanceSteps(leftPaletteIndex: number, rightPaletteIndex: number, hueCount: number) {
+  const leftHueIndex = leftPaletteIndex % hueCount;
+  const rightHueIndex = rightPaletteIndex % hueCount;
+  const directDistance = Math.abs(leftHueIndex - rightHueIndex);
+  return Math.min(directDistance, hueCount - directDistance);
+}
+
+function colorForCategoryCode(categoryCode: string, categoryColorMap: Map<string, string>) {
+  const mappedColor = categoryColorMap.get(categoryCode);
+  if (mappedColor) {
+    return mappedColor;
+  }
+
   const seed = hashString(categoryCode);
-  const baseHue = HEX_COMPOSITION_COLOR_HUES[position % HEX_COMPOSITION_COLOR_HUES.length];
-  const tone = HEX_COMPOSITION_COLOR_TONES[
-    Math.floor(position / HEX_COMPOSITION_COLOR_HUES.length) % HEX_COMPOSITION_COLOR_TONES.length
-  ];
-  const hueShift = ((seed % 3) - 1) * 4;
-  const saturation = clamp(tone.saturation + (((seed >>> 3) % 3) - 1) * 2, 38, 60);
-  const lightness = clamp(tone.lightness + (((seed >>> 5) % 3) - 1), 64, 82);
-
+  const baseHue = HEX_COMPOSITION_COLOR_HUES[seed % HEX_COMPOSITION_COLOR_HUES.length];
+  const tone = HEX_COMPOSITION_COLOR_TONES[(seed >>> 3) % HEX_COMPOSITION_COLOR_TONES.length];
+  const hueShift = ((seed % 5) - 2) * 2;
+  const saturation = clamp(tone.saturation + (((seed >>> 5) % 3) - 1), 44, 62);
+  const lightness = clamp(tone.lightness + (((seed >>> 7) % 3) - 1), 64, 80);
   return `hsl(${normalizeHue(baseHue + hueShift)} ${saturation}% ${lightness}%)`;
 }
 

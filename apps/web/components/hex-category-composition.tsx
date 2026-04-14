@@ -327,8 +327,8 @@ function computeFloatingPanelLayout({
 }
 
 function getFloatingPanelWidth(boundsWidth: number, panelPadding = 18) {
-  const availableWidth = Math.max(220, boundsWidth - panelPadding * 2);
-  return Math.min(320, availableWidth);
+  const availableWidth = Math.max(236, boundsWidth - panelPadding * 2);
+  return Math.min(352, availableWidth);
 }
 
 function buildDonutSegments(items: HexCategoryCompositionItem[]): DonutSegment[] {
@@ -420,6 +420,10 @@ function formatInteger(value: number) {
 }
 
 function buildActiveCategoryNarrative(item: HexCategoryCompositionItem, totalLocales: number) {
+  if (totalLocales <= 1 && item.nLocales <= 1) {
+    return "En este hexágono solo se observa 1 local en el periodo seleccionado, así que toda la mezcla corresponde a esta categoría.";
+  }
+
   if (item.nLocales <= 1) {
     return `Esta categoría solo aparece en 1 local de los ${formatInteger(totalLocales)} observados en el hexágono, así que su peso histórico aquí es muy puntual.`;
   }
