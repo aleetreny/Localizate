@@ -2,9 +2,12 @@
 
 Este archivo es la fuente unica y viva de contexto del proyecto. Se actualiza en cada avance y reemplaza al resto de documentos como referencia primaria.
 
-Ultima actualizacion: 2026-04-13
+Ultima actualizacion: 2026-04-14
 
-Nota de implementacion en curso (2026-04-13):
+Nota de implementacion en curso (2026-04-14):
+- Mejora de interactividad aplicada en `Historico > Mapa de hexágonos`: al pasar el ratón sobre un hexágono, ahora muestra un borde naranja (RGB 255, 180, 0) más visible como indicador visual de que es seleccionable; cuando se hace clic para seleccionar un hexágono, el borde cambia a azul oscuro (RGB 6, 39, 46) con mayor grosor, diferenciándose claramente del estado hover. La implementación usa un estado `hoveredHexCell` en el componente `madrid-map.tsx` para trackear el hexágono bajo el cursor, actualiza `getLineColor` y `getLineWidth` en el H3HexagonLayer según los estados de hover y selección, e incrementa el ajuste de `updateTriggers` para mantener la sincronización visual en tiempo real.
+
+Nota de implementacion anterior (2026-04-13):
 - Fix de desbordes aplicado en desplegables custom de `Historico` (categoría y comparación): se añaden márgenes laterales de seguridad, límite de altura más conservador y apertura automática hacia arriba cuando no hay espacio suficiente por debajo, evitando que el menú se salga del viewport en pantallas más justas.
 - Ajuste de UX final aplicado en `Historico`: `Ámbito` dentro de `Comparar zonas` vuelve a mostrarse como selector visible de dos píldoras (`Distrito/Barrio`) en vez de desplegable; además se retira del banner de `Evolución histórica` la etiqueta `Serie anual 2015-2026` para reducir ruido visual.
 - Ajuste adicional de consistencia aplicado en `Historico > Comparar zonas`: el selector de `Ámbito` y los dos selectores de zonas pasan de controles nativos a desplegable custom con el mismo patrón visual/interactivo del selector de categoría principal; además se corrige el centrado vertical del chip de liderazgo (`X mejor por Y puestos`) y el tamaño/alineación de los círculos de serie para que no queden descompensados frente a títulos como `Puesto en Madrid`.

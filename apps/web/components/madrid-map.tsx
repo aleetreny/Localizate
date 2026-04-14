@@ -34,6 +34,7 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ left: number; top: number } | null>(null);
+  const [hoveredHexCell, setHoveredHexCell] = useState<string | null>(null);
   const minZoom = getMinZoom(bounds);
 
   useLayoutEffect(() => {
@@ -70,27 +71,40 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
         opacity: 0.46,
         stroked: true,
         lineWidthMinPixels: 0.6,
-        getLineColor: (item) =>
-          selectedHex?.h3_cell === item.h3_cell ? [6, 39, 46, 255] : [255, 255, 255, 70],
+        lineWidthMaxPixels: 10,
+        getLineWidth: (item) =>
+          selectedHex?.h3_cell === item.h3_cell ? 3 : hoveredHexCell === item.h3_cell ? 2 : 0.6,
+        getLineColor: (item) => {
+          if (selectedHex?.h3_cell === item.h3_cell) {
+            return [6, 39, 46, 255];
+          }
+          if (hoveredHexCell === item.h3_cell) {
+            return [255, 180, 0, 255];
+          }
+          return [255, 255, 255, 70];
+        },
         getHexagon: (item) => item.h3_cell,
         getFillColor: (item) => colorForSurvival(getHorizonSurvival(item, horizon), colorScale),
         updateTriggers: {
           getFillColor: [horizon, colorScale.min, colorScale.low, colorScale.mid, colorScale.high, colorScale.max],
-          getLineColor: [selectedHex?.h3_cell]
+          getLineColor: [selectedHex?.h3_cell, hoveredHexCell],
+          getLineWidth: [selectedHex?.h3_cell, hoveredHexCell]
         },
         onHover: (info: PickingInfo<HexAggregate>) => {
           if (!info.object || info.x === undefined || info.y === undefined) {
             setTooltip(null);
+            setHoveredHexCell(null);
             return;
           }
           setTooltip({ x: info.x, y: info.y, object: info.object });
+          setHoveredHexCell(info.object.h3_cell);
         },
         onClick: (info: PickingInfo<HexAggregate>) => {
           onSelectHex(info.object ?? null);
         }
       })
     ];
-  }, [colorScale.high, colorScale.low, colorScale.max, colorScale.mid, colorScale.min, hexes, horizon, onSelectHex, selectedHex?.h3_cell]);
+  }, [colorScale.high, colorScale.low, colorScale.max, colorScale.mid, colorScale.min, hexes, horizon, onSelectHex, selectedHex?.h3_cell, hoveredHexCell]);
 
   return (
     <div className="map-canvas" ref={containerRef}>
