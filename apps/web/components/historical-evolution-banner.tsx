@@ -1,17 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type PointerEvent } from "react";
 
 import type { HistoricalRankingArtifacts, HistoricalZoneLevel, HistoricalZoneRankingRecord } from "@/lib/types";
 
-const SERIES_COLORS = ["#d7c8a2", "#b8d5d8", "#d8b9d3", "#bfd8c4", "#c9c2e8", "#ecc6b6", "#c6d8af", "#b9cbe7", "#e3cfb5", "#c8b6d9"];
+const SERIES_COLORS = ["#d7c8a2", "#b8d5d8", "#d8b9d3", "#bfd8c4", "#c9c2e8", "#ecc6b6", "#c6d8af", "#b9cbe7", "#e3cfb5", "#c8b6d9", "#bcd8ce", "#dfc5a6"];
 const CHART_WIDTH = 620;
 const CHART_PADDING = { top: 36, right: 18, bottom: 18, left: 60 };
 const HOVER_CARD_HEIGHT = 58;
 const HOVER_CARD_WIDTH = 196;
 const MAX_VISIBLE_CURRENT_SERIES = 4;
-const MAX_VISIBLE_RANK = 9;
-const MAX_VISIBLE_SERIES = 9;
+const DEFAULT_RANK_LIMIT = 9;
+const MIN_RANK_LIMIT = 6;
+const MAX_RANK_LIMIT = 12;
+const MAX_VISIBLE_SERIES = 12;
+const TOP_LIMIT_OPTIONS = [6, 7, 8, 9, 10, 11, 12] as const;
 
 type HistoricalEvolutionBannerProps = {
   artifacts: HistoricalRankingArtifacts | null;
@@ -79,12 +82,13 @@ export function HistoricalEvolutionBanner({
   onSelectZoneLevel,
   zoneLevel,
 }: HistoricalEvolutionBannerProps) {
+  const [selectedRankLimit, setSelectedRankLimit] = useState(DEFAULT_RANK_LIMIT);
   const chartView = useMemo(() => {
     if (!artifacts) {
       return null;
     }
-    return buildHistoricalChartView({ artifacts, categoryCode, zoneLevel });
-  }, [artifacts, categoryCode, zoneLevel]);
+    return buildHistoricalChartView({ artifacts, categoryCode, zoneLevel, selectedRankLimit });
+  }, [artifacts, categoryCode, selectedRankLimit, zoneLevel]);
   const [selectedZoneKey, setSelectedZoneKey] = useState<string | null>(null);
   const [hoverState, setHoverState] = useState<ChartHoverState | null>(null);
 
@@ -105,6 +109,10 @@ export function HistoricalEvolutionBanner({
     defaultMetricLabel: artifacts?.meta.metric_short_label ?? "Especializacion vs Madrid",
     fallbackBaseYear: chartView?.years[0] ?? artifacts?.meta.years[0] ?? null,
   });
+
+  const handleRankLimitChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setSelectedRankLimit(Number(event.target.value));
+  };
 
   return (
     <section
@@ -148,26 +156,24 @@ export function HistoricalEvolutionBanner({
           </button>
         </div>
 
-        {chartView ? (
-          <div className="historical-evolution-meta">
-            {chartView.years[0]}-{chartView.latestYear} · último corte {formatPeriodLabel(chartView.latestPeriod)}
-          </div>
-        ) : null}
+        <div className="historical-evolution-toolbar-side">
+          <label className="historical-evolution-rank-control" htmlFor="historical-evolution-top-limit">
+            <span className="historical-evolution-rank-control-label">Top</span>
+            <select id="historical-evolution-top-limit" onChange={handleRankLimitChange} value={selectedRankLimit}>
+              {TOP_LIMIT_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+
+        </div>
       </div>
 
-      <div className="explain-banner-body historical-evolution-intro">
-        <p className="explain-banner-copy">Más a la izquierda es mejor.</p>
-        <p className="explain-banner-copy">
-          Aquí no enseñamos todas las zonas. Enseñamos 9 rutas para que el gráfico se entienda de un vistazo.
-        </p>
-        <div className="explain-banner-example">
-          <span className="explain-banner-example-label">Ejemplo</span>
-          <p className="explain-banner-copy">
-            Si un año ves #1, #2 y #3 y después aparece Fuera, no faltan puestos en el ranking real. Solo significa que ese año no estamos dibujando más rutas en este resumen.
-          </p>
-        </div>
-        <p className="explain-banner-copy">Pasa el ratón por el gráfico para resaltar la ruta más cercana. Si haces click en la leyenda, la dejas fijada.</p>
-      </div>
+      <p className="historical-evolution-intro">
+        Más a la izquierda es mejor. Aquí no enseñamos todas las zonas. Enseñamos el top {selectedRankLimit} para que el gráfico se entienda de un vistazo. Puedes cambiar la categoría si quieres mirar otra.
+      </p>
 
       {isLoading && !artifacts ? (
         <div className="historical-evolution-empty">
@@ -421,10 +427,12 @@ function RankingBumpChart({
 function buildHistoricalChartView({
   artifacts,
   categoryCode,
+  selectedRankLimit,
   zoneLevel,
 }: {
   artifacts: HistoricalRankingArtifacts;
   categoryCode: string;
+  selectedRankLimit: number;
   zoneLevel: HistoricalZoneLevel;
 }): ChartView | null {
   const rows = artifacts.zones[zoneLevel].filter((item) => item.category_code === categoryCode);
@@ -451,9 +459,9 @@ function buildHistoricalChartView({
   }
 
   const years = artifacts.meta.years.filter((year) => year <= latestYear);
-  const rankFocusLimit = Math.min(artifacts.meta.rank_focus_limit, MAX_VISIBLE_RANK);
-  const seriesLimit = Math.min(artifacts.meta.series_limit, MAX_VISIBLE_SERIES, rankFocusLimit);
-  const currentLeaderLimit = Math.max(1, Math.min(artifacts.meta.current_series_limit, MAX_VISIBLE_CURRENT_SERIES, seriesLimit));
+  const rankFocusLimit = clamp(Math.round(selectedRankLimit), MIN_RANK_LIMIT, MAX_RANK_LIMIT);
+  const seriesLimit = Math.min(MAX_VISIBLE_SERIES, rankFocusLimit);
+  const currentLeaderLimit = Math.max(1, Math.min(MAX_VISIBLE_CURRENT_SERIES, seriesLimit));
   const fallbackRank = Math.max(2, rankFocusLimit + 1);
   const rankTicks = buildRankTicks(rankFocusLimit);
   const byZoneYear = new Map<string, HistoricalZoneRankingRecord>();
@@ -566,10 +574,7 @@ function buildHistoricalMetricCopy({
 }
 
 function buildHistoricalFootnote(view: ChartView, metricLead: string) {
-  const currentCut = view.latestYearIsPartial
-    ? `El último corte es ${formatPeriodLabel(view.latestPeriod)} y todavía es parcial.`
-    : `El último corte es ${formatPeriodLabel(view.latestPeriod)} y ya cierra el año.`;
-  return `${metricLead} ${currentCut} La columna Fuera no significa que la zona desaparezca del ranking. Solo significa que no entra en las 9 rutas que estamos enseñando en este resumen.`;
+  return `${metricLead} Fuera no significa que la zona desaparezca. Solo significa que no entra en el top ${view.rankFocusLimit} que estamos enseñando ahora.`;
 }
 
 function buildSeriesMixLabel(view: ChartView, currentSeriesLimit: number) {
@@ -924,16 +929,6 @@ function formatPercent(value: number | null) {
     return "Sin dato";
   }
   return new Intl.NumberFormat("es-ES", { style: "percent", maximumFractionDigits: value < 0.1 ? 1 : 0 }).format(value);
-}
-
-function formatPeriodLabel(period: string) {
-  const [yearText, monthText] = period.split("-");
-  const month = Number(monthText);
-  const months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-  if (!yearText || Number.isNaN(month) || month < 1 || month > 12) {
-    return period;
-  }
-  return `${months[month - 1]} ${yearText}`;
 }
 
 function truncateLabel(value: string, maxLength: number) {

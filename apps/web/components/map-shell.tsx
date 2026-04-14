@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { HexCategoryComposition, type HexCategoryCompositionItem } from "@/components/hex-category-composition";
 import { HistoricalEvolutionBanner } from "@/components/historical-evolution-banner";
 import { MadridMap } from "@/components/madrid-map";
 import { ViewTabs } from "@/components/view-tabs";
+import { ZoneComparisonBanner } from "@/components/zone-comparison-banner";
 import { DEFAULT_HEX_SIZE, formatHexSizeLabel, HEX_SIZE_OPTIONS, type HexSize } from "@/lib/hex-size";
 import { formatHorizonLongLabel, formatHorizonShortLabel, getHorizonSupport, getHorizonSurvival, isFiniteNumber, type Horizon } from "@/lib/horizon";
 import { FALLBACK_MAP_ARTIFACTS, loadHistoricalRankingsFromPublic, loadMapArtifactsFromPublic } from "@/lib/public-data";
-import type { ColorScale, FrontendArtifacts, HexAggregate, HistoricalRankingArtifacts, HistoricalZoneLevel, ZoneAggregate } from "@/lib/types";
+import type { ColorScale, FrontendArtifacts, HexAggregate, HistoricalRankingArtifacts, HistoricalZoneLevel, HistoricalZoneRankingRecord, ZoneAggregate } from "@/lib/types";
 
 type MapShellProps = {
   initialArtifacts?: FrontendArtifacts;
@@ -55,6 +56,18 @@ type ZoneActivityInsight = {
   items: ZoneActivityRankingItem[];
 };
 
+type ZoneComparisonOption = {
+  label: string;
+  zoneKey: string;
+};
+
+type CategoryOption = FrontendArtifacts["categories"][number];
+
+type PickerOption = {
+  label: string;
+  value: string;
+};
+
 export function MapShell({ initialArtifacts }: MapShellProps) {
   const [artifacts, setArtifacts] = useState(initialArtifacts ?? FALLBACK_MAP_ARTIFACTS);
   const [isLoadingArtifacts, setIsLoadingArtifacts] = useState(!initialArtifacts);
@@ -69,22 +82,44 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   const [historicalRankingArtifacts, setHistoricalRankingArtifacts] = useState<HistoricalRankingArtifacts | null>(null);
   const [historicalZoneLevel, setHistoricalZoneLevel] = useState<HistoricalZoneLevel>("district");
   const [isHistoricalEvolutionOpen, setIsHistoricalEvolutionOpen] = useState(false);
+  const [comparisonZoneLevel, setComparisonZoneLevel] = useState<HistoricalZoneLevel>("district");
+  const [comparisonLeftZoneKey, setComparisonLeftZoneKey] = useState("");
+  const [comparisonRightZoneKey, setComparisonRightZoneKey] = useState("");
+  const [isZoneComparisonOpen, setIsZoneComparisonOpen] = useState(false);
   const [isLoadingHistoricalRankings, setIsLoadingHistoricalRankings] = useState(false);
   const loadedArtifactsRef = useRef<Partial<Record<HexSize, FrontendArtifacts>>>(
     initialArtifacts ? { [DEFAULT_HEX_SIZE]: initialArtifacts } : {}
   );
+  const historicalRankingsRequestRef = useRef<Promise<HistoricalRankingArtifacts> | null>(null);
   const mapPanelRef = useRef<HTMLElement | null>(null);
 
-  async function ensureHistoricalRankingsLoaded() {
-    if (historicalRankingArtifacts || isLoadingHistoricalRankings) {
-      return;
+  const ensureHistoricalRankingsLoaded = useCallback(async () => {
+    if (historicalRankingArtifacts) {
+      return historicalRankingArtifacts;
+    }
+
+    if (historicalRankingsRequestRef.current) {
+      return historicalRankingsRequestRef.current;
     }
 
     setIsLoadingHistoricalRankings(true);
-    const nextArtifacts = await loadHistoricalRankingsFromPublic();
-    setHistoricalRankingArtifacts(nextArtifacts);
-    setIsLoadingHistoricalRankings(false);
-  }
+    const request = loadHistoricalRankingsFromPublic()
+      .then((nextArtifacts) => {
+        setHistoricalRankingArtifacts(nextArtifacts);
+        return nextArtifacts;
+      })
+      .finally(() => {
+        historicalRankingsRequestRef.current = null;
+        setIsLoadingHistoricalRankings(false);
+      });
+
+    historicalRankingsRequestRef.current = request;
+    return request;
+  }, [historicalRankingArtifacts]);
+
+  useEffect(() => {
+    void ensureHistoricalRankingsLoaded();
+  }, [ensureHistoricalRankingsLoaded]);
 
   useEffect(() => {
     let alive = true;
@@ -148,8 +183,6 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   const selectedCategoryMeta = useMemo(() => {
     return artifacts.categories.find((item) => item.category_code === selectedCategory) ?? artifacts.categories[0];
   }, [artifacts.categories, selectedCategory]);
-
-  const riskModelLabel = artifacts.meta.risk_model_label ?? "Cox";
 
   const filteredHexes = useMemo(() => {
     return artifacts.hexes.filter((item) => item.category_code === selectedCategory);
@@ -238,12 +271,37 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
       detailSupport,
       detailSurvival,
       horizon,
-      meanSurvival: activeStats.meanSurvival,
-      riskModelLabel
+      meanRiskIndex: activeStats.meanRelativeRisk
     });
-  }, [activeStats.meanSurvival, detail, detailRank, detailSupport, detailSurvival, horizon, riskModelLabel]);
+  }, [activeStats.meanRelativeRisk, detail, detailRank, detailSupport, detailSurvival, horizon]);
 
   const activeMetric = detailMetrics.find((metric) => metric.id === activeMetricId) ?? null;
+  const comparisonOptions = useMemo(() => {
+    return buildZoneComparisonOptions({
+      artifacts: historicalRankingArtifacts,
+      categoryCode: selectedCategory,
+      zoneLevel: comparisonZoneLevel,
+    });
+  }, [comparisonZoneLevel, historicalRankingArtifacts, selectedCategory]);
+  const comparisonZoneLabel = comparisonZoneLevel === "district" ? "distrito" : "barrio";
+  const comparisonOptionsPlaceholder = comparisonOptions.length > 0
+    ? `Selecciona un ${comparisonZoneLabel}`
+    : isLoadingHistoricalRankings
+      ? "Cargando serie histórica..."
+      : `Sin ${comparisonZoneLevel === "district" ? "distritos" : "barrios"} comparables`;
+  const comparisonZonePickerOptions = comparisonOptions.map((option) => ({
+    label: option.label,
+    value: option.zoneKey,
+  }));
+  const canCompareZones = comparisonLeftZoneKey.length > 0
+    && comparisonRightZoneKey.length > 0
+    && comparisonLeftZoneKey !== comparisonRightZoneKey;
+  const comparisonMetricNote = selectedCategory === "__all__"
+    ? "Comparamos puesto, número de locales y peso en Madrid. Son lecturas fáciles y con cambio real en el tiempo."
+    : "Comparamos puesto, número de locales y peso de la categoría en la zona. Son lecturas más claras que supervivencia o rotación.";
+  const comparisonSeriesMeta = historicalRankingArtifacts
+    ? `Serie anual ${historicalRankingArtifacts.meta.years[0]}-${historicalRankingArtifacts.meta.latest_year}`
+    : "Serie histórica no disponible todavía.";
 
   useEffect(() => {
     if (!activeMetricId) {
@@ -257,6 +315,18 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
     setActiveMetricId(null);
   }, [activeMetricId, detailMetrics]);
 
+  useEffect(() => {
+    const validKeys = new Set(comparisonOptions.map((item) => item.zoneKey));
+    setComparisonLeftZoneKey((current) => (current && validKeys.has(current) ? current : ""));
+    setComparisonRightZoneKey((current) => (current && validKeys.has(current) ? current : ""));
+  }, [comparisonOptions]);
+
+  useEffect(() => {
+    if (!canCompareZones && isZoneComparisonOpen) {
+      setIsZoneComparisonOpen(false);
+    }
+  }, [canCompareZones, isZoneComparisonOpen]);
+
   return (
     <main className="app-shell">
       <aside className="sidebar panel">
@@ -269,25 +339,19 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
         <p className="lede">Explora qué zonas sostienen mejor cada tipo de local en Madrid</p>
 
         <div className="control-group">
-          <label className="control-label" htmlFor="category">
+          <span className="control-label" id="category-label">
             Tipo de local
-          </label>
-          <select
-            className="select"
-            id="category"
-            value={selectedCategory}
-            onChange={(event) => {
-              setSelectedCategory(event.target.value);
+          </span>
+          <CategoryPicker
+            labelledBy="category-label"
+            onChange={(nextCategory) => {
+              setSelectedCategory(nextCategory);
               setSelectedHex(null);
               setActiveZoneInsight(null);
             }}
-          >
-            {artifacts.categories.map((category) => (
-              <option key={category.category_code} value={category.category_code}>
-                {category.category_desc}
-              </option>
-            ))}
-          </select>
+            options={artifacts.categories}
+            value={selectedCategory}
+          />
         </div>
 
         <div className="control-group">
@@ -385,6 +449,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
 
               setIsRiskExplainerOpen(false);
               setIsHistoricalEvolutionOpen(false);
+              setIsZoneComparisonOpen(false);
               setActiveMetricId(null);
               setActiveZoneInsight((current) => {
                 if (!nextInsight) {
@@ -403,6 +468,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
               className="zone-board-action"
               onClick={() => {
                 setIsHistoricalEvolutionOpen(false);
+                setIsZoneComparisonOpen(false);
                 setActiveZoneInsight(null);
                 setIsRiskExplainerOpen((current) => !current);
               }}
@@ -416,6 +482,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
               onClick={() => {
                 const nextOpen = !isHistoricalEvolutionOpen;
                 setIsRiskExplainerOpen(false);
+                setIsZoneComparisonOpen(false);
                 setActiveZoneInsight(null);
                 setActiveMetricId(null);
                 setIsHistoricalEvolutionOpen(nextOpen);
@@ -436,27 +503,130 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
           </div>
         </section>
 
+        <section
+          className="info-card"
+          onFocusCapture={() => {
+            void ensureHistoricalRankingsLoaded();
+          }}
+          onMouseEnter={() => {
+            void ensureHistoricalRankingsLoaded();
+          }}
+        >
+          <div className="info-card-heading-copy">
+            <div className="eyebrow">Comparar zonas</div>
+            <h3>Dos trayectorias cara a cara</h3>
+          </div>
+          <p className="comparison-note">{comparisonMetricNote}</p>
+          <div className="info-meta">
+            <span className="chip chip-light">{comparisonSeriesMeta}</span>
+          </div>
+
+          <div className="control-group">
+            <span className="control-label">Ámbito</span>
+            <div className="toggle-row">
+              <button
+                data-active={comparisonZoneLevel === "district"}
+                onClick={() => {
+                  if (comparisonZoneLevel === "district") {
+                    return;
+                  }
+                  setComparisonZoneLevel("district");
+                  setComparisonLeftZoneKey("");
+                  setComparisonRightZoneKey("");
+                  setIsZoneComparisonOpen(false);
+                }}
+                type="button"
+              >
+                Distrito
+              </button>
+              <button
+                data-active={comparisonZoneLevel === "barrio"}
+                onClick={() => {
+                  if (comparisonZoneLevel === "barrio") {
+                    return;
+                  }
+                  setComparisonZoneLevel("barrio");
+                  setComparisonLeftZoneKey("");
+                  setComparisonRightZoneKey("");
+                  setIsZoneComparisonOpen(false);
+                }}
+                type="button"
+              >
+                Barrio
+              </button>
+            </div>
+          </div>
+
+          <div className="control-group">
+            <span className="control-label" id="comparison-left-label">Primera zona</span>
+            <SimplePicker
+              disabled={comparisonZonePickerOptions.length === 0}
+              labelledBy="comparison-left-label"
+              onChange={(nextValue) => {
+                setComparisonLeftZoneKey(nextValue);
+              }}
+              options={comparisonZonePickerOptions}
+              placeholder={comparisonOptionsPlaceholder}
+              value={comparisonLeftZoneKey}
+            />
+          </div>
+
+          <div className="control-group">
+            <span className="control-label" id="comparison-right-label">Segunda zona</span>
+            <SimplePicker
+              disabled={comparisonZonePickerOptions.length === 0}
+              labelledBy="comparison-right-label"
+              onChange={(nextValue) => {
+                setComparisonRightZoneKey(nextValue);
+              }}
+              options={comparisonZonePickerOptions}
+              placeholder={comparisonOptionsPlaceholder}
+              value={comparisonRightZoneKey}
+            />
+          </div>
+
+          <div className="comparison-actions">
+            <button
+              className="sidebar-primary-action"
+              disabled={!canCompareZones}
+              onClick={() => {
+                if (!canCompareZones) {
+                  return;
+                }
+                setIsRiskExplainerOpen(false);
+                setActiveZoneInsight(null);
+                setActiveMetricId(null);
+                setIsHistoricalEvolutionOpen(false);
+                setIsZoneComparisonOpen(true);
+              }}
+              type="button"
+            >
+              Comparar
+            </button>
+            {!canCompareZones && comparisonLeftZoneKey && comparisonRightZoneKey && comparisonLeftZoneKey === comparisonRightZoneKey ? (
+              <p className="comparison-note">Elige dos {comparisonZoneLevel === "district" ? "distritos" : "barrios"} distintos.</p>
+            ) : null}
+            {!isLoadingHistoricalRankings && comparisonOptions.length < 2 ? (
+              <p className="comparison-note">No hay suficiente histórico vigente para comparar dos {comparisonZoneLevel === "district" ? "distritos" : "barrios"} en esta categoría.</p>
+            ) : null}
+          </div>
+        </section>
+
         <section className="detail-card">
           <div className="eyebrow">Hexágono seleccionado</div>
           {detail ? (
             <>
               <h2>{detail.category_desc}</h2>
-              <p className="detail-subtle">Hex {detail.h3_cell}</p>
-              <div className="detail-meta">
-                <span className="chip">{detail.n_locales} locales</span>
-                <span className={`chip${detailSurvival === null ? " chip-muted" : ""}`}>Surv {formatPercent(detailSurvival, detailSupport > 0 ? "Sin datos" : "Sin muestra")}</span>
-                <span className="chip">Soporte {detailSupport}/{detail.n_locales}</span>
-              </div>
               <MetricGrid
                 activeMetricId={activeMetricId}
                 metrics={detailMetrics}
                 onSelect={(metricId) => {
                   setActiveZoneInsight(null);
                   setIsHistoricalEvolutionOpen(false);
+                  setIsZoneComparisonOpen(false);
                   setActiveMetricId(metricId);
                 }}
               />
-              <p className="detail-footnote">{buildDetailSupportNote(detailSupport, detail.n_locales, horizon)}</p>
             </>
           ) : (
             <div className="detail-empty">
@@ -479,7 +649,22 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
       </aside>
 
       <section className="map-panel panel" ref={mapPanelRef}>
-        {isHistoricalEvolutionOpen ? (
+        {isZoneComparisonOpen && canCompareZones ? (
+          <div className="map-overlay panel zone-comparison-overlay">
+            <ZoneComparisonBanner
+              artifacts={historicalRankingArtifacts}
+              categoryCode={selectedCategory}
+              categoryDesc={selectedCategoryMeta.category_desc}
+              comparison={{
+                leftZoneKey: comparisonLeftZoneKey,
+                rightZoneKey: comparisonRightZoneKey,
+                zoneLevel: comparisonZoneLevel,
+              }}
+              isLoading={isLoadingHistoricalRankings}
+              onClose={() => setIsZoneComparisonOpen(false)}
+            />
+          </div>
+        ) : isHistoricalEvolutionOpen ? (
           <div className="map-overlay panel historical-evolution-overlay">
             <HistoricalEvolutionBanner
               artifacts={historicalRankingArtifacts}
@@ -513,12 +698,225 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
           onSelectHex={(hex) => {
             setActiveZoneInsight(null);
             setIsHistoricalEvolutionOpen(false);
+            setIsZoneComparisonOpen(false);
             setSelectedHex(hex);
           }}
           selectedHex={selectedHex}
         />
       </section>
     </main>
+  );
+}
+
+function CategoryPicker({
+  labelledBy,
+  onChange,
+  options,
+  value,
+}: {
+  labelledBy: string;
+  onChange: (value: string) => void;
+  options: CategoryOption[];
+  value: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
+  const pickerRef = useRef<HTMLDivElement | null>(null);
+  const selectedOption = options.find((option) => option.category_code === value) ?? options[0] ?? null;
+
+  useEffect(() => {
+    if (!isOpen || !pickerRef.current) {
+      return;
+    }
+    const triggerRect = pickerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - triggerRect.bottom;
+    const spaceAbove = triggerRect.top;
+    const nextOpenUpward = spaceBelow < 280 && spaceAbove > spaceBelow;
+    setOpenUpward(nextOpenUpward);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (pickerRef.current && event.target instanceof Node && !pickerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
+  if (!selectedOption) {
+    return null;
+  }
+
+  return (
+    <div className="category-picker" ref={pickerRef}>
+      <button
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-labelledby={labelledBy}
+        className="category-picker-trigger"
+        onClick={() => setIsOpen((current) => !current)}
+        type="button"
+      >
+        <span className="category-picker-trigger-copy">
+          <strong className="category-picker-trigger-title">{selectedOption.category_desc}</strong>
+          <span className="category-picker-trigger-subtitle">Elige la categoría que quieras analizar</span>
+        </span>
+        <span aria-hidden="true" className="category-picker-trigger-icon">
+          {isOpen ? "˄" : "˅"}
+        </span>
+      </button>
+
+      {isOpen ? (
+        <div className={`category-picker-menu${openUpward ? " category-picker-menu-up" : ""}`} role="listbox">
+          {options.map((option) => {
+            const isActive = option.category_code === value;
+            return (
+              <button
+                aria-selected={isActive}
+                className="category-picker-option"
+                data-active={isActive}
+                key={option.category_code}
+                onClick={() => {
+                  onChange(option.category_code);
+                  setIsOpen(false);
+                }}
+                role="option"
+                type="button"
+              >
+                {option.category_desc}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function SimplePicker({
+  disabled = false,
+  labelledBy,
+  onChange,
+  options,
+  placeholder = "Selecciona una opción",
+  value,
+}: {
+  disabled?: boolean;
+  labelledBy: string;
+  onChange: (value: string) => void;
+  options: PickerOption[];
+  placeholder?: string;
+  value: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
+  const pickerRef = useRef<HTMLDivElement | null>(null);
+  const selectedOption = options.find((option) => option.value === value) ?? null;
+  const triggerLabel = selectedOption?.label ?? placeholder;
+
+  useEffect(() => {
+    if (!isOpen || !pickerRef.current) {
+      return;
+    }
+    const triggerRect = pickerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - triggerRect.bottom;
+    const spaceAbove = triggerRect.top;
+    const nextOpenUpward = spaceBelow < 280 && spaceAbove > spaceBelow;
+    setOpenUpward(nextOpenUpward);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (pickerRef.current && event.target instanceof Node && !pickerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className="category-picker" ref={pickerRef}>
+      <button
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-labelledby={labelledBy}
+        className="category-picker-trigger"
+        disabled={disabled}
+        onClick={() => {
+          if (disabled) {
+            return;
+          }
+          setIsOpen((current) => !current);
+        }}
+        type="button"
+      >
+        <span className="category-picker-trigger-copy">
+          <strong className="category-picker-trigger-title">{triggerLabel}</strong>
+        </span>
+        <span aria-hidden="true" className="category-picker-trigger-icon">
+          {isOpen ? "˄" : "˅"}
+        </span>
+      </button>
+
+      {isOpen && !disabled ? (
+        <div className={`category-picker-menu${openUpward ? " category-picker-menu-up" : ""}`} role="listbox">
+          {options.map((option) => {
+            const isActive = option.value === value;
+            return (
+              <button
+                aria-selected={isActive}
+                className="category-picker-option"
+                data-active={isActive}
+                key={option.value}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                role="option"
+                type="button"
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -765,8 +1163,15 @@ function formatHexRank(rank: number, total: number) {
   if (total === 1) {
     return "#1 de 1";
   }
+  return `#${rank} de ${total}`;
+}
+
+function formatHexTopShare(rank: number, total: number) {
+  if (total <= 0) {
+    return "-";
+  }
   const topShare = Math.max(1, Math.round((rank / total) * 100));
-  return `#${rank} de ${total} · top ${topShare}%`;
+  return `top ${topShare}%`;
 }
 
 function formatRelativeRiskIndex(value: number | null, missingLabel = "Sin datos") {
@@ -777,10 +1182,6 @@ function formatRelativeRiskIndex(value: number | null, missingLabel = "Sin datos
   return new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(clamped);
 }
 
-function formatRiskValue(value: number) {
-  return value.toFixed(2);
-}
-
 function formatSignedPercent(value: number | null, missingLabel = "Sin muestra") {
   if (!isFiniteNumber(value)) {
     return missingLabel;
@@ -788,6 +1189,14 @@ function formatSignedPercent(value: number | null, missingLabel = "Sin muestra")
   const points = value * 100;
   const prefix = points > 0 ? "+" : "";
   return `${prefix}${points.toFixed(0)} pp`;
+}
+
+function formatSignedIndexPoints(value: number | null, missingLabel = "Sin muestra") {
+  if (!isFiniteNumber(value)) {
+    return missingLabel;
+  }
+  const prefix = value > 0 ? "+" : "";
+  return `${prefix}${new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)} pts`;
 }
 
 function formatSupport(support: number, total: number) {
@@ -884,24 +1293,40 @@ function buildHexMetrics({
   detailSupport,
   detailSurvival,
   horizon,
-  meanSurvival,
-  riskModelLabel
+  meanRiskIndex
 }: {
   detail: HexAggregate;
   detailRank: { rank: number; total: number } | null;
   detailSupport: number;
   detailSurvival: number | null;
   horizon: Horizon;
-  meanSurvival: number | null;
-  riskModelLabel: string;
+  meanRiskIndex: number | null;
 }): MetricDefinition[] {
-  const horizonLabel = formatHorizonShortLabel(horizon);
+  const horizonLabel = horizon === "24m" ? "24 meses" : "12 meses";
+  const rankTopShare = detailRank ? formatHexTopShare(detailRank.rank, detailRank.total) : "-";
+  const desiredOrder = [
+    `hex:${detail.h3_cell}:locales`,
+    `hex:${detail.h3_cell}:city-rank`,
+    `hex:${detail.h3_cell}:risk-percentile`,
+    `hex:${detail.h3_cell}:vs-category`,
+    `hex:${detail.h3_cell}:survival:${horizon}`,
+    `hex:${detail.h3_cell}:support:${horizon}`,
+    `hex:${detail.h3_cell}:barrio-name`,
+    `hex:${detail.h3_cell}:district-name`,
+  ];
   return [
+    {
+      id: `hex:${detail.h3_cell}:locales`,
+      label: "Locales del hexágono",
+      value: new Intl.NumberFormat("es-ES").format(detail.n_locales),
+      summary: "Cuenta cuántos locales históricos caen dentro de este hexágono para la categoría activa.",
+      calculation: "Es el recuento agregado de locales visibles en este hexágono tras aplicar la categoría seleccionada."
+    },
     {
       id: `hex:${detail.h3_cell}:city-rank`,
       label: "Ranking Madrid",
       value: detailRank ? formatHexRank(detailRank.rank, detailRank.total) : "-",
-      summary: "Te dice en qué puesto queda este hexágono dentro de Madrid para la categoría activa cuando ordenas de menor a mayor riesgo.",
+      summary: `Top dinámico actual: ${rankTopShare}. Te dice en qué puesto queda este hexágono dentro de Madrid para la categoría activa cuando ordenas de menor a mayor riesgo.`,
       calculation: "Ordenamos todos los hexágonos visibles de esta categoría por riesgo medio. El puesto #1 es el que sale mejor en esa comparación."
     },
     {
@@ -912,18 +1337,11 @@ function buildHexMetrics({
       calculation: "Convertimos el riesgo del hexágono en un índice entre 0 y 1 comparándolo con el resto de hexágonos de la misma categoría en Madrid. Los valores bajos salen mejor; los altos, peor."
     },
     {
-      id: `hex:${detail.h3_cell}:risk-value`,
-      label: `Score bruto ${riskModelLabel}`,
-      value: formatRiskValue(getPrimaryRiskValue(detail)),
-      summary: "Muestra la señal técnica media del modelo en este hexágono antes de pasarla al índice relativo.",
-      calculation: `Promediamos el score ${riskModelLabel} de los locales históricos de esta categoría que caen dentro del hexágono.`
-    },
-    {
       id: `hex:${detail.h3_cell}:vs-category`,
-      label: `Vs media ${horizonLabel}`,
-      value: formatSignedPercent(computeSurvivalDelta(detailSurvival, meanSurvival), detailSupport > 0 && isFiniteNumber(meanSurvival) ? "Sin datos" : "Sin muestra"),
-      summary: "Compara esta zona con el nivel normal de la categoría activa: positivo es mejor que la media; negativo, peor.",
-      calculation: `Restamos la supervivencia media de la categoría a la supervivencia del hexágono en ${horizonLabel} y expresamos la diferencia en puntos porcentuales.`
+      label: "Índice vs media",
+      value: formatSignedIndexPoints(computeRiskIndexDelta(detail.avg_risk_percentile, meanRiskIndex), isFiniteNumber(meanRiskIndex) ? "Sin datos" : "Sin muestra"),
+      summary: "Compara el índice relativo de este hexágono contra la media de riesgo de la categoría activa en Madrid.",
+      calculation: "Restamos la media de índice relativo de la categoría al índice del hexágono y mostramos la diferencia en puntos de índice. Valores negativos indican mejor posición relativa (menos riesgo) que la media."
     },
     {
       id: `hex:${detail.h3_cell}:survival:${horizon}`,
@@ -953,21 +1371,21 @@ function buildHexMetrics({
       summary: "Añade la referencia administrativa más útil para ubicar la zona de un vistazo.",
       calculation: "Se recupera desde la mejor asignación geográfica disponible entre las secciones históricas y el hexágono H3."
     }
-  ];
+  ].sort((left, right) => desiredOrder.indexOf(left.id) - desiredOrder.indexOf(right.id));
 }
 
 function buildMetricWhyUseful(metric: MetricDefinition) {
+  if (metric.id.endsWith(":locales")) {
+    return "Te da una lectura de tamaño inmediato: ayuda a diferenciar si estás viendo un hexágono muy representativo o uno con base pequeña.";
+  }
   if (metric.id.endsWith(":city-rank")) {
     return "Te ayuda a priorizar rápido: con una sola cifra ves si este hexágono está entre los mejores o peores de la categoría activa dentro de Madrid.";
   }
   if (metric.id.endsWith(":risk-percentile")) {
     return "Es la lectura más fácil de comparar entre zonas: 0,10 se entiende enseguida como mejor posición relativa que 0,70 sin tener que entrar en el score técnico del modelo.";
   }
-  if (metric.id.endsWith(":risk-value")) {
-    return "Sirve como lectura técnica secundaria cuando quieres auditar mejor cómo está ordenando el modelo por debajo del índice relativo.";
-  }
   if (metric.id.endsWith(":vs-category")) {
-    return "Te da contexto relativo: no solo ves cómo rinde el hexágono, sino si está por encima o por debajo del comportamiento normal de la categoría.";
+    return "Te da una lectura relativa inmediata: ves si el riesgo de este hexágono está por encima o por debajo del nivel medio de su categoría en Madrid.";
   }
   if (metric.id.includes(":survival:")) {
     return "Convierte el mapa en una pregunta de negocio muy directa: qué continuidad histórica ha tenido esta categoría aquí en el horizonte elegido.";
@@ -982,6 +1400,9 @@ function buildMetricWhyUseful(metric: MetricDefinition) {
 }
 
 function buildMetricExample(metric: MetricDefinition) {
+  if (metric.id.endsWith(":locales")) {
+    return "Ejemplo: 34 locales significa que el histórico útil de esta categoría en este hexágono está construido con 34 observaciones agregadas.";
+  }
   if (metric.id.endsWith(":city-rank")) {
     return "Ejemplo: #45 de 3.200 significa que este hexágono sale muy arriba dentro del mapa de esa categoría cuando ordenas por menor riesgo.";
   }
@@ -989,7 +1410,7 @@ function buildMetricExample(metric: MetricDefinition) {
     return "Ejemplo: 0,20 indica que el hexágono cae en una franja mejor que buena parte del mapa; equivale aproximadamente a un P20.";
   }
   if (metric.id.endsWith(":vs-category")) {
-    return "Ejemplo: +6 pp significa que la supervivencia del hexágono está 6 puntos porcentuales por encima de la media de la categoría.";
+    return "Ejemplo: -0,08 pts significa que el índice del hexágono está por debajo de la media (mejor posición relativa de riesgo).";
   }
   if (metric.id.includes(":support:")) {
     return "Ejemplo: 18 / 26 quiere decir que 18 locales del total de 26 tienen observación válida para ese horizonte.";
@@ -1176,23 +1597,59 @@ function buildGlobalSupportNote(hexesWithSupport: number, totalHexes: number, ho
   return `La supervivencia media y el color del mapa ignoran hexágonos sin soporte a ${horizonLabel}: ${formatCompact(hexesWithSupport)} de ${formatCompact(totalHexes)} sí tienen datos útiles.`;
 }
 
-function buildDetailSupportNote(support: number, total: number, horizon: Horizon) {
-  const horizonLabel = formatHorizonLongLabel(horizon);
-  if (total <= 0) {
-    return `No hay locales visibles en este hexágono.`;
-  }
-  if (support <= 0) {
-    return `Sin soporte suficiente a ${horizonLabel}: ninguno de los ${total} locales del hexágono permite resolver todavía ese horizonte.`;
-  }
-  if (support < total) {
-    return `Soporte ${horizonLabel}: ${support} de ${total} locales ya permiten medir este horizonte.`;
-  }
-  return `Soporte ${horizonLabel} completo: ${support} de ${total} locales permiten medir este horizonte.`;
-}
-
-function computeSurvivalDelta(value: number | null, baseline: number | null) {
+function computeRiskIndexDelta(value: number | null, baseline: number | null) {
   if (!isFiniteNumber(value) || !isFiniteNumber(baseline)) {
     return null;
   }
   return value - baseline;
 }
+
+function buildZoneComparisonOptions({
+  artifacts,
+  categoryCode,
+  zoneLevel,
+}: {
+  artifacts: HistoricalRankingArtifacts | null;
+  categoryCode: string;
+  zoneLevel: HistoricalZoneLevel;
+}): ZoneComparisonOption[] {
+  if (!artifacts) {
+    return [];
+  }
+
+  const latestYear = artifacts.meta.latest_year;
+  const rows = artifacts.zones[zoneLevel].filter((item) => item.category_code === categoryCode && item.year === latestYear);
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const latestByZone = new Map<string, HistoricalZoneRankingRecord>();
+  for (const row of rows) {
+    const current = latestByZone.get(row.zone_key);
+    if (!current || compareHistoricalRowsByTime(current, row) < 0) {
+      latestByZone.set(row.zone_key, row);
+    }
+  }
+
+  return [...latestByZone.values()]
+    .sort((left, right) => formatZoneComparisonOptionLabel(left, zoneLevel).localeCompare(formatZoneComparisonOptionLabel(right, zoneLevel), "es"))
+    .map((row) => ({
+      label: formatZoneComparisonOptionLabel(row, zoneLevel),
+      zoneKey: row.zone_key,
+    }));
+}
+
+function formatZoneComparisonOptionLabel(row: HistoricalZoneRankingRecord, zoneLevel: HistoricalZoneLevel) {
+  if (zoneLevel === "district" || !row.zone_context_name) {
+    return row.zone_name;
+  }
+  return `${row.zone_name} · ${row.zone_context_name}`;
+}
+
+function compareHistoricalRowsByTime(left: HistoricalZoneRankingRecord, right: HistoricalZoneRankingRecord) {
+  if (left.year !== right.year) {
+    return left.year - right.year;
+  }
+  return left.period.localeCompare(right.period, "es");
+}
+

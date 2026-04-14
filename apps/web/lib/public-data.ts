@@ -90,8 +90,8 @@ export const FALLBACK_HISTORICAL_RANKING_ARTIFACTS: HistoricalRankingArtifacts =
     latest_period: "",
     latest_year_is_partial: false,
     current_series_limit: 4,
-    series_limit: 9,
-    rank_focus_limit: 9,
+    series_limit: 12,
+    rank_focus_limit: 12,
     zone_totals: {
       district: 0,
       barrio: 0,

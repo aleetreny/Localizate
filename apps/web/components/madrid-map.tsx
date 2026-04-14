@@ -131,7 +131,6 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
           <span className="tooltip-subtitle">{tooltip.object.location_label}</span>
           <div className="tooltip-badges">
             <span className="tooltip-chip">{tooltip.object.n_locales} locales</span>
-            <span className="tooltip-chip">{formatTooltipRiskPercentile(tooltip.object.avg_risk_percentile)}</span>
           </div>
           <div className="tooltip-grid">
             <div className="tooltip-item">
@@ -229,11 +228,6 @@ function formatTooltipPercent(value: number | null) {
     return "Sin muestra";
   }
   return `${(value * 100).toFixed(0)}%`;
-}
-
-function formatTooltipRiskPercentile(value: number) {
-  const clamped = Math.max(0, Math.min(1, value));
-  return `P${Math.round(clamped * 100)} riesgo`;
 }
 
 function formatRelativeRiskIndex(value: number | null) {
