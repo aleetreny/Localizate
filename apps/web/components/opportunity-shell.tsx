@@ -543,20 +543,40 @@ function SimplePicker({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
+  const [menuMaxHeight, setMenuMaxHeight] = useState<number | null>(null);
   const pickerRef = useRef<HTMLDivElement | null>(null);
   const selectedOption = options.find((option) => option.value === value) ?? null;
   const triggerLabel = selectedOption?.label ?? placeholder;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isOpen || !pickerRef.current) {
+      setMenuMaxHeight(null);
       return;
     }
-    const triggerRect = pickerRef.current.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    const spaceBelow = viewportHeight - triggerRect.bottom;
-    const spaceAbove = triggerRect.top;
-    const nextOpenUpward = spaceBelow < 280 && spaceAbove > spaceBelow;
-    setOpenUpward(nextOpenUpward);
+
+    function updateMenuPlacement() {
+      if (!pickerRef.current) {
+        return;
+      }
+
+      const triggerRect = pickerRef.current.getBoundingClientRect();
+      const availableBelow = Math.max(0, window.innerHeight - triggerRect.bottom - PICKER_VIEWPORT_PADDING_PX - PICKER_MENU_OFFSET_PX);
+      const availableAbove = Math.max(0, triggerRect.top - PICKER_VIEWPORT_PADDING_PX - PICKER_MENU_OFFSET_PX);
+      const nextOpenUpward = availableAbove > availableBelow;
+      const availableSpace = nextOpenUpward ? availableAbove : availableBelow;
+
+      setOpenUpward(nextOpenUpward);
+      setMenuMaxHeight(Math.min(PICKER_MENU_MAX_HEIGHT_PX, availableSpace));
+    }
+
+    updateMenuPlacement();
+    window.addEventListener("resize", updateMenuPlacement);
+    window.addEventListener("scroll", updateMenuPlacement, true);
+
+    return () => {
+      window.removeEventListener("resize", updateMenuPlacement);
+      window.removeEventListener("scroll", updateMenuPlacement, true);
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -601,7 +621,7 @@ function SimplePicker({
         type="button"
       >
         <span className="category-picker-trigger-copy">
-          <strong className="category-picker-trigger-title">{triggerLabel}</strong>
+          <span className="category-picker-trigger-title">{triggerLabel}</span>
         </span>
         <span aria-hidden="true" className="category-picker-trigger-icon">
           {isOpen ? "˄" : "˅"}
@@ -609,7 +629,11 @@ function SimplePicker({
       </button>
 
       {isOpen && !disabled ? (
-        <div className={`category-picker-menu${openUpward ? " category-picker-menu-up" : ""}`} role="listbox">
+        <div
+          className={`category-picker-menu${openUpward ? " category-picker-menu-up" : ""}`}
+          role="listbox"
+          style={menuMaxHeight === null ? undefined : { maxHeight: `${menuMaxHeight}px` }}
+        >
           {options.map((option) => {
             const isActive = option.value === value;
             return (
@@ -634,6 +658,10 @@ function SimplePicker({
     </div>
   );
 }
+
+const PICKER_VIEWPORT_PADDING_PX = 16;
+const PICKER_MENU_OFFSET_PX = 8;
+const PICKER_MENU_MAX_HEIGHT_PX = 360;
 
 function ListingDetail({
   point,

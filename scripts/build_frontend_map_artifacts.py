@@ -25,6 +25,7 @@ MEDIUM_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-ma
 LARGE_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-map-artifacts-large.json"
 HISTORICAL_RANKING_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-historical-rankings.json"
 HEX_COMPOSITION_HISTORY_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-hex-composition-history.json"
+ZONE_BOUNDARY_OUTPUT = PROJECT_ROOT / "apps" / "web" / "public" / "data" / "frontend-zone-boundaries.json"
 ACTIVITY_GLOSSARY = PROJECT_ROOT / "ACTIVITY_GLOSSARY.md"
 ACTIVITY_NORMALIZATION_AUDIT = PROJECT_ROOT / "data" / "processed" / "activity_code_normalization_audit.csv"
 ACTIVITY_MACRO_TAXONOMY = PROJECT_ROOT / "data" / "processed" / "activity_macro_taxonomy.csv"
@@ -32,6 +33,7 @@ HISTORICAL_LOCALES_DIR = PROJECT_ROOT / "data" / "processed" / "censo_geospatial
 HISTORICAL_ACTIVITIES_DIR = PROJECT_ROOT / "data" / "intermediate" / "censo_snapshots" / "actividades"
 SPATIAL_FALLBACK_CRS = "EPSG:25830"
 SPATIAL_NEAREST_MAX_DISTANCE_M = 75.0
+ZONE_BOUNDARY_SIMPLIFY_TOLERANCE_M = 8.0
 GEOGRAPHY_COLUMNS = ("district_code", "district_name", "barrio_code", "barrio_name")
 HEX_SIZE_SPECS = (
     {"key": "small", "label": "Pequeño", "resolution_offset": 0, "output_path": DEFAULT_OUTPUT},
@@ -163,6 +165,7 @@ def main() -> int:
     generated_at = pd.Timestamp.utcnow().isoformat()
     base_h3_resolution = detect_h3_resolution(merged["h3_cell_start"])
     historical_payload = build_historical_ranking_artifacts(generated_at=generated_at)
+    zone_boundary_payload = build_zone_boundary_artifacts(generated_at=generated_at)
 
     HISTORICAL_RANKING_OUTPUT.write_text(
         json.dumps(historical_payload, ensure_ascii=False, indent=2, allow_nan=False),
@@ -171,6 +174,16 @@ def main() -> int:
     print(
         f"Wrote historical ranking artifacts: {HISTORICAL_RANKING_OUTPUT} "
         f"(district_rows={len(historical_payload['zones']['district']):,}, barrio_rows={len(historical_payload['zones']['barrio']):,})"
+    )
+
+    ZONE_BOUNDARY_OUTPUT.write_text(
+        json.dumps(zone_boundary_payload, ensure_ascii=False, indent=2, allow_nan=False),
+        encoding="utf-8",
+    )
+    print(
+        f"Wrote zone boundary artifacts: {ZONE_BOUNDARY_OUTPUT} "
+        f"(district_features={len(zone_boundary_payload['zones']['district']['features']):,}, "
+        f"barrio_features={len(zone_boundary_payload['zones']['barrio']['features']):,})"
     )
 
     hex_composition_payload = build_hex_composition_history_artifacts(generated_at=generated_at)
@@ -452,16 +465,36 @@ def build_category_options(hexes: list[dict[str, object]], glossary_profiles: di
 
 def build_zone_payloads(frame: pd.DataFrame) -> dict[str, list[dict[str, object]]]:
     return {
-        "district": build_zone_metrics(frame, zone_level="district", zone_code_col="district_code", zone_name_col="district_name"),
-        "barrio": build_zone_metrics(frame, zone_level="barrio", zone_code_col="barrio_code", zone_name_col="barrio_name"),
+        "district": build_zone_metrics(
+            frame,
+            zone_level="district",
+            zone_code_col="district_code",
+            zone_name_col="district_name",
+        ),
+        "barrio": build_zone_metrics(
+            frame,
+            zone_level="barrio",
+            zone_code_col="barrio_code",
+            zone_name_col="barrio_name",
+            zone_context_col="district_name",
+        ),
     }
 
 
-def build_zone_metrics(frame: pd.DataFrame, *, zone_level: str, zone_code_col: str, zone_name_col: str) -> list[dict[str, object]]:
+def build_zone_metrics(
+    frame: pd.DataFrame,
+    *,
+    zone_level: str,
+    zone_code_col: str,
+    zone_name_col: str,
+    zone_context_col: str | None = None,
+) -> list[dict[str, object]]:
     primary_risk_col = resolve_primary_risk_column(frame)
     scoped = frame.copy()
     scoped[zone_name_col] = scoped[zone_name_col].fillna("").astype("string").map(clean_place_name)
     scoped[zone_code_col] = scoped[zone_code_col].fillna("").astype("string")
+    if zone_context_col:
+        scoped[zone_context_col] = scoped[zone_context_col].fillna("").astype("string").map(clean_place_name)
     scoped = scoped[scoped[zone_name_col].ne("")].copy()
 
     min_locales = 80 if zone_level == "district" else 40
@@ -472,6 +505,7 @@ def build_zone_metrics(frame: pd.DataFrame, *, zone_level: str, zone_code_col: s
     for (zone_code, zone_name, category_code, category_desc), part in grouped:
         duration = part["duration_months"]
         event = part["event_observed"]
+        zone_context_name = dominant_place_name(part[zone_context_col]) if zone_context_col else ""
         support_12m, survival_12m = compute_horizon_metrics(duration, event, horizon=12.0)
         support_24m, survival_24m = compute_horizon_metrics(duration, event, horizon=24.0)
         n_locales = int(len(part))
@@ -482,6 +516,7 @@ def build_zone_metrics(frame: pd.DataFrame, *, zone_level: str, zone_code_col: s
                 "zone_level": zone_level,
                 "zone_code": str(zone_code),
                 "zone_name": str(zone_name),
+                "zone_context_name": str(zone_context_name) if zone_context_name else None,
                 "category_code": str(category_code),
                 "category_desc": str(category_desc),
                 "n_locales": n_locales,
@@ -531,6 +566,7 @@ def build_zone_metrics(frame: pd.DataFrame, *, zone_level: str, zone_code_col: s
                 "zone_level": str(row.zone_level),
                 "zone_code": str(row.zone_code),
                 "zone_name": str(row.zone_name),
+                "zone_context_name": str(row.zone_context_name) if pd.notna(row.zone_context_name) and str(row.zone_context_name).strip() else None,
                 "category_code": str(row.category_code),
                 "category_desc": str(row.category_desc),
                 "n_locales": int(row.n_locales),
@@ -1580,6 +1616,114 @@ def build_location_label(barrio_name: str, district_name: str) -> str:
     if district_name:
         return district_name
     return "Madrid"
+
+
+def build_zone_boundary_artifacts(*, generated_at: str) -> dict[str, object]:
+    try:
+        import geopandas as gpd
+    except ModuleNotFoundError as exc:
+        raise ModuleNotFoundError(
+            "geopandas is required to build frontend administrative boundaries. Install requirements.txt first."
+        ) from exc
+
+    from localizate.section_geography import load_section_geodataframe
+
+    sections = load_section_geodataframe()
+    sections["district_code"] = sections["COD_DIS"].map(lambda value: normalize_admin_code_value(value, width=2)).astype("string")
+    sections["district_name"] = sections["NOM_DIS"].map(clean_place_name).astype("string")
+    sections["barrio_code"] = sections["COD_BAR"].map(lambda value: normalize_admin_code_value(value, width=3)).astype("string")
+    sections["barrio_name"] = sections["NOM_BAR"].map(clean_place_name).astype("string")
+    sections = sections.loc[sections.geometry.notna()].copy()
+
+    district_sections = sections.loc[
+        sections["district_code"].ne("") & sections["district_name"].ne(""),
+        ["district_code", "district_name", "geometry"],
+    ].copy()
+    barrio_sections = sections.loc[
+        sections["barrio_code"].ne("") & sections["barrio_name"].ne("") & sections["district_name"].ne(""),
+        ["barrio_code", "barrio_name", "district_name", "geometry"],
+    ].copy()
+
+    district_boundaries = district_sections.dissolve(by=["district_code", "district_name"], as_index=False)
+    barrio_boundaries = barrio_sections.dissolve(by=["barrio_code", "barrio_name", "district_name"], as_index=False)
+
+    district_boundaries = simplify_zone_geometries(
+        district_boundaries,
+        tolerance_m=ZONE_BOUNDARY_SIMPLIFY_TOLERANCE_M * 1.75,
+    )
+    barrio_boundaries = simplify_zone_geometries(
+        barrio_boundaries,
+        tolerance_m=ZONE_BOUNDARY_SIMPLIFY_TOLERANCE_M,
+    )
+
+    return {
+        "meta": {
+            "title": "Madrid Zone Boundaries",
+            "subtitle": "Limites administrativos simplificados para la vista historica por distritos y barrios.",
+            "generated_at": generated_at,
+        },
+        "zones": {
+            "district": serialize_zone_boundary_collection(
+                district_boundaries.sort_values(["district_code", "district_name"]).reset_index(drop=True),
+                zone_level="district",
+                zone_code_col="district_code",
+                zone_name_col="district_name",
+            ),
+            "barrio": serialize_zone_boundary_collection(
+                barrio_boundaries.sort_values(["barrio_code", "district_name", "barrio_name"]).reset_index(drop=True),
+                zone_level="barrio",
+                zone_code_col="barrio_code",
+                zone_name_col="barrio_name",
+                zone_context_col="district_name",
+            ),
+        },
+    }
+
+
+def simplify_zone_geometries(frame: "pd.DataFrame", *, tolerance_m: float):
+    if frame.empty:
+        return frame
+
+    working = frame.copy()
+    if getattr(working, "crs", None) is None:
+        raise ValueError("Section geometry has no CRS; cannot build administrative boundary artifacts safely.")
+
+    working = working.to_crs(SPATIAL_FALLBACK_CRS)
+    working["geometry"] = working.geometry.simplify(float(tolerance_m), preserve_topology=True)
+    working = working.loc[working.geometry.notna() & ~working.geometry.is_empty].copy()
+    return working.to_crs("EPSG:4326")
+
+
+def serialize_zone_boundary_collection(
+    frame: "pd.DataFrame",
+    *,
+    zone_level: str,
+    zone_code_col: str,
+    zone_name_col: str,
+    zone_context_col: str | None = None,
+) -> dict[str, object]:
+    export = frame.copy()
+    export["zone_level"] = zone_level
+    export["zone_code"] = export[zone_code_col].fillna("").astype("string").str.strip()
+    export["zone_name"] = export[zone_name_col].fillna("").astype("string").map(clean_place_name)
+    if zone_context_col:
+        export["zone_context_name"] = export[zone_context_col].fillna("").astype("string").map(clean_place_name)
+    else:
+        export["zone_context_name"] = pd.Series("", index=export.index, dtype="string")
+
+    export = export.loc[export["zone_code"].ne("") & export["zone_name"].ne(""), [
+        "zone_level",
+        "zone_code",
+        "zone_name",
+        "zone_context_name",
+        "geometry",
+    ]].copy()
+
+    payload = json.loads(export.to_json(drop_id=True))
+    for feature in payload.get("features", []):
+        properties = feature.get("properties", {})
+        properties["zone_context_name"] = properties.get("zone_context_name") or None
+    return payload
 
 
 def compute_horizon_metrics(duration: pd.Series, event: pd.Series, *, horizon: float) -> tuple[int, float | None]:

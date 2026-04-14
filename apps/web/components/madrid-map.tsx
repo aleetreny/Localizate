@@ -1,45 +1,94 @@
 "use client";
 
-import type { Color, PickingInfo } from "@deck.gl/core";
+import type { Color, Layer, PickingInfo } from "@deck.gl/core";
 import { H3HexagonLayer } from "@deck.gl/geo-layers";
+import { GeoJsonLayer } from "@deck.gl/layers";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
-import Map, { NavigationControl, useControl, type ViewState } from "react-map-gl/maplibre";
+import MapLibreMap, { NavigationControl, useControl, type ViewState } from "react-map-gl/maplibre";
 
 import { formatHorizonShortLabel, getHorizonSurvival, isFiniteNumber, type Horizon } from "@/lib/horizon";
 import { computeTooltipPosition } from "@/lib/tooltip-position";
-import type { Bounds, ColorScale, HexAggregate } from "@/lib/types";
+import type { Bounds, ColorScale, HexAggregate, HistoricalZoneLevel, ZoneAggregate, ZoneBoundaryFeature } from "@/lib/types";
+
+type MapViewMode = HistoricalZoneLevel | "hex";
 
 type MadridMapProps = {
   bounds: Bounds;
   colorScale: ColorScale;
   hexes: HexAggregate[];
   horizon: Horizon;
-  selectedHex: HexAggregate | null;
+  mapViewMode: MapViewMode;
   onSelectHex: (hex: HexAggregate | null) => void;
+  onSelectZone: (zone: ZoneAggregate | null) => void;
+  selectedHex: HexAggregate | null;
+  selectedZone: ZoneAggregate | null;
+  zoneBoundaries: ZoneBoundaryFeature[];
+  zoneColorFloorLocales: number;
+  zones: ZoneAggregate[];
 };
 
-type TooltipState = {
-  x: number;
-  y: number;
-  object: HexAggregate;
-} | null;
+type TooltipState =
+  | {
+      kind: "hex";
+      object: HexAggregate;
+      x: number;
+      y: number;
+    }
+  | {
+      feature: ZoneBoundaryFeature;
+      kind: "zone";
+      object: ZoneAggregate | null;
+      x: number;
+      y: number;
+    }
+  | null;
 
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
 const INITIAL_ZOOM_INSET = 0.45;
 const INITIAL_LATITUDE_FOCUS_RATIO = 0.36;
+const HEX_LAYER_OPACITY = 0.4;
+const ZONE_LAYER_OPACITY = 0.62;
 
-export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onSelectHex }: MadridMapProps) {
+export function MadridMap({
+  bounds,
+  colorScale,
+  hexes,
+  horizon,
+  mapViewMode,
+  onSelectHex,
+  onSelectZone,
+  selectedHex,
+  selectedZone,
+  zoneBoundaries,
+  zoneColorFloorLocales,
+  zones,
+}: MadridMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ left: number; top: number } | null>(null);
   const [hoveredHexCell, setHoveredHexCell] = useState<string | null>(null);
+  const [hoveredZoneCode, setHoveredZoneCode] = useState<string | null>(null);
   const minZoom = getMinZoom(bounds);
+
   const clearHoverState = useCallback(() => {
     setTooltip(null);
     setHoveredHexCell(null);
+    setHoveredZoneCode(null);
   }, []);
+
+  const zoneLookup = useMemo(() => {
+    const nextLookup = new Map<string, ZoneAggregate>();
+    for (const zone of zones) {
+      nextLookup.set(zone.zone_code, zone);
+    }
+    return nextLookup;
+  }, [zones]);
+
+  const renderedZoneBoundaries = useMemo(() => {
+    return zoneBoundaries.filter((feature) => feature.geometry !== null);
+  }, [zoneBoundaries]);
 
   useLayoutEffect(() => {
     if (!tooltip) {
@@ -58,60 +107,174 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
       computeTooltipPosition({
         anchor: { x: tooltip.x, y: tooltip.y },
         tooltip: { width: bubble.offsetWidth, height: bubble.offsetHeight },
-        viewport: { width: container.clientWidth, height: container.clientHeight }
+        viewport: { width: container.clientWidth, height: container.clientHeight },
       })
     );
-  }, [tooltip, horizon]);
+  }, [horizon, mapViewMode, tooltip]);
 
-  const layers = useMemo(() => {
-    return [
-      new H3HexagonLayer<HexAggregate>({
-        id: "madrid-h3-layer",
-        data: hexes,
+  const layers = useMemo<Layer[]>(() => {
+    if (mapViewMode === "hex") {
+      return [
+        new H3HexagonLayer<HexAggregate>({
+          id: "madrid-h3-layer",
+          data: hexes,
+          pickable: true,
+          filled: true,
+          extruded: false,
+          wireframe: false,
+          opacity: HEX_LAYER_OPACITY,
+          stroked: true,
+          lineWidthMinPixels: 0.6,
+          lineWidthMaxPixels: 10,
+          getLineWidth: (item) =>
+            selectedHex?.h3_cell === item.h3_cell ? 3 : hoveredHexCell === item.h3_cell ? 2 : 0.6,
+          getLineColor: (item) => {
+            if (selectedHex?.h3_cell === item.h3_cell) {
+              return [6, 39, 46, 255];
+            }
+            if (hoveredHexCell === item.h3_cell) {
+              return [255, 180, 0, 255];
+            }
+            return [255, 255, 255, 70];
+          },
+          getHexagon: (item) => item.h3_cell,
+          getFillColor: (item) => colorForRelativeRiskIndex(item.avg_risk_percentile, colorScale),
+          updateTriggers: {
+            getFillColor: [colorScale.min, colorScale.low, colorScale.mid, colorScale.high, colorScale.max],
+            getLineColor: [selectedHex?.h3_cell, hoveredHexCell],
+            getLineWidth: [selectedHex?.h3_cell, hoveredHexCell],
+          },
+          onHover: (info: PickingInfo<HexAggregate>) => {
+            if (!info.object || info.x === undefined || info.y === undefined) {
+              clearHoverState();
+              return;
+            }
+            setTooltip({ x: info.x, y: info.y, kind: "hex", object: info.object });
+            setHoveredHexCell(info.object.h3_cell);
+          },
+          onClick: (info: PickingInfo<HexAggregate>) => {
+            onSelectHex(info.object ?? null);
+          },
+        }),
+      ];
+    }
+
+    const selectedZoneCode =
+      selectedZone?.zone_level === mapViewMode ? selectedZone.zone_code : null;
+    const selectedZoneFeature = selectedZoneCode
+      ? renderedZoneBoundaries.find((feature) => feature.properties.zone_code === selectedZoneCode) ?? null
+      : null;
+    const hoveredZoneFeature =
+      hoveredZoneCode && hoveredZoneCode !== selectedZoneCode
+        ? renderedZoneBoundaries.find((feature) => feature.properties.zone_code === hoveredZoneCode) ?? null
+        : null;
+
+    const zoneLayers: Layer[] = [
+      new GeoJsonLayer<any>({
+        id: `madrid-zone-layer:${mapViewMode}`,
+        data: renderedZoneBoundaries as never,
         pickable: true,
         filled: true,
-        extruded: false,
-        wireframe: false,
-        opacity: 0.46,
         stroked: true,
-        lineWidthMinPixels: 0.6,
-        lineWidthMaxPixels: 10,
-        getLineWidth: (item) =>
-          selectedHex?.h3_cell === item.h3_cell ? 3 : hoveredHexCell === item.h3_cell ? 2 : 0.6,
-        getLineColor: (item) => {
-          if (selectedHex?.h3_cell === item.h3_cell) {
-            return [6, 39, 46, 255];
-          }
-          if (hoveredHexCell === item.h3_cell) {
-            return [255, 180, 0, 255];
-          }
-          return [255, 255, 255, 70];
+        lineWidthMinPixels: 0.9,
+        lineWidthMaxPixels: 12,
+        opacity: ZONE_LAYER_OPACITY,
+        getFillColor: (feature) => {
+          const zone = zoneLookup.get(feature.properties.zone_code) ?? null;
+          return colorForZone(zone, colorScale, zoneColorFloorLocales);
         },
-        getHexagon: (item) => item.h3_cell,
-        getFillColor: (item) => colorForSurvival(getHorizonSurvival(item, horizon), colorScale),
+        getLineColor: [255, 255, 255, 92],
+        getLineWidth: 1,
         updateTriggers: {
-          getFillColor: [horizon, colorScale.min, colorScale.low, colorScale.mid, colorScale.high, colorScale.max],
-          getLineColor: [selectedHex?.h3_cell, hoveredHexCell],
-          getLineWidth: [selectedHex?.h3_cell, hoveredHexCell]
+          getFillColor: [
+            mapViewMode,
+            colorScale.min,
+            colorScale.low,
+            colorScale.mid,
+            colorScale.high,
+            colorScale.max,
+            zoneColorFloorLocales,
+            zones,
+          ],
         },
-        onHover: (info: PickingInfo<HexAggregate>) => {
+        onHover: (info: PickingInfo<ZoneBoundaryFeature>) => {
           if (!info.object || info.x === undefined || info.y === undefined) {
             clearHoverState();
             return;
           }
-          setTooltip({ x: info.x, y: info.y, object: info.object });
-          setHoveredHexCell(info.object.h3_cell);
+
+          const zone = zoneLookup.get(info.object.properties.zone_code) ?? null;
+          setTooltip({ x: info.x, y: info.y, feature: info.object, kind: "zone", object: zone });
+          setHoveredZoneCode(info.object.properties.zone_code);
         },
-        onClick: (info: PickingInfo<HexAggregate>) => {
-          onSelectHex(info.object ?? null);
-        }
-      })
+        onClick: (info: PickingInfo<ZoneBoundaryFeature>) => {
+          if (!info.object) {
+            onSelectZone(null);
+            return;
+          }
+          onSelectZone(zoneLookup.get(info.object.properties.zone_code) ?? null);
+        },
+      }),
     ];
-  }, [clearHoverState, colorScale.high, colorScale.low, colorScale.max, colorScale.mid, colorScale.min, hexes, horizon, onSelectHex, selectedHex?.h3_cell, hoveredHexCell]);
+
+    if (hoveredZoneFeature) {
+      zoneLayers.push(
+        new GeoJsonLayer<any>({
+          id: `madrid-zone-layer:${mapViewMode}:hover-outline`,
+          data: [hoveredZoneFeature] as never,
+          pickable: false,
+          filled: false,
+          stroked: true,
+          lineWidthMinPixels: 2,
+          lineWidthMaxPixels: 16,
+          getLineColor: [255, 180, 0, 255],
+          getLineWidth: 2.4,
+        })
+      );
+    }
+
+    if (selectedZoneFeature) {
+      zoneLayers.push(
+        new GeoJsonLayer<any>({
+          id: `madrid-zone-layer:${mapViewMode}:selected-outline`,
+          data: [selectedZoneFeature] as never,
+          pickable: false,
+          filled: false,
+          stroked: true,
+          lineWidthMinPixels: 3,
+          lineWidthMaxPixels: 18,
+          getLineColor: [6, 39, 46, 255],
+          getLineWidth: 3.6,
+        })
+      );
+    }
+
+    return zoneLayers;
+  }, [
+    clearHoverState,
+    colorScale.high,
+    colorScale.low,
+    colorScale.max,
+    colorScale.mid,
+    colorScale.min,
+    hexes,
+    hoveredHexCell,
+    hoveredZoneCode,
+    mapViewMode,
+    onSelectHex,
+    onSelectZone,
+    renderedZoneBoundaries,
+    selectedHex?.h3_cell,
+    selectedZone?.zone_code,
+    selectedZone?.zone_level,
+    zoneColorFloorLocales,
+    zoneLookup,
+    zones,
+  ]);
 
   return (
     <div className="map-canvas" onPointerLeave={clearHoverState} ref={containerRef}>
-      <Map
+      <MapLibreMap
         key={buildBoundsKey(bounds)}
         initialViewState={buildInitialViewState(bounds, minZoom)}
         mapStyle={MAP_STYLE}
@@ -119,7 +282,7 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
         maxZoom={bounds.max_zoom}
         maxBounds={[
           [bounds.min_lng, bounds.min_lat],
-          [bounds.max_lng, bounds.max_lat]
+          [bounds.max_lng, bounds.max_lat],
         ]}
         dragPan
         scrollZoom
@@ -135,7 +298,7 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
       >
         <NavigationControl position="bottom-right" showCompass={false} />
         <DeckOverlay layers={layers} />
-      </Map>
+      </MapLibreMap>
 
       {tooltip ? (
         <div
@@ -143,30 +306,91 @@ export function MadridMap({ bounds, colorScale, hexes, horizon, selectedHex, onS
           ref={tooltipRef}
           style={tooltipPosition ? tooltipPosition : { left: 0, top: 0, visibility: "hidden" }}
         >
-          <span className="tooltip-kicker">Hexágono histórico</span>
-          <strong className="tooltip-title">{tooltip.object.category_desc}</strong>
-          <span className="tooltip-subtitle">{tooltip.object.location_label}</span>
-          <div className="tooltip-badges">
-            <span className="tooltip-chip">{tooltip.object.n_locales} locales</span>
-          </div>
-          <div className="tooltip-grid">
-            <div className="tooltip-item">
-              <span className="tooltip-label">Supervivencia {formatHorizonShortLabel(horizon)}</span>
-              <strong className="tooltip-value">{formatTooltipPercent(getHorizonSurvival(tooltip.object, horizon))}</strong>
-            </div>
-            <div className="tooltip-item">
-              <span className="tooltip-label">Índice relativo 0-1</span>
-              <strong className="tooltip-value">{formatRelativeRiskIndex(tooltip.object.avg_risk_percentile)}</strong>
-            </div>
-          </div>
-            <small className="tooltip-note">Haz clic para fijar el hexágono y abrir su ficha completa.</small>
+          {tooltip.kind === "hex" ? (
+            <HexTooltip horizon={horizon} object={tooltip.object} />
+          ) : (
+            <ZoneTooltip
+              fallbackFeature={tooltip.feature}
+              horizon={horizon}
+              mapViewMode={mapViewMode}
+              object={tooltip.object}
+            />
+          )}
         </div>
       ) : null}
     </div>
   );
 }
 
-function DeckOverlay({ layers }: { layers: H3HexagonLayer<HexAggregate>[] }) {
+function HexTooltip({ horizon, object }: { horizon: Horizon; object: HexAggregate }) {
+  return (
+    <>
+      <span className="tooltip-kicker">Hexagono</span>
+      <strong className="tooltip-title">{object.category_desc}</strong>
+      <span className="tooltip-subtitle">{object.location_label}</span>
+      <div className="tooltip-badges">
+        <span className="tooltip-chip">{object.n_locales} locales</span>
+      </div>
+      <div className="tooltip-grid">
+        <div className="tooltip-item">
+          <span className="tooltip-label">Surv {formatHorizonShortLabel(horizon)}</span>
+          <strong className="tooltip-value">{formatTooltipPercent(getHorizonSurvival(object, horizon))}</strong>
+        </div>
+        <div className="tooltip-item">
+          <span className="tooltip-label">Indice 0-1</span>
+          <strong className="tooltip-value">{formatRelativeRiskIndex(object.avg_risk_percentile)}</strong>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ZoneTooltip({
+  fallbackFeature,
+  horizon,
+  mapViewMode,
+  object,
+}: {
+  fallbackFeature: ZoneBoundaryFeature;
+  horizon: Horizon;
+  mapViewMode: MapViewMode;
+  object: ZoneAggregate | null;
+}) {
+  const zoneLevel = mapViewMode === "hex" ? "district" : mapViewMode;
+  const zoneLabel = zoneLevel === "district" ? "Distrito" : "Barrio";
+  const zoneName = object?.zone_name ?? fallbackFeature.properties.zone_name;
+  const contextName = object?.zone_context_name ?? fallbackFeature.properties.zone_context_name ?? null;
+
+  return (
+    <>
+      <span className="tooltip-kicker">{zoneLabel}</span>
+      <strong className="tooltip-title">{zoneName}</strong>
+      <span className="tooltip-subtitle">
+        {object?.category_desc ?? "Sin datos de categoria"}
+      </span>
+      <div className="tooltip-badges">
+        {object ? <span className="tooltip-chip">{formatCompact(object.n_locales)} locales</span> : null}
+        {contextName ? <span className="tooltip-chip">{contextName}</span> : null}
+      </div>
+      <div className="tooltip-grid">
+        <div className="tooltip-item">
+          <span className="tooltip-label">Surv {formatHorizonShortLabel(horizon)}</span>
+          <strong className="tooltip-value">
+            {object ? formatTooltipPercent(getHorizonSurvival(object, horizon)) : "Sin muestra"}
+          </strong>
+        </div>
+        <div className="tooltip-item">
+          <span className="tooltip-label">Indice 0-1</span>
+          <strong className="tooltip-value">
+            {object ? formatRelativeRiskIndex(object.avg_risk_percentile) : "Sin datos"}
+          </strong>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function DeckOverlay({ layers }: { layers: Layer[] }) {
   const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay({ interleaved: false }));
 
   overlay.setProps({
@@ -176,7 +400,7 @@ function DeckOverlay({ layers }: { layers: H3HexagonLayer<HexAggregate>[] }) {
         return "grabbing";
       }
       return isHovering ? "pointer" : "grab";
-    }
+    },
   });
 
   return null;
@@ -189,7 +413,7 @@ function buildInitialViewState(bounds: Bounds, minZoom: number): ViewState {
     zoom: minZoom,
     pitch: 0,
     bearing: 0,
-    padding: { top: 0, right: 0, bottom: 0, left: 0 }
+    padding: { top: 0, right: 0, bottom: 0, left: 0 },
   };
 }
 
@@ -201,18 +425,30 @@ function buildBoundsKey(bounds: Bounds) {
   return [bounds.min_lng, bounds.min_lat, bounds.max_lng, bounds.max_lat, bounds.min_zoom, bounds.max_zoom].join(":");
 }
 
-function colorForSurvival(value: number | null, scale: ColorScale): Color {
+function colorForZone(zone: ZoneAggregate | null, scale: ColorScale, zoneColorFloorLocales: number): Color {
+  if (!zone) {
+    return [214, 210, 201, 98];
+  }
+
+  if (!isZoneEligibleForColor(zone, zoneColorFloorLocales) || !isFiniteNumber(zone.avg_risk_percentile)) {
+    return [191, 186, 178, 122];
+  }
+
+  return colorForRelativeRiskIndex(zone.avg_risk_percentile, scale);
+}
+
+function colorForRelativeRiskIndex(value: number | null, scale: ColorScale): Color {
   if (!isFiniteNumber(value)) {
-    return [136, 142, 147, 96];
+    return [136, 142, 147, 78];
   }
 
   const anchors = [scale.min, scale.low, scale.mid, scale.high, scale.max];
   const palette: ReadonlyArray<Color> = [
-    [156, 56, 32, 232],
-    [196, 106, 52, 224],
-    [228, 192, 122, 214],
-    [142, 181, 156, 216],
-    [27, 112, 123, 230]
+    [27, 112, 123, 196],
+    [142, 181, 156, 184],
+    [228, 192, 122, 182],
+    [196, 106, 52, 188],
+    [156, 56, 32, 198],
   ];
 
   if (anchors[0] === anchors[4]) {
@@ -255,6 +491,17 @@ function formatRelativeRiskIndex(value: number | null) {
   return new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(clamped);
 }
 
+function isZoneEligibleForColor(zone: ZoneAggregate, zoneColorFloorLocales: number) {
+  if (zoneColorFloorLocales <= 0) {
+    return zone.n_locales > 0;
+  }
+  return zone.n_locales >= zoneColorFloorLocales;
+}
+
+function formatCompact(value: number) {
+  return new Intl.NumberFormat("es-ES", { notation: "compact", maximumFractionDigits: 1 }).format(value);
+}
+
 function interpolateColor(left: Color, right: Color, ratio: number): Color {
   const clamped = Math.max(0, Math.min(1, ratio));
   const leftAlpha = left[3] ?? 255;
@@ -263,6 +510,6 @@ function interpolateColor(left: Color, right: Color, ratio: number): Color {
     Math.round(left[0] + (right[0] - left[0]) * clamped),
     Math.round(left[1] + (right[1] - left[1]) * clamped),
     Math.round(left[2] + (right[2] - left[2]) * clamped),
-    Math.round(leftAlpha + (rightAlpha - leftAlpha) * clamped)
+    Math.round(leftAlpha + (rightAlpha - leftAlpha) * clamped),
   ] as const;
 }

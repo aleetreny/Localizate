@@ -19,6 +19,7 @@ type HexCategoryCompositionProps = {
   minYear: number;
   maxYear: number;
   onYearChange: (year: number) => void;
+  subjectLabel: string;
 };
 
 type DonutSegment = HexCategoryCompositionItem & {
@@ -45,6 +46,7 @@ export function HexCategoryComposition({
   minYear,
   maxYear,
   onYearChange,
+  subjectLabel,
 }: HexCategoryCompositionProps) {
   const [activeCategoryCode, setActiveCategoryCode] = useState<string | null>(null);
   const [floatingPanelLayout, setFloatingPanelLayout] = useState<FloatingPanelLayout | null>(null);
@@ -157,95 +159,98 @@ export function HexCategoryComposition({
 
   return (
     <>
-      <div aria-label="Reparto histórico por categoría dentro del hexágono seleccionado" className="hex-category-composition">
-      <div className="hex-category-composition-header">
-        <p className="hex-category-composition-copy">
-          Reparte los {formatInteger(totalLocales)} locales del hexágono en {selectedYear} entre las categorías históricas observadas. Pasa por cada color del círculo para abrir el detalle al lado.
-        </p>
-      </div>
+      <div
+        aria-label={`Reparto historico por categoria dentro del ${subjectLabel} seleccionado`}
+        className="hex-category-composition"
+      >
+        <div className="hex-category-composition-header">
+          <p className="hex-category-composition-copy">
+            Reparte los {formatInteger(totalLocales)} locales del {subjectLabel} en {selectedYear} entre las categorias historicas observadas. Pasa por cada color del circulo para abrir el detalle al lado.
+          </p>
+        </div>
 
-      {items.length > 0 ? (
-        <div className="hex-category-composition-layout">
-          <div
-            className="hex-category-composition-chart-shell"
-            onMouseEnter={clearDismissTimer}
-            onMouseLeave={scheduleDismiss}
-            ref={chartShellRef}
-          >
-            <svg
-              aria-label="Composición por categorías del hexágono seleccionado"
-              className="hex-category-composition-chart"
-              role="img"
-              viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
+        {items.length > 0 ? (
+          <div className="hex-category-composition-layout">
+            <div
+              className="hex-category-composition-chart-shell"
+              onMouseEnter={clearDismissTimer}
+              onMouseLeave={scheduleDismiss}
+              ref={chartShellRef}
             >
-              <circle
-                cx={DONUT_CENTER}
-                cy={DONUT_CENTER}
-                fill="none"
-                r={(DONUT_OUTER_RADIUS + DONUT_INNER_RADIUS) / 2}
-                stroke="rgba(23, 32, 38, 0.06)"
-                strokeWidth={DONUT_OUTER_RADIUS - DONUT_INNER_RADIUS}
-              />
-              {segments.map((segment) => {
-                const isActive = segment.categoryCode === activeItem?.categoryCode;
-                const hasSelection = activeItem !== null;
+              <svg
+                aria-label={`Composicion por categorias del ${subjectLabel} seleccionado`}
+                className="hex-category-composition-chart"
+                role="img"
+                viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
+              >
+                <circle
+                  cx={DONUT_CENTER}
+                  cy={DONUT_CENTER}
+                  fill="none"
+                  r={(DONUT_OUTER_RADIUS + DONUT_INNER_RADIUS) / 2}
+                  stroke="rgba(23, 32, 38, 0.06)"
+                  strokeWidth={DONUT_OUTER_RADIUS - DONUT_INNER_RADIUS}
+                />
+                {segments.map((segment) => {
+                  const isActive = segment.categoryCode === activeItem?.categoryCode;
+                  const hasSelection = activeItem !== null;
 
-                return (
-                  <path
-                    aria-label={`${segment.categoryDesc}: ${formatCompositionShare(segment.share)} y ${formatInteger(segment.nLocales)} locales`}
-                    className="hex-category-composition-slice"
-                    d={segment.path}
-                    data-active={isActive}
-                    data-dimmed={hasSelection && !isActive}
-                    fill={segment.color}
-                    fillRule="evenodd"
-                    key={segment.categoryCode}
-                    onMouseEnter={() => activateCategory(segment.categoryCode)}
-                  />
-                );
-              })}
-              <circle
-                cx={DONUT_CENTER}
-                cy={DONUT_CENTER}
-                fill="rgba(255, 250, 242, 0.96)"
-                r={DONUT_INNER_RADIUS - 4}
-                stroke="rgba(23, 32, 38, 0.08)"
-                strokeWidth="1.5"
-              />
-            </svg>
+                  return (
+                    <path
+                      aria-label={`${segment.categoryDesc}: ${formatCompositionShare(segment.share)} y ${formatInteger(segment.nLocales)} locales`}
+                      className="hex-category-composition-slice"
+                      d={segment.path}
+                      data-active={isActive}
+                      data-dimmed={hasSelection && !isActive}
+                      fill={segment.color}
+                      fillRule="evenodd"
+                      key={segment.categoryCode}
+                      onMouseEnter={() => activateCategory(segment.categoryCode)}
+                    />
+                  );
+                })}
+                <circle
+                  cx={DONUT_CENTER}
+                  cy={DONUT_CENTER}
+                  fill="rgba(255, 250, 242, 0.96)"
+                  r={DONUT_INNER_RADIUS - 4}
+                  stroke="rgba(23, 32, 38, 0.08)"
+                  strokeWidth="1.5"
+                />
+              </svg>
+            </div>
+          </div>
+        ) : (
+          <p className="hex-category-composition-empty">
+            Este {subjectLabel} no conserva desglose historico por categoria para {selectedYear} aunque figure dentro de Todos los locales.
+          </p>
+        )}
+
+        <div className="hex-category-composition-year-control">
+          <div className="hex-category-composition-year-header">
+            <span className="hex-category-composition-year-label">Ano</span>
+            <strong className="hex-category-composition-year-value">{selectedYear}</strong>
+          </div>
+          <input
+            aria-label={`Seleccionar ano de la mezcla del ${subjectLabel}`}
+            className="hex-category-composition-year-slider"
+            max={maxYear}
+            min={minYear}
+            onChange={(event) => {
+              const nextYear = Number.parseInt(event.target.value, 10);
+              if (Number.isFinite(nextYear)) {
+                onYearChange(nextYear);
+              }
+            }}
+            step={1}
+            type="range"
+            value={selectedYear}
+          />
+          <div className="hex-category-composition-year-range">
+            <span>{minYear}</span>
+            <span>{maxYear}</span>
           </div>
         </div>
-      ) : (
-        <p className="hex-category-composition-empty">
-          Este hexágono no conserva desglose histórico por categoría para {selectedYear} aunque figure dentro de Todos los locales.
-        </p>
-      )}
-
-      <div className="hex-category-composition-year-control">
-        <div className="hex-category-composition-year-header">
-          <span className="hex-category-composition-year-label">Año</span>
-          <strong className="hex-category-composition-year-value">{selectedYear}</strong>
-        </div>
-        <input
-          aria-label="Seleccionar año de la mezcla del hexágono"
-          className="hex-category-composition-year-slider"
-          max={maxYear}
-          min={minYear}
-          onChange={(event) => {
-            const nextYear = Number.parseInt(event.target.value, 10);
-            if (Number.isFinite(nextYear)) {
-              onYearChange(nextYear);
-            }
-          }}
-          step={1}
-          type="range"
-          value={selectedYear}
-        />
-        <div className="hex-category-composition-year-range">
-          <span>{minYear}</span>
-          <span>{maxYear}</span>
-        </div>
-      </div>
       </div>
 
       {activeItem && typeof document !== "undefined"
@@ -258,7 +263,7 @@ export function HexCategoryComposition({
               ref={hoverPanelRef}
               style={floatingPanelStyle}
             >
-              <span className="hex-category-composition-hover-kicker">Categoría resaltada</span>
+              <span className="hex-category-composition-hover-kicker">Categoria resaltada</span>
               <div className="hex-category-composition-hover-title-row">
                 <span aria-hidden="true" className="hex-category-composition-swatch" style={{ background: activeItem.color }} />
                 <strong className="hex-category-composition-hover-title">{activeItem.categoryDesc}</strong>
@@ -273,11 +278,13 @@ export function HexCategoryComposition({
                   <strong className="hex-category-composition-hover-value">{formatInteger(activeItem.nLocales)}</strong>
                 </div>
                 <div className="hex-category-composition-hover-stat">
-                  <span className="hex-category-composition-hover-label">Posición</span>
+                  <span className="hex-category-composition-hover-label">Posicion</span>
                   <strong className="hex-category-composition-hover-value">#{activeItemRank} de {formatInteger(items.length)}</strong>
                 </div>
               </div>
-              <p className="hex-category-composition-hover-copy">{buildActiveCategoryNarrative(activeItem, totalLocales)}</p>
+              <p className="hex-category-composition-hover-copy">
+                {buildActiveCategoryNarrative(activeItem, totalLocales, subjectLabel)}
+              </p>
             </aside>,
             document.body,
           )
@@ -419,22 +426,22 @@ function formatInteger(value: number) {
   return new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 }).format(value);
 }
 
-function buildActiveCategoryNarrative(item: HexCategoryCompositionItem, totalLocales: number) {
+function buildActiveCategoryNarrative(item: HexCategoryCompositionItem, totalLocales: number, subjectLabel: string) {
   if (totalLocales <= 1 && item.nLocales <= 1) {
-    return "En este hexágono solo se observa 1 local en el periodo seleccionado, así que toda la mezcla corresponde a esta categoría.";
+    return `En este ${subjectLabel} solo se observa 1 local en el periodo seleccionado, asi que toda la mezcla corresponde a esta categoria.`;
   }
 
   if (item.nLocales <= 1) {
-    return `Esta categoría solo aparece en 1 local de los ${formatInteger(totalLocales)} observados en el hexágono, así que su peso histórico aquí es muy puntual.`;
+    return `Esta categoria solo aparece en 1 local de los ${formatInteger(totalLocales)} observados en el ${subjectLabel}, asi que su peso historico aqui es muy puntual.`;
   }
 
   if (item.share >= 0.25) {
-    return "Es una de las categorías dominantes del hexágono: concentra una parte muy visible del histórico local y condiciona bastante la mezcla observada.";
+    return `Es una de las categorias dominantes del ${subjectLabel}: concentra una parte muy visible del historico local y condiciona bastante la mezcla observada.`;
   }
 
   if (item.share >= 0.1) {
-    return "Tiene un peso intermedio dentro del hexágono: no domina la mezcla, pero sí aparece con suficiente frecuencia como para dejar una huella clara.";
+    return `Tiene un peso intermedio dentro del ${subjectLabel}: no domina la mezcla, pero si aparece con suficiente frecuencia como para dejar una huella clara.`;
   }
 
-  return "Su presencia es minoritaria dentro del hexágono: forma parte de la mezcla histórica, pero queda por detrás de las categorías principales.";
+  return `Su presencia es minoritaria dentro del ${subjectLabel}: forma parte de la mezcla historica, pero queda por detras de las categorias principales.`;
 }

@@ -358,25 +358,24 @@ export function OpportunityMap({
           ref={tooltipRef}
           style={tooltipPosition ? tooltipPosition : { left: 0, top: 0, visibility: "hidden" }}
         >
-          <span className="tooltip-kicker">Local disponible</span>
+          <span className="tooltip-kicker">Local</span>
           <strong className="tooltip-title">{tooltip.point.card_title}</strong>
           <span className="tooltip-subtitle">{tooltip.point.barrio_name}, {tooltip.point.district_name}</span>
-          <span className="tooltip-subtitle">Actividad sugerida: {tooltip.point.best_activity_label || "Sin ranking"}</span>
           <div className="tooltip-badges">
             <span className="tooltip-chip">{tooltip.point.operation}</span>
             <span className="tooltip-chip">{formatTooltipPrice(tooltip.point.price_eur)}</span>
+            {tooltip.point.best_activity_label ? <span className="tooltip-chip">{tooltip.point.best_activity_label}</span> : null}
           </div>
           <div className="tooltip-grid">
             <div className="tooltip-item">
-              <span className="tooltip-label">Supervivencia {formatHorizonShortLabel(horizon)}</span>
+              <span className="tooltip-label">Surv {formatHorizonShortLabel(horizon)}</span>
               <strong className="tooltip-value">{formatTooltipPercent(getPointSurvival(tooltip.point, horizon))}</strong>
             </div>
             <div className="tooltip-item">
-              <span className="tooltip-label">Riesgo relativo</span>
+              <span className="tooltip-label">Riesgo</span>
               <strong className="tooltip-value">{formatRiskPercentile(tooltip.point.risk_percentile)}</strong>
             </div>
           </div>
-          <small className="tooltip-note">Haz clic para abrir la ficha del local.</small>
         </div>
       ) : null}
     </div>

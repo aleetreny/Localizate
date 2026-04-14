@@ -59,6 +59,7 @@ export type ZoneAggregate = {
   zone_level: "district" | "barrio";
   zone_code: string;
   zone_name: string;
+  zone_context_name?: string | null;
   category_code: string;
   category_desc: string;
   n_locales: number;
@@ -90,6 +91,39 @@ export type FrontendArtifacts = {
 };
 
 export type HistoricalZoneLevel = "district" | "barrio";
+
+export type ZoneBoundaryGeometry = {
+  type: string;
+  coordinates: unknown;
+};
+
+export type ZoneBoundaryFeature = {
+  type: "Feature";
+  geometry: ZoneBoundaryGeometry | null;
+  properties: {
+    zone_level: HistoricalZoneLevel;
+    zone_code: string;
+    zone_name: string;
+    zone_context_name: string | null;
+  };
+};
+
+export type ZoneBoundaryCollection = {
+  type: "FeatureCollection";
+  features: ZoneBoundaryFeature[];
+};
+
+export type ZoneBoundaryArtifacts = {
+  meta: {
+    title: string;
+    subtitle: string;
+    generated_at: string;
+  };
+  zones: {
+    district: ZoneBoundaryCollection;
+    barrio: ZoneBoundaryCollection;
+  };
+};
 
 export type HistoricalRankingMeta = {
   title: string;

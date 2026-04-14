@@ -1,5 +1,11 @@
 import { DEFAULT_HEX_SIZE, type HexSize } from "@/lib/hex-size";
-import type { FrontendArtifacts, HexCompositionHistoryArtifacts, HistoricalRankingArtifacts, OpportunityArtifacts } from "@/lib/types";
+import type {
+  FrontendArtifacts,
+  HexCompositionHistoryArtifacts,
+  HistoricalRankingArtifacts,
+  OpportunityArtifacts,
+  ZoneBoundaryArtifacts,
+} from "@/lib/types";
 
 export const MAP_ARTIFACTS_PATHS: Record<HexSize, string> = {
   small: "/data/frontend-map-artifacts.json",
@@ -9,6 +15,7 @@ export const MAP_ARTIFACTS_PATHS: Record<HexSize, string> = {
 export const OPPORTUNITY_ARTIFACTS_PATH = "/data/frontend-opportunity-artifacts.json";
 export const HISTORICAL_RANKING_ARTIFACTS_PATH = "/data/frontend-historical-rankings.json";
 export const HEX_COMPOSITION_HISTORY_ARTIFACTS_PATH = "/data/frontend-hex-composition-history.json";
+export const ZONE_BOUNDARY_ARTIFACTS_PATH = "/data/frontend-zone-boundaries.json";
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 export const FALLBACK_MAP_ARTIFACTS: FrontendArtifacts = {
@@ -118,10 +125,29 @@ export const FALLBACK_HEX_COMPOSITION_HISTORY_ARTIFACTS: HexCompositionHistoryAr
   hexes: [],
 };
 
+export const FALLBACK_ZONE_BOUNDARY_ARTIFACTS: ZoneBoundaryArtifacts = {
+  meta: {
+    title: "Madrid Zone Boundaries",
+    subtitle: "Limites administrativos pendientes de materializar.",
+    generated_at: new Date(0).toISOString(),
+  },
+  zones: {
+    district: {
+      type: "FeatureCollection",
+      features: [],
+    },
+    barrio: {
+      type: "FeatureCollection",
+      features: [],
+    },
+  },
+};
+
 const mapArtifactsPromises = new Map<HexSize, Promise<FrontendArtifacts>>();
 let opportunityArtifactsPromise: Promise<OpportunityArtifacts> | null = null;
 let historicalRankingArtifactsPromise: Promise<HistoricalRankingArtifacts> | null = null;
 let hexCompositionHistoryArtifactsPromise: Promise<HexCompositionHistoryArtifacts> | null = null;
+let zoneBoundaryArtifactsPromise: Promise<ZoneBoundaryArtifacts> | null = null;
 
 export function loadMapArtifactsFromPublic(hexSize: HexSize = DEFAULT_HEX_SIZE) {
   const path = MAP_ARTIFACTS_PATHS[hexSize];
@@ -172,9 +198,22 @@ export function loadHexCompositionHistoryFromPublic() {
   return hexCompositionHistoryArtifactsPromise;
 }
 
+export function loadZoneBoundariesFromPublic() {
+  if (!IS_PRODUCTION) {
+    return fetchPublicJson(ZONE_BOUNDARY_ARTIFACTS_PATH, FALLBACK_ZONE_BOUNDARY_ARTIFACTS);
+  }
+
+  zoneBoundaryArtifactsPromise ??= fetchPublicJson(
+    ZONE_BOUNDARY_ARTIFACTS_PATH,
+    FALLBACK_ZONE_BOUNDARY_ARTIFACTS
+  );
+  return zoneBoundaryArtifactsPromise;
+}
+
 export function prefetchArtifactsForView(href: string) {
   if (href === "/") {
     void loadMapArtifactsFromPublic();
+    void loadZoneBoundariesFromPublic();
     return;
   }
 

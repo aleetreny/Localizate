@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { HexCategoryComposition, type HexCategoryCompositionItem } from "@/components/hex-category-composition";
 import { HistoricalEvolutionBanner } from "@/components/historical-evolution-banner";
@@ -9,7 +9,13 @@ import { ViewTabs } from "@/components/view-tabs";
 import { ZoneComparisonBanner } from "@/components/zone-comparison-banner";
 import { DEFAULT_HEX_SIZE, formatHexSizeLabel, HEX_SIZE_OPTIONS, type HexSize } from "@/lib/hex-size";
 import { formatHorizonLongLabel, formatHorizonShortLabel, getHorizonSupport, getHorizonSurvival, isFiniteNumber, type Horizon } from "@/lib/horizon";
-import { FALLBACK_MAP_ARTIFACTS, loadHexCompositionHistoryFromPublic, loadHistoricalRankingsFromPublic, loadMapArtifactsFromPublic } from "@/lib/public-data";
+import {
+  FALLBACK_MAP_ARTIFACTS,
+  loadHexCompositionHistoryFromPublic,
+  loadHistoricalRankingsFromPublic,
+  loadMapArtifactsFromPublic,
+  loadZoneBoundariesFromPublic,
+} from "@/lib/public-data";
 import type {
   ColorScale,
   FrontendArtifacts,
@@ -20,6 +26,7 @@ import type {
   HistoricalZoneLevel,
   HistoricalZoneRankingRecord,
   ZoneAggregate,
+  ZoneBoundaryArtifacts,
 } from "@/lib/types";
 
 type MapShellProps = {
@@ -33,6 +40,8 @@ type MetricDefinition = {
   summary: string;
   calculation: string;
 };
+
+type MapViewMode = HistoricalZoneLevel | "hex";
 
 type ZoneListProps = {
   districtZones: ZoneAggregate[];
@@ -88,10 +97,37 @@ type HexCategoryColorStats = {
   nLocales: number;
 };
 
+type MapAggregateMetrics = {
+  avg_risk_percentile: number;
+  n_locales: number;
+  support_12m: number;
+  support_24m: number;
+  survival_12m: number | null;
+  survival_24m: number | null;
+};
+
+type VisibleStats = {
+  locales: number;
+  meanRelativeRisk: number | null;
+  meanSurvival: number | null;
+  units: number;
+  unitsWithSupport: number;
+};
+
+type ZoneCompositionHistoryIndex = {
+  byCode: Map<string, HistoricalZoneRankingRecord[]>;
+  byIdentity: Map<string, HistoricalZoneRankingRecord[]>;
+};
+
 const HEX_COMPOSITION_YEAR_MIN = 2015;
 const HEX_COMPOSITION_YEAR_MAX = 2026;
 const MIN_UNSUPPORTED_BARRIO_LOCALES = 5;
 const MIN_UNSUPPORTED_DISTRICT_LOCALES = 10;
+const DISTRICT_COLOR_FLOOR_MIN = 4;
+const DISTRICT_COLOR_FLOOR_MAX = 24;
+const BARRIO_COLOR_FLOOR_MIN = 2;
+const BARRIO_COLOR_FLOOR_MAX = 16;
+const ZONE_COLOR_FLOOR_QUANTILE = 0.2;
 const ZONE_ACTIVITY_VISIBLE_LIMIT = 5;
 const ZONE_ACTIVITY_PRIOR_STRENGTH = 25;
 const ZONE_ACTIVITY_UNSUPPORTED_PENALTY = 0.03;
@@ -102,15 +138,18 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   const [isLoadingArtifacts, setIsLoadingArtifacts] = useState(!initialArtifacts);
   const [isSwitchingHexSize, setIsSwitchingHexSize] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState((initialArtifacts ?? FALLBACK_MAP_ARTIFACTS).meta.defaultCategoryCode);
-  const [horizon, setHorizon] = useState<Horizon>("24m");
+  const horizon: Horizon = "24m";
+  const [mapViewMode, setMapViewMode] = useState<MapViewMode>("district");
   const [hexSize, setHexSize] = useState<HexSize>(DEFAULT_HEX_SIZE);
   const [selectedHex, setSelectedHex] = useState<HexAggregate | null>(null);
+  const [selectedZone, setSelectedZone] = useState<ZoneAggregate | null>(null);
   const [activeMetricId, setActiveMetricId] = useState<string | null>(null);
   const [isRiskExplainerOpen, setIsRiskExplainerOpen] = useState(false);
   const [activeZoneInsight, setActiveZoneInsight] = useState<ZoneActivityInsight | null>(null);
   const [historicalRankingArtifacts, setHistoricalRankingArtifacts] = useState<HistoricalRankingArtifacts | null>(null);
   const [hexCompositionHistoryArtifacts, setHexCompositionHistoryArtifacts] = useState<HexCompositionHistoryArtifacts | null>(null);
-  const [hexCompositionYear, setHexCompositionYear] = useState(HEX_COMPOSITION_YEAR_MAX);
+  const [zoneBoundaryArtifacts, setZoneBoundaryArtifacts] = useState<ZoneBoundaryArtifacts | null>(null);
+  const [compositionYear, setCompositionYear] = useState(HEX_COMPOSITION_YEAR_MAX);
   const [historicalZoneLevel, setHistoricalZoneLevel] = useState<HistoricalZoneLevel>("district");
   const [isHistoricalEvolutionOpen, setIsHistoricalEvolutionOpen] = useState(false);
   const [comparisonZoneLevel, setComparisonZoneLevel] = useState<HistoricalZoneLevel>("district");
@@ -118,11 +157,13 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   const [comparisonRightZoneKey, setComparisonRightZoneKey] = useState("");
   const [isZoneComparisonOpen, setIsZoneComparisonOpen] = useState(false);
   const [isLoadingHistoricalRankings, setIsLoadingHistoricalRankings] = useState(false);
+  const [isLoadingZoneBoundaries, setIsLoadingZoneBoundaries] = useState(false);
   const loadedArtifactsRef = useRef<Partial<Record<HexSize, FrontendArtifacts>>>(
     initialArtifacts ? { [DEFAULT_HEX_SIZE]: initialArtifacts } : {}
   );
   const historicalRankingsRequestRef = useRef<Promise<HistoricalRankingArtifacts> | null>(null);
   const hexCompositionHistoryRequestRef = useRef<Promise<HexCompositionHistoryArtifacts> | null>(null);
+  const zoneBoundariesRequestRef = useRef<Promise<ZoneBoundaryArtifacts> | null>(null);
   const mapPanelRef = useRef<HTMLElement | null>(null);
 
   const ensureHistoricalRankingsLoaded = useCallback(async () => {
@@ -176,8 +217,39 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
   }, [hexCompositionHistoryArtifacts]);
 
   useEffect(() => {
+    if (mapViewMode !== "hex" || selectedCategory !== "__all__") {
+      return;
+    }
     void ensureHexCompositionHistoryLoaded();
-  }, [ensureHexCompositionHistoryLoaded]);
+  }, [ensureHexCompositionHistoryLoaded, mapViewMode, selectedCategory]);
+
+  const ensureZoneBoundariesLoaded = useCallback(async () => {
+    if (zoneBoundaryArtifacts) {
+      return zoneBoundaryArtifacts;
+    }
+
+    if (zoneBoundariesRequestRef.current) {
+      return zoneBoundariesRequestRef.current;
+    }
+
+    setIsLoadingZoneBoundaries(true);
+    const request = loadZoneBoundariesFromPublic()
+      .then((nextArtifacts) => {
+        setZoneBoundaryArtifacts(nextArtifacts);
+        return nextArtifacts;
+      })
+      .finally(() => {
+        zoneBoundariesRequestRef.current = null;
+        setIsLoadingZoneBoundaries(false);
+      });
+
+    zoneBoundariesRequestRef.current = request;
+    return request;
+  }, [zoneBoundaryArtifacts]);
+
+  useEffect(() => {
+    void ensureZoneBoundariesLoaded();
+  }, [ensureZoneBoundariesLoaded]);
 
   useEffect(() => {
     let alive = true;
@@ -231,12 +303,19 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
       return;
     }
 
-    if (artifacts.hexes.some((item) => item.h3_cell === selectedHex.h3_cell && item.category_code === selectedHex.category_code)) {
+    const matchedHex = artifacts.hexes.find(
+      (item) => item.h3_cell === selectedHex.h3_cell && item.category_code === selectedHex.category_code
+    );
+    if (matchedHex) {
+      if (matchedHex !== selectedHex) {
+        setSelectedHex(matchedHex);
+      }
       return;
     }
 
     setSelectedHex(null);
   }, [artifacts.hexes, selectedHex]);
+
 
   const selectedCategoryMeta = useMemo(() => {
     return artifacts.categories.find((item) => item.category_code === selectedCategory) ?? artifacts.categories[0];
@@ -254,47 +333,101 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
     return artifacts.zones.barrio.filter((item) => item.category_code === selectedCategory);
   }, [artifacts.zones.barrio, selectedCategory]);
 
-  const colorScale = useMemo(() => buildColorScale(filteredHexes, horizon), [filteredHexes, horizon]);
+  const districtZoneColorThresholds = useMemo(
+    () => buildZoneColorThresholds(artifacts.zones.district, "district"),
+    [artifacts.zones.district]
+  );
 
-  const activeStats = useMemo(() => {
-    if (filteredHexes.length === 0) {
-      return {
-        locales: 0,
-        hexes: 0,
-        hexesWithSupport: 0,
-        meanSurvival: null,
-        meanRelativeRisk: null
-      };
+  const barrioZoneColorThresholds = useMemo(
+    () => buildZoneColorThresholds(artifacts.zones.barrio, "barrio"),
+    [artifacts.zones.barrio]
+  );
+
+  useEffect(() => {
+    if (!selectedZone) {
+      return;
     }
 
-    const locales = filteredHexes.reduce((sum, item) => sum + item.n_locales, 0);
-    const survivalTotals = filteredHexes.reduce(
-      (accumulator, item) => {
-        const support = getHorizonSupport(item, horizon);
-        const survival = getHorizonSurvival(item, horizon);
-        if (support > 0 && isFiniteNumber(survival)) {
-          accumulator.supportedHexes += 1;
-          accumulator.supportedLocales += support;
-          accumulator.weightedSurvival += support * survival;
-        }
-        return accumulator;
-      },
-      { supportedHexes: 0, supportedLocales: 0, weightedSurvival: 0 }
+    const zonePool = selectedZone.zone_level === "district" ? filteredDistrictZones : filteredBarrioZones;
+    const matchedZone = zonePool.find(
+      (item) => item.zone_code === selectedZone.zone_code && item.category_code === selectedZone.category_code
     );
-    const meanRelativeRisk = filteredHexes.reduce((sum, item) => sum + item.n_locales * item.avg_risk_percentile, 0) / locales;
+    if (matchedZone) {
+      if (matchedZone !== selectedZone) {
+        setSelectedZone(matchedZone);
+      }
+      return;
+    }
 
-    return {
-      locales,
-      hexes: filteredHexes.length,
-      hexesWithSupport: survivalTotals.supportedHexes,
-      meanSurvival: survivalTotals.supportedLocales > 0 ? survivalTotals.weightedSurvival / survivalTotals.supportedLocales : null,
-      meanRelativeRisk
-    };
-  }, [filteredHexes, horizon]);
+    setSelectedZone(null);
+  }, [filteredBarrioZones, filteredDistrictZones, selectedZone]);
 
-  const detail = selectedHex;
-  const detailSurvival = detail ? getHorizonSurvival(detail, horizon) : null;
-  const detailSupport = detail ? getHorizonSupport(detail, horizon) : 0;
+  const currentZoneRows = useMemo(() => {
+    if (mapViewMode === "district") {
+      return filteredDistrictZones;
+    }
+    if (mapViewMode === "barrio") {
+      return filteredBarrioZones;
+    }
+    return [];
+  }, [filteredBarrioZones, filteredDistrictZones, mapViewMode]);
+
+  const currentZoneBoundaries = useMemo(() => {
+    if (!zoneBoundaryArtifacts || mapViewMode === "hex") {
+      return [];
+    }
+    return zoneBoundaryArtifacts.zones[mapViewMode].features;
+  }, [mapViewMode, zoneBoundaryArtifacts]);
+
+  const currentMapRows = useMemo<MapAggregateMetrics[]>(() => {
+    return mapViewMode === "hex" ? filteredHexes : currentZoneRows;
+  }, [currentZoneRows, filteredHexes, mapViewMode]);
+
+  const currentZoneColorFloor = useMemo(() => {
+    if (mapViewMode === "district") {
+      return districtZoneColorThresholds.get(selectedCategory) ?? DISTRICT_COLOR_FLOOR_MIN;
+    }
+    if (mapViewMode === "barrio") {
+      return barrioZoneColorThresholds.get(selectedCategory) ?? BARRIO_COLOR_FLOOR_MIN;
+    }
+    return 0;
+  }, [barrioZoneColorThresholds, districtZoneColorThresholds, mapViewMode, selectedCategory]);
+
+  const colorableMapRows = useMemo<MapAggregateMetrics[]>(() => {
+    if (mapViewMode === "hex") {
+      return filteredHexes;
+    }
+    return currentZoneRows.filter((item) => item.n_locales >= currentZoneColorFloor);
+  }, [currentZoneColorFloor, currentZoneRows, filteredHexes, mapViewMode]);
+
+  const colorScale = useMemo(() => buildColorScale(colorableMapRows), [colorableMapRows]);
+
+  const activeStats = useMemo(() => buildVisibleStats(currentMapRows, horizon), [currentMapRows, horizon]);
+
+  const selectedZoneForView = useMemo(() => {
+    if (mapViewMode === "hex") {
+      return null;
+    }
+    if (!selectedZone || selectedZone.zone_level !== mapViewMode) {
+      return null;
+    }
+    return selectedZone;
+  }, [mapViewMode, selectedZone]);
+
+  const detailHex = mapViewMode === "hex" ? selectedHex : null;
+  const detailZone = selectedZoneForView;
+  const detailSurvival = detailHex
+    ? getHorizonSurvival(detailHex, horizon)
+    : detailZone
+      ? getHorizonSurvival(detailZone, horizon)
+      : null;
+  const detailSupport = detailHex
+    ? getHorizonSupport(detailHex, horizon)
+    : detailZone
+      ? getHorizonSupport(detailZone, horizon)
+      : 0;
+  const activeUnitLabelPlural = getMapViewUnitLabel(mapViewMode, true);
+  const activeUnitLabelSingular = getMapViewUnitLabel(mapViewMode, false);
 
   const hasHexCompositionHistory = (hexCompositionHistoryArtifacts?.meta.years.length ?? 0) > 0;
   const hexCategoryColorMap = useMemo(() => buildHexCategoryColorMap(artifacts.hexes), [artifacts.hexes]);
@@ -318,82 +451,191 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
     return index;
   }, [hexCompositionHistoryArtifacts]);
 
+  const zoneCompositionHistoryIndex = useMemo<ZoneCompositionHistoryIndex>(() => {
+    const grouped = new Map<string, HistoricalZoneRankingRecord[]>();
+    const byCode = new Map<string, HistoricalZoneRankingRecord[]>();
+    const byIdentity = new Map<string, HistoricalZoneRankingRecord[]>();
+    if (!historicalRankingArtifacts) {
+      return { byCode, byIdentity };
+    }
+
+    for (const zoneLevel of ["district", "barrio"] as const) {
+      for (const row of historicalRankingArtifacts.zones[zoneLevel]) {
+        const key = `${zoneLevel}::${row.year}::${row.zone_key}`;
+        const bucket = grouped.get(key);
+        if (bucket) {
+          bucket.push(row);
+        } else {
+          grouped.set(key, [row]);
+        }
+      }
+    }
+
+    for (const bucket of grouped.values()) {
+      const sample = bucket[0];
+      if (!sample) {
+        continue;
+      }
+
+      byCode.set(`${sample.zone_level}::${sample.year}::${sample.zone_key}`, bucket);
+      byCode.set(`${sample.zone_level}::${sample.year}::${sample.zone_code}`, bucket);
+
+      for (const identityKey of buildZoneHistoryIdentityKeys(
+        sample.zone_level,
+        sample.zone_name,
+        sample.zone_context_name
+      )) {
+        byIdentity.set(`${sample.zone_level}::${sample.year}::${identityKey}`, bucket);
+      }
+    }
+
+    return { byCode, byIdentity };
+  }, [historicalRankingArtifacts]);
+
+  const compositionYears = useMemo(() => {
+    if (mapViewMode === "hex") {
+      return (hexCompositionHistoryArtifacts?.meta.years ?? []).filter(
+        (year) => year >= HEX_COMPOSITION_YEAR_MIN && year <= HEX_COMPOSITION_YEAR_MAX
+      );
+    }
+    return historicalRankingArtifacts?.meta.years ?? [];
+  }, [hexCompositionHistoryArtifacts, historicalRankingArtifacts, mapViewMode]);
+
   useEffect(() => {
-    if (!hasHexCompositionHistory) {
+    if (compositionYears.length === 0) {
       return;
     }
 
-    const availableYears = new Set(
-      (hexCompositionHistoryArtifacts?.meta.years ?? []).filter(
-        (year) => year >= HEX_COMPOSITION_YEAR_MIN && year <= HEX_COMPOSITION_YEAR_MAX
-      )
-    );
+    const availableYears = new Set(compositionYears);
     if (availableYears.size === 0) {
       return;
     }
 
-    setHexCompositionYear((currentYear) => {
+    setCompositionYear((currentYear) => {
       if (availableYears.has(currentYear)) {
         return currentYear;
       }
 
-      for (let year = HEX_COMPOSITION_YEAR_MAX; year >= HEX_COMPOSITION_YEAR_MIN; year -= 1) {
-        if (availableYears.has(year)) {
-          return year;
-        }
-      }
-
-      return currentYear;
+      return compositionYears[compositionYears.length - 1] ?? currentYear;
     });
-  }, [hasHexCompositionHistory, hexCompositionHistoryArtifacts]);
+  }, [compositionYears]);
 
   const detailCategoryCompositionState = useMemo(() => {
-    if (!detail || selectedCategory !== "__all__") {
+    if (selectedCategory !== "__all__") {
       return { items: [], totalLocales: 0 };
     }
 
-    if (!hasHexCompositionHistory) {
+    if (detailHex) {
+      if (!hasHexCompositionHistory) {
+        return {
+          items: buildHexCategoryComposition(artifacts.hexes, detailHex, hexCategoryColorMap),
+          totalLocales: detailHex.n_locales,
+        };
+      }
+
+      const historyRows = hexCompositionHistoryIndex.get(`${compositionYear}::${detailHex.h3_cell}`) ?? [];
+      return buildHexCategoryCompositionForYear(historyRows, hexCategoryColorMap);
+    }
+
+    if (!detailZone) {
+      return { items: [], totalLocales: 0 };
+    }
+
+    if (!historicalRankingArtifacts) {
       return {
-        items: buildHexCategoryComposition(artifacts.hexes, detail, hexCategoryColorMap),
-        totalLocales: detail.n_locales,
+        items: buildZoneCategoryComposition(
+          detailZone.zone_level === "district" ? artifacts.zones.district : artifacts.zones.barrio,
+          detailZone,
+          hexCategoryColorMap
+        ),
+        totalLocales: detailZone.n_locales,
       };
     }
 
-    const historyRows = hexCompositionHistoryIndex.get(`${hexCompositionYear}::${detail.h3_cell}`) ?? [];
-    return buildHexCategoryCompositionForYear(historyRows, hexCategoryColorMap);
-  }, [artifacts.hexes, detail, hasHexCompositionHistory, hexCategoryColorMap, hexCompositionHistoryIndex, hexCompositionYear, selectedCategory]);
+    const historyRows = resolveZoneCompositionHistoryRows(zoneCompositionHistoryIndex, detailZone, compositionYear);
+    return buildZoneCategoryCompositionForYear(historyRows, hexCategoryColorMap);
+  }, [
+    artifacts.hexes,
+    artifacts.zones.barrio,
+    artifacts.zones.district,
+    compositionYear,
+    detailHex,
+    detailZone,
+    hasHexCompositionHistory,
+    hexCategoryColorMap,
+    hexCompositionHistoryIndex,
+    historicalRankingArtifacts,
+    selectedCategory,
+    zoneCompositionHistoryIndex,
+  ]);
 
   const detailCategoryComposition = detailCategoryCompositionState.items;
   const detailCategoryCompositionTotalLocales = detailCategoryCompositionState.totalLocales;
+  const currentRankableZoneRows = useMemo(() => {
+    return currentZoneRows.filter((item) => item.n_locales >= currentZoneColorFloor);
+  }, [currentZoneColorFloor, currentZoneRows]);
 
-  const detailRank = useMemo(() => {
-    if (!detail) {
+  const meanRiskIndexForDetail = useMemo(() => {
+    return mapViewMode === "hex"
+      ? computeWeightedMeanRiskIndex(filteredHexes)
+      : computeWeightedMeanRiskIndex(currentRankableZoneRows);
+  }, [currentRankableZoneRows, filteredHexes, mapViewMode]);
+
+  const detailHexRank = useMemo(() => {
+    if (!detailHex) {
       return null;
     }
-    return buildHexRanking(filteredHexes, detail, horizon);
-  }, [detail, filteredHexes, horizon]);
+    return buildHexRanking(filteredHexes, detailHex, horizon);
+  }, [detailHex, filteredHexes, horizon]);
+
+  const detailZoneRank = useMemo(() => {
+    if (!detailZone) {
+      return null;
+    }
+    return buildZoneRanking(currentRankableZoneRows, detailZone);
+  }, [currentRankableZoneRows, detailZone]);
 
   const topZones = useMemo(() => {
     return {
-      district: buildTopZones(filteredDistrictZones),
-      barrio: buildTopZones(filteredBarrioZones)
+      district: buildTopZones(filteredDistrictZones, districtZoneColorThresholds.get(selectedCategory) ?? DISTRICT_COLOR_FLOOR_MIN),
+      barrio: buildTopZones(filteredBarrioZones, barrioZoneColorThresholds.get(selectedCategory) ?? BARRIO_COLOR_FLOOR_MIN)
     };
-  }, [filteredBarrioZones, filteredDistrictZones]);
+  }, [barrioZoneColorThresholds, districtZoneColorThresholds, filteredBarrioZones, filteredDistrictZones, selectedCategory]);
 
   const detailMetrics = useMemo(() => {
-    if (!detail) {
-      return [];
+    if (detailHex) {
+      return buildHexMetrics({
+        detail: detailHex,
+        detailRank: detailHexRank,
+        detailSupport,
+        detailSurvival,
+        horizon,
+        meanRiskIndex: meanRiskIndexForDetail
+      });
     }
 
-    return buildHexMetrics({
-      detail,
-      detailRank,
-      detailSupport,
-      detailSurvival,
-      horizon,
-      meanRiskIndex: activeStats.meanRelativeRisk
-    });
-  }, [activeStats.meanRelativeRisk, detail, detailRank, detailSupport, detailSurvival, horizon]);
+    if (detailZone) {
+      return buildZoneMetrics({
+        detail: detailZone,
+        detailRank: detailZoneRank,
+        detailSupport,
+        detailSurvival,
+        horizon,
+        meanRiskIndex: meanRiskIndexForDetail
+      });
+    }
+
+    return [];
+  }, [
+    detailHex,
+    detailHexRank,
+    detailSupport,
+    detailSurvival,
+    detailZone,
+    detailZoneRank,
+    horizon,
+    meanRiskIndexForDetail,
+  ]);
 
   const activeMetric = detailMetrics.find((metric) => metric.id === activeMetricId) ?? null;
   const comparisonOptions = useMemo(() => {
@@ -444,6 +686,23 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
     }
   }, [canCompareZones, isZoneComparisonOpen]);
 
+  const handleMapViewModeChange = (nextMode: MapViewMode) => {
+    if (mapViewMode === nextMode) {
+      return;
+    }
+
+    setMapViewMode(nextMode);
+    setActiveMetricId(null);
+    setActiveZoneInsight(null);
+    setIsHistoricalEvolutionOpen(false);
+    setIsZoneComparisonOpen(false);
+
+    if (nextMode !== "hex") {
+      setHistoricalZoneLevel(nextMode);
+      setComparisonZoneLevel(nextMode);
+    }
+  };
+
   return (
     <main className="app-shell">
       <aside className="sidebar panel">
@@ -464,6 +723,8 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
             onChange={(nextCategory) => {
               setSelectedCategory(nextCategory);
               setSelectedHex(null);
+              setSelectedZone(null);
+              setActiveMetricId(null);
               setActiveZoneInsight(null);
             }}
             options={artifacts.categories}
@@ -471,6 +732,22 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
           />
         </div>
 
+        <div className="control-group">
+          <span className="control-label">Visor principal</span>
+          <div className="toggle-row toggle-row-three map-view-toggle-row">
+            <button data-active={mapViewMode === "district"} onClick={() => handleMapViewModeChange("district")} type="button">
+              Distrito
+            </button>
+            <button data-active={mapViewMode === "barrio"} onClick={() => handleMapViewModeChange("barrio")} type="button">
+              Barrio
+            </button>
+            <button data-active={mapViewMode === "hex"} onClick={() => handleMapViewModeChange("hex")} type="button">
+              Hexagono
+            </button>
+          </div>
+        </div>
+
+        {mapViewMode === "hex" && (
         <div className="control-group">
           <span className="control-label">Tamaño hexágono</span>
           <div className="toggle-row toggle-row-three">
@@ -494,49 +771,40 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
             ))}
           </div>
         </div>
-
-        <div className="control-group">
-          <span className="control-label">Horizonte</span>
-          <div className="toggle-row">
-            <button data-active={horizon === "12m"} onClick={() => {
-              setActiveZoneInsight(null);
-              setHorizon("12m");
-            }} type="button">
-              12 meses
-            </button>
-            <button data-active={horizon === "24m"} onClick={() => {
-              setActiveZoneInsight(null);
-              setHorizon("24m");
-            }} type="button">
-              24 meses
-            </button>
-          </div>
-        </div>
+        )}
 
         <div className="stat-grid">
           <div className="stat-card">
-            <span className="label">Supervivencia media</span>
-            <span className="value">{formatPercent(activeStats.meanSurvival, activeStats.hexes > 0 ? "Sin muestra" : "Sin datos")}</span>
+            <span className="label">Indice relativo 0-1</span>
+            <span className="value">{formatRelativeRiskIndex(activeStats.meanRelativeRisk)}</span>
           </div>
           <div className="stat-card">
-            <span className="label">Índice relativo 0-1</span>
-            <span className="value">{formatRelativeRiskIndex(activeStats.meanRelativeRisk)}</span>
+            <span className="label">Supervivencia media 24m</span>
+            <span className="value">{formatPercent(activeStats.meanSurvival, activeStats.units > 0 ? "Sin muestra" : "Sin datos")}</span>
           </div>
           <div className="stat-card">
             <span className="label">Locales visibles</span>
             <span className="value">{formatCompact(activeStats.locales)}</span>
           </div>
           <div className="stat-card">
-            <span className="label">Hexágonos</span>
-            <span className="value">{formatCompact(activeStats.hexes)}</span>
+            <span className="label">{activeUnitLabelPlural} visibles</span>
+            <span className="value">{formatCompact(activeStats.units)}</span>
           </div>
         </div>
         <p className="support-note">
           {isLoadingArtifacts
-            ? "Cargando el artefacto histórico del mapa. La vista aparece primero y los hexágonos se hidratan en segundo plano."
-            : isSwitchingHexSize
+            ? "Cargando el artefacto historico del mapa. La vista aparece primero y los datos se hidratan en segundo plano."
+            : mapViewMode !== "hex" && isLoadingZoneBoundaries && currentZoneBoundaries.length === 0
+              ? `Cargando limites de ${activeUnitLabelPlural.toLowerCase()}...`
+            : isSwitchingHexSize && mapViewMode === "hex"
               ? `Cambiando a nivel ${formatHexSizeLabel(hexSize).toLowerCase()}...`
-            : buildGlobalSupportNote(activeStats.hexesWithSupport, activeStats.hexes, horizon)}
+                : buildGlobalSupportNote({
+                    activeUnitLabelPlural,
+                    mapViewMode,
+                    totalUnits: activeStats.units,
+                    unitsWithSupport: activeStats.unitsWithSupport,
+                    zoneColorFloor: currentZoneColorFloor,
+                  })}
         </p>
 
         <section className="info-card">
@@ -564,6 +832,11 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
                 horizon,
               });
 
+              setMapViewMode(zone.zone_level);
+              setHistoricalZoneLevel(zone.zone_level);
+              setComparisonZoneLevel(zone.zone_level);
+              setSelectedHex(null);
+              setSelectedZone(zone);
               setIsRiskExplainerOpen(false);
               setIsHistoricalEvolutionOpen(false);
               setIsZoneComparisonOpen(false);
@@ -591,7 +864,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
               }}
               type="button"
             >
-              {isRiskExplainerOpen ? "Ocultar guía" : "Cómo interpretar este ranking"}
+              {isRiskExplainerOpen ? "Ocultar guia" : "Como interpretar este ranking"}
             </button>
             <button
               aria-expanded={isHistoricalEvolutionOpen}
@@ -615,7 +888,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
               }}
               type="button"
             >
-              {isHistoricalEvolutionOpen ? "Ocultar evolución histórica" : "Evolución histórica"}
+              {isHistoricalEvolutionOpen ? "Ocultar evolucion historica" : "Evolucion historica"}
             </button>
           </div>
         </section>
@@ -727,10 +1000,28 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
         </section>
 
         <section className="detail-card">
-          <div className="eyebrow">Hexágono seleccionado</div>
-          {detail ? (
+          <div className="eyebrow">
+            {mapViewMode === "hex" ? "Hexagono seleccionado" : `${capitalize(activeUnitLabelSingular)} seleccionado`}
+          </div>
+          {detailHex || detailZone ? (
             <>
-              <h2>{detail.category_desc}</h2>
+              <div className="detail-header-row">
+                <div className="detail-guide">
+                  <h2>{detailHex ? detailHex.location_label : detailZone?.zone_name}</h2>
+                  <p className="detail-location">
+                    {buildSelectedUnitSummary({
+                      categoryDesc: selectedCategoryMeta.category_desc,
+                      detailHex,
+                      detailZone,
+                    })}
+                  </p>
+                  <p className="detail-subtle">
+                    {detailHex
+                      ? "Lectura fina por celda H3. Sirve para detectar contrastes internos dentro de un barrio o distrito."
+                      : `Lectura historica agregada por ${activeUnitLabelSingular}. Prioriza estabilidad y narrativa territorial.`}
+                  </p>
+                </div>
+              </div>
               <MetricGrid
                 activeMetricId={activeMetricId}
                 metrics={detailMetrics}
@@ -744,27 +1035,36 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
             </>
           ) : (
             <div className="detail-empty">
-              <h3>Selecciona un hexágono</h3>
-              <p>Haz clic en el mapa para ver su posición en Madrid, su ranking por riesgo y la diferencia frente a la media de la categoría.</p>
+              <h3>{`Selecciona ${mapViewMode === "hex" ? "un hexagono" : `un ${activeUnitLabelSingular}`}`}</h3>
+              <p>
+                {mapViewMode === "hex"
+                  ? "Haz clic en el mapa para ver su posicion en Madrid, su ranking por riesgo y la diferencia frente a la media de la categoria."
+                  : `Haz clic en el mapa para ver la ficha historica del ${activeUnitLabelSingular}, su ranking en Madrid y el soporte real de la metrica.`}
+              </p>
             </div>
           )}
         </section>
 
         {selectedCategory === "__all__" ? (
           <section className="info-card info-card-hex-category-composition">
-            <div className="eyebrow">Mezcla del hexágono</div>
-            {detail ? (
+            <div className="eyebrow">{mapViewMode === "hex" ? "Mezcla del hexagono" : `Mezcla del ${activeUnitLabelSingular}`}</div>
+            {detailHex || detailZone ? (
               <HexCategoryComposition
                 items={detailCategoryComposition}
-                maxYear={HEX_COMPOSITION_YEAR_MAX}
-                minYear={HEX_COMPOSITION_YEAR_MIN}
-                onYearChange={setHexCompositionYear}
+                maxYear={compositionYears[compositionYears.length - 1] ?? HEX_COMPOSITION_YEAR_MAX}
+                minYear={compositionYears[0] ?? HEX_COMPOSITION_YEAR_MIN}
+                onYearChange={setCompositionYear}
                 overlayBoundsRef={mapPanelRef}
-                selectedYear={hexCompositionYear}
+                selectedYear={compositionYear}
+                subjectLabel={mapViewMode === "hex" ? "hexagono" : activeUnitLabelSingular}
                 totalLocales={detailCategoryCompositionTotalLocales}
               />
             ) : (
-              <p className="empty-note">Selecciona un hexágono para ver cómo se reparten sus locales históricos entre las distintas categorías.</p>
+              <p className="empty-note">
+                {mapViewMode === "hex"
+                  ? "Selecciona un hexagono para ver como se reparten sus locales historicos entre las distintas categorias."
+                  : `Selecciona un ${activeUnitLabelSingular} para ver como cambia su mezcla historica por categorias a lo largo del tiempo.`}
+              </p>
             )}
           </section>
         ) : null}
@@ -817,13 +1117,24 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
           colorScale={colorScale}
           horizon={horizon}
           hexes={filteredHexes}
+          mapViewMode={mapViewMode}
           onSelectHex={(hex) => {
             setActiveZoneInsight(null);
             setIsHistoricalEvolutionOpen(false);
             setIsZoneComparisonOpen(false);
             setSelectedHex(hex);
           }}
+          onSelectZone={(zone) => {
+            setActiveZoneInsight(null);
+            setIsHistoricalEvolutionOpen(false);
+            setIsZoneComparisonOpen(false);
+            setSelectedZone(zone);
+          }}
           selectedHex={selectedHex}
+          selectedZone={selectedZoneForView}
+          zoneColorFloorLocales={currentZoneColorFloor}
+          zoneBoundaries={currentZoneBoundaries}
+          zones={currentZoneRows}
         />
       </section>
     </main>
@@ -843,19 +1154,39 @@ function CategoryPicker({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
+  const [menuMaxHeight, setMenuMaxHeight] = useState<number | null>(null);
   const pickerRef = useRef<HTMLDivElement | null>(null);
   const selectedOption = options.find((option) => option.category_code === value) ?? options[0] ?? null;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isOpen || !pickerRef.current) {
+      setMenuMaxHeight(null);
       return;
     }
-    const triggerRect = pickerRef.current.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    const spaceBelow = viewportHeight - triggerRect.bottom;
-    const spaceAbove = triggerRect.top;
-    const nextOpenUpward = spaceBelow < 280 && spaceAbove > spaceBelow;
-    setOpenUpward(nextOpenUpward);
+
+    function updateMenuPlacement() {
+      if (!pickerRef.current) {
+        return;
+      }
+
+      const triggerRect = pickerRef.current.getBoundingClientRect();
+      const availableBelow = Math.max(0, window.innerHeight - triggerRect.bottom - PICKER_VIEWPORT_PADDING_PX - PICKER_MENU_OFFSET_PX);
+      const availableAbove = Math.max(0, triggerRect.top - PICKER_VIEWPORT_PADDING_PX - PICKER_MENU_OFFSET_PX);
+      const nextOpenUpward = availableAbove > availableBelow;
+      const availableSpace = nextOpenUpward ? availableAbove : availableBelow;
+
+      setOpenUpward(nextOpenUpward);
+      setMenuMaxHeight(Math.min(PICKER_MENU_MAX_HEIGHT_PX, availableSpace));
+    }
+
+    updateMenuPlacement();
+    window.addEventListener("resize", updateMenuPlacement);
+    window.addEventListener("scroll", updateMenuPlacement, true);
+
+    return () => {
+      window.removeEventListener("resize", updateMenuPlacement);
+      window.removeEventListener("scroll", updateMenuPlacement, true);
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -898,7 +1229,7 @@ function CategoryPicker({
         type="button"
       >
         <span className="category-picker-trigger-copy">
-          <strong className="category-picker-trigger-title">{selectedOption.category_desc}</strong>
+          <span className="category-picker-trigger-title">{selectedOption.category_desc}</span>
           <span className="category-picker-trigger-subtitle">Elige la categoría que quieras analizar</span>
         </span>
         <span aria-hidden="true" className="category-picker-trigger-icon">
@@ -907,7 +1238,11 @@ function CategoryPicker({
       </button>
 
       {isOpen ? (
-        <div className={`category-picker-menu${openUpward ? " category-picker-menu-up" : ""}`} role="listbox">
+        <div
+          className={`category-picker-menu${openUpward ? " category-picker-menu-up" : ""}`}
+          role="listbox"
+          style={menuMaxHeight === null ? undefined : { maxHeight: `${menuMaxHeight}px` }}
+        >
           {options.map((option) => {
             const isActive = option.category_code === value;
             return (
@@ -950,20 +1285,40 @@ function SimplePicker({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
+  const [menuMaxHeight, setMenuMaxHeight] = useState<number | null>(null);
   const pickerRef = useRef<HTMLDivElement | null>(null);
   const selectedOption = options.find((option) => option.value === value) ?? null;
   const triggerLabel = selectedOption?.label ?? placeholder;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isOpen || !pickerRef.current) {
+      setMenuMaxHeight(null);
       return;
     }
-    const triggerRect = pickerRef.current.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    const spaceBelow = viewportHeight - triggerRect.bottom;
-    const spaceAbove = triggerRect.top;
-    const nextOpenUpward = spaceBelow < 280 && spaceAbove > spaceBelow;
-    setOpenUpward(nextOpenUpward);
+
+    function updateMenuPlacement() {
+      if (!pickerRef.current) {
+        return;
+      }
+
+      const triggerRect = pickerRef.current.getBoundingClientRect();
+      const availableBelow = Math.max(0, window.innerHeight - triggerRect.bottom - PICKER_VIEWPORT_PADDING_PX - PICKER_MENU_OFFSET_PX);
+      const availableAbove = Math.max(0, triggerRect.top - PICKER_VIEWPORT_PADDING_PX - PICKER_MENU_OFFSET_PX);
+      const nextOpenUpward = availableAbove > availableBelow;
+      const availableSpace = nextOpenUpward ? availableAbove : availableBelow;
+
+      setOpenUpward(nextOpenUpward);
+      setMenuMaxHeight(Math.min(PICKER_MENU_MAX_HEIGHT_PX, availableSpace));
+    }
+
+    updateMenuPlacement();
+    window.addEventListener("resize", updateMenuPlacement);
+    window.addEventListener("scroll", updateMenuPlacement, true);
+
+    return () => {
+      window.removeEventListener("resize", updateMenuPlacement);
+      window.removeEventListener("scroll", updateMenuPlacement, true);
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -1008,7 +1363,7 @@ function SimplePicker({
         type="button"
       >
         <span className="category-picker-trigger-copy">
-          <strong className="category-picker-trigger-title">{triggerLabel}</strong>
+          <span className="category-picker-trigger-title">{triggerLabel}</span>
         </span>
         <span aria-hidden="true" className="category-picker-trigger-icon">
           {isOpen ? "˄" : "˅"}
@@ -1016,7 +1371,11 @@ function SimplePicker({
       </button>
 
       {isOpen && !disabled ? (
-        <div className={`category-picker-menu${openUpward ? " category-picker-menu-up" : ""}`} role="listbox">
+        <div
+          className={`category-picker-menu${openUpward ? " category-picker-menu-up" : ""}`}
+          role="listbox"
+          style={menuMaxHeight === null ? undefined : { maxHeight: `${menuMaxHeight}px` }}
+        >
           {options.map((option) => {
             const isActive = option.value === value;
             return (
@@ -1041,6 +1400,10 @@ function SimplePicker({
     </div>
   );
 }
+
+const PICKER_VIEWPORT_PADDING_PX = 16;
+const PICKER_MENU_OFFSET_PX = 8;
+const PICKER_MENU_MAX_HEIGHT_PX = 360;
 
 function prefetchRemainingHexSizes(
   selectedHexSize: HexSize,
@@ -1211,7 +1574,7 @@ function ZoneRankCard({ rank, zone, emptyLabel, onSelectZone }: ZoneRankCardProp
 
   return (
     <button
-      aria-label={`Ver ranking de actividades en ${zone.zone_name}`}
+      aria-label={`Ver ranking de actividades en ${zone.zone_name}${zone.zone_context_name ? `, ${zone.zone_context_name}` : ""}`}
       className="zone-list-item zone-list-item-button"
       onClick={() => onSelectZone(zone)}
       type="button"
@@ -1324,28 +1687,133 @@ function formatSupport(support: number, total: number) {
   return `${formatCompact(support)} / ${formatCompact(total)}`;
 }
 
+function formatZoneConfidenceTier(value: string) {
+  if (value === "high") {
+    return "Alta";
+  }
+  if (value === "medium") {
+    return "Media";
+  }
+  if (value === "low") {
+    return "Baja";
+  }
+  if (value === "very_low") {
+    return "Muy baja";
+  }
+  return value;
+}
+
 function buildFallbackCategoryDefinition(categoryDesc: string) {
   return `Lectura agregada de la macrocategoría ${categoryDesc.toLowerCase()} sobre los locales históricos visibles en el mapa.`;
 }
 
-function buildTopZones(zones: ZoneAggregate[]) {
+function capitalize(value: string) {
+  if (!value) {
+    return value;
+  }
+  return `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`;
+}
+
+function getMapViewUnitLabel(mode: MapViewMode, plural: boolean) {
+  if (mode === "district") {
+    return plural ? "Distritos" : "distrito";
+  }
+  if (mode === "barrio") {
+    return plural ? "Barrios" : "barrio";
+  }
+  return plural ? "Hexagonos" : "hexagono";
+}
+
+function buildSelectedUnitSummary({
+  categoryDesc,
+  detailHex,
+  detailZone,
+}: {
+  categoryDesc: string;
+  detailHex: HexAggregate | null;
+  detailZone: ZoneAggregate | null;
+}) {
+  if (detailHex) {
+    return [detailHex.barrio_name, detailHex.district_name, categoryDesc].filter(Boolean).join(" · ");
+  }
+
+  if (!detailZone) {
+    return categoryDesc;
+  }
+
+  const contextParts = [
+    detailZone.zone_level === "barrio" ? detailZone.zone_context_name : "Madrid",
+    categoryDesc,
+  ].filter((value): value is string => Boolean(value));
+  return contextParts.join(" · ");
+}
+
+function buildVisibleStats<T extends MapAggregateMetrics>(items: T[], horizon: Horizon): VisibleStats {
+  if (items.length === 0) {
+    return {
+      locales: 0,
+      meanRelativeRisk: null,
+      meanSurvival: null,
+      units: 0,
+      unitsWithSupport: 0,
+    };
+  }
+
+  const locales = items.reduce((sum, item) => sum + item.n_locales, 0);
+  const survivalTotals = items.reduce(
+    (accumulator, item) => {
+      const support = getHorizonSupport(item, horizon);
+      const survival = getHorizonSurvival(item, horizon);
+      if (support > 0 && isFiniteNumber(survival)) {
+        accumulator.unitsWithSupport += 1;
+        accumulator.supportedLocales += support;
+        accumulator.weightedSurvival += support * survival;
+      }
+      return accumulator;
+    },
+    { unitsWithSupport: 0, supportedLocales: 0, weightedSurvival: 0 }
+  );
+  const meanRelativeRisk = locales > 0
+    ? items.reduce((sum, item) => sum + item.n_locales * item.avg_risk_percentile, 0) / locales
+    : null;
+
+  return {
+    locales,
+    meanRelativeRisk,
+    meanSurvival: survivalTotals.supportedLocales > 0 ? survivalTotals.weightedSurvival / survivalTotals.supportedLocales : null,
+    units: items.length,
+    unitsWithSupport: survivalTotals.unitsWithSupport,
+  };
+}
+
+function computeWeightedMeanRiskIndex<T extends Pick<MapAggregateMetrics, "avg_risk_percentile" | "n_locales">>(items: T[]) {
+  const totalLocales = items.reduce((sum, item) => sum + item.n_locales, 0);
+  if (totalLocales <= 0) {
+    return null;
+  }
+  return items.reduce((sum, item) => sum + item.n_locales * item.avg_risk_percentile, 0) / totalLocales;
+}
+
+function buildTopZones(zones: ZoneAggregate[], minLocalesForColor: number) {
   if (zones.length === 0) {
     return [];
   }
 
-  const rankedSupported = sortZonesByRisk(zones.filter((item) => item.supported_for_stats));
-  if (rankedSupported.length >= 3) {
-    return rankedSupported.slice(0, 3);
+  const rankedColorable = sortZonesByRisk(zones.filter((item) => item.n_locales >= minLocalesForColor));
+  if (rankedColorable.length >= 3) {
+    return rankedColorable.slice(0, 3);
   }
 
-  const minUnsupportedLocales = zones[0].zone_level === "district"
+  const fallbackMinLocales = zones[0].zone_level === "district"
     ? MIN_UNSUPPORTED_DISTRICT_LOCALES
     : MIN_UNSUPPORTED_BARRIO_LOCALES;
-  const unsupported = zones.filter((item) => !item.supported_for_stats);
-  const unsupportedWithFloor = unsupported.filter((item) => item.n_locales >= minUnsupportedLocales);
-  const rankedUnsupported = sortZonesByRisk(unsupportedWithFloor.length > 0 ? unsupportedWithFloor : unsupported);
+  const fallbackFloor = Math.min(minLocalesForColor, fallbackMinLocales);
+  const rankedFallback = sortZonesByRisk(zones.filter((item) => item.n_locales >= fallbackFloor));
+  if (rankedFallback.length >= 3) {
+    return rankedFallback.slice(0, 3);
+  }
 
-  return [...rankedSupported, ...rankedUnsupported].slice(0, 3);
+  return sortZonesByRisk(zones).slice(0, 3);
 }
 
 function buildZoneActivityInsight({
@@ -1507,6 +1975,110 @@ function sortZonesByRisk(zones: ZoneAggregate[]) {
   });
 }
 
+function buildZoneRanking(zones: ZoneAggregate[], detail: ZoneAggregate) {
+  const sorted = sortZonesByRisk(zones);
+  const rankIndex = sorted.findIndex((item) => item.zone_code === detail.zone_code);
+  if (rankIndex < 0) {
+    return null;
+  }
+
+  return { rank: rankIndex + 1, total: sorted.length };
+}
+
+function buildZoneMetrics({
+  detail,
+  detailRank,
+  detailSupport,
+  detailSurvival,
+  horizon,
+  meanRiskIndex,
+}: {
+  detail: ZoneAggregate;
+  detailRank: { rank: number; total: number } | null;
+  detailSupport: number;
+  detailSurvival: number | null;
+  horizon: Horizon;
+  meanRiskIndex: number | null;
+}): MetricDefinition[] {
+  const horizonLabel = horizon === "24m" ? "24 meses" : "12 meses";
+  const unitLabel = detail.zone_level === "district" ? "distrito" : "barrio";
+  const rankTopShare = detailRank ? formatHexTopShare(detailRank.rank, detailRank.total) : "-";
+  const detailKey = `zone:${detail.zone_level}:${detail.zone_code}`;
+  const confidenceLabel = formatZoneConfidenceTier(detail.confidence_tier);
+  const desiredOrder = [
+    `${detailKey}:locales`,
+    `${detailKey}:city-rank`,
+    `${detailKey}:risk-percentile`,
+    `${detailKey}:vs-category`,
+    `${detailKey}:survival:${horizon}`,
+    `${detailKey}:support:${horizon}`,
+    `${detailKey}:event-rate`,
+    `${detailKey}:confidence`,
+  ];
+
+  return [
+    {
+      id: `${detailKey}:locales`,
+      label: `Locales del ${unitLabel}`,
+      value: new Intl.NumberFormat("es-ES").format(detail.n_locales),
+      summary: `Cuenta cuantos locales historicos visibles de la categoria activa quedan agregados dentro de este ${unitLabel}.`,
+      calculation: `Es el recuento agregado de locales asociados a este ${unitLabel} despues de aplicar la categoria seleccionada.`,
+    },
+    {
+      id: `${detailKey}:city-rank`,
+      label: "Ranking Madrid",
+      value: detailRank ? formatHexRank(detailRank.rank, detailRank.total) : "-",
+      summary: `Top dinamico actual: ${rankTopShare}. Situa este ${unitLabel} frente al resto de ${detail.zone_level === "district" ? "distritos" : "barrios"} visibles de Madrid en la categoria activa.`,
+      calculation: `Ordenamos todos los ${detail.zone_level === "district" ? "distritos" : "barrios"} visibles de esta categoria por menor riesgo medio. El puesto #1 es el que sale mejor en esa comparacion.`,
+    },
+    {
+      id: `${detailKey}:risk-percentile`,
+      label: "Indice relativo 0-1",
+      value: formatRelativeRiskIndex(detail.avg_risk_percentile),
+      summary: `Es la lectura principal del mapa territorial. Cuanto mas cerca de 0, mejor posicion relativa tiene este ${unitLabel} dentro de la categoria activa.`,
+      calculation: `Convertimos el riesgo agregado del ${unitLabel} en un indice entre 0 y 1 comparandolo con el resto de ${detail.zone_level === "district" ? "distritos" : "barrios"} de la misma categoria en Madrid.`,
+    },
+    {
+      id: `${detailKey}:vs-category`,
+      label: "Indice vs media",
+      value: formatSignedIndexPoints(
+        computeRiskIndexDelta(detail.avg_risk_percentile, meanRiskIndex),
+        isFiniteNumber(meanRiskIndex) ? "Sin datos" : "Sin muestra"
+      ),
+      summary: `Compara el indice relativo de este ${unitLabel} con la media de la categoria activa dentro del mismo tipo de unidad territorial.`,
+      calculation: `Restamos la media de indice relativo de la categoria al indice de este ${unitLabel}. Los valores negativos indican mejor posicion relativa que la media.`,
+    },
+    {
+      id: `${detailKey}:survival:${horizon}`,
+      label: `Supervivencia ${horizonLabel}`,
+      value: formatPercent(detailSurvival, detailSupport > 0 ? "Sin datos" : "Sin muestra"),
+      summary: `Muestra que parte de los locales comparables sigue activa en este ${unitLabel} al llegar a ${horizonLabel}.`,
+      calculation: `Tomamos los locales de esta categoria con observacion suficiente en ${horizonLabel} y calculamos su supervivencia observada agregada en este ${unitLabel}.`,
+    },
+    {
+      id: `${detailKey}:support:${horizon}`,
+      label: `Soporte ${horizonLabel}`,
+      value: formatSupport(detailSupport, detail.n_locales),
+      summary: `Te dice cuantos locales sostienen de verdad la metrica frente al total visible en este ${unitLabel}.`,
+      calculation: `El numerador cuenta los locales con observacion valida en ${horizonLabel}; el denominador es el total de locales agregados del ${unitLabel}.`,
+    },
+    {
+      id: `${detailKey}:event-rate`,
+      label: "Rotacion historica",
+      value: formatPercent(detail.event_rate, "Sin muestra"),
+      summary: `Mide que porcentaje de locales de esta categoria registra cierres o cambios de actividad dentro de este ${unitLabel}.`,
+      calculation: `Calculamos eventos observados dividido por locales historicos agregados del ${unitLabel}. Cuanto mas alto, mayor rotacion comercial observada.`,
+    },
+    {
+      id: `${detailKey}:confidence`,
+      label: "Confianza historica",
+      value: confidenceLabel,
+      summary: `Te indica cuanta base historica sostiene la lectura de este ${unitLabel}; sirve para separar señales robustas de lecturas mas finas o fragiles.`,
+      calculation: "La asignamos a partir del numero de locales y eventos historicos disponibles en la unidad. Distritos y barrios usan umbrales distintos segun su escala.",
+    },
+  ].sort((left, right) => desiredOrder.indexOf(left.id) - desiredOrder.indexOf(right.id));
+}
+
 function buildHexMetrics({
   detail,
   detailRank,
@@ -1594,7 +2166,7 @@ function buildHexMetrics({
   ].sort((left, right) => desiredOrder.indexOf(left.id) - desiredOrder.indexOf(right.id));
 }
 
-function buildMetricWhyUseful(metric: MetricDefinition) {
+function buildMetricWhyUsefulLegacy(metric: MetricDefinition) {
   if (metric.id.endsWith(":locales")) {
     return "Te da una lectura de tamaño inmediato: ayuda a diferenciar si estás viendo un hexágono muy representativo o uno con base pequeña.";
   }
@@ -1619,7 +2191,7 @@ function buildMetricWhyUseful(metric: MetricDefinition) {
   return "Aporta contexto adicional para interpretar mejor el comportamiento histórico del hexágono seleccionado.";
 }
 
-function buildMetricExample(metric: MetricDefinition) {
+function buildMetricExampleLegacy(metric: MetricDefinition) {
   if (metric.id.endsWith(":locales")) {
     return "Ejemplo: 34 locales significa que el histórico útil de esta categoría en este hexágono está construido con 34 observaciones agregadas.";
   }
@@ -1634,6 +2206,64 @@ function buildMetricExample(metric: MetricDefinition) {
   }
   if (metric.id.includes(":support:")) {
     return "Ejemplo: 18 / 26 quiere decir que 18 locales del total de 26 tienen observación válida para ese horizonte.";
+  }
+  return null;
+}
+
+function buildMetricWhyUseful(metric: MetricDefinition) {
+  const unitLabel = metric.id.startsWith("hex:") ? "hexagono" : "unidad territorial";
+  if (metric.id.endsWith(":locales")) {
+    return `Te da una lectura de tamano inmediato: ayuda a diferenciar si estas viendo un ${unitLabel} muy representativo o uno con base pequena.`;
+  }
+  if (metric.id.endsWith(":city-rank")) {
+    return `Te ayuda a priorizar rapido: con una sola cifra ves si este ${unitLabel} esta entre los mejores o peores de la categoria activa dentro de Madrid.`;
+  }
+  if (metric.id.endsWith(":risk-percentile")) {
+    return "Es la lectura mas facil de comparar entre zonas: 0,10 se entiende enseguida como mejor posicion relativa que 0,70 sin tener que entrar en el score tecnico del modelo.";
+  }
+  if (metric.id.endsWith(":vs-category")) {
+    return `Te da una lectura relativa inmediata: ves si el riesgo de este ${unitLabel} esta por encima o por debajo del nivel medio de su categoria en Madrid.`;
+  }
+  if (metric.id.includes(":survival:")) {
+    return "Convierte el mapa en una pregunta de negocio muy directa: que continuidad historica ha tenido esta categoria aqui en el horizonte elegido.";
+  }
+  if (metric.id.includes(":support:")) {
+    return "Te protege de falsas certezas: una cifra buena con poco soporte vale menos que una lectura parecida con mas base historica.";
+  }
+  if (metric.id.endsWith(":event-rate")) {
+    return "Resume la rotacion comercial de forma muy directa: cuanto porcentaje de locales termina cerrando o cambiando de actividad en esta zona.";
+  }
+  if (metric.id.endsWith(":confidence")) {
+    return "Te recuerda cuanta evidencia real hay detras de la lectura. Es clave cuando comparas zonas pequenas o categorias con poca historia.";
+  }
+  if (metric.id.endsWith(":barrio-name") || metric.id.endsWith(":district-name")) {
+    return "Te orienta territorialmente y hace mas facil relacionar el hexagono con zonas reconocibles de Madrid sin tener que leer un identificador H3.";
+  }
+  return `Aporta contexto adicional para interpretar mejor el comportamiento historico del ${unitLabel} seleccionado.`;
+}
+
+function buildMetricExample(metric: MetricDefinition) {
+  const unitLabel = metric.id.startsWith("hex:") ? "hexagono" : "unidad";
+  if (metric.id.endsWith(":locales")) {
+    return `Ejemplo: 34 locales significa que el historico util de esta categoria en esta ${unitLabel} esta construido con 34 observaciones agregadas.`;
+  }
+  if (metric.id.endsWith(":city-rank")) {
+    return `Ejemplo: #45 de 3.200 significa que esta ${unitLabel} sale muy arriba dentro del mapa de esa categoria cuando ordenas por menor riesgo.`;
+  }
+  if (metric.id.endsWith(":risk-percentile")) {
+    return `Ejemplo: 0,20 indica que esta ${unitLabel} cae en una franja mejor que buena parte del mapa; equivale aproximadamente a un P20.`;
+  }
+  if (metric.id.endsWith(":vs-category")) {
+    return `Ejemplo: -0,08 pts significa que el indice de esta ${unitLabel} esta por debajo de la media (mejor posicion relativa de riesgo).`;
+  }
+  if (metric.id.includes(":support:")) {
+    return "Ejemplo: 18 / 26 quiere decir que 18 locales del total de 26 tienen observacion valida para ese horizonte.";
+  }
+  if (metric.id.endsWith(":event-rate")) {
+    return "Ejemplo: 22% implica que, historicamente, unos 22 de cada 100 locales comparables acabaron cerrando o cambiando de actividad.";
+  }
+  if (metric.id.endsWith(":confidence")) {
+    return "Ejemplo: confianza media significa que la unidad ya tiene cierta base historica, pero todavia conviene leerla junto con soporte y volumen.";
   }
   return null;
 }
@@ -1726,6 +2356,153 @@ function buildHexCategoryCompositionForYear(
   };
 }
 
+function buildZoneCategoryComposition(
+  zones: ZoneAggregate[],
+  detail: ZoneAggregate,
+  categoryColorMap: Map<string, string>
+): HexCategoryCompositionItem[] {
+  const totalLocales = detail.n_locales;
+  if (totalLocales <= 0) {
+    return [];
+  }
+
+  const orderedItems = zones
+    .filter((item) => item.zone_code === detail.zone_code && item.category_code !== "__all__" && item.n_locales > 0)
+    .sort((left, right) => {
+      if (right.n_locales !== left.n_locales) {
+        return right.n_locales - left.n_locales;
+      }
+      return left.category_desc.localeCompare(right.category_desc, "es");
+    });
+
+  return orderedItems.map((item) => ({
+    categoryCode: item.category_code,
+    categoryDesc: item.category_desc,
+    nLocales: item.n_locales,
+    share: item.n_locales / totalLocales,
+    color: colorForCategoryCode(item.category_code, categoryColorMap),
+  }));
+}
+
+function buildZoneCategoryCompositionForYear(
+  rows: HistoricalZoneRankingRecord[],
+  categoryColorMap: Map<string, string>
+): { items: HexCategoryCompositionItem[]; totalLocales: number } {
+  if (rows.length === 0) {
+    return { items: [], totalLocales: 0 };
+  }
+
+  const totalLocales = rows.reduce((maxTotal, item) => Math.max(maxTotal, item.zone_total_locales), 0);
+  if (totalLocales <= 0) {
+    return { items: [], totalLocales: 0 };
+  }
+
+  const orderedItems = rows
+    .filter((item) => item.category_code !== "__all__" && item.n_locales > 0)
+    .sort((left, right) => {
+      if (right.n_locales !== left.n_locales) {
+        return right.n_locales - left.n_locales;
+      }
+      return left.category_desc.localeCompare(right.category_desc, "es");
+    });
+
+  return {
+    totalLocales,
+    items: orderedItems.map((item) => ({
+      categoryCode: item.category_code,
+      categoryDesc: item.category_desc,
+      nLocales: item.n_locales,
+      share: item.share_of_zone ?? item.n_locales / totalLocales,
+      color: colorForCategoryCode(item.category_code, categoryColorMap),
+    })),
+  };
+}
+
+function resolveZoneCompositionHistoryRows(
+  index: ZoneCompositionHistoryIndex,
+  detailZone: ZoneAggregate,
+  year: number,
+): HistoricalZoneRankingRecord[] {
+  const directMatch = index.byCode.get(`${detailZone.zone_level}::${year}::${detailZone.zone_code}`);
+  if (directMatch) {
+    return directMatch;
+  }
+
+  for (const identityKey of buildZoneHistoryIdentityKeys(
+    detailZone.zone_level,
+    detailZone.zone_name,
+    detailZone.zone_context_name
+  )) {
+    const matchedRows = index.byIdentity.get(`${detailZone.zone_level}::${year}::${identityKey}`);
+    if (matchedRows) {
+      return matchedRows;
+    }
+  }
+
+  return [];
+}
+
+function buildZoneHistoryIdentityKeys(
+  zoneLevel: HistoricalZoneLevel,
+  zoneName: string,
+  zoneContextName?: string | null,
+) {
+  const normalizedContext = normalizeZoneHistoryIdentityPart(zoneContextName ?? "");
+  if (!normalizedContext && zoneLevel === "barrio") {
+    return [];
+  }
+
+  const nameVariants = buildZoneHistoryNameVariants(zoneName);
+  return nameVariants.map((nameVariant) => `${normalizedContext}::${nameVariant}`);
+}
+
+function buildZoneHistoryNameVariants(zoneName: string) {
+  const variants = new Set<string>();
+  const normalizedName = normalizeZoneHistoryIdentityPart(zoneName);
+  if (!normalizedName) {
+    return [];
+  }
+
+  variants.add(normalizedName);
+  variants.add(stripZoneArticles(normalizedName));
+  variants.add(canonicalizeZoneHistoryName(normalizedName));
+  variants.add(stripZoneArticles(canonicalizeZoneHistoryName(normalizedName)));
+
+  const explicitAlias = BARRIO_HISTORY_NAME_ALIASES.get(normalizedName);
+  if (explicitAlias) {
+    variants.add(explicitAlias);
+    variants.add(stripZoneArticles(explicitAlias));
+    variants.add(canonicalizeZoneHistoryName(explicitAlias));
+  }
+
+  return [...variants].filter(Boolean);
+}
+
+function normalizeZoneHistoryIdentityPart(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function stripZoneArticles(value: string) {
+  return value
+    .split(" ")
+    .filter((token) => !ZONE_HISTORY_ARTICLES.has(token))
+    .join(" ")
+    .trim();
+}
+
+function canonicalizeZoneHistoryName(value: string) {
+  return value
+    .replace(/\bcasco h\b/g, "casco historico")
+    .replace(/\bcasco historico de\b/g, "casco historico")
+    .replace(/\bfuentelareina\b/g, "fuentelarreina");
+}
+
 const HEX_COMPOSITION_COLOR_HUES = [16, 198, 332, 92, 258, 44, 172, 286, 8, 218, 126, 308, 64, 238, 152, 348, 106, 266, 186, 28, 138, 324];
 const HEX_COMPOSITION_COLOR_TONES = [
   { saturation: 58, lightness: 67 },
@@ -1739,6 +2516,20 @@ const HEX_COMPOSITION_STATUS_COLORS: Record<string, string> = {
   __status_missing_snapshot__: "hsl(35 20% 80%)",
   __status_unmapped_activity__: "hsl(24 24% 72%)",
 };
+const ZONE_HISTORY_ARTICLES = new Set(["de", "del", "el", "la", "las", "los"]);
+const BARRIO_HISTORY_NAME_ALIASES = new Map<string, string>([
+  ["aguilas", "las aguilas"],
+  ["carmenes", "los carmenes"],
+  ["casco historico de barajas", "casco h barajas"],
+  ["casco historico de vallecas", "casco h vallecas"],
+  ["casco historico de vicalvaro", "casco h vicalvaro"],
+  ["fuentelareina", "fuentelarreina"],
+  ["jeronimos", "los jeronimos"],
+  ["penagrande", "pena grande"],
+  ["pilar", "el pilar"],
+  ["salvador", "el salvador"],
+  ["villaverde alto casco historico de villaverde", "san andres"],
+]);
 const HEX_COMPOSITION_COLOR_PALETTE = buildHexCompositionPalette();
 
 function buildHexCompositionPalette() {
@@ -1915,9 +2706,9 @@ function getPrimaryRiskValue(item: RiskAggregate) {
   return item.avg_risk_primary ?? item.avg_risk_ensemble;
 }
 
-function buildColorScale(hexes: HexAggregate[], horizon: Horizon): ColorScale {
-  const values = hexes
-    .map((item) => getHorizonSurvival(item, horizon))
+function buildColorScale<T extends MapAggregateMetrics>(items: T[]): ColorScale {
+  const values = items
+    .map((item) => item.avg_risk_percentile)
     .filter(isFiniteNumber)
     .sort((left, right) => left - right);
 
@@ -1995,7 +2786,7 @@ function quantile(sortedValues: number[], q: number) {
   return sortedValues[lower] * (1 - weight) + sortedValues[upper] * weight;
 }
 
-function buildGlobalSupportNote(hexesWithSupport: number, totalHexes: number, horizon: Horizon) {
+function buildGlobalSupportNoteLegacy(hexesWithSupport: number, totalHexes: number, horizon: Horizon) {
   const horizonLabel = formatHorizonLongLabel(horizon);
   if (totalHexes <= 0) {
     return `No hay hexágonos visibles para la categoría activa.`;
@@ -2007,6 +2798,66 @@ function buildGlobalSupportNote(hexesWithSupport: number, totalHexes: number, ho
     return `Todos los hexágonos visibles tienen soporte suficiente a ${horizonLabel}.`;
   }
   return `La supervivencia media y el color del mapa ignoran hexágonos sin soporte a ${horizonLabel}: ${formatCompact(hexesWithSupport)} de ${formatCompact(totalHexes)} sí tienen datos útiles.`;
+}
+
+function buildGlobalSupportNote({
+  activeUnitLabelPlural,
+  mapViewMode,
+  totalUnits,
+  unitsWithSupport,
+  zoneColorFloor,
+}: {
+  activeUnitLabelPlural: string;
+  mapViewMode: MapViewMode;
+  totalUnits: number;
+  unitsWithSupport: number;
+  zoneColorFloor: number;
+}) {
+  const normalizedLabel = activeUnitLabelPlural.toLowerCase();
+  const singularLabel = normalizedLabel.endsWith("s") ? normalizedLabel.slice(0, -1) : normalizedLabel;
+  if (totalUnits <= 0) {
+    return `No hay ${normalizedLabel} visibles para la categoria activa.`;
+  }
+
+  if (mapViewMode === "hex") {
+    return unitsWithSupport > 0
+      ? "El color del mapa usa el indice relativo 0-1. La supervivencia media queda fijada a 24 meses para no duplicar lecturas casi iguales."
+      : "El color del mapa usa el indice relativo 0-1. La supervivencia media queda fijada a 24 meses, pero ahora mismo no hay muestra suficiente para resumirla.";
+  }
+
+  if (unitsWithSupport <= 0) {
+    return `El color del mapa usa el indice relativo 0-1 y se activa desde ${formatCompact(zoneColorFloor)} locales por ${singularLabel}. La supervivencia media 24m sale sin muestra en esta categoria.`;
+  }
+
+  return `El color del mapa usa el indice relativo 0-1 y se activa desde ${formatCompact(zoneColorFloor)} locales por ${singularLabel}. La supervivencia media 24m se calcula solo con unidades que si tienen soporte real.`;
+}
+
+function buildZoneColorThresholds(
+  zones: ZoneAggregate[],
+  zoneLevel: HistoricalZoneLevel
+) {
+  const grouped = new Map<string, number[]>();
+  for (const zone of zones) {
+    if (zone.n_locales <= 0) {
+      continue;
+    }
+    const bucket = grouped.get(zone.category_code);
+    if (bucket) {
+      bucket.push(zone.n_locales);
+    } else {
+      grouped.set(zone.category_code, [zone.n_locales]);
+    }
+  }
+
+  const thresholds = new Map<string, number>();
+  for (const [categoryCode, values] of grouped.entries()) {
+    const ordered = [...values].sort((left, right) => left - right);
+    const rawThreshold = Math.round(quantile(ordered, ZONE_COLOR_FLOOR_QUANTILE));
+    const minFloor = zoneLevel === "district" ? DISTRICT_COLOR_FLOOR_MIN : BARRIO_COLOR_FLOOR_MIN;
+    const maxFloor = zoneLevel === "district" ? DISTRICT_COLOR_FLOOR_MAX : BARRIO_COLOR_FLOOR_MAX;
+    thresholds.set(categoryCode, clamp(rawThreshold, minFloor, maxFloor));
+  }
+  return thresholds;
 }
 
 function computeRiskIndexDelta(value: number | null, baseline: number | null) {
