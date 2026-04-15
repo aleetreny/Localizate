@@ -14,12 +14,14 @@ __pycache__/
 .streamlit/secrets.toml
 node_modules/
 .next/
-apps/web/.next/
-apps/web/node_modules/
+front/.next/
+front/.next-legacy/
+front/node_modules/
+front/tsconfig.tsbuildinfo
 
-DB/
-data/
-models/
+storage/raw/
+storage/data/
+storage/models/
 ingestion_log.txt
 
 *.parquet
