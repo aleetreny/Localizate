@@ -226,7 +226,7 @@ export function HistoricalEvolutionBanner({
       ) : (
         <div className="historical-evolution-empty">
           <strong>No hay recorrido suficiente para esta categoría.</strong>
-          <p>Prueba con otra categoría o regenera el artefacto temporal si acabas de tocar el builder.</p>
+          <p>Prueba con otra categoría o regenera los datos temporales si acabas de tocar el generador.</p>
         </div>
       )}
     </section>

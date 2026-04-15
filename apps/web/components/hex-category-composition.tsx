@@ -160,12 +160,12 @@ export function HexCategoryComposition({
   return (
     <>
       <div
-        aria-label={`Reparto historico por categoria dentro del ${subjectLabel} seleccionado`}
+        aria-label={`Reparto histórico por categoría dentro del ${subjectLabel} seleccionado`}
         className="hex-category-composition"
       >
         <div className="hex-category-composition-header">
           <p className="hex-category-composition-copy">
-            Reparte los {formatInteger(totalLocales)} locales del {subjectLabel} en {selectedYear} entre las categorias historicas observadas. Pasa por cada color del circulo para abrir el detalle al lado.
+            Reparte los {formatInteger(totalLocales)} locales del {subjectLabel} en {selectedYear} entre las categorías históricas observadas. Pasa por cada color del círculo para abrir el detalle al lado.
           </p>
         </div>
 
@@ -178,7 +178,7 @@ export function HexCategoryComposition({
               ref={chartShellRef}
             >
               <svg
-                aria-label={`Composicion por categorias del ${subjectLabel} seleccionado`}
+                aria-label={`Composición por categorías del ${subjectLabel} seleccionado`}
                 className="hex-category-composition-chart"
                 role="img"
                 viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
@@ -222,17 +222,17 @@ export function HexCategoryComposition({
           </div>
         ) : (
           <p className="hex-category-composition-empty">
-            Este {subjectLabel} no conserva desglose historico por categoria para {selectedYear} aunque figure dentro de Todos los locales.
+            Este {subjectLabel} no conserva desglose histórico por categoría para {selectedYear}, aunque figure dentro de Todos los locales.
           </p>
         )}
 
         <div className="hex-category-composition-year-control">
           <div className="hex-category-composition-year-header">
-            <span className="hex-category-composition-year-label">Ano</span>
+            <span className="hex-category-composition-year-label">Año</span>
             <strong className="hex-category-composition-year-value">{selectedYear}</strong>
           </div>
           <input
-            aria-label={`Seleccionar ano de la mezcla del ${subjectLabel}`}
+            aria-label={`Seleccionar año de la mezcla del ${subjectLabel}`}
             className="hex-category-composition-year-slider"
             max={maxYear}
             min={minYear}
@@ -263,7 +263,7 @@ export function HexCategoryComposition({
               ref={hoverPanelRef}
               style={floatingPanelStyle}
             >
-              <span className="hex-category-composition-hover-kicker">Categoria resaltada</span>
+              <span className="hex-category-composition-hover-kicker">Categoría resaltada</span>
               <div className="hex-category-composition-hover-title-row">
                 <span aria-hidden="true" className="hex-category-composition-swatch" style={{ background: activeItem.color }} />
                 <strong className="hex-category-composition-hover-title">{activeItem.categoryDesc}</strong>
@@ -278,7 +278,7 @@ export function HexCategoryComposition({
                   <strong className="hex-category-composition-hover-value">{formatInteger(activeItem.nLocales)}</strong>
                 </div>
                 <div className="hex-category-composition-hover-stat">
-                  <span className="hex-category-composition-hover-label">Posicion</span>
+                  <span className="hex-category-composition-hover-label">Posición</span>
                   <strong className="hex-category-composition-hover-value">#{activeItemRank} de {formatInteger(items.length)}</strong>
                 </div>
               </div>
@@ -428,20 +428,20 @@ function formatInteger(value: number) {
 
 function buildActiveCategoryNarrative(item: HexCategoryCompositionItem, totalLocales: number, subjectLabel: string) {
   if (totalLocales <= 1 && item.nLocales <= 1) {
-    return `En este ${subjectLabel} solo se observa 1 local en el periodo seleccionado, asi que toda la mezcla corresponde a esta categoria.`;
+    return `En este ${subjectLabel} solo se observa 1 local en el período seleccionado, así que toda la mezcla corresponde a esta categoría.`;
   }
 
   if (item.nLocales <= 1) {
-    return `Esta categoria solo aparece en 1 local de los ${formatInteger(totalLocales)} observados en el ${subjectLabel}, asi que su peso historico aqui es muy puntual.`;
+    return `Esta categoría solo aparece en 1 local de los ${formatInteger(totalLocales)} observados en el ${subjectLabel}, así que su peso histórico aquí es muy puntual.`;
   }
 
   if (item.share >= 0.25) {
-    return `Es una de las categorias dominantes del ${subjectLabel}: concentra una parte muy visible del historico local y condiciona bastante la mezcla observada.`;
+    return `Es una de las categorías dominantes del ${subjectLabel}: concentra una parte muy visible del histórico local y condiciona bastante la mezcla observada.`;
   }
 
   if (item.share >= 0.1) {
-    return `Tiene un peso intermedio dentro del ${subjectLabel}: no domina la mezcla, pero si aparece con suficiente frecuencia como para dejar una huella clara.`;
+    return `Tiene un peso intermedio dentro del ${subjectLabel}: no domina la mezcla, pero sí aparece con suficiente frecuencia como para dejar una huella clara.`;
   }
 
-  return `Su presencia es minoritaria dentro del ${subjectLabel}: forma parte de la mezcla historica, pero queda por detras de las categorias principales.`;
+  return `Su presencia es minoritaria dentro del ${subjectLabel}: forma parte de la mezcla histórica, pero queda por detrás de las categorías principales.`;
 }

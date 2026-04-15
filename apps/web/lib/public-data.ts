@@ -4,6 +4,7 @@ import type {
   HexCompositionHistoryArtifacts,
   HistoricalRankingArtifacts,
   OpportunityArtifacts,
+  OpportunityPoint,
   ZoneBoundaryArtifacts,
 } from "@/lib/types";
 
@@ -20,8 +21,8 @@ const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 export const FALLBACK_MAP_ARTIFACTS: FrontendArtifacts = {
   meta: {
-    title: "Madrid Survival Grid",
-    subtitle: "Datos frontend pendientes de materializar. Ejecuta el builder estático para poblar el mapa.",
+    title: "Mapa de supervivencia comercial de Madrid",
+    subtitle: "Datos de la web pendientes de materializar. Ejecuta el generador estático para poblar el mapa.",
     generated_at: new Date(0).toISOString(),
     defaultCategoryCode: "__all__",
     map_bounds: {
@@ -50,7 +51,7 @@ export const FALLBACK_MAP_ARTIFACTS: FrontendArtifacts = {
 
 export const FALLBACK_OPPORTUNITY_ARTIFACTS: OpportunityArtifacts = {
   meta: {
-    title: "Madrid Opportunity Map",
+    title: "Mapa de oportunidades de Madrid",
     subtitle: "Locales disponibles y recomendación de actividad",
     generated_at: new Date(0).toISOString(),
     section_geojson_path: "/data/frontend-opportunity-sections.geojson",
@@ -83,13 +84,13 @@ export const FALLBACK_OPPORTUNITY_ARTIFACTS: OpportunityArtifacts = {
 
 export const FALLBACK_HISTORICAL_RANKING_ARTIFACTS: HistoricalRankingArtifacts = {
   meta: {
-    title: "Madrid Historical Category Ranking",
-    subtitle: "Artefacto temporal pendiente de materializar.",
+    title: "Ranking histórico por categoría en Madrid",
+    subtitle: "Datos temporales pendientes de materializar.",
     generated_at: new Date(0).toISOString(),
     metric_key: "specialization_index",
-    metric_label: "Indice de especializacion",
-    metric_short_label: "Especializacion vs Madrid",
-    metric_definition: "Cuota suavizada de la categoria en la zona comparada con la cuota de esa categoria en Madrid.",
+    metric_label: "Índice de especialización",
+    metric_short_label: "Especialización vs. Madrid",
+    metric_definition: "Cuota suavizada de la categoría en la zona comparada con la cuota de esa categoría en Madrid.",
     metric_direction: "higher_better",
     smoothing_weight: 12,
     years: [],
@@ -113,8 +114,8 @@ export const FALLBACK_HISTORICAL_RANKING_ARTIFACTS: HistoricalRankingArtifacts =
 
 export const FALLBACK_HEX_COMPOSITION_HISTORY_ARTIFACTS: HexCompositionHistoryArtifacts = {
   meta: {
-    title: "Madrid Historical Hex Composition",
-    subtitle: "Artefacto temporal pendiente de materializar.",
+    title: "Composición histórica por hexágono en Madrid",
+    subtitle: "Datos temporales pendientes de materializar.",
     generated_at: new Date(0).toISOString(),
     years: [],
     latest_period_by_year: {},
@@ -127,8 +128,8 @@ export const FALLBACK_HEX_COMPOSITION_HISTORY_ARTIFACTS: HexCompositionHistoryAr
 
 export const FALLBACK_ZONE_BOUNDARY_ARTIFACTS: ZoneBoundaryArtifacts = {
   meta: {
-    title: "Madrid Zone Boundaries",
-    subtitle: "Limites administrativos pendientes de materializar.",
+    title: "Límites territoriales de Madrid",
+    subtitle: "Límites administrativos pendientes de materializar.",
     generated_at: new Date(0).toISOString(),
   },
   zones: {
@@ -168,9 +169,10 @@ export function loadMapArtifactsFromPublic(hexSize: HexSize = DEFAULT_HEX_SIZE) 
 
 export function loadOpportunityArtifactsFromPublic() {
   if (!IS_PRODUCTION) {
-    return fetchPublicJson(OPPORTUNITY_ARTIFACTS_PATH, FALLBACK_OPPORTUNITY_ARTIFACTS);
+    return fetchPublicJson(OPPORTUNITY_ARTIFACTS_PATH, FALLBACK_OPPORTUNITY_ARTIFACTS).then(normalizeOpportunityArtifacts);
   }
-  opportunityArtifactsPromise ??= fetchPublicJson(OPPORTUNITY_ARTIFACTS_PATH, FALLBACK_OPPORTUNITY_ARTIFACTS);
+  opportunityArtifactsPromise ??= fetchPublicJson(OPPORTUNITY_ARTIFACTS_PATH, FALLBACK_OPPORTUNITY_ARTIFACTS)
+    .then(normalizeOpportunityArtifacts);
   return opportunityArtifactsPromise;
 }
 
@@ -232,4 +234,61 @@ async function fetchPublicJson<T>(path: string, fallback: T): Promise<T> {
   } catch {
     return fallback;
   }
+}
+
+export function normalizeOpportunityArtifacts(artifacts: OpportunityArtifacts): OpportunityArtifacts {
+  const listingIdCounts = new Map<string, number>();
+  for (const point of artifacts.points) {
+    listingIdCounts.set(point.listing_id, (listingIdCounts.get(point.listing_id) ?? 0) + 1);
+  }
+
+  if (![...listingIdCounts.values()].some((count) => count > 1)) {
+    return artifacts;
+  }
+
+  const usedListingIds = new Set<string>();
+  const normalizedPoints = artifacts.points.map((point) => {
+    const duplicateCount = listingIdCounts.get(point.listing_id) ?? 0;
+    if (duplicateCount <= 1 && !usedListingIds.has(point.listing_id)) {
+      usedListingIds.add(point.listing_id);
+      return point;
+    }
+
+    const baseId = buildOpportunityPointClientId(point);
+    let nextId = baseId;
+    let suffix = 2;
+
+    while (usedListingIds.has(nextId)) {
+      nextId = `${baseId}:${suffix}`;
+      suffix += 1;
+    }
+
+    usedListingIds.add(nextId);
+    return {
+      ...point,
+      listing_id: nextId,
+    };
+  });
+
+  return {
+    ...artifacts,
+    points: normalizedPoints,
+  };
+}
+
+function buildOpportunityPointClientId(point: OpportunityPoint) {
+  const operationToken = normalizeOpportunityClientIdToken(point.operation);
+  if (operationToken) {
+    return `${point.listing_id}:${operationToken}`;
+  }
+  return `${point.listing_id}:anuncio`;
+}
+
+function normalizeOpportunityClientIdToken(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }

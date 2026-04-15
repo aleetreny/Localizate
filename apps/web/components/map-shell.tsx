@@ -712,7 +712,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
           <h1>Mapa de supervivencia comercial.</h1>
         </div>
 
-        <p className="lede">Explora qué zonas sostienen mejor cada tipo de local en Madrid</p>
+        <p className="lede">Explora qué zonas sostienen mejor cada tipo de local en Madrid.</p>
 
         <div className="control-group">
           <span className="control-label" id="category-label">
@@ -733,7 +733,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
         </div>
 
         <div className="control-group">
-          <span className="control-label">Visor principal</span>
+          <span className="control-label">Vista principal</span>
           <div className="toggle-row toggle-row-three map-view-toggle-row">
             <button data-active={mapViewMode === "district"} onClick={() => handleMapViewModeChange("district")} type="button">
               Distrito
@@ -742,14 +742,14 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
               Barrio
             </button>
             <button data-active={mapViewMode === "hex"} onClick={() => handleMapViewModeChange("hex")} type="button">
-              Hexagono
+              Hexágono
             </button>
           </div>
         </div>
 
         {mapViewMode === "hex" && (
         <div className="control-group">
-          <span className="control-label">Tamaño hexágono</span>
+          <span className="control-label">Tamaño del hexágono</span>
           <div className="toggle-row toggle-row-three">
             {HEX_SIZE_OPTIONS.map((option) => (
               <button
@@ -775,7 +775,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
 
         <div className="stat-grid">
           <div className="stat-card">
-            <span className="label">Indice relativo 0-1</span>
+            <span className="label">Índice relativo 0-1</span>
             <span className="value">{formatRelativeRiskIndex(activeStats.meanRelativeRisk)}</span>
           </div>
           <div className="stat-card">
@@ -793,9 +793,9 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
         </div>
         <p className="support-note">
           {isLoadingArtifacts
-            ? "Cargando el artefacto historico del mapa. La vista aparece primero y los datos se hidratan en segundo plano."
+            ? "Cargando los datos históricos del mapa. La vista aparece primero y el contenido se completa en segundo plano."
             : mapViewMode !== "hex" && isLoadingZoneBoundaries && currentZoneBoundaries.length === 0
-              ? `Cargando limites de ${activeUnitLabelPlural.toLowerCase()}...`
+              ? `Cargando límites de ${activeUnitLabelPlural.toLowerCase()}...`
             : isSwitchingHexSize && mapViewMode === "hex"
               ? `Cambiando a nivel ${formatHexSizeLabel(hexSize).toLowerCase()}...`
                 : buildGlobalSupportNote({
@@ -864,7 +864,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
               }}
               type="button"
             >
-              {isRiskExplainerOpen ? "Ocultar guia" : "Como interpretar este ranking"}
+              {isRiskExplainerOpen ? "Ocultar guía" : "Cómo interpretar este ranking"}
             </button>
             <button
               aria-expanded={isHistoricalEvolutionOpen}
@@ -888,7 +888,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
               }}
               type="button"
             >
-              {isHistoricalEvolutionOpen ? "Ocultar evolucion historica" : "Evolucion historica"}
+              {isHistoricalEvolutionOpen ? "Ocultar evolución histórica" : "Evolución histórica"}
             </button>
           </div>
         </section>
@@ -1001,7 +1001,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
 
         <section className="detail-card">
           <div className="eyebrow">
-            {mapViewMode === "hex" ? "Hexagono seleccionado" : `${capitalize(activeUnitLabelSingular)} seleccionado`}
+            {mapViewMode === "hex" ? "Hexágono seleccionado" : `${capitalize(activeUnitLabelSingular)} seleccionado`}
           </div>
           {detailHex || detailZone ? (
             <>
@@ -1018,7 +1018,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
                   <p className="detail-subtle">
                     {detailHex
                       ? "Lectura fina por celda H3. Sirve para detectar contrastes internos dentro de un barrio o distrito."
-                      : `Lectura historica agregada por ${activeUnitLabelSingular}. Prioriza estabilidad y narrativa territorial.`}
+                      : `Lectura histórica agregada por ${activeUnitLabelSingular}. Prioriza estabilidad y narrativa territorial.`}
                   </p>
                 </div>
               </div>
@@ -1035,11 +1035,11 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
             </>
           ) : (
             <div className="detail-empty">
-              <h3>{`Selecciona ${mapViewMode === "hex" ? "un hexagono" : `un ${activeUnitLabelSingular}`}`}</h3>
+              <h3>{`Selecciona ${mapViewMode === "hex" ? "un hexágono" : `un ${activeUnitLabelSingular}`}`}</h3>
               <p>
                 {mapViewMode === "hex"
-                  ? "Haz clic en el mapa para ver su posicion en Madrid, su ranking por riesgo y la diferencia frente a la media de la categoria."
-                  : `Haz clic en el mapa para ver la ficha historica del ${activeUnitLabelSingular}, su ranking en Madrid y el soporte real de la metrica.`}
+                  ? "Haz clic en el mapa para ver su posición en Madrid, su ranking por riesgo y la diferencia frente a la media de la categoría."
+                  : `Haz clic en el mapa para ver la ficha histórica del ${activeUnitLabelSingular}, su ranking en Madrid y el soporte real de la métrica.`}
               </p>
             </div>
           )}
@@ -1047,7 +1047,7 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
 
         {selectedCategory === "__all__" ? (
           <section className="info-card info-card-hex-category-composition">
-            <div className="eyebrow">{mapViewMode === "hex" ? "Mezcla del hexagono" : `Mezcla del ${activeUnitLabelSingular}`}</div>
+            <div className="eyebrow">{mapViewMode === "hex" ? "Mezcla del hexágono" : `Mezcla del ${activeUnitLabelSingular}`}</div>
             {detailHex || detailZone ? (
               <HexCategoryComposition
                 items={detailCategoryComposition}
@@ -1056,14 +1056,14 @@ export function MapShell({ initialArtifacts }: MapShellProps) {
                 onYearChange={setCompositionYear}
                 overlayBoundsRef={mapPanelRef}
                 selectedYear={compositionYear}
-                subjectLabel={mapViewMode === "hex" ? "hexagono" : activeUnitLabelSingular}
+                subjectLabel={mapViewMode === "hex" ? "hexágono" : activeUnitLabelSingular}
                 totalLocales={detailCategoryCompositionTotalLocales}
               />
             ) : (
               <p className="empty-note">
                 {mapViewMode === "hex"
-                  ? "Selecciona un hexagono para ver como se reparten sus locales historicos entre las distintas categorias."
-                  : `Selecciona un ${activeUnitLabelSingular} para ver como cambia su mezcla historica por categorias a lo largo del tiempo.`}
+                  ? "Selecciona un hexágono para ver cómo se reparten sus locales históricos entre las distintas categorías."
+                  : `Selecciona un ${activeUnitLabelSingular} para ver cómo cambia su mezcla histórica por categorías a lo largo del tiempo.`}
               </p>
             )}
           </section>
@@ -1721,7 +1721,7 @@ function getMapViewUnitLabel(mode: MapViewMode, plural: boolean) {
   if (mode === "barrio") {
     return plural ? "Barrios" : "barrio";
   }
-  return plural ? "Hexagonos" : "hexagono";
+  return plural ? "Hexágonos" : "hexágono";
 }
 
 function buildSelectedUnitSummary({
@@ -1955,7 +1955,7 @@ function buildZoneActivityInsightSummary(insight: ZoneActivityInsight) {
 function formatZoneActivityDetail(item: ZoneActivityRankingItem, horizon: Horizon) {
   const horizonLabel = formatHorizonShortLabel(horizon);
   const survivalLabel = formatPercent(item.survival, item.support > 0 ? "Sin datos" : "Sin muestra");
-  return `Surv ${horizonLabel} ${survivalLabel} · ${formatCompact(item.nLocales)} locales`;
+  return `Superv. ${horizonLabel} ${survivalLabel} · ${formatCompact(item.nLocales)} locales`;
 }
 
 function sortZonesByRisk(zones: ZoneAggregate[]) {
@@ -2021,60 +2021,60 @@ function buildZoneMetrics({
       id: `${detailKey}:locales`,
       label: `Locales del ${unitLabel}`,
       value: new Intl.NumberFormat("es-ES").format(detail.n_locales),
-      summary: `Cuenta cuantos locales historicos visibles de la categoria activa quedan agregados dentro de este ${unitLabel}.`,
-      calculation: `Es el recuento agregado de locales asociados a este ${unitLabel} despues de aplicar la categoria seleccionada.`,
+      summary: `Cuenta cuántos locales históricos visibles de la categoría activa quedan agregados dentro de este ${unitLabel}.`,
+      calculation: `Es el recuento agregado de locales asociados a este ${unitLabel} después de aplicar la categoría seleccionada.`,
     },
     {
       id: `${detailKey}:city-rank`,
       label: "Ranking Madrid",
       value: detailRank ? formatHexRank(detailRank.rank, detailRank.total) : "-",
-      summary: `Top dinamico actual: ${rankTopShare}. Situa este ${unitLabel} frente al resto de ${detail.zone_level === "district" ? "distritos" : "barrios"} visibles de Madrid en la categoria activa.`,
-      calculation: `Ordenamos todos los ${detail.zone_level === "district" ? "distritos" : "barrios"} visibles de esta categoria por menor riesgo medio. El puesto #1 es el que sale mejor en esa comparacion.`,
+      summary: `Top dinámico actual: ${rankTopShare}. Sitúa este ${unitLabel} frente al resto de ${detail.zone_level === "district" ? "distritos" : "barrios"} visibles de Madrid en la categoría activa.`,
+      calculation: `Ordenamos todos los ${detail.zone_level === "district" ? "distritos" : "barrios"} visibles de esta categoría por menor riesgo medio. El puesto #1 es el que sale mejor en esa comparación.`,
     },
     {
       id: `${detailKey}:risk-percentile`,
-      label: "Indice relativo 0-1",
+      label: "Índice relativo 0-1",
       value: formatRelativeRiskIndex(detail.avg_risk_percentile),
-      summary: `Es la lectura principal del mapa territorial. Cuanto mas cerca de 0, mejor posicion relativa tiene este ${unitLabel} dentro de la categoria activa.`,
-      calculation: `Convertimos el riesgo agregado del ${unitLabel} en un indice entre 0 y 1 comparandolo con el resto de ${detail.zone_level === "district" ? "distritos" : "barrios"} de la misma categoria en Madrid.`,
+      summary: `Es la lectura principal del mapa territorial. Cuanto más cerca de 0, mejor posición relativa tiene este ${unitLabel} dentro de la categoría activa.`,
+      calculation: `Convertimos el riesgo agregado del ${unitLabel} en un índice entre 0 y 1 comparándolo con el resto de ${detail.zone_level === "district" ? "distritos" : "barrios"} de la misma categoría en Madrid.`,
     },
     {
       id: `${detailKey}:vs-category`,
-      label: "Indice vs media",
+      label: "Índice vs. media",
       value: formatSignedIndexPoints(
         computeRiskIndexDelta(detail.avg_risk_percentile, meanRiskIndex),
         isFiniteNumber(meanRiskIndex) ? "Sin datos" : "Sin muestra"
       ),
-      summary: `Compara el indice relativo de este ${unitLabel} con la media de la categoria activa dentro del mismo tipo de unidad territorial.`,
-      calculation: `Restamos la media de indice relativo de la categoria al indice de este ${unitLabel}. Los valores negativos indican mejor posicion relativa que la media.`,
+      summary: `Compara el índice relativo de este ${unitLabel} con la media de la categoría activa dentro del mismo tipo de unidad territorial.`,
+      calculation: `Restamos la media del índice relativo de la categoría al índice de este ${unitLabel}. Los valores negativos indican mejor posición relativa que la media.`,
     },
     {
       id: `${detailKey}:survival:${horizon}`,
       label: `Supervivencia ${horizonLabel}`,
       value: formatPercent(detailSurvival, detailSupport > 0 ? "Sin datos" : "Sin muestra"),
       summary: `Muestra que parte de los locales comparables sigue activa en este ${unitLabel} al llegar a ${horizonLabel}.`,
-      calculation: `Tomamos los locales de esta categoria con observacion suficiente en ${horizonLabel} y calculamos su supervivencia observada agregada en este ${unitLabel}.`,
+      calculation: `Tomamos los locales de esta categoría con observación suficiente en ${horizonLabel} y calculamos su supervivencia observada agregada en este ${unitLabel}.`,
     },
     {
       id: `${detailKey}:support:${horizon}`,
       label: `Soporte ${horizonLabel}`,
       value: formatSupport(detailSupport, detail.n_locales),
-      summary: `Te dice cuantos locales sostienen de verdad la metrica frente al total visible en este ${unitLabel}.`,
+      summary: `Te dice cuántos locales sostienen de verdad la métrica frente al total visible en este ${unitLabel}.`,
       calculation: `El numerador cuenta los locales con observacion valida en ${horizonLabel}; el denominador es el total de locales agregados del ${unitLabel}.`,
     },
     {
       id: `${detailKey}:event-rate`,
-      label: "Rotacion historica",
+      label: "Rotación histórica",
       value: formatPercent(detail.event_rate, "Sin muestra"),
-      summary: `Mide que porcentaje de locales de esta categoria registra cierres o cambios de actividad dentro de este ${unitLabel}.`,
-      calculation: `Calculamos eventos observados dividido por locales historicos agregados del ${unitLabel}. Cuanto mas alto, mayor rotacion comercial observada.`,
+      summary: `Mide qué porcentaje de locales de esta categoría registra cierres o cambios de actividad dentro de este ${unitLabel}.`,
+      calculation: `Calculamos los eventos observados divididos por los locales históricos agregados del ${unitLabel}. Cuanto más alto, mayor rotación comercial observada.`,
     },
     {
       id: `${detailKey}:confidence`,
-      label: "Confianza historica",
+      label: "Confianza histórica",
       value: confidenceLabel,
-      summary: `Te indica cuanta base historica sostiene la lectura de este ${unitLabel}; sirve para separar señales robustas de lecturas mas finas o fragiles.`,
-      calculation: "La asignamos a partir del numero de locales y eventos historicos disponibles en la unidad. Distritos y barrios usan umbrales distintos segun su escala.",
+      summary: `Te indica cuánta base histórica sostiene la lectura de este ${unitLabel}; sirve para separar señales robustas de lecturas más finas o frágiles.`,
+      calculation: "La asignamos a partir del número de locales y eventos históricos disponibles en la unidad. Distritos y barrios usan umbrales distintos según su escala.",
     },
   ].sort((left, right) => desiredOrder.indexOf(left.id) - desiredOrder.indexOf(right.id));
 }
@@ -2174,7 +2174,7 @@ function buildMetricWhyUsefulLegacy(metric: MetricDefinition) {
     return "Te ayuda a priorizar rápido: con una sola cifra ves si este hexágono está entre los mejores o peores de la categoría activa dentro de Madrid.";
   }
   if (metric.id.endsWith(":risk-percentile")) {
-    return "Es la lectura más fácil de comparar entre zonas: 0,10 se entiende enseguida como mejor posición relativa que 0,70 sin tener que entrar en el score técnico del modelo.";
+    return "Es la lectura más fácil de comparar entre zonas: 0,10 se entiende enseguida como mejor posición relativa que 0,70 sin tener que entrar en la puntuación técnica del modelo.";
   }
   if (metric.id.endsWith(":vs-category")) {
     return "Te da una lectura relativa inmediata: ves si el riesgo de este hexágono está por encima o por debajo del nivel medio de su categoría en Madrid.";
@@ -2211,59 +2211,59 @@ function buildMetricExampleLegacy(metric: MetricDefinition) {
 }
 
 function buildMetricWhyUseful(metric: MetricDefinition) {
-  const unitLabel = metric.id.startsWith("hex:") ? "hexagono" : "unidad territorial";
+  const unitLabel = metric.id.startsWith("hex:") ? "hexágono" : "unidad territorial";
   if (metric.id.endsWith(":locales")) {
-    return `Te da una lectura de tamano inmediato: ayuda a diferenciar si estas viendo un ${unitLabel} muy representativo o uno con base pequena.`;
+    return `Te da una lectura de tamaño inmediato: ayuda a diferenciar si estás viendo un ${unitLabel} muy representativo o uno con base pequeña.`;
   }
   if (metric.id.endsWith(":city-rank")) {
-    return `Te ayuda a priorizar rapido: con una sola cifra ves si este ${unitLabel} esta entre los mejores o peores de la categoria activa dentro de Madrid.`;
+    return `Te ayuda a priorizar rápido: con una sola cifra ves si este ${unitLabel} está entre los mejores o peores de la categoría activa dentro de Madrid.`;
   }
   if (metric.id.endsWith(":risk-percentile")) {
-    return "Es la lectura mas facil de comparar entre zonas: 0,10 se entiende enseguida como mejor posicion relativa que 0,70 sin tener que entrar en el score tecnico del modelo.";
+    return "Es la lectura más fácil de comparar entre zonas: 0,10 se entiende enseguida como mejor posición relativa que 0,70 sin tener que entrar en la puntuación técnica del modelo.";
   }
   if (metric.id.endsWith(":vs-category")) {
-    return `Te da una lectura relativa inmediata: ves si el riesgo de este ${unitLabel} esta por encima o por debajo del nivel medio de su categoria en Madrid.`;
+    return `Te da una lectura relativa inmediata: ves si el riesgo de este ${unitLabel} está por encima o por debajo del nivel medio de su categoría en Madrid.`;
   }
   if (metric.id.includes(":survival:")) {
-    return "Convierte el mapa en una pregunta de negocio muy directa: que continuidad historica ha tenido esta categoria aqui en el horizonte elegido.";
+    return "Convierte el mapa en una pregunta de negocio muy directa: qué continuidad histórica ha tenido esta categoría aquí en el horizonte elegido.";
   }
   if (metric.id.includes(":support:")) {
-    return "Te protege de falsas certezas: una cifra buena con poco soporte vale menos que una lectura parecida con mas base historica.";
+    return "Te protege de falsas certezas: una cifra buena con poco soporte vale menos que una lectura parecida con más base histórica.";
   }
   if (metric.id.endsWith(":event-rate")) {
-    return "Resume la rotacion comercial de forma muy directa: cuanto porcentaje de locales termina cerrando o cambiando de actividad en esta zona.";
+    return "Resume la rotación comercial de forma muy directa: cuánto porcentaje de locales termina cerrando o cambiando de actividad en esta zona.";
   }
   if (metric.id.endsWith(":confidence")) {
-    return "Te recuerda cuanta evidencia real hay detras de la lectura. Es clave cuando comparas zonas pequenas o categorias con poca historia.";
+    return "Te recuerda cuánta evidencia real hay detrás de la lectura. Es clave cuando comparas zonas pequeñas o categorías con poca historia.";
   }
   if (metric.id.endsWith(":barrio-name") || metric.id.endsWith(":district-name")) {
-    return "Te orienta territorialmente y hace mas facil relacionar el hexagono con zonas reconocibles de Madrid sin tener que leer un identificador H3.";
+    return "Te orienta territorialmente y hace más fácil relacionar el hexágono con zonas reconocibles de Madrid sin tener que leer un identificador H3.";
   }
-  return `Aporta contexto adicional para interpretar mejor el comportamiento historico del ${unitLabel} seleccionado.`;
+  return `Aporta contexto adicional para interpretar mejor el comportamiento histórico del ${unitLabel} seleccionado.`;
 }
 
 function buildMetricExample(metric: MetricDefinition) {
-  const unitLabel = metric.id.startsWith("hex:") ? "hexagono" : "unidad";
+  const unitLabel = metric.id.startsWith("hex:") ? "hexágono" : "unidad";
   if (metric.id.endsWith(":locales")) {
-    return `Ejemplo: 34 locales significa que el historico util de esta categoria en esta ${unitLabel} esta construido con 34 observaciones agregadas.`;
+    return `Ejemplo: 34 locales significa que el histórico útil de esta categoría en esta ${unitLabel} está construido con 34 observaciones agregadas.`;
   }
   if (metric.id.endsWith(":city-rank")) {
-    return `Ejemplo: #45 de 3.200 significa que esta ${unitLabel} sale muy arriba dentro del mapa de esa categoria cuando ordenas por menor riesgo.`;
+    return `Ejemplo: #45 de 3.200 significa que esta ${unitLabel} sale muy arriba dentro del mapa de esa categoría cuando ordenas por menor riesgo.`;
   }
   if (metric.id.endsWith(":risk-percentile")) {
     return `Ejemplo: 0,20 indica que esta ${unitLabel} cae en una franja mejor que buena parte del mapa; equivale aproximadamente a un P20.`;
   }
   if (metric.id.endsWith(":vs-category")) {
-    return `Ejemplo: -0,08 pts significa que el indice de esta ${unitLabel} esta por debajo de la media (mejor posicion relativa de riesgo).`;
+    return `Ejemplo: -0,08 pts significa que el índice de esta ${unitLabel} está por debajo de la media, con una mejor posición relativa de riesgo.`;
   }
   if (metric.id.includes(":support:")) {
     return "Ejemplo: 18 / 26 quiere decir que 18 locales del total de 26 tienen observacion valida para ese horizonte.";
   }
   if (metric.id.endsWith(":event-rate")) {
-    return "Ejemplo: 22% implica que, historicamente, unos 22 de cada 100 locales comparables acabaron cerrando o cambiando de actividad.";
+    return "Ejemplo: 22% implica que, históricamente, unos 22 de cada 100 locales comparables acabaron cerrando o cambiando de actividad.";
   }
   if (metric.id.endsWith(":confidence")) {
-    return "Ejemplo: confianza media significa que la unidad ya tiene cierta base historica, pero todavia conviene leerla junto con soporte y volumen.";
+    return "Ejemplo: confianza media significa que la unidad ya tiene cierta base histórica, pero todavía conviene leerla junto con soporte y volumen.";
   }
   return null;
 }
@@ -2816,20 +2816,20 @@ function buildGlobalSupportNote({
   const normalizedLabel = activeUnitLabelPlural.toLowerCase();
   const singularLabel = normalizedLabel.endsWith("s") ? normalizedLabel.slice(0, -1) : normalizedLabel;
   if (totalUnits <= 0) {
-    return `No hay ${normalizedLabel} visibles para la categoria activa.`;
+    return `No hay ${normalizedLabel} visibles para la categoría activa.`;
   }
 
   if (mapViewMode === "hex") {
     return unitsWithSupport > 0
-      ? "El color del mapa usa el indice relativo 0-1. La supervivencia media queda fijada a 24 meses para no duplicar lecturas casi iguales."
-      : "El color del mapa usa el indice relativo 0-1. La supervivencia media queda fijada a 24 meses, pero ahora mismo no hay muestra suficiente para resumirla.";
+      ? "El color del mapa usa el índice relativo 0-1. La supervivencia media queda fijada en 24 meses para no duplicar lecturas casi iguales."
+      : "El color del mapa usa el índice relativo 0-1. La supervivencia media queda fijada en 24 meses, pero ahora mismo no hay muestra suficiente para resumirla.";
   }
 
   if (unitsWithSupport <= 0) {
-    return `El color del mapa usa el indice relativo 0-1 y se activa desde ${formatCompact(zoneColorFloor)} locales por ${singularLabel}. La supervivencia media 24m sale sin muestra en esta categoria.`;
+    return `El color del mapa usa el índice relativo 0-1 y se activa desde ${formatCompact(zoneColorFloor)} locales por ${singularLabel}. La supervivencia media a 24 meses sale sin muestra en esta categoría.`;
   }
 
-  return `El color del mapa usa el indice relativo 0-1 y se activa desde ${formatCompact(zoneColorFloor)} locales por ${singularLabel}. La supervivencia media 24m se calcula solo con unidades que si tienen soporte real.`;
+  return `El color del mapa usa el índice relativo 0-1 y se activa desde ${formatCompact(zoneColorFloor)} locales por ${singularLabel}. La supervivencia media a 24 meses se calcula solo con unidades que sí tienen soporte real.`;
 }
 
 function buildZoneColorThresholds(

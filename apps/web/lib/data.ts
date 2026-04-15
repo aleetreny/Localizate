@@ -13,8 +13,8 @@ const MAP_ARTIFACT_FILE_NAMES: Record<HexSize, string> = {
 
 const FALLBACK_ARTIFACTS: FrontendArtifacts = {
   meta: {
-    title: "Madrid Survival Grid",
-    subtitle: "Datos frontend pendientes de materializar. Ejecuta el builder estático para poblar el mapa.",
+    title: "Mapa de supervivencia comercial de Madrid",
+    subtitle: "Datos de la web pendientes de materializar. Ejecuta el generador estático para poblar el mapa.",
     generated_at: new Date(0).toISOString(),
     defaultCategoryCode: "__all__",
     map_bounds: {
@@ -43,7 +43,7 @@ const FALLBACK_ARTIFACTS: FrontendArtifacts = {
 
 const FALLBACK_OPPORTUNITY_ARTIFACTS: OpportunityArtifacts = {
   meta: {
-    title: "Madrid Opportunity Map",
+    title: "Mapa de oportunidades de Madrid",
     subtitle: "Locales disponibles y recomendación de actividad",
     generated_at: new Date(0).toISOString(),
     section_geojson_path: "/data/frontend-opportunity-sections.geojson",

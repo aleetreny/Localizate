@@ -325,7 +325,7 @@ export function MadridMap({
 function HexTooltip({ horizon, object }: { horizon: Horizon; object: HexAggregate }) {
   return (
     <>
-      <span className="tooltip-kicker">Hexagono</span>
+      <span className="tooltip-kicker">Hexágono</span>
       <strong className="tooltip-title">{object.category_desc}</strong>
       <span className="tooltip-subtitle">{object.location_label}</span>
       <div className="tooltip-badges">
@@ -333,11 +333,11 @@ function HexTooltip({ horizon, object }: { horizon: Horizon; object: HexAggregat
       </div>
       <div className="tooltip-grid">
         <div className="tooltip-item">
-          <span className="tooltip-label">Surv {formatHorizonShortLabel(horizon)}</span>
+          <span className="tooltip-label">Superv. {formatHorizonShortLabel(horizon)}</span>
           <strong className="tooltip-value">{formatTooltipPercent(getHorizonSurvival(object, horizon))}</strong>
         </div>
         <div className="tooltip-item">
-          <span className="tooltip-label">Indice 0-1</span>
+          <span className="tooltip-label">Índice 0-1</span>
           <strong className="tooltip-value">{formatRelativeRiskIndex(object.avg_risk_percentile)}</strong>
         </div>
       </div>
@@ -366,7 +366,7 @@ function ZoneTooltip({
       <span className="tooltip-kicker">{zoneLabel}</span>
       <strong className="tooltip-title">{zoneName}</strong>
       <span className="tooltip-subtitle">
-        {object?.category_desc ?? "Sin datos de categoria"}
+        {object?.category_desc ?? "Sin datos de categoría"}
       </span>
       <div className="tooltip-badges">
         {object ? <span className="tooltip-chip">{formatCompact(object.n_locales)} locales</span> : null}
@@ -374,13 +374,13 @@ function ZoneTooltip({
       </div>
       <div className="tooltip-grid">
         <div className="tooltip-item">
-          <span className="tooltip-label">Surv {formatHorizonShortLabel(horizon)}</span>
+          <span className="tooltip-label">Superv. {formatHorizonShortLabel(horizon)}</span>
           <strong className="tooltip-value">
             {object ? formatTooltipPercent(getHorizonSurvival(object, horizon)) : "Sin muestra"}
           </strong>
         </div>
         <div className="tooltip-item">
-          <span className="tooltip-label">Indice 0-1</span>
+          <span className="tooltip-label">Índice 0-1</span>
           <strong className="tooltip-value">
             {object ? formatRelativeRiskIndex(object.avg_risk_percentile) : "Sin datos"}
           </strong>

@@ -14,8 +14,8 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Localizate Madrid Map",
-  description: "Mapa minimalista de supervivencia comercial por hexágono en Madrid."
+  title: "Localizate Madrid",
+  description: "Mapa de supervivencia comercial por hexágono en Madrid."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

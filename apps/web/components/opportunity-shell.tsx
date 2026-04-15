@@ -6,7 +6,7 @@ import { OpportunityMap } from "@/components/opportunity-map";
 import { ViewTabs } from "@/components/view-tabs";
 import { formatHorizonShortLabel, isFiniteNumber, type Horizon } from "@/lib/horizon";
 import { buildOpportunityBenchmarkContext, type OpportunityBenchmarkContext } from "@/lib/opportunity-insights";
-import { FALLBACK_OPPORTUNITY_ARTIFACTS, loadOpportunityArtifactsFromPublic } from "@/lib/public-data";
+import { FALLBACK_OPPORTUNITY_ARTIFACTS, loadOpportunityArtifactsFromPublic, normalizeOpportunityArtifacts } from "@/lib/public-data";
 import type {
   FacilityCategory,
   IndicadorDistrito,
@@ -78,11 +78,15 @@ const EMPTY_SECTION_COLLECTION: OpportunitySectionFeatureCollection = {
 };
 
 export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
-  const [artifacts, setArtifacts] = useState(initialArtifacts ?? FALLBACK_OPPORTUNITY_ARTIFACTS);
+  const normalizedInitialArtifacts = useMemo(
+    () => normalizeOpportunityArtifacts(initialArtifacts ?? FALLBACK_OPPORTUNITY_ARTIFACTS),
+    [initialArtifacts]
+  );
+  const [artifacts, setArtifacts] = useState(normalizedInitialArtifacts);
   const [isLoadingArtifacts, setIsLoadingArtifacts] = useState(!initialArtifacts);
   const [operationFilter, setOperationFilter] = useState<OperationFilter>("all");
   const [horizon, setHorizon] = useState<Horizon>("24m");
-  const [selectedListingId, setSelectedListingId] = useState<string | null>((initialArtifacts ?? FALLBACK_OPPORTUNITY_ARTIFACTS).points[0]?.listing_id ?? null);
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(normalizedInitialArtifacts.points[0]?.listing_id ?? null);
   const [manualSelection, setManualSelection] = useState<OpportunityManualSelection | null>(null);
   const [activeMetricId, setActiveMetricId] = useState<string | null>(null);
   const [sectionUniverse, setSectionUniverse] = useState<OpportunitySectionFeatureCollection>(EMPTY_SECTION_COLLECTION);
@@ -443,7 +447,7 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
 
         <p className="support-note">
           {isLoadingArtifacts
-            ? "Cargando el dataset de oportunidades y su contexto espacial. La interfaz aparece primero y los puntos se completan en segundo plano."
+            ? "Cargando los datos de oportunidades y su contexto espacial. La interfaz aparece primero y los puntos se completan en segundo plano."
             : "Haz clic en un local para abrir su ficha. Si haces clic en cualquier otro punto del mapa, la lectura se hace con la zona pequeña del censo donde cae ese punto para comparar riesgo, competencia, ingresos, metro y avisos con la misma referencia."}
         </p>
 
@@ -471,7 +475,7 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
               <h3>{isLoadingArtifacts ? "Cargando oportunidades" : "Sin selección"}</h3>
               <p>
                 {isLoadingArtifacts
-                  ? "La vista está esperando el artefacto de oportunidades y la geometría de secciones para habilitar el detalle."
+                  ? "La vista está esperando los datos de oportunidades y la geometría de secciones para habilitar el detalle."
                   : "No hay locales visibles con el filtro actual. Cambia la operación o haz clic en el mapa para explorar una sección."}
               </p>
             </div>
@@ -481,7 +485,7 @@ export function OpportunityShell({ initialArtifacts }: OpportunityShellProps) {
         <section className="info-card">
           <div className="eyebrow">Actividades recomendadas</div>
           <h3>{manualSelection ? "Actividades con mejor pronóstico en esta sección" : selectedListing ? "Actividades con mejor pronóstico en este entorno" : "Selecciona un punto"}</h3>
-          <p className="empty-note">Las ordenamos de menor a mayor riesgo estimado para esta zona. En cada tarjeta verás una referencia rápida de cuánto suele aguantar esa actividad a 2 años y cuánta muestra parecida tenemos cerca.</p>
+          <p className="empty-note">Las ordenamos de menor a mayor riesgo estimado para esta zona. En cada tarjeta verás una referencia rápida de cuánto suele aguantar esa actividad a 24 meses y cuánta muestra parecida tenemos cerca.</p>
           {activeActivities.length > 0 ? (
             <ActivityList
               activities={activeActivities}
@@ -1287,13 +1291,17 @@ function formatRank(rank: number | null, total: number | null) {
 }
 
 function buildOpportunityTierMetric(scopeId: string, value: string): MetricDefinition {
-  const resolvedTier = value || "Sin lectura";
+  const resolvedTier = value === "Solida"
+    ? "Sólida"
+    : value === "Fragil"
+      ? "Frágil"
+      : value || "Sin lectura";
   return {
     id: `${scopeId}:opportunity-tier`,
     label: "Lectura de oportunidad",
     value: resolvedTier,
     summary: buildOpportunityTierSummary(resolvedTier),
-    calculation: "Traducimos el percentil de riesgo de la sección a un tramo cualitativo para lectura rápida. Alta cubre aproximadamente P0-P20, Solida P21-P45, Intermedia P46-P70 y Fragil el tramo restante.",
+    calculation: "Traducimos el percentil de riesgo de la sección a un tramo cualitativo para lectura rápida. Alta cubre aproximadamente P0-P20, Sólida P21-P45, Intermedia P46-P70 y Frágil el tramo restante.",
     breakdownTitle: "Tramos posibles",
     breakdownItems: buildOpportunityTierBreakdownItems(resolvedTier),
   };
@@ -1302,10 +1310,10 @@ function buildOpportunityTierMetric(scopeId: string, value: string): MetricDefin
 function buildRiskPercentileMetric(scopeId: string, value: number | null): MetricDefinition {
   return {
     id: `${scopeId}:risk-percentile`,
-    label: "Percentil riesgo",
+    label: "Percentil de riesgo",
     value: formatRiskPercentile(value ?? Number.NaN),
     summary: "Ubica este entorno dentro de la distribución de riesgo de Madrid. Cuanto más alto, más exigente es el entorno observado.",
-    calculation: "Ordenamos todas las secciones por su score de riesgo. Un P80 significa que el riesgo de esta sección queda por encima de aproximadamente el 80% de las secciones de la ciudad.",
+    calculation: "Ordenamos todas las secciones por su puntuación de riesgo. Un P80 significa que el riesgo de esta sección queda por encima de aproximadamente el 80% de las secciones de la ciudad.",
   };
 }
 
@@ -1417,20 +1425,20 @@ function buildActivityRankingMethodMetric({
     value: "Cox + ajuste contextual",
     summary: topActivity
       ? `${topActivity.display_label} aparece arriba porque, al simular esa actividad en esta misma ubicación, es la que obtiene el mejor equilibrio entre riesgo previsto por el modelo, encaje histórico de la categoría y solidez de la evidencia disponible.`
-      : "El ranking no ordena por popularidad ni por volumen bruto: compara macrocategorías en esta misma ubicación y coloca arriba las que salen mejor en nuestro score de riesgo contextual.",
-    calculation: "La base sale de un modelo de survival analysis tipo Cox, entrenado sobre histórico real de aperturas, cierres y cambios de actividad. Para cada macrocategoría recalculamos el riesgo bruto en esta misma zona con sus features de contexto. Ese score se transforma a una escala comparable de riesgo y además lo contrastamos contra el histórico de esa propia categoría para medir su encaje específico. Después combinamos ambas señales con un peso que sube cuando la categoría tiene más eventos observados y un patrón más específico, generando un índice contextual final. Sobre ese índice añadimos penalizaciones suaves si la evidencia solo llega desde distrito o ciudad, o si el soporte estadístico es débil, y con eso ordenamos la lista de menor a mayor riesgo contextual.",
+      : "El ranking no ordena por popularidad ni por volumen bruto: compara macrocategorías en esta misma ubicación y coloca arriba las que salen mejor en nuestra lectura de riesgo contextual.",
+    calculation: "La base sale de un modelo de supervivencia tipo Cox, entrenado sobre histórico real de aperturas, cierres y cambios de actividad. Para cada macrocategoría recalculamos el riesgo bruto en esta misma zona con sus variables de contexto. Esa puntuación se transforma a una escala comparable de riesgo y además la contrastamos con el histórico de esa propia categoría para medir su encaje específico. Después combinamos ambas señales con un peso que sube cuando la categoría tiene más eventos observados y un patrón más específico, generando un índice contextual final. Sobre ese índice añadimos penalizaciones suaves si la evidencia solo llega desde distrito o ciudad, o si el soporte estadístico es débil, y con eso ordenamos la lista de menor a mayor riesgo contextual.",
     breakdownTitle: "Qué entra en juego",
     breakdownItems: [
       {
         rank: 1,
-        label: "Modelo ML base",
-        value: "Cox survival",
+        label: "Modelo base",
+        value: "Modelo Cox",
         detail: "Simulamos cada macrocategoría en esta misma ubicación y el modelo estima un riesgo bruto usando demografía, renta, competencia, accesibilidad, avisos y resto de señales del entorno.",
       },
       {
         rank: 2,
         label: "Encaje específico",
-        value: "Fit por actividad",
+        value: "Encaje por actividad",
         detail: "No miramos solo el riesgo absoluto: comparamos cada actividad contra su propia distribución histórica para saber si aquí rinde mejor o peor de lo habitual para esa categoría.",
       },
       {
@@ -1588,9 +1596,9 @@ function buildCompetitionMetric({
     label: "Competencia local",
     value: formatCompact(localCount),
     summary: bestActivityLabel
-      ? `Resume cuántos locales activos hay en ${sectionSubject} y qué parte del stock ya pertenece a la misma categoría amplia que hoy lidera el ranking, ${bestActivityLabel}.`
-      : `Resume cuántos locales activos hay en ${sectionSubject} y qué parte del stock ya cae en la misma categoría amplia usada como referencia competitiva.`,
-    calculation: "Tomamos el stock histórico de locales activos observado en la sección usada para puntuar el entorno. La cuota de misma categoría se calcula sobre una familia amplia de actividad, no sobre el epígrafe exacto ni sobre competencia directa uno a uno.",
+      ? `Resume cuántos locales activos hay en ${sectionSubject} y qué parte del total ya pertenece a la misma categoría amplia que hoy lidera el ranking, ${bestActivityLabel}.`
+      : `Resume cuántos locales activos hay en ${sectionSubject} y qué parte del total ya cae en la misma categoría amplia usada como referencia competitiva.`,
+    calculation: "Tomamos el histórico de locales activos observado en la sección usada para puntuar el entorno. La cuota de misma categoría se calcula sobre una familia amplia de actividad, no sobre el epígrafe exacto ni sobre competencia directa uno a uno.",
     breakdownTitle: "Lectura competitiva",
     breakdownItems: buildCompetitionBreakdownItems({
       localCount,
@@ -1610,7 +1618,7 @@ function buildPointPrimaryMetrics(point: OpportunityPoint, horizon: Horizon, ben
       label: `Supervivencia ${horizonLabel}`,
       value: formatPercent(getPointSurvival(point, horizon)),
       summary: `Es la probabilidad esperada de que un local comparable siga activo dentro de ${horizonLabel} en este entorno.`,
-      calculation: "Partimos del score de riesgo del modelo para la sección donde cae el local y lo transformamos a supervivencia esperada en ese horizonte."
+      calculation: "Partimos de la puntuación de riesgo del modelo para la sección donde cae el local y la transformamos en supervivencia esperada para ese horizonte."
     },
     buildRankingMetric({
       scopeId: `listing:${point.listing_id}`,
@@ -1697,7 +1705,7 @@ function buildSectionPrimaryMetrics(section: OpportunitySection, horizon: Horizo
       label: `Supervivencia ${horizonLabel}`,
       value: formatPercent(getSectionSurvival(section, horizon)),
       summary: `Es la probabilidad esperada de que un local comparable siga activo dentro de ${horizonLabel} en esta sección.`,
-      calculation: "Partimos del score de riesgo agregado de la sección y lo transformamos a supervivencia esperada para el horizonte seleccionado."
+      calculation: "Partimos de la puntuación de riesgo agregada de la sección y la transformamos en supervivencia esperada para el horizonte seleccionado."
     },
     buildRankingMetric({
       scopeId: `section:${section.section_key}`,
@@ -1849,7 +1857,7 @@ function buildContextMetrics({
       label: "Rotación 12m",
       value: formatTurnoverValue(turnoverRate12m),
       summary: buildTurnoverSummary(turnoverRate12m),
-      calculation: "Dividimos los cambios o salidas observados en los últimos 12 meses entre el stock de locales de la sección. En zonas tan pequeñas es normal observar ceros exactos cuando no se registra ningún movimiento en ese año.",
+      calculation: "Dividimos los cambios o salidas observados en los últimos 12 meses entre el total de locales de la sección. En zonas tan pequeñas es normal observar ceros exactos cuando no se registra ningún movimiento en ese año.",
       breakdownTitle: "Comparación territorial",
       breakdownItems: buildTerritorialBreakdownItems({
         benchmark: benchmarks?.metrics.section_turnover_rate_12m_start,
@@ -1934,7 +1942,7 @@ function buildContextMetrics({
       label: "Inspecciones consumo",
       value: formatCompact(inspeccionesDistritoTotal),
       summary: buildInspeccionesSummary(inspeccionesDistritoTotal, inspeccionesCiudadMedia, districtName),
-      calculation: "Recuento de inspecciones de consumo realizadas en el distrito según el último dataset publicado por el Ayuntamiento de Madrid. La media ciudad es el promedio por distrito.",
+      calculation: "Recuento de inspecciones de consumo realizadas en el distrito según el último conjunto de datos publicado por el Ayuntamiento de Madrid. La media ciudad es el promedio por distrito.",
       breakdownTitle: `Top epígrafes inspeccionados · ${districtName || "Distrito"}`,
       breakdownItems: buildInspeccionesBreakdownItems(inspeccionesTopEpigrafes),
       breakdownEmptyText: "Sin datos de inspecciones disponibles para este distrito."
@@ -2168,9 +2176,9 @@ function buildTurnoverSummary(turnoverRate12m: number | null) {
     return "En el último año observado no aparece ningún cambio o salida registrado en esta zona pequeña del censo. En este corte esto es frecuente y significa ausencia de movimientos observados, no falta de datos.";
   }
   if (turnoverRate12m < 0.01) {
-    return `La rotación existe, pero es muy baja: ${formatTurnoverValue(turnoverRate12m)} del stock comercial en el último año observado.`;
+    return `La rotación existe, pero es muy baja: ${formatTurnoverValue(turnoverRate12m)} del total comercial en el último año observado.`;
   }
-  return `Resume cuánto se ha movido el tejido comercial en el último año observado: ${formatTurnoverValue(turnoverRate12m)} del stock comercial.`;
+  return `Resume cuánto se ha movido el tejido comercial en el último año observado: ${formatTurnoverValue(turnoverRate12m)} del total comercial.`;
 }
 
 function buildFacilitiesSummary(tier: string, n200: number, n500: number, n1000: number): string {
@@ -2734,7 +2742,7 @@ function buildIncomeSummary({
 
 function buildIncomeCalculation({ granularityUsed, outlierAdjusted }: { granularityUsed: string; outlierAdjusted: boolean }) {
   if (outlierAdjusted) {
-    return "Partimos del dato anual de ingresos de la zona pequeña del censo. Si ese dato sale incoherente frente a su distrito, lo descartamos y usamos la referencia distrital para no arrastrar outliers al mapa.";
+    return "Partimos del dato anual de ingresos de la zona pequeña del censo. Si ese dato sale incoherente frente a su distrito, lo descartamos y usamos la referencia distrital para no arrastrar valores atípicos al mapa.";
   }
   if (granularityUsed === "district") {
     return "Partimos del dato anual de ingresos de la zona pequeña del censo. Si falta o no es fiable, usamos la referencia del distrito.";
@@ -2742,20 +2750,20 @@ function buildIncomeCalculation({ granularityUsed, outlierAdjusted }: { granular
   if (granularityUsed === "city") {
     return "Partimos del dato anual de ingresos de la zona pequeña del censo. Si faltan referencias local y distrital, usamos la referencia general de Madrid.";
   }
-  return "Usamos el dato anual de ingresos de la zona pequeña del censo donde cae el local. Si esa lectura faltara, el pipeline conserva el mejor fallback territorial disponible.";
+  return "Usamos el dato anual de ingresos de la zona pequeña del censo donde cae el local. Si esa lectura faltara, el proceso conserva la mejor referencia territorial disponible.";
 }
 
 function buildOpportunityTierSummary(value: string) {
   if (value === "Alta") {
     return "La sección cae dentro del tramo más defensivo del mapa de oportunidades. Sigue exigiendo validar local, renta y competencia, pero parte de una lectura comparativamente favorable en Madrid.";
   }
-  if (value === "Solida") {
+  if (value === "Sólida") {
     return "La sección está en un tramo favorable, aunque ya no tan selecto como Alta. Suele combinar una base razonable de contexto con riesgo por debajo de buena parte de la ciudad.";
   }
   if (value === "Intermedia") {
     return "La sección está en una zona media del mapa. No es una mala lectura por sí sola, pero conviene apoyarse más en competencia, metro, demografía y encaje de actividad.";
   }
-  if (value === "Fragil") {
+  if (value === "Frágil") {
     return "La sección cae en el tramo más exigente del mapa. No invalida una apertura, pero sí exige una tesis más fuerte sobre producto, precio, ubicación exacta y demanda.";
   }
   return "No hay suficiente señal para ubicar esta sección en un tramo cualitativo de oportunidad.";
@@ -2771,9 +2779,9 @@ function buildOpportunityTierBreakdownItems(activeTier: string): MetricBreakdown
     },
     {
       rank: 2,
-      label: "Solida",
+      label: "Sólida",
       value: "P21-P45",
-      detail: activeTier === "Solida" ? "Tu sección cae aquí" : "Lectura favorable",
+      detail: activeTier === "Sólida" ? "Tu sección cae aquí" : "Lectura favorable",
     },
     {
       rank: 3,
@@ -2783,9 +2791,9 @@ function buildOpportunityTierBreakdownItems(activeTier: string): MetricBreakdown
     },
     {
       rank: 4,
-      label: "Fragil",
+      label: "Frágil",
       value: "P71-P100",
-      detail: activeTier === "Fragil" ? "Tu sección cae aquí" : "Tramo más exigente",
+      detail: activeTier === "Frágil" ? "Tu sección cae aquí" : "Tramo más exigente",
     },
   ];
 }
@@ -2902,7 +2910,7 @@ function buildMetricWhyUseful(metric: MetricDefinition) {
     return "Condensa el percentil de riesgo en un lenguaje más rápido de leer, útil para filtrar primero y entrar después al detalle de ranking, competencia o demografía.";
   }
   if (metric.id.endsWith(":risk-percentile")) {
-    return "Te permite entender si estás en una zona estructuralmente más delicada o más favorable que la media de Madrid sin tener que interpretar el score bruto del modelo.";
+    return "Te permite entender si estás en una zona estructuralmente más delicada o más favorable que la media de Madrid sin tener que interpretar el valor bruto del modelo.";
   }
   if (metric.id.endsWith(":ranking")) {
     return "Te ayuda a priorizar ubicaciones sin perder contexto: ves si la buena lectura se sostiene en Madrid, dentro del distrito y dentro del barrio.";
@@ -2963,7 +2971,7 @@ function buildMetricExample(metric: MetricDefinition) {
     return "Ejemplo: Top 5% Madrid con #3 de 41 en distrito y #1 de 8 en barrio significa que la buena lectura no depende solo de un ámbito, sino que se sostiene también cerca del local.";
   }
   if (metric.id.endsWith(":activity-ranking-method")) {
-    return "Ejemplo: dos categorías pueden tener una supervivencia parecida, pero si una sale mejor en el scorer Cox y además encaja mejor frente a su propio histórico, subirá puestos aunque la otra tenga más locales observados.";
+    return "Ejemplo: dos categorías pueden tener una supervivencia parecida, pero si una sale mejor en el modelo Cox y además encaja mejor frente a su propio histórico, subirá puestos aunque la otra tenga más locales observados.";
   }
   if (metric.id.endsWith(":residential-base")) {
     return "Ejemplo: 1,3 mil residentes en la tarjeta y 27.211 hab/km² en el detalle pueden convivir si la sección apenas ocupa unas pocas hectáreas; no es una contradicción, sino una zona pequeña y compacta.";
@@ -2984,7 +2992,7 @@ function buildMetricExample(metric: MetricDefinition) {
     return "Ejemplo: 2,40 / 1.000 hab significa que el año anterior hubo 2,4 avisos por cada mil residentes de ese ámbito.";
   }
   if (metric.id.endsWith(":competition")) {
-    return "Ejemplo: 120 locales no significa 120 competidores directos. Y una cuota misma categoría del 18% significa que el 18% del stock cae en la misma familia amplia de negocio que hoy lidera el ranking, no en el mismo epígrafe exacto.";
+    return "Ejemplo: 120 locales no significa 120 competidores directos. Y una cuota de misma categoría del 18% significa que el 18% del total cae en la misma familia amplia de negocio que hoy lidera el ranking, no en el mismo epígrafe exacto.";
   }
   if (metric.id.endsWith(":district-unemployment")) {
     return "Ejemplo: 7,1% frente a 6,3% en Madrid indica un mercado laboral distrital algo más presionado que la media de la ciudad.";

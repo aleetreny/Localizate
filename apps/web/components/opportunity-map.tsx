@@ -116,6 +116,7 @@ export function OpportunityMap({
   }, [sections]);
 
   const pointsById = useMemo(() => new Map(points.map((point) => [point.listing_id, point] as const)), [points]);
+  const pointPositions = useMemo(() => buildPointPositionIndex(points), [points]);
 
   const pointScale = useMemo(() => buildSurvivalScale(points, horizon), [points, horizon]);
 
@@ -124,27 +125,39 @@ export function OpportunityMap({
       type: "FeatureCollection",
       features: points
         .filter((point) => isFiniteNumber(point.lat_wgs84) && isFiniteNumber(point.lon_wgs84))
-        .map((point) => ({
-          type: "Feature",
-          geometry: {
-            type: "Point",
-            coordinates: [point.lon_wgs84 as number, point.lat_wgs84 as number]
-          },
-          properties: {
-            listing_id: point.listing_id,
-            section_key: point.section_key,
-            color: colorForSurvival(getPointSurvival(point, horizon), pointScale),
-            radius: buildPointRadius(point.area_m2)
-          }
-        }))
+        .map((point) => {
+          const position = pointPositions.get(point.listing_id) ?? {
+            lat: point.lat_wgs84 as number,
+            lng: point.lon_wgs84 as number,
+          };
+
+          return {
+            type: "Feature",
+            geometry: {
+              type: "Point",
+              coordinates: [position.lng, position.lat]
+            },
+            properties: {
+              listing_id: point.listing_id,
+              section_key: point.section_key,
+              color: colorForSurvival(getPointSurvival(point, horizon), pointScale),
+              radius: buildPointRadius(point.area_m2)
+            }
+          };
+        })
     };
-  }, [horizon, pointScale, points]);
+  }, [horizon, pointPositions, pointScale, points]);
 
   const selectedPointFeatureCollection = useMemo(() => {
     const selectedPoint = selectedListingId ? pointsById.get(selectedListingId) ?? null : null;
     if (!selectedPoint || !isFiniteNumber(selectedPoint.lat_wgs84) || !isFiniteNumber(selectedPoint.lon_wgs84)) {
       return null;
     }
+
+    const position = pointPositions.get(selectedPoint.listing_id) ?? {
+      lat: selectedPoint.lat_wgs84,
+      lng: selectedPoint.lon_wgs84,
+    };
 
     return {
       type: "FeatureCollection",
@@ -153,7 +166,7 @@ export function OpportunityMap({
           type: "Feature",
           geometry: {
             type: "Point",
-            coordinates: [selectedPoint.lon_wgs84, selectedPoint.lat_wgs84]
+            coordinates: [position.lng, position.lat]
           },
           properties: {
             listing_id: selectedPoint.listing_id
@@ -161,7 +174,7 @@ export function OpportunityMap({
         }
       ]
     };
-  }, [pointsById, selectedListingId]);
+  }, [pointPositions, pointsById, selectedListingId]);
 
   const manualPointFeatureCollection = useMemo(() => {
     if (!manualSelection) {
@@ -341,7 +354,7 @@ export function OpportunityMap({
       {!sections && !loadError ? (
         <div className="map-overlay panel">
           <h2>Cargando secciones</h2>
-          <p>La lectura libre por punto se activa cuando termina de descargarse la geometría censal.</p>
+          <p>La lectura libre por punto se activa en cuanto termina de descargarse la geometría censal.</p>
         </div>
       ) : null}
 
@@ -368,7 +381,7 @@ export function OpportunityMap({
           </div>
           <div className="tooltip-grid">
             <div className="tooltip-item">
-              <span className="tooltip-label">Surv {formatHorizonShortLabel(horizon)}</span>
+              <span className="tooltip-label">Superv. {formatHorizonShortLabel(horizon)}</span>
               <strong className="tooltip-value">{formatTooltipPercent(getPointSurvival(tooltip.point, horizon))}</strong>
             </div>
             <div className="tooltip-item">
@@ -391,6 +404,95 @@ function buildPointRadius(area: number | null) {
     return 6;
   }
   return clamp(4 + Math.log1p(Math.max(area, 0)) * 1.15, 5, 14);
+}
+
+function buildPointPositionIndex(points: OpportunityPoint[]) {
+  const groupedPoints = new Map<string, OpportunityPoint[]>();
+  for (const point of points) {
+    if (!isFiniteNumber(point.lat_wgs84) || !isFiniteNumber(point.lon_wgs84)) {
+      continue;
+    }
+
+    const groupKey = `${point.lat_wgs84}:${point.lon_wgs84}`;
+    const bucket = groupedPoints.get(groupKey);
+    if (bucket) {
+      bucket.push(point);
+    } else {
+      groupedPoints.set(groupKey, [point]);
+    }
+  }
+
+  const positions = new Map<string, { lat: number; lng: number }>();
+  for (const bucket of groupedPoints.values()) {
+    const referencePoint = bucket[0];
+    if (!referencePoint || !isFiniteNumber(referencePoint.lat_wgs84) || !isFiniteNumber(referencePoint.lon_wgs84)) {
+      continue;
+    }
+
+    if (bucket.length === 1) {
+      positions.set(referencePoint.listing_id, {
+        lat: referencePoint.lat_wgs84,
+        lng: referencePoint.lon_wgs84,
+      });
+      continue;
+    }
+
+    const sortedBucket = [...bucket].sort(comparePointsForLayout);
+    for (let index = 0; index < sortedBucket.length; index += 1) {
+      const point = sortedBucket[index];
+      const offset = buildPointOffset(
+        referencePoint.lat_wgs84,
+        referencePoint.lon_wgs84,
+        index,
+        sortedBucket.length
+      );
+      positions.set(point.listing_id, offset);
+    }
+  }
+
+  return positions;
+}
+
+function comparePointsForLayout(left: OpportunityPoint, right: OpportunityPoint) {
+  const operationDiff = left.operation.localeCompare(right.operation, "es");
+  if (operationDiff !== 0) {
+    return operationDiff;
+  }
+
+  const priceDiff = (left.price_eur ?? Number.POSITIVE_INFINITY) - (right.price_eur ?? Number.POSITIVE_INFINITY);
+  if (Math.abs(priceDiff) > 1e-6) {
+    return priceDiff;
+  }
+
+  const areaDiff = (left.area_m2 ?? Number.POSITIVE_INFINITY) - (right.area_m2 ?? Number.POSITIVE_INFINITY);
+  if (Math.abs(areaDiff) > 1e-6) {
+    return areaDiff;
+  }
+
+  return left.listing_id.localeCompare(right.listing_id, "es");
+}
+
+function buildPointOffset(baseLat: number, baseLng: number, index: number, total: number) {
+  const pointsPerRing = 6;
+  const ring = Math.floor(index / pointsPerRing);
+  const indexWithinRing = index % pointsPerRing;
+  const ringCount = Math.min(pointsPerRing, total - ring * pointsPerRing);
+  const angle = (-Math.PI / 2) + ((Math.PI * 2) / ringCount) * indexWithinRing;
+  const distanceMeters = total <= 2 ? 16 : total <= 4 ? 20 : 24 + ring * 8;
+
+  return offsetCoordinate(baseLat, baseLng, distanceMeters, angle);
+}
+
+function offsetCoordinate(baseLat: number, baseLng: number, distanceMeters: number, angleRad: number) {
+  const metersPerLatDegree = 111_320;
+  const metersPerLngDegree = Math.max(1, Math.cos((baseLat * Math.PI) / 180) * metersPerLatDegree);
+  const latOffset = (Math.sin(angleRad) * distanceMeters) / metersPerLatDegree;
+  const lngOffset = (Math.cos(angleRad) * distanceMeters) / metersPerLngDegree;
+
+  return {
+    lat: baseLat + latOffset,
+    lng: baseLng + lngOffset,
+  };
 }
 
 function buildInitialViewState(bounds: Bounds, minZoom: number): ViewState {
