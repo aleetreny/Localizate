@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 
 import { DEFAULT_HEX_SIZE, type HexSize } from "@/lib/hex-size";
+import { normalizeOpportunityArtifactUrls, resolvePublicAssetUrl } from "@/lib/runtime-config";
 import type {
   FrontendArtifacts,
   MapHexArtifacts,
@@ -63,8 +64,8 @@ const FALLBACK_OPPORTUNITY_ARTIFACTS: OpportunityArtifacts = {
     title: "Mapa de oportunidades de Madrid",
     subtitle: "Locales disponibles y recomendacion de actividad",
     generated_at: new Date(0).toISOString(),
-    section_index_path: "/data/opportunities/sections/index.json",
-    section_geojson_path: "/data/opportunities/sections/geometry.geojson",
+    section_index_path: resolvePublicAssetUrl("/data/opportunities/sections/index.json"),
+    section_geojson_path: resolvePublicAssetUrl("/data/opportunities/sections/geometry.geojson"),
     map_bounds: {
       min_lng: -3.888,
       min_lat: 40.312,
@@ -151,7 +152,7 @@ export async function loadOpportunityArtifacts(): Promise<OpportunityArtifacts> 
 
   try {
     const raw = await fs.readFile(filePath, "utf-8");
-    return JSON.parse(raw) as OpportunityArtifacts;
+    return normalizeOpportunityArtifactUrls(JSON.parse(raw) as OpportunityArtifacts);
   } catch {
     return FALLBACK_OPPORTUNITY_ARTIFACTS;
   }

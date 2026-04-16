@@ -1,13 +1,10 @@
 import { OpportunityShell } from "@/components/opportunity-shell";
-import { loadOpportunityArtifacts, loadOpportunitySectionIndexArtifacts } from "@/lib/data";
+import { loadOpportunityArtifacts } from "@/lib/data";
 
 export const dynamic = "force-static";
 
 export default async function OpportunityPage() {
-  const [initialArtifacts, initialSectionIndex] = await Promise.all([
-    loadOpportunityArtifacts(),
-    loadOpportunitySectionIndexArtifacts(),
-  ]);
+  const initialArtifacts = await loadOpportunityArtifacts();
 
-  return <OpportunityShell initialArtifacts={initialArtifacts} initialSectionIndex={initialSectionIndex} />;
+  return <OpportunityShell initialArtifacts={initialArtifacts} />;
 }

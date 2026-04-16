@@ -9,9 +9,9 @@ ABT por local con cierre observado tanto por desaparicion del `id_local` como po
 - Tasa de evento observada: 0.0950
 - Mediana de duracion (meses): 135.0
 - Filas con H3 inicial: 164,441
-- Filas con renta inicial: 167,574
+- Filas con renta inicial: 203,051
 - Filas con distancia a metro calculable: 164,412
-- Filas con avisos positivos en barrio/año previo: 53,545
+- Filas con avisos positivos en barrio/año previo: 89,009
 
 ## Desglose de eventos
 

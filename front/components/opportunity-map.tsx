@@ -15,8 +15,10 @@ import type {
 
 type OpportunityMapProps = {
   bounds: Bounds;
-  sectionsGeojsonPath: string;
+  sections: OpportunitySectionFeatureCollection | null;
   sectionsByKey: ReadonlyMap<string, OpportunitySection>;
+  sectionsError: string | null;
+  sectionsLoading: boolean;
   points: OpportunityPoint[];
   highlightAddressSelection: boolean;
   selectedListingId: string | null;
@@ -43,12 +45,13 @@ const MANUAL_POINT_HALO_LAYER_ID = "opportunity-manual-point-halo";
 const MANUAL_POINT_LAYER_ID = "opportunity-manual-point";
 const INITIAL_ZOOM_INSET = 0.45;
 const INITIAL_LATITUDE_FOCUS_RATIO = 0.36;
-const SECTION_FETCH_CACHE_MODE = process.env.NODE_ENV === "production" ? "force-cache" : "no-store";
 
 export function OpportunityMap({
   bounds,
-  sectionsGeojsonPath,
+  sections,
   sectionsByKey,
+  sectionsError,
+  sectionsLoading,
   points,
   highlightAddressSelection,
   selectedListingId,
@@ -61,40 +64,10 @@ export function OpportunityMap({
   const mapRef = useRef<MapRef | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
-  const [sections, setSections] = useState<OpportunitySectionFeatureCollection | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ left: number; top: number } | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const minZoom = getMinZoom(bounds);
 
-  useEffect(() => {
-    let alive = true;
-
-    async function loadSections() {
-      try {
-        setLoadError(null);
-        const response = await fetch(sectionsGeojsonPath, { cache: SECTION_FETCH_CACHE_MODE });
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        const payload = (await response.json()) as OpportunitySectionFeatureCollection;
-        if (alive) {
-          setSections(payload);
-        }
-      } catch (error) {
-        if (alive) {
-          setLoadError(error instanceof Error ? error.message : "No se pudo cargar la geometría");
-        }
-      }
-    }
-
-    setSections(null);
-    void loadSections();
-
-    return () => {
-      alive = false;
-    };
-  }, [sectionsGeojsonPath]);
 
   useLayoutEffect(() => {
     if (!tooltip) {
@@ -456,17 +429,17 @@ export function OpportunityMap({
         ) : null}
       </MapView>
 
-      {!sections && !loadError ? (
+      {!sections && sectionsLoading ? (
         <div className="map-overlay panel">
           <h2>Cargando secciones</h2>
           <p>La lectura libre por punto se activa en cuanto termina de descargarse la geometría censal.</p>
         </div>
       ) : null}
 
-      {loadError ? (
+      {sectionsError ? (
         <div className="map-overlay panel">
           <h2>Geometría no disponible</h2>
-          <p>No se ha podido cargar el contexto de secciones: {loadError}.</p>
+          <p>No se ha podido cargar el contexto de secciones: {sectionsError}.</p>
         </div>
       ) : null}
 
@@ -867,3 +840,4 @@ function formatRiskPercentile(value: number) {
   }
   return `P${Math.round(value * 100)}`;
 }
+

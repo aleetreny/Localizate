@@ -13,6 +13,7 @@ import {
   loadOpportunitySectionIndexFromPublic,
   normalizeOpportunityArtifacts,
 } from "@/lib/public-data";
+import { buildOpportunityGeocodeUrl, HAS_EXTERNAL_PUBLIC_DATA_BASE_URL } from "@/lib/runtime-config";
 import type {
   FacilityCategory,
   IndicadorDistrito,
@@ -131,10 +132,16 @@ export function OpportunityShell({ initialArtifacts, initialSectionIndex }: Oppo
 
   useEffect(() => {
     let alive = true;
+    const shouldRefreshLiveArtifacts = !initialArtifacts || HAS_EXTERNAL_PUBLIC_DATA_BASE_URL;
 
     async function syncArtifacts(resetManualSelection: boolean) {
       const nextArtifacts = await loadOpportunityArtifactsFromPublic();
       if (!alive) {
+        return;
+      }
+
+      if (nextArtifacts.points.length === 0 && artifacts.points.length > 0) {
+        setIsLoadingArtifacts(false);
         return;
       }
 
@@ -159,13 +166,17 @@ export function OpportunityShell({ initialArtifacts, initialSectionIndex }: Oppo
       }
     }
 
-    if (initialArtifacts) {
+    if (shouldRefreshLiveArtifacts) {
+      void syncArtifacts(false);
+    } else {
+      setIsLoadingArtifacts(false);
+    }
+
+    if (!shouldRefreshLiveArtifacts) {
       return () => {
         alive = false;
       };
     }
-
-    void syncArtifacts(false);
 
     function handleFocus() {
       void syncArtifacts(true);
@@ -519,7 +530,7 @@ export function OpportunityShell({ initialArtifacts, initialSectionIndex }: Oppo
     setAddressSearchState({ status: "loading", message: "Buscando dirección exacta en Madrid..." });
 
     try {
-      const response = await fetch(`/api/geocode/opportunity-address?q=${encodeURIComponent(query)}`, { cache: "no-store" });
+      const response = await fetch(buildOpportunityGeocodeUrl(query), { cache: "no-store" });
       const payload = (await response.json()) as unknown;
 
       if (!response.ok || !isOpportunityAddressGeocodeSuccessResponse(payload)) {
@@ -738,8 +749,10 @@ export function OpportunityShell({ initialArtifacts, initialSectionIndex }: Oppo
           }}
           highlightAddressSelection={manualSelectionSource === "address"}
           points={filteredPoints}
+          sections={sectionGeometry}
           sectionsByKey={sectionsByKey}
-          sectionsGeojsonPath={artifacts.meta.section_geojson_path}
+          sectionsError={sectionGeometryError}
+          sectionsLoading={isLoadingSectionGeometry}
           selectedListingId={manualSelection ? null : selectedListing?.listing_id ?? null}
           selectedListingFocusNonce={selectedListingFocusNonce}
           selectedSectionKey={selectedSectionKey}

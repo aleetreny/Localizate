@@ -3,7 +3,7 @@ name: Refresh Opportunity Listings
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 5 * * 1"
+#    - cron: "0 5 * * 1"
 
 permissions:
   contents: write
@@ -43,6 +43,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r back/requirements-opportunity-weekly.txt
+
+      - name: Install optional R2 sync dependency
+        if: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' && secrets.R2_ACCESS_KEY_ID != '' && secrets.R2_SECRET_ACCESS_KEY != '' && vars.R2_BUCKET_NAME != '' }}
+        run: python -m pip install boto3
 
       - name: Scrape and rebuild listings
         run: |
@@ -89,3 +93,16 @@ jobs:
           git add front/public/data/opportunities/listings.json
           git commit -m "chore: refresh opportunity listings"
           git push
+
+      - name: Publish refreshed opportunity data to R2
+        if: ${{ steps.changes.outputs.changed == 'true' && secrets.CLOUDFLARE_ACCOUNT_ID != '' && secrets.R2_ACCESS_KEY_ID != '' && secrets.R2_SECRET_ACCESS_KEY != '' && vars.R2_BUCKET_NAME != '' }}
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          python back/scripts/sync_public_data_to_r2.py \
+            --source front/public/data/opportunities \
+            --bucket "${{ vars.R2_BUCKET_NAME }}" \
+            --prefix "data/opportunities" \
+            --delete-missing

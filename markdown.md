@@ -1,298 +1,439 @@
-# Plan Temporal: Automatizacion Semanal + Publicacion Web
+# Despliegue gratuito recomendado para Localizate
 
-## 1. Objetivo real
+## Resumen ejecutivo
 
-Durante los proximos 5 meses no hace falta recalcular todo el modelo ni rehacer el pipeline pesado.
-Lo que si queremos automatizar es esto:
+La ruta que dejo preparada es esta:
 
-1. Raspar `locales.es` una vez por semana.
-2. Actualizar los anuncios visibles en `Oportunidades`.
-3. Recalcular el `listings.json` del frontend con esos anuncios.
-4. Mantener fija la foto estructural de secciones (`index.json` + `geometry.geojson`).
-5. Publicar solo si el resultado final es sano y no vacio.
+1. `front/` se publica como **sitio estatico** en **Cloudflare Pages**.
+2. `front/public/data/` se publica por separado en **Cloudflare R2** bajo un dominio publico o `r2.dev`.
+3. El buscador de direccion de oportunidades sale de Next y se despliega como **Cloudflare Worker** independiente.
+4. El workflow semanal ya no tiene que redeployar la web: actualiza `listings.json`, hace commit y, si R2 esta configurado, sube automaticamente `data/opportunities/` al bucket.
 
-Ese flujo ya queda preparado en el repo con:
+Con esto evitamos subir cientos de MB al despliegue del frontend, mantenemos la funcionalidad completa y dejamos la web servida como producto serio:
 
-- `.github/workflows/refresh-opportunities-weekly.yml`
-- `back/scripts/build_manual_available_locales.py`
-- `back/scripts/build_frontend_opportunity_listings.py`
-- `back/src/localizate/section_geography.py`
-- `.gitignore` ajustado para permitir versionar `front/public/data/opportunities/sections/geometry.geojson`
+- HTML/JS/CSS ligeros en CDN.
+- Datos grandes fuera del bundle web.
+- Actualizacion semanal automatizable.
+- Geocoder separado del build del frontend.
 
-## 2. Como funciona la automatizacion semanal
+---
 
-Cada semana GitHub Actions hace esto:
+## Que problema habia de verdad
 
-1. Clona el repo.
-2. Restaura la cache de geocoding si existe.
-3. Instala solo las dependencias minimas del refresh semanal.
-4. Ejecuta el scraping de `locales.es`.
-5. Regenera `front/public/data/opportunities/listings.json`.
-6. Valida que el JSON no este vacio y que el numero de puntos sea coherente.
-7. Si hay cambios reales, hace commit y push.
-8. Si falla, no publica nada nuevo y se mantiene la version anterior.
+El bloqueo no era "Next.js" ni "el hosting" por si solos. El problema real era una mezcla de tres cosas:
 
-Horario actual del workflow:
+1. **Los artefactos pesados estaban empaquetados como parte del frontend.**
+   - `front/public/data/` pesa en local unos `362 MB`.
+   - Solo `front/public/data/map/historical/hex-composition.json` pesa unos `235.97 MB`.
+   - `rankings.json` pesa unos `45.18 MB`.
+   - `small.json` pesa unos `32.65 MB`.
 
-- Lunes a las `05:00 UTC`
-- En Madrid, mientras haya horario de verano, equivale a `07:00`
+2. **La app ya era casi estatica, pero tenia un runtime metido dentro de Next.**
+   - El endpoint `/api/geocode/opportunity-address` impedia una exportacion estatica limpia.
 
-## 3. Lo que tienes que hacer tu en GitHub
+3. **Habia peso invisible en la experiencia.**
+   - La pestaña de oportunidades estaba serializando demasiado contexto inicial.
+   - La geometria de secciones se descargaba dos veces.
+   - `hex-composition.json` se cargaba entero aunque la UI solo necesita un año cada vez.
 
-### Paso 1. Subir estos cambios al repo
+Conclusión:
 
-Antes de nada, tienes que committear y subir:
+- El problema principal no era "necesitas Vercel Pro".
+- El problema era **como se servian y desplegaban los datos**.
 
-- `.github/workflows/refresh-opportunities-weekly.yml`
-- `back/requirements-opportunity-weekly.txt`
-- `back/scripts/build_frontend_opportunity_listings.py`
-- `back/src/localizate/section_geography.py`
-- `front/public/data/opportunities/sections/geometry.geojson`
-- `.gitignore`
-- `back/tests/test_build_frontend_opportunity_listings.py`
-- `back/tests/test_section_geography_fallback.py`
+---
 
-Punto importante:
+## Alternativas evaluadas
 
-- `front/public/data/opportunities/sections/geometry.geojson` estaba bloqueado por el ignore global de `*.geojson`.
-- Ahora ya no.
-- Si no lo subes, el workflow semanal no tendra geometria fallback en GitHub Actions.
+### 1. Vercel Hobby
 
-### Paso 2. Confirmar que el repo vive en GitHub
+La descarto como solucion por defecto.
 
-Necesitas que el proyecto este en GitHub con una rama principal estable:
+Motivos:
 
-- `main` o
-- `master`
+- Vercel documenta un limite de **`100 MB`** para `Static File uploads` en Hobby.
+- Aunque movieramos parte de los datos fuera, seguiriamos acoplados a un stack mas pensado para fullstack que para este caso, donde el frontend puede ser estatico y el peso real esta en los artefactos.
+- No aporta una ventaja clara frente a Cloudflare en el escenario actual.
 
-El workflow esta pensado para ejecutarse ahi.
+### 2. GitHub Pages + apaños auxiliares
 
-### Paso 3. Activar permisos de escritura para Actions
+Es viable solo a medias, pero no la he elegido.
 
-En GitHub:
+Motivos:
 
-1. Abre el repo.
-2. Ve a `Settings`.
-3. Ve a `Actions`.
-4. En `General`, busca `Workflow permissions`.
-5. Marca `Read and write permissions`.
-6. Guarda.
+- Para una web con datos grandes, cache, CORS y una pieza auxiliar tipo geocoder, GitHub Pages se queda mas rigido.
+- Obliga a montar mas soluciones paralelas para algo que Cloudflare ya resuelve mejor dentro del mismo ecosistema.
+- Es mas "barato" en teoria que en practica para este producto concreto.
 
-Esto es necesario porque el workflow hace `commit` y `push` automatico del `listings.json`.
+### 3. Netlify
 
-### Paso 4. Lanzar una primera prueba manual
+No la tomo como opcion preferente.
 
-En GitHub:
+Motivos:
 
-1. Entra en la pestaña `Actions`.
-2. Abre el workflow `Refresh Opportunity Listings`.
-3. Pulsa `Run workflow`.
-4. Espera a que termine.
+- Ya te ha dado problemas.
+- No hay una ventaja tecnica clara aqui que compense forzarte a volver.
 
-Que debes comprobar despues:
+### 4. Cloudflare Pages + R2 + Worker
 
-1. Que el job termina en verde.
-2. Que, si hubo cambios, aparece un commit nuevo tipo `chore: refresh opportunity listings`.
-3. Que `front/public/data/opportunities/listings.json` cambia.
-4. Que la web sigue cargando bien `Oportunidades`.
+Es la opcion elegida.
 
-### Paso 5. Dejarlo ya en automatico
+Motivos:
 
-Una vez la primera prueba manual salga bien:
+- Pages sirve el frontend estatico gratis y muy bien desde CDN.
+- R2 encaja justo para sacar los datos pesados del despliegue web.
+- Worker resuelve el geocoder sin obligar a mantener un backend completo.
+- Todo queda desacoplado:
+  - web
+  - datos
+  - runtime auxiliar
 
-- no tienes que tocar nada mas.
-- el workflow correra cada semana solo.
+---
 
-## 4. Lo que NO hace este flujo
+## Arquitectura final elegida
 
-Este flujo semanal NO:
+### Produccion
 
-- rehace `index.json`
-- rehace `geometry.geojson`
-- rehace el historico
-- rehace ABTs
-- rehace rankings profundos
-- rehace avisos o indicadores estructurales
+- `www.tu-dominio.com` o `tu-proyecto.pages.dev`
+  - frontend estatico exportado desde Next
 
-Esto es intencional.
-Para tribunal y 5 meses de vida del proyecto, es suficiente y mas robusto.
+- `data.tu-dominio.com` o `https://<bucket>.r2.dev`
+  - JSON y GeoJSON servidos desde R2
 
-## 5. Validacion local recomendada antes de empujar
+- `api.tu-dominio.com` o `https://localizate-opportunity-geocode.<subdominio>.workers.dev`
+  - geocoder del buscador de direcciones
 
-Desde la raiz:
+### Flujo de datos
 
-```powershell
-.\.venv\Scripts\python.exe back\scripts\build_frontend_opportunity_listings.py
-cd back
-..\.venv\Scripts\python.exe -m unittest tests.test_build_frontend_opportunity_listings tests.test_section_geography_fallback
+1. La web carga HTML/JS/CSS desde Pages.
+2. Cuando necesita datos, los pide a R2.
+3. Cuando el usuario busca una direccion, la web llama al Worker.
+4. El workflow semanal actualiza oportunidades y, si R2 esta configurado, sincroniza automaticamente `data/opportunities/`.
+
+---
+
+## Cambios que ya he dejado hechos en el repo
+
+### Frontend
+
+- Añadido `front/lib/runtime-config.ts`
+  - resuelve URLs externas de datos
+  - resuelve URL externa del geocoder
+
+- Exportacion estatica preparada:
+  - `front/next.config.mjs`
+  - `front/scripts/build-static.mjs`
+  - `front/package.json` con `npm run build:static`
+
+- La build estatica ya no publica `front/public/data` dentro de `front/out` cuando existe `NEXT_PUBLIC_DATA_BASE_URL`.
+
+- `front/app/oportunidades/page.tsx`
+  - deja de embutir el indice completo de secciones en el payload inicial
+
+- `front/components/opportunity-shell.tsx`
+  - revalida oportunidades desde el CDN externo cuando aplica
+  - usa endpoint de geocoder configurable
+  - comparte la geometria con el mapa en vez de descargarla dos veces
+
+- `front/components/opportunity-map.tsx`
+  - ya no re-descarga la geometria
+
+- `front/components/map-shell.tsx`
+  - usa URL de datos resoluble
+  - carga la composicion historica del hexagono por año
+
+### Datos
+
+- `back/scripts/build_frontend_map_artifacts.py`
+  - ahora genera `hex-composition.manifest.json`
+  - ahora genera particiones por año en:
+    - `front/public/data/map/historical/hex-composition/2015.json`
+    - ...
+    - `front/public/data/map/historical/hex-composition/2026.json`
+
+- `back/scripts/materialize_hex_composition_parts.py`
+  - genera esas particiones a partir del monolito actual sin rehacer todo el pipeline
+  - el workflow de publicacion a R2 lo ejecuta antes del sync
+  - no hace falta versionar esas particiones en Git
+
+### Runtime auxiliar
+
+- El endpoint de geocoder ya no vive dentro de Next.
+- Se ha movido a:
+  - `workers/opportunity-geocode/src/index.ts`
+  - `workers/opportunity-geocode/wrangler.toml`
+
+### Automatizacion
+
+- Nuevo workflow para desplegar la web estatica:
+  - `.github/workflows/deploy-static-web-cloudflare-pages.yml`
+
+- Nuevo workflow para publicar datos en R2:
+  - `.github/workflows/publish-public-data-to-r2.yml`
+
+- Nuevo workflow para desplegar el Worker:
+  - `.github/workflows/deploy-opportunity-geocode-worker.yml`
+
+- El workflow semanal ya existente:
+  - `.github/workflows/refresh-opportunities-weekly.yml`
+  - ahora, si R2 esta configurado, publica automaticamente `data/opportunities/`
+
+---
+
+## Lo que tienes que hacer tu una sola vez
+
+## 1. Crear el proyecto de Pages
+
+En Cloudflare:
+
+1. Ve a **Workers & Pages**.
+2. Crea un proyecto de **Pages**.
+3. No hace falta conectar el repo por UI si vas a usar los workflows de GitHub que ya dejo montados.
+4. Apunta el nombre exacto del proyecto.
+
+Valor que luego pondras en GitHub Variables:
+
+- `CLOUDFLARE_PAGES_PROJECT_NAME`
+
+---
+
+## 2. Crear el bucket R2 para los datos
+
+En Cloudflare:
+
+1. Ve a **R2**.
+2. Crea un bucket, por ejemplo:
+   - `localizate-public-data`
+3. Activa **public bucket**.
+4. Si tienes dominio, lo recomendable es asociar:
+   - `data.tu-dominio.com`
+5. Si no tienes dominio, puedes usar el subdominio `r2.dev` que te da Cloudflare.
+
+### CORS del bucket
+
+Configura CORS para permitir lectura desde la web.
+
+Ejemplo razonable:
+
+```json
+[
+  {
+    "AllowedOrigins": [
+      "https://tu-proyecto.pages.dev",
+      "https://www.tu-dominio.com",
+      "http://localhost:3000"
+    ],
+    "AllowedMethods": ["GET", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag", "Content-Length", "Content-Type"],
+    "MaxAgeSeconds": 3600
+  }
+]
 ```
 
-## 6. Plan recomendado para publicar la web
+### Access keys S3 para R2
 
-### Recomendacion principal
+Necesitas crear unas credenciales de acceso S3 para el workflow de sync.
 
-La via mas simple para este proyecto es:
+Apunta:
 
-1. GitHub para el codigo y el workflow semanal.
-2. Vercel para publicar `front/`.
-3. Git integration entre GitHub y Vercel.
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
 
-Con esto ocurre algo muy util:
+---
 
-- GitHub Actions actualiza `listings.json`
-- ese commit entra en `main`
-- Vercel detecta el commit
-- Vercel redepliega la web automaticamente
+## 3. Desplegar el Worker de geocoding
 
-Tu no haces nada manual cada semana.
+El worker ya esta preparado en:
 
-## 7. Importante: con el repo actual, Vercel Hobby probablemente NO es la mejor opcion
+- `workers/opportunity-geocode/`
 
-Hoy el directorio `front/public/data` pesa aproximadamente:
+En Cloudflare:
 
-- `362.36 MB` en total
-- `337.2 MB` solo la parte `map/`
-- `281.15 MB` solo la parte `map/historical/`
-- `25.15 MB` la parte `opportunities/`
+1. Crea o reutiliza un API token que permita desplegar Workers y Pages.
+2. Puedes dejar el nombre por defecto:
+   - `localizate-opportunity-geocode`
+3. Tras el primer deploy tendras una URL tipo:
+   - `https://localizate-opportunity-geocode.<subdominio>.workers.dev`
 
-El fichero mas pesado ahora mismo es:
+Si tienes dominio propio, lo ideal es mapearlo luego a:
 
-- `front/public/data/map/historical/hex-composition.json` con unos `235.97 MB`
+- `api.tu-dominio.com`
 
-Esto importa porque, segun la documentacion oficial de Vercel consultada el `16 de abril de 2026`:
+---
 
-- en `Hobby`, el limite de `Static File uploads` es `100 MB`
-- en `Pro`, el limite es `1 GB`
-- esa limitacion tambien aplica al flujo de importacion de repositorios Git existentes
+## 4. Crear los secrets y variables en GitHub
 
-Fuentes oficiales:
+### GitHub Secrets
 
-- https://vercel.com/docs/platform/limits/
-- https://vercel.com/docs/limits/overview
-- https://vercel.com/docs/monorepos/
+Crea estos secrets en el repositorio:
 
-## Conclusiones practicas
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
 
-### Opcion A. La mas simple y la que recomiendo
+### GitHub Variables
 
-Usar `Vercel Pro` durante el periodo del tribunal.
+Crea estas variables:
 
-Ventajas:
+- `CLOUDFLARE_PAGES_PROJECT_NAME`
+- `R2_BUCKET_NAME`
+- `NEXT_PUBLIC_DATA_BASE_URL`
+- `NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT`
 
-- cero inventos
-- despliegue natural de `Next.js`
-- redeploy automatico por cada commit del workflow semanal
-- mantiene API route de geocoding sin tocar codigo
+### Valores esperados
 
-### Opcion B. Intentar quedarte en gratis
+Ejemplo con dominios Cloudflare por defecto:
 
-Solo la recomiendo si quieres dedicar tiempo a adelgazar la web antes.
-Para que sea realista tendrias que:
+- `CLOUDFLARE_PAGES_PROJECT_NAME = localizate`
+- `R2_BUCKET_NAME = localizate-public-data`
+- `NEXT_PUBLIC_DATA_BASE_URL = https://<tu-bucket-publico>.r2.dev`
+- `NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT = https://localizate-opportunity-geocode.<subdominio>.workers.dev`
 
-1. sacar o recortar el historico pesado
-2. mover artefactos muy grandes fuera del repo
-3. o desactivar temporalmente la parte historica para la demo publica
+Ejemplo con dominio propio:
 
-Si no haces eso, lo normal es que Hobby te de guerra por tamano.
+- `NEXT_PUBLIC_DATA_BASE_URL = https://data.tu-dominio.com`
+- `NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT = https://api.tu-dominio.com`
 
-## 8. Paso a paso para desplegar en Vercel
+---
 
-### Opcion recomendada: Vercel Pro
+## Orden exacto del primer despliegue
 
-1. Crea cuenta en Vercel con tu GitHub.
-2. Pulsa `Add New Project`.
-3. Importa el repo de `Localizate`.
-4. Cuando Vercel detecte el monorepo:
-   - selecciona como `Root Directory` la carpeta `front`
-5. Verifica la configuracion:
-   - Framework: `Next.js`
-   - Install Command: `npm install`
-   - Build Command: `npm run build`
-   - Output Directory: la de Next por defecto
-6. Variables de entorno:
-   - ahora mismo no necesitas ninguna obligatoria para levantar la web
-7. Pulsa `Deploy`.
+Hazlo en este orden:
 
-### Despues del primer deploy
+1. **Deploy del Worker**
+   - lanza manualmente `Deploy Opportunity Geocode Worker`
 
-1. Abre la URL publica que te da Vercel.
-2. Revisa:
-   - home
-   - mapa historico
-   - pestaña `Oportunidades`
-   - buscador de direccion en oportunidades
-3. Si todo esta bien, añade dominio propio si quieres.
+2. **Publicacion inicial de datos en R2**
+   - lanza manualmente `Publish Public Data to R2`
 
-## 9. Que partes de la web tiran de internet en runtime
+3. **Deploy de la web estatica**
+   - lanza manualmente `Deploy Static Web to Cloudflare Pages`
 
-La web publicada no depende de un backend Python vivo para servir el mapa.
-Sirve artefactos estaticos desde `front/public/data`.
+4. **Prueba en navegador**
+   - abre la home
+   - abre `oportunidades`
+   - comprueba que:
+     - carga el mapa
+     - carga oportunidades
+     - el buscador de direccion responde
+     - el historico de composicion del hexagono funciona
 
-Lo unico dinamico relevante es:
+5. **Prueba del flujo semanal**
+   - ejecuta manualmente `Refresh Opportunity Listings`
+   - comprueba que:
+     - si hay cambio, se actualiza `listings.json`
+     - hace commit
+     - si R2 esta configurado, sincroniza `data/opportunities/`
 
-- `front/app/api/geocode/opportunity-address/route.ts`
+---
 
-Ese endpoint:
+## Que automatizacion queda funcionando
 
-- vive dentro de la propia app Next.js
-- consulta `Nominatim`
-- se usa para buscar direcciones en `Oportunidades`
+### Web estatica
 
-Esto significa que Vercel te lo resuelve bien sin desplegar un backend Python aparte.
+- Cuando cambie codigo del frontend, el workflow de Pages puede volver a desplegar la web sin subir los datos pesados.
 
-## 10. Paso a paso completo recomendado
+### Datos
 
-### Fase 1. Dejar la automatizacion semanal cerrada
+- Cuando cambie `front/public/data/**`, el workflow de R2 puede volver a publicar el arbol completo de datos.
+- Antes del sync, ese workflow materializa automaticamente las 12 particiones anuales de `hex-composition`.
 
-1. Commit de los archivos preparados.
-2. Push a GitHub.
-3. Activar permisos `Read and write` para Actions.
-4. Lanzar `Run workflow` manual.
-5. Comprobar commit automatico si hubo cambios.
+### Oportunidades semanales
 
-### Fase 2. Publicar la web
+- El workflow semanal:
+  - scrapea
+  - reconstruye `listings.json`
+  - valida
+  - hace commit si hay cambios
+  - sincroniza `data/opportunities/` a R2 si las credenciales existen
 
-1. Conectar repo a Vercel.
-2. Configurar `Root Directory = front`.
-3. Desplegar.
-4. Verificar la web.
+Esto es justo lo que querias para no tocarlo a mano cada semana.
 
-### Fase 3. Probar el flujo extremo a extremo
+---
 
-1. Lanzar de nuevo el workflow semanal manualmente.
-2. Esperar a que GitHub genere commit.
-3. Confirmar que Vercel detecta el commit.
-4. Confirmar que la web publicada refleja el `listings.json` nuevo.
+## Verificaciones que ya he pasado
 
-## 11. Lo que te recomiendo hacer ya
+- `python -m py_compile` en:
+  - `back/scripts/build_frontend_map_artifacts.py`
+  - `back/scripts/sync_public_data_to_r2.py`
 
-Si quieres ir por el camino mas corto y menos arriesgado:
+- `npm run typecheck` en `front/`
 
-1. Sube estos cambios a GitHub.
-2. Activa el workflow.
-3. Haz una primera corrida manual.
-4. Publica en Vercel Pro con `front` como root.
-5. Verifica la web.
-6. Dejalo ya correr semanalmente solo.
+- `npm run build:static` en `front/` con:
+  - `NEXT_PUBLIC_DATA_BASE_URL`
+  - `NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT`
 
-## 12. Si quieres mantener el coste al minimo
+### Resultado importante
 
-Mi recomendacion realista es:
+La exportacion estatica sale bien y el `out/` final queda alrededor de `14 MB`, porque ya no arrastra `public/data` dentro del despliegue web.
 
-- mantener gratis GitHub Actions
-- usar Vercel Pro solo durante la fase publica del tribunal, si no quieres tocar el historico pesado
+---
 
-Si mas adelante quieres bajar a gratis:
+## Riesgos y limitaciones que siguen existiendo
 
-- hacemos una pasada de adelgazamiento del `front/public/data/map/historical/`
-- y dejamos una version publica mas ligera
+### 1. `rankings.json` sigue monolitico
 
-## 13. Checklist corto final
+No lo he troceado porque:
 
-- [ ] Committeado `geometry.geojson`
-- [ ] Push al repo en GitHub
-- [ ] Actions con permiso `Read and write`
-- [ ] Primera corrida manual en verde
-- [ ] Proyecto importado en Vercel con root `front`
-- [ ] Web publica validada
-- [ ] Confirmado que un commit nuevo de Actions dispara redeploy en Vercel
+- se carga bajo demanda
+- comprimido pesa mucho menos por red
+- no era el principal cuello de botella frente a `hex-composition.json`
+
+Si en una segunda iteracion quieres exprimir mas rendimiento, el siguiente paso natural es partir `rankings.json` por ambito o por año.
+
+### 2. La home sigue entregando bastante contenido inicial
+
+La pagina principal sigue enviando bastantes datos iniciales del mapa porque priorice mantener el comportamiento actual sin vaciar la UX.
+
+No rompe el despliegue gratuito, pero si algun dia quieres apretar mas la carga inicial, la siguiente optimizacion seria diferir parte de `shared.json`.
+
+### 3. R2 requiere configuracion correcta de CORS
+
+Si CORS no esta bien configurado en el bucket, la web cargara pero los fetch cross-origin a datos fallaran.
+
+### 4. El geocoder depende de Nominatim
+
+La arquitectura queda desacoplada y mas limpia, pero la fiabilidad del endpoint sigue dependiendo del servicio externo.
+
+Para un tribunal y trafico moderado me parece razonable.
+
+### 5. El workflow semanal publica automaticamente oportunidades, no todo el historico
+
+Eso esta bien y es deliberado.
+
+- Para tu ventana de 5 meses, no necesitas rebuild profundo semanal.
+- Si algun dia regeneras artefactos del mapa historico, entonces si deberias lanzar manualmente `Publish Public Data to R2`.
+
+---
+
+## Recomendacion operativa para los 5 meses del tribunal
+
+Haz esto y no mas:
+
+1. Deja la web publica con Pages + R2 + Worker.
+2. Deja el semanal activo.
+3. Durante las primeras 2 semanas, lanza tambien el workflow semanal manualmente y revisa logs.
+4. Si no hay incidencias, deja solo el semanal.
+5. No rehagas el pipeline historico profundo salvo que cambies el modelo, la taxonomia o los artefactos del mapa.
+
+Para el uso que describes, esto es suficiente y sensato.
+
+---
+
+## Si quieres el minimo absoluto para salir hoy
+
+Sin dominio propio:
+
+- web en `pages.dev`
+- datos en `r2.dev`
+- geocoder en `workers.dev`
+
+Con eso ya puedes salir gratis.
+
+La version mas profesional es la misma arquitectura, pero con:
+
+- `www.tu-dominio.com`
+- `data.tu-dominio.com`
+- `api.tu-dominio.com`

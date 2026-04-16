@@ -348,8 +348,8 @@ def build_local_survival_abt(
                     END AS section_key_current,
                     CASE
                         WHEN section_digits IS NULL OR section_digits = '' THEN NULL
-                        WHEN LENGTH(section_digits) >= 6 AND RIGHT(section_digits, 1) = '0'
-                            THEN RIGHT(LEFT(section_digits, LENGTH(section_digits) - 1), 5)
+                        WHEN LENGTH(section_digits) >= 5 AND RIGHT(section_digits, 1) = '0'
+                            THEN LPAD(RIGHT(LEFT(section_digits, LENGTH(section_digits) - 1), 5), 5, '0')
                         ELSE NULL
                     END AS section_key_drop_trailing_zero,
                     CASE
@@ -358,7 +358,7 @@ def build_local_survival_abt(
                     END AS section_key_district_tail3,
                     CASE
                         WHEN district_digits IS NULL OR district_digits = '' OR section_digits IS NULL OR section_digits = '' THEN NULL
-                        WHEN LENGTH(section_digits) >= 6 AND RIGHT(section_digits, 1) = '0'
+                        WHEN LENGTH(section_digits) >= 5 AND RIGHT(section_digits, 1) = '0'
                             THEN LPAD(district_digits, 2, '0') || RIGHT('000' || LEFT(section_digits, LENGTH(section_digits) - 1), 3)
                         ELSE NULL
                     END AS section_key_district_tail3_drop
@@ -707,13 +707,38 @@ def build_local_survival_abt(
             ), context_enriched AS (
                 SELECT
                     l.*,
-                    COALESCE(s_prev.section_local_count, s_curr.section_local_count) AS section_local_count,
-                    COALESCE(s_prev.section_unique_division_count, s_curr.section_unique_division_count) AS section_unique_division_count,
-                    COALESCE(s_prev.section_unique_activity_category_count, s_curr.section_unique_activity_category_count) AS section_unique_activity_category_count,
+                    CASE
+                        WHEN COALESCE(s_prev.section_local_count, 0) <= 0
+                             AND COALESCE(s_curr.section_local_count, 0) > 0
+                            THEN s_curr.section_local_count
+                        ELSE COALESCE(s_prev.section_local_count, s_curr.section_local_count)
+                    END AS section_local_count,
+                    CASE
+                        WHEN COALESCE(s_prev.section_unique_division_count, 0) <= 0
+                             AND COALESCE(s_curr.section_unique_division_count, 0) > 0
+                            THEN s_curr.section_unique_division_count
+                        ELSE COALESCE(s_prev.section_unique_division_count, s_curr.section_unique_division_count)
+                    END AS section_unique_division_count,
+                    CASE
+                        WHEN COALESCE(s_prev.section_unique_activity_category_count, 0) <= 0
+                             AND COALESCE(s_curr.section_unique_activity_category_count, 0) > 0
+                            THEN s_curr.section_unique_activity_category_count
+                        ELSE COALESCE(s_prev.section_unique_activity_category_count, s_curr.section_unique_activity_category_count)
+                    END AS section_unique_activity_category_count,
                     COALESCE(s_prev.section_single_division_share, s_curr.section_single_division_share) AS section_single_division_share,
                     COALESCE(s_prev.section_local_count_delta_12m, s_curr.section_local_count_delta_12m) AS section_local_count_delta_12m,
-                    COALESCE(d_prev.section_same_division_local_count, d_curr.section_same_division_local_count) AS section_same_division_local_count,
-                    COALESCE(a_prev.section_same_activity_category_local_count, a_curr.section_same_activity_category_local_count) AS section_same_activity_category_local_count,
+                    CASE
+                        WHEN COALESCE(d_prev.section_same_division_local_count, 0) <= 0
+                             AND COALESCE(d_curr.section_same_division_local_count, 0) > 0
+                            THEN d_curr.section_same_division_local_count
+                        ELSE COALESCE(d_prev.section_same_division_local_count, d_curr.section_same_division_local_count)
+                    END AS section_same_division_local_count,
+                    CASE
+                        WHEN COALESCE(a_prev.section_same_activity_category_local_count, 0) <= 0
+                             AND COALESCE(a_curr.section_same_activity_category_local_count, 0) > 0
+                            THEN a_curr.section_same_activity_category_local_count
+                        ELSE COALESCE(a_prev.section_same_activity_category_local_count, a_curr.section_same_activity_category_local_count)
+                    END AS section_same_activity_category_local_count,
                     COALESCE(s_prev.section_entry_count_3m, s_curr.section_entry_count_3m) AS section_entry_count_3m,
                     COALESCE(s_prev.section_entry_count_6m, s_curr.section_entry_count_6m) AS section_entry_count_6m,
                     COALESCE(s_prev.section_entry_count_12m, s_curr.section_entry_count_12m) AS section_entry_count_12m,

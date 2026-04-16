@@ -16,6 +16,7 @@ node_modules/
 .next/
 front/.next/
 front/.next-legacy/
+front/out/
 front/node_modules/
 front/tsconfig.tsbuildinfo
 
@@ -33,3 +34,5 @@ ingestion_log.txt
 *.geojson
 *.gpkg
 !front/public/data/opportunities/sections/geometry.geojson
+front/public/data/map/historical/hex-composition.manifest.json
+front/public/data/map/historical/hex-composition/

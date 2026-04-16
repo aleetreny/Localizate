@@ -9,9 +9,9 @@ ABT por local con target unico de `cese de actividad`: evento por desaparicion d
 - Tasa de evento observada: 0.1112
 - Mediana de duracion (meses): 135.0
 - Filas con H3 inicial: 164,441
-- Filas con renta inicial: 167,574
+- Filas con renta inicial: 203,051
 - Filas con distancia a metro calculable: 164,412
-- Filas con avisos positivos en barrio/año previo: 53,545
+- Filas con avisos positivos en barrio/año previo: 89,009
 
 ## Desglose de eventos
 

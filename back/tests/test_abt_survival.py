@@ -218,6 +218,137 @@ class AbtSurvivalTests(unittest.TestCase):
         self.assertAlmostEqual(float(resolved["section_same_division_share"]), 0.2)
         self.assertAlmostEqual(float(resolved["section_same_activity_category_share"]), 0.3)
 
+    def test_local_feature_context_falls_back_to_same_period_when_tminus1_is_zero(self) -> None:
+        local_activity_enriched = pd.DataFrame(
+            {
+                "id_local": [101],
+                "period": ["2018-03"],
+                "section_key": ["08151"],
+                "division_code_start": ["56"],
+                "activity_category_code_start": ["bar_cafe"],
+            }
+        )
+        section_period_features = pd.DataFrame(
+            {
+                "period": ["2018-02", "2018-03"],
+                "section_key": ["08151", "08151"],
+                "section_local_count": [0, 12],
+                "section_unique_division_count": [0, 4],
+                "section_unique_activity_category_count": [0, 5],
+            }
+        )
+        section_division_features = pd.DataFrame(
+            {
+                "period": ["2018-02", "2018-03"],
+                "section_key": ["08151", "08151"],
+                "division_code_start": ["56", "56"],
+                "section_same_division_local_count": [0, 3],
+            }
+        )
+        section_activity_category_features = pd.DataFrame(
+            {
+                "period": ["2018-02", "2018-03"],
+                "section_key": ["08151", "08151"],
+                "activity_category_code_start": ["bar_cafe", "bar_cafe"],
+                "section_same_activity_category_local_count": [0, 4],
+            }
+        )
+
+        con = duckdb.connect()
+        try:
+            con.register("local_activity_enriched_df", local_activity_enriched)
+            con.register("section_period_features_df", section_period_features)
+            con.register("section_division_features_df", section_division_features)
+            con.register("section_activity_category_features_df", section_activity_category_features)
+            con.execute("CREATE OR REPLACE TABLE local_activity_enriched AS SELECT * FROM local_activity_enriched_df")
+            con.execute("CREATE OR REPLACE TABLE section_period_features AS SELECT * FROM section_period_features_df")
+            con.execute("CREATE OR REPLACE TABLE section_division_features AS SELECT * FROM section_division_features_df")
+            con.execute(
+                "CREATE OR REPLACE TABLE section_activity_category_features AS SELECT * FROM section_activity_category_features_df"
+            )
+
+            resolved = con.execute(
+                """
+                WITH lagged_context AS (
+                    SELECT
+                        *,
+                        STRFTIME(CAST(period || '-01' AS DATE) - INTERVAL 1 MONTH, '%Y-%m') AS context_period
+                    FROM local_activity_enriched
+                ), context_enriched AS (
+                    SELECT
+                        l.*,
+                        CASE
+                            WHEN COALESCE(s_prev.section_local_count, 0) <= 0
+                                 AND COALESCE(s_curr.section_local_count, 0) > 0
+                                THEN s_curr.section_local_count
+                            ELSE COALESCE(s_prev.section_local_count, s_curr.section_local_count)
+                        END AS section_local_count,
+                        CASE
+                            WHEN COALESCE(s_prev.section_unique_division_count, 0) <= 0
+                                 AND COALESCE(s_curr.section_unique_division_count, 0) > 0
+                                THEN s_curr.section_unique_division_count
+                            ELSE COALESCE(s_prev.section_unique_division_count, s_curr.section_unique_division_count)
+                        END AS section_unique_division_count,
+                        CASE
+                            WHEN COALESCE(s_prev.section_unique_activity_category_count, 0) <= 0
+                                 AND COALESCE(s_curr.section_unique_activity_category_count, 0) > 0
+                                THEN s_curr.section_unique_activity_category_count
+                            ELSE COALESCE(s_prev.section_unique_activity_category_count, s_curr.section_unique_activity_category_count)
+                        END AS section_unique_activity_category_count,
+                        CASE
+                            WHEN COALESCE(d_prev.section_same_division_local_count, 0) <= 0
+                                 AND COALESCE(d_curr.section_same_division_local_count, 0) > 0
+                                THEN d_curr.section_same_division_local_count
+                            ELSE COALESCE(d_prev.section_same_division_local_count, d_curr.section_same_division_local_count)
+                        END AS section_same_division_local_count,
+                        CASE
+                            WHEN COALESCE(a_prev.section_same_activity_category_local_count, 0) <= 0
+                                 AND COALESCE(a_curr.section_same_activity_category_local_count, 0) > 0
+                                THEN a_curr.section_same_activity_category_local_count
+                            ELSE COALESCE(a_prev.section_same_activity_category_local_count, a_curr.section_same_activity_category_local_count)
+                        END AS section_same_activity_category_local_count
+                    FROM lagged_context l
+                    LEFT JOIN section_period_features s_prev
+                        ON l.context_period = s_prev.period
+                       AND l.section_key = s_prev.section_key
+                    LEFT JOIN section_period_features s_curr
+                        ON l.period = s_curr.period
+                       AND l.section_key = s_curr.section_key
+                    LEFT JOIN section_division_features d_prev
+                        ON l.context_period = d_prev.period
+                       AND l.section_key = d_prev.section_key
+                       AND l.division_code_start = d_prev.division_code_start
+                    LEFT JOIN section_division_features d_curr
+                        ON l.period = d_curr.period
+                       AND l.section_key = d_curr.section_key
+                       AND l.division_code_start = d_curr.division_code_start
+                    LEFT JOIN section_activity_category_features a_prev
+                        ON l.context_period = a_prev.period
+                       AND l.section_key = a_prev.section_key
+                       AND l.activity_category_code_start = a_prev.activity_category_code_start
+                    LEFT JOIN section_activity_category_features a_curr
+                        ON l.period = a_curr.period
+                       AND l.section_key = a_curr.section_key
+                       AND l.activity_category_code_start = a_curr.activity_category_code_start
+                )
+                SELECT
+                    section_local_count,
+                    section_unique_division_count,
+                    section_unique_activity_category_count,
+                    section_same_division_local_count,
+                    section_same_activity_category_local_count
+                FROM context_enriched
+                """
+            ).df().iloc[0]
+        finally:
+            con.close()
+
+        self.assertEqual(int(resolved["section_local_count"]), 12)
+        self.assertEqual(int(resolved["section_unique_division_count"]), 4)
+        self.assertEqual(int(resolved["section_unique_activity_category_count"]), 5)
+        self.assertEqual(int(resolved["section_same_division_local_count"]), 3)
+        self.assertEqual(int(resolved["section_same_activity_category_local_count"]), 4)
+
     def test_resolve_survival_target_prioritizes_earliest_change_event(self) -> None:
         resolved = resolve_survival_target(
             first_seen_period="2020-01",
@@ -261,10 +392,10 @@ class AbtSurvivalTests(unittest.TestCase):
     def test_section_key_resolution_prefers_district_consistent_candidates(self) -> None:
         local_rows = pd.DataFrame(
             {
-                "id_local": [1, 2, 3],
-                "period": ["2024-10", "2024-10", "2024-10"],
-                "district_digits": ["18", "20", "99"],
-                "section_digits": ["180460", "2032", "2032"],
+                "id_local": [1, 2, 3, 4, 5],
+                "period": ["2024-10", "2024-10", "2024-10", "2024-11", "2024-11"],
+                "district_digits": ["18", "20", "99", "06", ""],
+                "section_digits": ["180460", "2032", "2032", "60290", "60290"],
             }
         )
         panel_rows = pd.DataFrame(
@@ -293,8 +424,8 @@ class AbtSurvivalTests(unittest.TestCase):
                         END AS section_key_current,
                         CASE
                             WHEN section_digits IS NULL OR section_digits = '' THEN NULL
-                            WHEN LENGTH(section_digits) >= 6 AND RIGHT(section_digits, 1) = '0'
-                                THEN RIGHT(LEFT(section_digits, LENGTH(section_digits) - 1), 5)
+                            WHEN LENGTH(section_digits) >= 5 AND RIGHT(section_digits, 1) = '0'
+                                THEN LPAD(RIGHT(LEFT(section_digits, LENGTH(section_digits) - 1), 5), 5, '0')
                             ELSE NULL
                         END AS section_key_drop_trailing_zero,
                         CASE
@@ -303,7 +434,7 @@ class AbtSurvivalTests(unittest.TestCase):
                         END AS section_key_district_tail3,
                         CASE
                             WHEN district_digits IS NULL OR district_digits = '' OR section_digits IS NULL OR section_digits = '' THEN NULL
-                            WHEN LENGTH(section_digits) >= 6 AND RIGHT(section_digits, 1) = '0'
+                            WHEN LENGTH(section_digits) >= 5 AND RIGHT(section_digits, 1) = '0'
                                 THEN LPAD(district_digits, 2, '0') || RIGHT('000' || LEFT(section_digits, LENGTH(section_digits) - 1), 3)
                             ELSE NULL
                         END AS section_key_district_tail3_drop
@@ -347,6 +478,8 @@ class AbtSurvivalTests(unittest.TestCase):
         self.assertEqual(resolved_map[1], "18046")
         self.assertEqual(resolved_map[2], "20032")
         self.assertEqual(resolved_map[3], "02032")
+        self.assertEqual(resolved_map[4], "06029")
+        self.assertEqual(resolved_map[5], "06029")
 
 
 if __name__ == "__main__":

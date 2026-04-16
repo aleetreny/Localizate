@@ -32,6 +32,8 @@ MEDIUM_OUTPUT = MAP_HEX_DATA_DIR / "medium.json"
 LARGE_OUTPUT = MAP_HEX_DATA_DIR / "large.json"
 HISTORICAL_RANKING_OUTPUT = MAP_HISTORICAL_DATA_DIR / "rankings.json"
 HEX_COMPOSITION_HISTORY_OUTPUT = MAP_HISTORICAL_DATA_DIR / "hex-composition.json"
+HEX_COMPOSITION_HISTORY_PARTS_DIR = MAP_HISTORICAL_DATA_DIR / "hex-composition"
+HEX_COMPOSITION_HISTORY_MANIFEST_OUTPUT = MAP_HISTORICAL_DATA_DIR / "hex-composition.manifest.json"
 ZONE_BOUNDARY_OUTPUT = MAP_ZONES_DATA_DIR / "boundaries.json"
 ACTIVITY_GLOSSARY = PROJECT_ROOT / "docs" / "reference" / "ACTIVITY_GLOSSARY.md"
 ACTIVITY_NORMALIZATION_AUDIT = PROJECT_ROOT / "storage" / "data" / "processed" / "activity_code_normalization_audit.csv"
@@ -112,6 +114,7 @@ def main() -> int:
     DEFAULT_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     HISTORICAL_RANKING_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     HEX_COMPOSITION_HISTORY_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    HEX_COMPOSITION_HISTORY_PARTS_DIR.mkdir(parents=True, exist_ok=True)
     ZONE_BOUNDARY_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     section_geography = pd.read_csv(
         PROJECT_ROOT / "storage" / "data" / "processed" / "section_geography.csv",
@@ -205,6 +208,11 @@ def main() -> int:
     print(
         f"Wrote hex composition history artifacts: {HEX_COMPOSITION_HISTORY_OUTPUT} "
         f"(rows={len(hex_composition_payload['hexes']):,}, years={len(hex_composition_payload['meta']['years']):,})"
+    )
+    hex_composition_manifest = write_hex_composition_history_manifest(hex_composition_payload)
+    print(
+        f"Wrote hex composition manifest: {HEX_COMPOSITION_HISTORY_MANIFEST_OUTPUT} "
+        f"(parts={len(hex_composition_manifest['parts']):,})"
     )
 
     hex_specs = build_hex_size_specs(base_h3_resolution)
@@ -924,6 +932,52 @@ def build_hex_composition_history_artifacts(*, generated_at: str) -> dict[str, o
         },
         "hexes": rows,
     }
+
+
+def write_hex_composition_history_manifest(payload: dict[str, object]) -> dict[str, object]:
+    for existing_part in HEX_COMPOSITION_HISTORY_PARTS_DIR.glob("*.json"):
+        existing_part.unlink()
+
+    rows = payload.get("hexes")
+    if not isinstance(rows, list):
+        rows = []
+
+    rows_by_year: dict[int, list[dict[str, object]]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        year_value = row.get("year")
+        try:
+            year = int(year_value)
+        except (TypeError, ValueError):
+            continue
+        rows_by_year.setdefault(year, []).append(row)
+
+    parts: list[dict[str, object]] = []
+    for year in sorted(rows_by_year):
+        year_rows = rows_by_year[year]
+        part_path = HEX_COMPOSITION_HISTORY_PARTS_DIR / f"{year}.json"
+        part_path.write_text(
+            json.dumps({"hexes": year_rows}, ensure_ascii=False, indent=2, allow_nan=False),
+            encoding="utf-8",
+        )
+        parts.append(
+            {
+                "year": year,
+                "path": f"/data/map/historical/hex-composition/{year}.json",
+                "rows": len(year_rows),
+            }
+        )
+
+    manifest = {
+        "meta": payload.get("meta", {}),
+        "parts": parts,
+    }
+    HEX_COMPOSITION_HISTORY_MANIFEST_OUTPUT.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False),
+        encoding="utf-8",
+    )
+    return manifest
 
 
 def list_snapshot_periods(directory: Path) -> list[str]:

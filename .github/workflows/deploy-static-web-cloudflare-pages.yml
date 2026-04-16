@@ -1,0 +1,65 @@
+name: Deploy Static Web to Cloudflare Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "front/app/**"
+      - "front/components/**"
+      - "front/lib/**"
+      - "front/package.json"
+      - "front/package-lock.json"
+      - "front/next.config.mjs"
+      - "front/scripts/**"
+      - "front/.env.example"
+      - ".github/workflows/deploy-static-web-cloudflare-pages.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-static-web-cloudflare-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_DATA_BASE_URL: ${{ vars.NEXT_PUBLIC_DATA_BASE_URL }}
+      NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT: ${{ vars.NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate deployment configuration
+        run: |
+          test -n "$NEXT_PUBLIC_DATA_BASE_URL" || { echo "Missing repo variable NEXT_PUBLIC_DATA_BASE_URL"; exit 1; }
+          test -n "$NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT" || { echo "Missing repo variable NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT"; exit 1; }
+          test -n "${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}" || { echo "Missing repo variable CLOUDFLARE_PAGES_PROJECT_NAME"; exit 1; }
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: front/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: front
+        run: npm ci
+
+      - name: Build static export
+        working-directory: front
+        run: npm run build:static
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: front
+          command: pages deploy out --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}

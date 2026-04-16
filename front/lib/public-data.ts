@@ -1,7 +1,10 @@
 import { DEFAULT_HEX_SIZE, type HexSize } from "@/lib/hex-size";
+import { normalizeOpportunityArtifactUrls, resolvePublicAssetUrl } from "@/lib/runtime-config";
 import type {
   FrontendArtifacts,
   HexCompositionHistoryArtifacts,
+  HexCompositionHistoryMeta,
+  HexCompositionHistoryRecord,
   HistoricalRankingArtifacts,
   MapHexArtifacts,
   MapSharedArtifacts,
@@ -11,19 +14,31 @@ import type {
   ZoneBoundaryArtifacts,
 } from "@/lib/types";
 
-export const MAP_SHARED_ARTIFACTS_PATH = "/data/map/shared.json";
+export const MAP_SHARED_ARTIFACTS_PATH = resolvePublicAssetUrl("/data/map/shared.json");
 export const MAP_HEX_ARTIFACTS_PATHS: Record<HexSize, string> = {
-  small: "/data/map/hex/small.json",
-  medium: "/data/map/hex/medium.json",
-  large: "/data/map/hex/large.json",
+  small: resolvePublicAssetUrl("/data/map/hex/small.json"),
+  medium: resolvePublicAssetUrl("/data/map/hex/medium.json"),
+  large: resolvePublicAssetUrl("/data/map/hex/large.json"),
 };
-export const OPPORTUNITY_ARTIFACTS_PATH = "/data/opportunities/listings.json";
-export const OPPORTUNITY_SECTION_INDEX_PATH = "/data/opportunities/sections/index.json";
-export const HISTORICAL_RANKING_ARTIFACTS_PATH = "/data/map/historical/rankings.json";
-export const HEX_COMPOSITION_HISTORY_ARTIFACTS_PATH = "/data/map/historical/hex-composition.json";
-export const ZONE_BOUNDARY_ARTIFACTS_PATH = "/data/map/zones/boundaries.json";
+export const OPPORTUNITY_ARTIFACTS_PATH = resolvePublicAssetUrl("/data/opportunities/listings.json");
+export const OPPORTUNITY_SECTION_INDEX_PATH = resolvePublicAssetUrl("/data/opportunities/sections/index.json");
+export const HISTORICAL_RANKING_ARTIFACTS_PATH = resolvePublicAssetUrl("/data/map/historical/rankings.json");
+export const HEX_COMPOSITION_HISTORY_ARTIFACTS_PATH = resolvePublicAssetUrl("/data/map/historical/hex-composition.json");
+export const HEX_COMPOSITION_HISTORY_MANIFEST_PATH = resolvePublicAssetUrl("/data/map/historical/hex-composition.manifest.json");
+export const ZONE_BOUNDARY_ARTIFACTS_PATH = resolvePublicAssetUrl("/data/map/zones/boundaries.json");
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+type HexCompositionHistoryYearPart = {
+  year: number;
+  path: string;
+  rows: number;
+};
+
+type HexCompositionHistoryManifest = {
+  meta: HexCompositionHistoryMeta;
+  parts: HexCompositionHistoryYearPart[];
+};
 
 export const FALLBACK_MAP_SHARED_ARTIFACTS: MapSharedArtifacts = {
   meta: {
@@ -75,7 +90,7 @@ export const FALLBACK_OPPORTUNITY_ARTIFACTS: OpportunityArtifacts = {
     subtitle: "Locales disponibles y recomendacion de actividad",
     generated_at: new Date(0).toISOString(),
     section_index_path: OPPORTUNITY_SECTION_INDEX_PATH,
-    section_geojson_path: "/data/opportunities/sections/geometry.geojson",
+    section_geojson_path: resolvePublicAssetUrl("/data/opportunities/sections/geometry.geojson"),
     map_bounds: {
       min_lng: -3.888,
       min_lat: 40.312,
@@ -178,7 +193,8 @@ const mapArtifactsPromises = new Map<HexSize, Promise<FrontendArtifacts>>();
 let opportunityArtifactsPromise: Promise<OpportunityArtifacts> | null = null;
 let opportunitySectionIndexPromise: Promise<OpportunitySectionIndexArtifacts> | null = null;
 let historicalRankingArtifactsPromise: Promise<HistoricalRankingArtifacts> | null = null;
-let hexCompositionHistoryArtifactsPromise: Promise<HexCompositionHistoryArtifacts> | null = null;
+let hexCompositionHistoryManifestPromise: Promise<HexCompositionHistoryManifest | null> | null = null;
+const hexCompositionHistoryArtifactsPromises = new Map<number, Promise<HexCompositionHistoryArtifacts>>();
 let zoneBoundaryArtifactsPromise: Promise<ZoneBoundaryArtifacts> | null = null;
 
 export function loadMapSharedArtifactsFromPublic() {
@@ -229,11 +245,11 @@ export function loadMapArtifactsFromPublic(hexSize: HexSize = DEFAULT_HEX_SIZE) 
 
 export function loadOpportunityArtifactsFromPublic() {
   if (!IS_PRODUCTION) {
-    return fetchPublicJson(OPPORTUNITY_ARTIFACTS_PATH, FALLBACK_OPPORTUNITY_ARTIFACTS).then(normalizeOpportunityArtifacts);
+    return fetchPublicJson(OPPORTUNITY_ARTIFACTS_PATH, FALLBACK_OPPORTUNITY_ARTIFACTS).then(normalizePublicOpportunityArtifacts);
   }
 
   opportunityArtifactsPromise ??= fetchPublicJson(OPPORTUNITY_ARTIFACTS_PATH, FALLBACK_OPPORTUNITY_ARTIFACTS).then(
-    normalizeOpportunityArtifacts,
+    normalizePublicOpportunityArtifacts,
   );
   return opportunityArtifactsPromise;
 }
@@ -262,16 +278,24 @@ export function loadHistoricalRankingsFromPublic() {
   return historicalRankingArtifactsPromise;
 }
 
-export function loadHexCompositionHistoryFromPublic() {
+export function loadHexCompositionHistoryFromPublic(year?: number) {
+  return loadHexCompositionHistoryYearFromPublic(year);
+}
+
+export function loadHexCompositionHistoryYearFromPublic(year?: number) {
   if (!IS_PRODUCTION) {
-    return fetchPublicJson(HEX_COMPOSITION_HISTORY_ARTIFACTS_PATH, FALLBACK_HEX_COMPOSITION_HISTORY_ARTIFACTS);
+    return loadHexCompositionHistoryUsingManifestOrMonolith(year);
   }
 
-  hexCompositionHistoryArtifactsPromise ??= fetchPublicJson(
-    HEX_COMPOSITION_HISTORY_ARTIFACTS_PATH,
-    FALLBACK_HEX_COMPOSITION_HISTORY_ARTIFACTS,
-  );
-  return hexCompositionHistoryArtifactsPromise;
+  const cacheKey = year ?? -1;
+  const cached = hexCompositionHistoryArtifactsPromises.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const promise = loadHexCompositionHistoryUsingManifestOrMonolith(year);
+  hexCompositionHistoryArtifactsPromises.set(cacheKey, promise);
+  return promise;
 }
 
 export function loadZoneBoundariesFromPublic() {
@@ -310,6 +334,65 @@ function mergeMapArtifacts(sharedArtifacts: MapSharedArtifacts, hexArtifacts: Ma
     ...sharedArtifacts,
     hexes: hexArtifacts.hexes,
   };
+}
+
+function normalizePublicOpportunityArtifacts(artifacts: OpportunityArtifacts) {
+  return normalizeOpportunityArtifacts(normalizeOpportunityArtifactUrls(artifacts));
+}
+
+async function loadHexCompositionHistoryUsingManifestOrMonolith(year?: number): Promise<HexCompositionHistoryArtifacts> {
+  const manifest = await loadHexCompositionHistoryManifestFromPublic();
+  if (manifest && manifest.parts.length > 0) {
+    const effectiveYear = resolveHexCompositionHistoryYear(manifest, year);
+    const part = manifest.parts.find((candidate) => candidate.year === effectiveYear);
+    if (!part) {
+      return {
+        meta: manifest.meta,
+        hexes: [],
+      };
+    }
+
+    const payload = await fetchPublicJson<{ hexes: HexCompositionHistoryRecord[] }>(part.path, { hexes: [] });
+    return {
+      meta: manifest.meta,
+      hexes: payload.hexes,
+    };
+  }
+
+  return fetchPublicJson(HEX_COMPOSITION_HISTORY_ARTIFACTS_PATH, FALLBACK_HEX_COMPOSITION_HISTORY_ARTIFACTS);
+}
+
+async function loadHexCompositionHistoryManifestFromPublic() {
+  if (!IS_PRODUCTION) {
+    return fetchHexCompositionHistoryManifest();
+  }
+
+  hexCompositionHistoryManifestPromise ??= fetchHexCompositionHistoryManifest();
+  return hexCompositionHistoryManifestPromise;
+}
+
+async function fetchHexCompositionHistoryManifest() {
+  try {
+    const response = await fetch(HEX_COMPOSITION_HISTORY_MANIFEST_PATH, { cache: IS_PRODUCTION ? "force-cache" : "no-store" });
+    if (!response.ok) {
+      return null;
+    }
+    return (await response.json()) as HexCompositionHistoryManifest;
+  } catch {
+    return null;
+  }
+}
+
+function resolveHexCompositionHistoryYear(manifest: HexCompositionHistoryManifest, requestedYear?: number) {
+  if (typeof requestedYear === "number" && manifest.parts.some((part) => part.year === requestedYear)) {
+    return requestedYear;
+  }
+
+  if (typeof manifest.meta.latest_year === "number" && manifest.meta.latest_year > 0) {
+    return manifest.meta.latest_year;
+  }
+
+  return manifest.parts[manifest.parts.length - 1]?.year ?? requestedYear ?? FALLBACK_HEX_COMPOSITION_HISTORY_ARTIFACTS.meta.latest_year;
 }
 
 export function normalizeOpportunityArtifacts(artifacts: OpportunityArtifacts): OpportunityArtifacts {

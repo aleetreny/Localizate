@@ -17,6 +17,7 @@ import {
   loadMapSharedArtifactsFromPublic,
   loadZoneBoundariesFromPublic,
 } from "@/lib/public-data";
+import { resolvePublicAssetUrl } from "@/lib/runtime-config";
 import type {
   ColorScale,
   FrontendArtifacts,
@@ -164,7 +165,11 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
     initialArtifacts && initialArtifacts.hexes.length > 0 ? { [DEFAULT_HEX_SIZE]: initialArtifacts } : {}
   );
   const historicalRankingsRequestRef = useRef<Promise<HistoricalRankingArtifacts> | null>(null);
-  const hexCompositionHistoryRequestRef = useRef<Promise<HexCompositionHistoryArtifacts> | null>(null);
+  const hexCompositionHistoryRequestRef = useRef<{
+    promise: Promise<HexCompositionHistoryArtifacts>;
+    year: number;
+  } | null>(null);
+  const loadedHexCompositionYearsRef = useRef<Set<number>>(new Set());
   const zoneBoundariesRequestRef = useRef<Promise<ZoneBoundaryArtifacts> | null>(null);
   const mapPanelRef = useRef<HTMLElement | null>(null);
 
@@ -192,34 +197,35 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
     return request;
   }, [historicalRankingArtifacts]);
 
-  const ensureHexCompositionHistoryLoaded = useCallback(async () => {
-    if (hexCompositionHistoryArtifacts) {
+  const ensureHexCompositionHistoryLoaded = useCallback(async (targetYear: number = compositionYear) => {
+    if (hexCompositionHistoryArtifacts && loadedHexCompositionYearsRef.current.has(targetYear)) {
       return hexCompositionHistoryArtifacts;
     }
 
-    if (hexCompositionHistoryRequestRef.current) {
-      return hexCompositionHistoryRequestRef.current;
+    if (hexCompositionHistoryRequestRef.current?.year === targetYear) {
+      return hexCompositionHistoryRequestRef.current.promise;
     }
 
-    const request = loadHexCompositionHistoryFromPublic()
+    const request = loadHexCompositionHistoryFromPublic(targetYear)
       .then((nextArtifacts) => {
         setHexCompositionHistoryArtifacts(nextArtifacts);
+        loadedHexCompositionYearsRef.current = new Set(nextArtifacts.hexes.map((row) => row.year));
         return nextArtifacts;
       })
       .finally(() => {
         hexCompositionHistoryRequestRef.current = null;
       });
 
-    hexCompositionHistoryRequestRef.current = request;
+    hexCompositionHistoryRequestRef.current = { promise: request, year: targetYear };
     return request;
-  }, [hexCompositionHistoryArtifacts]);
+  }, [compositionYear, hexCompositionHistoryArtifacts]);
 
   useEffect(() => {
     if (mapViewMode !== "hex" || selectedCategory !== "__all__") {
       return;
     }
-    void ensureHexCompositionHistoryLoaded();
-  }, [ensureHexCompositionHistoryLoaded, mapViewMode, selectedCategory]);
+    void ensureHexCompositionHistoryLoaded(compositionYear);
+  }, [compositionYear, ensureHexCompositionHistoryLoaded, mapViewMode, selectedCategory]);
 
   const ensureZoneBoundariesLoaded = useCallback(async () => {
     if (zoneBoundaryArtifacts) {
@@ -325,7 +331,7 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
 
   useEffect(() => {
     const cancel = scheduleIdleTask(() => {
-      void fetch("/data/opportunities/sections/geometry.geojson", { cache: "force-cache" }).catch(() => undefined);
+      void fetch(resolvePublicAssetUrl("/data/opportunities/sections/geometry.geojson"), { cache: "force-cache" }).catch(() => undefined);
     }, 1200);
 
     return cancel;
