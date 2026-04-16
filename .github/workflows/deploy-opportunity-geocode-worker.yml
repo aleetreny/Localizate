@@ -25,10 +25,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate Cloudflare credentials
+        run: |
+          missing=0
+
+          require_value() {
+            local label="$1"
+            local value="$2"
+            if [ -z "$value" ]; then
+              echo "Missing ${label}"
+              missing=1
+            fi
+          }
+
+          require_value "secret CLOUDFLARE_API_TOKEN" "${{ secrets.CLOUDFLARE_API_TOKEN }}"
+          require_value "secret CLOUDFLARE_ACCOUNT_ID" "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+
+          test "$missing" -eq 0
+
       - name: Deploy worker
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: workers/opportunity-geocode
+          wranglerVersion: "4.83.0"
           command: deploy

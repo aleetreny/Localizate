@@ -4,6 +4,9 @@ Este archivo es la fuente unica y viva de contexto del proyecto. Se actualiza en
 
 Ultima actualizacion: 2026-04-16
 
+Nota de implementacion en curso (2026-04-16):
+ - Correccion de robustez aplicada en el workflow semanal `Refresh Opportunity Listings`: se elimina la condicion directa con `secrets` en `if` (que dejaba el YAML en rojo en VS Code y podia invalidar el parseo del workflow) y se sustituye por deteccion previa de credenciales R2 via output (`steps.r2-sync.outputs.enabled`), reutilizada tanto para la instalacion opcional de `boto3` como para el publish opcional de `data/opportunities` a R2.
+
 Nota de implementacion en curso (2026-04-15):
  - Refinamiento de UX aplicado en los overlays de explicación por métrica (`Historico` y `Oportunidades`): el botón `Cerrar` deja de renderizarse en una fila independiente del banner y pasa a alinearse con el título de la métrica activa, evitando que el contenido textual se desplace hacia abajo al abrir la explicación.
  - Ajuste de UX aplicado en frontend para cierre manual de banners de explicación abiertos por clic en tarjetas: los dos overlays `metric-banner` (pestaña `Historico` y pestaña `Oportunidades`) incorporan ya botón discreto `Cerrar` en la esquina superior derecha, reutilizando el patrón visual existente de `explain-banner-close` y permitiendo cerrar el panel sin cambiar selección de tarjeta.

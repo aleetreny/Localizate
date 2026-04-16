@@ -1,226 +1,413 @@
-# Despliegue gratuito recomendado para Localizate
+# Integración real Cloudflare + GitHub para Localizate
+
+Fecha de auditoría real: 2026-04-16
 
 ## Resumen ejecutivo
 
-La ruta que dejo preparada es esta:
+La base técnica del repo estaba bien orientada, pero la integración real no estaba cerrada:
 
-1. `front/` se publica como **sitio estatico** en **Cloudflare Pages**.
-2. `front/public/data/` se publica por separado en **Cloudflare R2** bajo un dominio publico o `r2.dev`.
-3. El buscador de direccion de oportunidades sale de Next y se despliega como **Cloudflare Worker** independiente.
-4. El workflow semanal ya no tiene que redeployar la web: actualiza `listings.json`, hace commit y, si R2 esta configurado, sube automaticamente `data/opportunities/` al bucket.
+- Los workflows de GitHub existían y estaban activos.
+- El repositorio no tenía variables ni secrets configurados para Cloudflare o R2.
+- El workflow semanal estaba inválido para GitHub porque había quedado `schedule:` sin cron activo.
+- El deploy del worker usaba el `wrangler` por defecto del action y caía en `3.90.0`.
+- La web estática ya podía compilar con datos externos, pero seguía embebiendo parte de los artefactos pesados en el HTML inicial cuando se hacía export estático.
 
-Con esto evitamos subir cientos de MB al despliegue del frontend, mantenemos la funcionalidad completa y dejamos la web servida como producto serio:
+He dejado corregido todo lo que sí podía cerrar desde el repo local y GitHub sin credenciales de Cloudflare:
 
-- HTML/JS/CSS ligeros en CDN.
-- Datos grandes fuera del bundle web.
-- Actualizacion semanal automatizable.
-- Geocoder separado del build del frontend.
+- workflows endurecidos
+- cron semanal reparado
+- pin de `wrangler` a `4.83.0`
+- validaciones explícitas de variables y secrets
+- export estático realmente desacoplado del JSON pesado cuando existe `NEXT_PUBLIC_DATA_BASE_URL`
+- documentación actualizada con estado real y no teórico
 
----
+No he podido crear ni verificar recursos reales en Cloudflare porque en este entorno no había ningún acceso autenticado a Cloudflare disponible.
 
-## Que problema habia de verdad
+## Qué he auditado de verdad
 
-El bloqueo no era "Next.js" ni "el hosting" por si solos. El problema real era una mezcla de tres cosas:
+### Repo local
 
-1. **Los artefactos pesados estaban empaquetados como parte del frontend.**
-   - `front/public/data/` pesa en local unos `362 MB`.
-   - Solo `front/public/data/map/historical/hex-composition.json` pesa unos `235.97 MB`.
-   - `rankings.json` pesa unos `45.18 MB`.
-   - `small.json` pesa unos `32.65 MB`.
+He revisado y cruzado estas piezas:
 
-2. **La app ya era casi estatica, pero tenia un runtime metido dentro de Next.**
-   - El endpoint `/api/geocode/opportunity-address` impedia una exportacion estatica limpia.
+- `.github/workflows/deploy-static-web-cloudflare-pages.yml`
+- `.github/workflows/publish-public-data-to-r2.yml`
+- `.github/workflows/deploy-opportunity-geocode-worker.yml`
+- `.github/workflows/refresh-opportunities-weekly.yml`
+- `workers/opportunity-geocode/wrangler.toml`
+- `workers/opportunity-geocode/src/index.ts`
+- `front/lib/runtime-config.ts`
+- `front/lib/data.ts`
+- `front/lib/public-data.ts`
+- `front/scripts/build-static.mjs`
+- `front/app/page.tsx`
+- `front/app/oportunidades/page.tsx`
+- `back/scripts/sync_public_data_to_r2.py`
+- `back/scripts/materialize_hex_composition_parts.py`
+- `back/scripts/build_frontend_opportunity_listings.py`
 
-3. **Habia peso invisible en la experiencia.**
-   - La pestaña de oportunidades estaba serializando demasiado contexto inicial.
-   - La geometria de secciones se descargaba dos veces.
-   - `hex-composition.json` se cargaba entero aunque la UI solo necesita un año cada vez.
+### GitHub real
 
-Conclusión:
+Repositorio remoto detectado:
 
-- El problema principal no era "necesitas Vercel Pro".
-- El problema era **como se servian y desplegaban los datos**.
+- `https://github.com/aleetreny/Localizate.git`
 
----
+Autenticación verificada con `gh auth status`:
 
-## Alternativas evaluadas
+- cuenta activa: `aleetreny`
+- scopes presentes: `gist`, `read:org`, `repo`, `workflow`
 
-### 1. Vercel Hobby
+Workflows visibles en GitHub:
 
-La descarto como solucion por defecto.
+- `Deploy Opportunity Geocode Worker`
+- `Deploy Static Web to Cloudflare Pages`
+- `Publish Public Data to R2`
+- `refresh-opportunities-weekly.yml` como workflow activo, aunque venía roto
 
-Motivos:
+Últimos runs reales observados en GitHub el 2026-04-16:
 
-- Vercel documenta un limite de **`100 MB`** para `Static File uploads` en Hobby.
-- Aunque movieramos parte de los datos fuera, seguiriamos acoplados a un stack mas pensado para fullstack que para este caso, donde el frontend puede ser estatico y el peso real esta en los artefactos.
-- No aporta una ventaja clara frente a Cloudflare en el escenario actual.
+- `24525563709` `Deploy Static Web to Cloudflare Pages`: fallo por variables ausentes
+- `24525563696` `Publish Public Data to R2`: fallo por variable y secrets ausentes
+- `24525563737` `Deploy Opportunity Geocode Worker`: fallo por `CLOUDFLARE_API_TOKEN` ausente
+- `24525560376` `refresh-opportunities-weekly.yml`: fallo por workflow inválido
 
-### 2. GitHub Pages + apaños auxiliares
+### Cloudflare real
 
-Es viable solo a medias, pero no la he elegido.
+No he podido inspeccionar recursos reales en Cloudflare porque este entorno no tenía acceso autenticado disponible:
 
-Motivos:
+- no había `wrangler` global instalado
+- no había variables de entorno `CLOUDFLARE_*` ni `R2_*`
+- no existía `~/.wrangler`
 
-- Para una web con datos grandes, cache, CORS y una pieza auxiliar tipo geocoder, GitHub Pages se queda mas rigido.
-- Obliga a montar mas soluciones paralelas para algo que Cloudflare ya resuelve mejor dentro del mismo ecosistema.
-- Es mas "barato" en teoria que en practica para este producto concreto.
+Lo que sí he podido validar localmente:
 
-### 3. Netlify
+- `npx wrangler@4.83.0 deploy --dry-run` compila el worker correctamente
+- bundle estimado del worker: `20.20 KiB` sin bindings
 
-No la tomo como opcion preferente.
+Conclusión honesta:
 
-Motivos:
+- no he podido verificar si ya existe proyecto de Pages
+- no he podido verificar si ya existe bucket R2
+- no he podido verificar si el worker ya existe desplegado
+- no he podido inspeccionar CORS real del bucket
+- no he podido crear recursos en Cloudflare ni desplegar de verdad por falta de credenciales
 
-- Ya te ha dado problemas.
-- No hay una ventaja tecnica clara aqui que compense forzarte a volver.
+## Hallazgos reales antes de tocar nada
 
-### 4. Cloudflare Pages + R2 + Worker
+### 1. GitHub no tenía configuración operativa para Cloudflare
 
-Es la opcion elegida.
+`gh variable list --repo aleetreny/Localizate` devolvía vacío.
 
-Motivos:
+`gh secret list --repo aleetreny/Localizate` devolvía vacío.
 
-- Pages sirve el frontend estatico gratis y muy bien desde CDN.
-- R2 encaja justo para sacar los datos pesados del despliegue web.
-- Worker resuelve el geocoder sin obligar a mantener un backend completo.
-- Todo queda desacoplado:
-  - web
-  - datos
-  - runtime auxiliar
+Eso explica los fallos inmediatos de los workflows.
 
----
+### 2. El workflow semanal estaba roto
 
-## Arquitectura final elegida
+Estado observado en el repo:
 
-### Produccion
+```yaml
+on:
+  workflow_dispatch:
+  schedule:
+#    - cron: "0 5 * * 1"
+```
 
-- `www.tu-dominio.com` o `tu-proyecto.pages.dev`
-  - frontend estatico exportado desde Next
+Ese `schedule:` vacío hace que GitHub rechace el workflow.
 
-- `data.tu-dominio.com` o `https://<bucket>.r2.dev`
-  - JSON y GeoJSON servidos desde R2
+### 3. El worker dependía del `wrangler` por defecto del action
 
-- `api.tu-dominio.com` o `https://localizate-opportunity-geocode.<subdominio>.workers.dev`
-  - geocoder del buscador de direcciones
+En el run `24525563737`, `cloudflare/wrangler-action@v3` instaló `wrangler 3.90.0`.
 
-### Flujo de datos
+No es un fallo de código del worker, pero sí un punto débil evitable del pipeline.
 
-1. La web carga HTML/JS/CSS desde Pages.
-2. Cuando necesita datos, los pide a R2.
-3. Cuando el usuario busca una direccion, la web llama al Worker.
-4. El workflow semanal actualiza oportunidades y, si R2 esta configurado, sincroniza automaticamente `data/opportunities/`.
+### 4. La exportación estática seguía arrastrando demasiados datos en el HTML
 
----
+Antes del ajuste del frontend:
 
-## Cambios que ya he dejado hechos en el repo
+- `front/public/data/` pesaba `627,735,424` bytes
+- `front/public/data/map/historical/hex-composition.json` pesaba `235.97 MB`
+- `front/public/data/map/historical/rankings.json` pesaba `45.18 MB`
+- `front/public/data/map/hex/small.json` pesaba `32.65 MB`
+- el export estático con URLs externas ya eliminaba `front/out/data`, pero el HTML seguía embebiendo artefactos iniciales
+
+Medición real del export estático antes del ajuste de páginas:
+
+- `front/out/` total: `14,704,994` bytes
+- `index.html`: alrededor de `3.9 MB`
+- `oportunidades.html`: alrededor de `2.0 MB`
+
+Eso significa que la separación `Pages + R2` existía solo a medias.
+
+## Cambios que he aplicado
 
 ### Frontend
 
-- Añadido `front/lib/runtime-config.ts`
-  - resuelve URLs externas de datos
-  - resuelve URL externa del geocoder
+He cambiado estas dos páginas:
 
-- Exportacion estatica preparada:
-  - `front/next.config.mjs`
-  - `front/scripts/build-static.mjs`
-  - `front/package.json` con `npm run build:static`
-
-- La build estatica ya no publica `front/public/data` dentro de `front/out` cuando existe `NEXT_PUBLIC_DATA_BASE_URL`.
-
+- `front/app/page.tsx`
 - `front/app/oportunidades/page.tsx`
-  - deja de embutir el indice completo de secciones en el payload inicial
 
-- `front/components/opportunity-shell.tsx`
-  - revalida oportunidades desde el CDN externo cuando aplica
-  - usa endpoint de geocoder configurable
-  - comparte la geometria con el mapa en vez de descargarla dos veces
+Cambio aplicado:
 
-- `front/components/opportunity-map.tsx`
-  - ya no re-descarga la geometria
+- cuando existe `NEXT_PUBLIC_DATA_BASE_URL`, dejan de cargar artefactos locales en build-time
+- la exportación estática ya no embebe los JSON grandes en el HTML inicial
+- el cliente arranca ligero y hace fetch a los artefactos públicos desde la base externa configurada
 
-- `front/components/map-shell.tsx`
-  - usa URL de datos resoluble
-  - carga la composicion historica del hexagono por año
+### Workflows
 
-### Datos
+#### `.github/workflows/deploy-static-web-cloudflare-pages.yml`
 
-- `back/scripts/build_frontend_map_artifacts.py`
-  - ahora genera `hex-composition.manifest.json`
-  - ahora genera particiones por año en:
-    - `front/public/data/map/historical/hex-composition/2015.json`
-    - ...
-    - `front/public/data/map/historical/hex-composition/2026.json`
+He añadido:
 
-- `back/scripts/materialize_hex_composition_parts.py`
-  - genera esas particiones a partir del monolito actual sin rehacer todo el pipeline
-  - el workflow de publicacion a R2 lo ejecuta antes del sync
-  - no hace falta versionar esas particiones en Git
+- validación explícita de:
+  - `NEXT_PUBLIC_DATA_BASE_URL`
+  - `NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT`
+  - `CLOUDFLARE_PAGES_PROJECT_NAME`
+  - `CLOUDFLARE_API_TOKEN`
+  - `CLOUDFLARE_ACCOUNT_ID`
+- inclusión de `front/tsconfig.json` en los paths de despliegue
+- pin de `wranglerVersion: "4.83.0"`
 
-### Runtime auxiliar
+#### `.github/workflows/deploy-opportunity-geocode-worker.yml`
 
-- El endpoint de geocoder ya no vive dentro de Next.
-- Se ha movido a:
-  - `workers/opportunity-geocode/src/index.ts`
-  - `workers/opportunity-geocode/wrangler.toml`
+He añadido:
 
-### Automatizacion
+- validación explícita de:
+  - `CLOUDFLARE_API_TOKEN`
+  - `CLOUDFLARE_ACCOUNT_ID`
+- pin de `wranglerVersion: "4.83.0"`
 
-- Nuevo workflow para desplegar la web estatica:
-  - `.github/workflows/deploy-static-web-cloudflare-pages.yml`
+#### `.github/workflows/publish-public-data-to-r2.yml`
 
-- Nuevo workflow para publicar datos en R2:
-  - `.github/workflows/publish-public-data-to-r2.yml`
+He añadido:
 
-- Nuevo workflow para desplegar el Worker:
-  - `.github/workflows/deploy-opportunity-geocode-worker.yml`
+- validación explícita de:
+  - `R2_BUCKET_NAME`
+  - `CLOUDFLARE_ACCOUNT_ID`
+  - `R2_ACCESS_KEY_ID`
+  - `R2_SECRET_ACCESS_KEY`
+- trigger cuando cambie `back/scripts/materialize_hex_composition_parts.py`
+- exclusión de `front/public/data/opportunities/listings.json` del trigger automático por `push`
 
-- El workflow semanal ya existente:
-  - `.github/workflows/refresh-opportunities-weekly.yml`
-  - ahora, si R2 esta configurado, publica automaticamente `data/opportunities/`
+Motivo de esa exclusión:
 
----
+- el workflow semanal ya sincroniza `data/opportunities/` directamente a R2
+- sin esa exclusión, una actualización semanal de `listings.json` dispararía además un sync completo del árbol `front/public/data/**`, duplicando trabajo y tráfico
 
-## Lo que tienes que hacer tu una sola vez
+#### `.github/workflows/refresh-opportunities-weekly.yml`
 
-## 1. Crear el proyecto de Pages
+He reparado el cron:
 
-En Cloudflare:
+- antes: inválido
+- ahora: `0 5 * * 1`
 
-1. Ve a **Workers & Pages**.
-2. Crea un proyecto de **Pages**.
-3. No hace falta conectar el repo por UI si vas a usar los workflows de GitHub que ya dejo montados.
-4. Apunta el nombre exacto del proyecto.
+Interpretación real:
 
-Valor que luego pondras en GitHub Variables:
+- cada lunes a las `05:00 UTC`
+
+## Validaciones que sí he ejecutado
+
+### Frontend
+
+Comandos ejecutados:
+
+```powershell
+cd front
+npm run typecheck
+```
+
+Resultado:
+
+- OK
+
+Comandos ejecutados:
+
+```powershell
+cd front
+$env:NEXT_PUBLIC_DATA_BASE_URL='https://data.example.com'
+$env:NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT='https://localizate-opportunity-geocode.example.workers.dev'
+npm run build:static
+```
+
+Resultado:
+
+- OK
+
+### Tamaño del export estático después del ajuste
+
+Medición real después del cambio en `front/app/page.tsx` y `front/app/oportunidades/page.tsx`:
+
+- `front/out/` total: `3,223,502` bytes
+- `front/out/data`: no existe
+- `front/out/index.html`: `10.06 KB`
+- `front/out/oportunidades.html`: `8.51 KB`
+
+Esto sí deja el frontend realmente ligero para Pages.
+
+### Worker
+
+Comando ejecutado:
+
+```powershell
+cd workers/opportunity-geocode
+npx wrangler@4.83.0 deploy --dry-run
+```
+
+Resultado:
+
+- OK
+- bundle compilado localmente
+- upload estimado: `20.20 KiB`
+
+### Python y builders relevantes
+
+Comandos ejecutados:
+
+```powershell
+.\.venv\Scripts\python.exe -m py_compile `
+  back\scripts\sync_public_data_to_r2.py `
+  back\scripts\materialize_hex_composition_parts.py `
+  back\scripts\build_frontend_opportunity_listings.py `
+  back\scripts\build_manual_available_locales.py
+```
+
+Resultado:
+
+- OK
+
+Tests ejecutados:
+
+```powershell
+cd back
+$env:PYTHONPATH='src'
+..\.venv\Scripts\python.exe -m unittest tests.test_build_frontend_opportunity_listings
+..\.venv\Scripts\python.exe -m unittest tests.test_build_frontend_opportunity_artifacts
+..\.venv\Scripts\python.exe -m unittest tests.test_build_frontend_map_artifacts
+```
+
+Resultado real:
+
+- `test_build_frontend_opportunity_listings`: OK
+- `test_build_frontend_opportunity_artifacts`: OK
+- `test_build_frontend_map_artifacts`: OK
+
+Nota:
+
+- el primer intento desde la raíz falló por contexto de import del test, no por un bug del código; al relanzarlo desde `back/` con `PYTHONPATH=src` pasó correctamente
+
+### Materialización de históricos
+
+Comando ejecutado:
+
+```powershell
+.\.venv\Scripts\python.exe back\scripts\materialize_hex_composition_parts.py
+```
+
+Resultado:
+
+- OK
+- manifest válido
+- `12` particiones anuales detectadas en `front/public/data/map/historical/hex-composition/`
+
+Primeras filas del manifest verificadas:
+
+- `2015 -> /data/map/historical/hex-composition/2015.json`
+- `2016 -> /data/map/historical/hex-composition/2016.json`
+- `2017 -> /data/map/historical/hex-composition/2017.json`
+
+## Variables y secrets que faltan ahora mismo en GitHub
+
+### Variables de repositorio ausentes
 
 - `CLOUDFLARE_PAGES_PROJECT_NAME`
+- `NEXT_PUBLIC_DATA_BASE_URL`
+- `NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT`
+- `R2_BUCKET_NAME`
 
----
+### Secrets de repositorio ausentes
 
-## 2. Crear el bucket R2 para los datos
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
 
-En Cloudflare:
+## Estado final esperado de cada workflow
 
-1. Ve a **R2**.
-2. Crea un bucket, por ejemplo:
-   - `localizate-public-data`
-3. Activa **public bucket**.
-4. Si tienes dominio, lo recomendable es asociar:
-   - `data.tu-dominio.com`
-5. Si no tienes dominio, puedes usar el subdominio `r2.dev` que te da Cloudflare.
+### `Deploy Opportunity Geocode Worker`
 
-### CORS del bucket
+Queda listo para usar cuando existan:
 
-Configura CORS para permitir lectura desde la web.
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
 
-Ejemplo razonable:
+Usará:
+
+- `wrangler 4.83.0`
+- worker configurado en `workers/opportunity-geocode/wrangler.toml`
+- nombre actual del worker: `localizate-opportunity-geocode`
+
+### `Publish Public Data to R2`
+
+Queda listo para usar cuando existan:
+
+- `R2_BUCKET_NAME`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+
+Publicará:
+
+- `front/public/data/**`
+- bajo prefijo remoto `data/`
+
+Antes del sync:
+
+- materializa las `12` particiones anuales de `hex-composition`
+
+### `Deploy Static Web to Cloudflare Pages`
+
+Queda listo para usar cuando existan:
+
+- `CLOUDFLARE_PAGES_PROJECT_NAME`
+- `NEXT_PUBLIC_DATA_BASE_URL`
+- `NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT`
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
+Publicará:
+
+- `front/out`
+
+Con el ajuste aplicado:
+
+- sin `front/out/data`
+- sin embebidos pesados en HTML inicial
+
+### `Refresh Opportunity Listings`
+
+Queda listo para usar con:
+
+- cron semanal real: lunes `05:00 UTC`
+- ejecución manual por `workflow_dispatch`
+
+Si además existen credenciales R2:
+
+- reconstruye `listings.json`
+- hace commit si hubo cambios
+- sincroniza `data/opportunities/` a R2
+
+## CORS de R2
+
+No he podido inspeccionarlo ni confirmarlo porque no he tenido acceso al bucket real.
+
+Cuando exista el bucket público, la configuración mínima recomendada es:
 
 ```json
 [
   {
     "AllowedOrigins": [
-      "https://tu-proyecto.pages.dev",
-      "https://www.tu-dominio.com",
+      "https://<tu-proyecto>.pages.dev",
+      "https://www.<tu-dominio>",
       "http://localhost:3000"
     ],
     "AllowedMethods": ["GET", "HEAD"],
@@ -231,209 +418,95 @@ Ejemplo razonable:
 ]
 ```
 
-### Access keys S3 para R2
+## Qué no he podido completar y por qué
 
-Necesitas crear unas credenciales de acceso S3 para el workflow de sync.
+### No he podido crear recursos reales en Cloudflare
 
-Apunta:
+Motivo exacto:
 
-- `R2_ACCESS_KEY_ID`
-- `R2_SECRET_ACCESS_KEY`
+- no existía ningún método de autenticación utilizable en este entorno
+- no había token ni account ID en local
+- no había sesión `wrangler` ya iniciada
 
----
+### No he podido verificar si Pages, Worker o R2 ya existen
 
-## 3. Desplegar el Worker de geocoding
+Motivo exacto:
 
-El worker ya esta preparado en:
+- sin autenticación de Cloudflare no hay forma fiable de inspeccionar el estado real de la cuenta
 
-- `workers/opportunity-geocode/`
+### No he podido lanzar despliegues reales a Cloudflare
 
-En Cloudflare:
+Motivo exacto:
 
-1. Crea o reutiliza un API token que permita desplegar Workers y Pages.
-2. Puedes dejar el nombre por defecto:
-   - `localizate-opportunity-geocode`
-3. Tras el primer deploy tendras una URL tipo:
-   - `https://localizate-opportunity-geocode.<subdominio>.workers.dev`
+- GitHub no tiene configurados los secrets necesarios
+- el entorno local tampoco tiene credenciales de Cloudflare
 
-Si tienes dominio propio, lo ideal es mapearlo luego a:
+## Hallazgo adicional importante fuera del wiring
 
-- `api.tu-dominio.com`
+He ejecutado `back/scripts/build_frontend_opportunity_listings.py` para comprobar el flujo semanal con los datos locales actuales.
 
----
+Resultado:
 
-## 4. Crear los secrets y variables en GitHub
+- el script funciona
+- genera `207` listings seleccionados
+- pero el `front/public/data/opportunities/listings.json` resultante deriva bastante del snapshot versionado actual
 
-### GitHub Secrets
+No he dejado ese cambio en el árbol final porque:
 
-Crea estos secrets en el repositorio:
+- depende de `storage/`, que es local y no versionado como fuente cerrada de despliegue
+- mezclarlo con esta intervención de DevOps habría introducido un diff funcional muy grande y ajeno al wiring Cloudflare/GitHub
+
+Conclusión operativa:
+
+- el pipeline semanal está vivo
+- pero conviene tratar el refresh de `listings.json` como una decisión funcional separada del cierre de infraestructura
+
+## Lo mínimo que falta hacer manualmente
+
+Solo queda lo que realmente no podía hacer yo sin acceso a tu cuenta de Cloudflare.
+
+### 1. Crear o confirmar los recursos reales en Cloudflare
+
+Necesitas confirmar o crear:
+
+- proyecto de Pages
+- bucket R2 público
+- worker `localizate-opportunity-geocode`
+
+Nombres recomendados si aún no existen:
+
+- Pages: `localizate`
+- bucket R2: `localizate-public-data`
+- worker: `localizate-opportunity-geocode`
+
+### 2. Crear los secrets en GitHub
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 - `R2_ACCESS_KEY_ID`
 - `R2_SECRET_ACCESS_KEY`
 
-### GitHub Variables
-
-Crea estas variables:
+### 3. Crear las variables en GitHub
 
 - `CLOUDFLARE_PAGES_PROJECT_NAME`
 - `R2_BUCKET_NAME`
 - `NEXT_PUBLIC_DATA_BASE_URL`
 - `NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT`
 
-### Valores esperados
+### 4. Lanzar los workflows en este orden
 
-Ejemplo con dominios Cloudflare por defecto:
+1. `Deploy Opportunity Geocode Worker`
+2. `Publish Public Data to R2`
+3. `Deploy Static Web to Cloudflare Pages`
+4. `Refresh Opportunity Listings` para validar la automatización semanal
 
-- `CLOUDFLARE_PAGES_PROJECT_NAME = localizate`
-- `R2_BUCKET_NAME = localizate-public-data`
-- `NEXT_PUBLIC_DATA_BASE_URL = https://<tu-bucket-publico>.r2.dev`
-- `NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT = https://localizate-opportunity-geocode.<subdominio>.workers.dev`
+## Checklist final de producción
 
-Ejemplo con dominio propio:
-
-- `NEXT_PUBLIC_DATA_BASE_URL = https://data.tu-dominio.com`
-- `NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT = https://api.tu-dominio.com`
-
----
-
-## Orden exacto del primer despliegue
-
-Hazlo en este orden:
-
-1. **Deploy del Worker**
-   - lanza manualmente `Deploy Opportunity Geocode Worker`
-
-2. **Publicacion inicial de datos en R2**
-   - lanza manualmente `Publish Public Data to R2`
-
-3. **Deploy de la web estatica**
-   - lanza manualmente `Deploy Static Web to Cloudflare Pages`
-
-4. **Prueba en navegador**
-   - abre la home
-   - abre `oportunidades`
-   - comprueba que:
-     - carga el mapa
-     - carga oportunidades
-     - el buscador de direccion responde
-     - el historico de composicion del hexagono funciona
-
-5. **Prueba del flujo semanal**
-   - ejecuta manualmente `Refresh Opportunity Listings`
-   - comprueba que:
-     - si hay cambio, se actualiza `listings.json`
-     - hace commit
-     - si R2 esta configurado, sincroniza `data/opportunities/`
-
----
-
-## Que automatizacion queda funcionando
-
-### Web estatica
-
-- Cuando cambie codigo del frontend, el workflow de Pages puede volver a desplegar la web sin subir los datos pesados.
-
-### Datos
-
-- Cuando cambie `front/public/data/**`, el workflow de R2 puede volver a publicar el arbol completo de datos.
-- Antes del sync, ese workflow materializa automaticamente las 12 particiones anuales de `hex-composition`.
-
-### Oportunidades semanales
-
-- El workflow semanal:
-  - scrapea
-  - reconstruye `listings.json`
-  - valida
-  - hace commit si hay cambios
-  - sincroniza `data/opportunities/` a R2 si las credenciales existen
-
-Esto es justo lo que querias para no tocarlo a mano cada semana.
-
----
-
-## Verificaciones que ya he pasado
-
-- `python -m py_compile` en:
-  - `back/scripts/build_frontend_map_artifacts.py`
-  - `back/scripts/sync_public_data_to_r2.py`
-
-- `npm run typecheck` en `front/`
-
-- `npm run build:static` en `front/` con:
-  - `NEXT_PUBLIC_DATA_BASE_URL`
-  - `NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT`
-
-### Resultado importante
-
-La exportacion estatica sale bien y el `out/` final queda alrededor de `14 MB`, porque ya no arrastra `public/data` dentro del despliegue web.
-
----
-
-## Riesgos y limitaciones que siguen existiendo
-
-### 1. `rankings.json` sigue monolitico
-
-No lo he troceado porque:
-
-- se carga bajo demanda
-- comprimido pesa mucho menos por red
-- no era el principal cuello de botella frente a `hex-composition.json`
-
-Si en una segunda iteracion quieres exprimir mas rendimiento, el siguiente paso natural es partir `rankings.json` por ambito o por año.
-
-### 2. La home sigue entregando bastante contenido inicial
-
-La pagina principal sigue enviando bastantes datos iniciales del mapa porque priorice mantener el comportamiento actual sin vaciar la UX.
-
-No rompe el despliegue gratuito, pero si algun dia quieres apretar mas la carga inicial, la siguiente optimizacion seria diferir parte de `shared.json`.
-
-### 3. R2 requiere configuracion correcta de CORS
-
-Si CORS no esta bien configurado en el bucket, la web cargara pero los fetch cross-origin a datos fallaran.
-
-### 4. El geocoder depende de Nominatim
-
-La arquitectura queda desacoplada y mas limpia, pero la fiabilidad del endpoint sigue dependiendo del servicio externo.
-
-Para un tribunal y trafico moderado me parece razonable.
-
-### 5. El workflow semanal publica automaticamente oportunidades, no todo el historico
-
-Eso esta bien y es deliberado.
-
-- Para tu ventana de 5 meses, no necesitas rebuild profundo semanal.
-- Si algun dia regeneras artefactos del mapa historico, entonces si deberias lanzar manualmente `Publish Public Data to R2`.
-
----
-
-## Recomendacion operativa para los 5 meses del tribunal
-
-Haz esto y no mas:
-
-1. Deja la web publica con Pages + R2 + Worker.
-2. Deja el semanal activo.
-3. Durante las primeras 2 semanas, lanza tambien el workflow semanal manualmente y revisa logs.
-4. Si no hay incidencias, deja solo el semanal.
-5. No rehagas el pipeline historico profundo salvo que cambies el modelo, la taxonomia o los artefactos del mapa.
-
-Para el uso que describes, esto es suficiente y sensato.
-
----
-
-## Si quieres el minimo absoluto para salir hoy
-
-Sin dominio propio:
-
-- web en `pages.dev`
-- datos en `r2.dev`
-- geocoder en `workers.dev`
-
-Con eso ya puedes salir gratis.
-
-La version mas profesional es la misma arquitectura, pero con:
-
-- `www.tu-dominio.com`
-- `data.tu-dominio.com`
-- `api.tu-dominio.com`
+- workflow semanal reparado
+- workflows endurecidos con validación clara de configuración
+- `wrangler` fijado a versión moderna y validado en dry-run
+- frontend realmente desacoplado del JSON pesado cuando usa base externa
+- export estático reducido de ~`14.7 MB` a ~`3.2 MB`
+- `front/out/data` eliminado correctamente
+- sync a R2 preparado con materialización previa del histórico troceado
+- pendientes reales reducidos a credenciales y recursos Cloudflare

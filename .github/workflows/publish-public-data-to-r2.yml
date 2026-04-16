@@ -7,7 +7,9 @@ on:
       - main
     paths:
       - "front/public/data/**"
+      - "!front/public/data/opportunities/listings.json"
       - "back/scripts/sync_public_data_to_r2.py"
+      - "back/scripts/materialize_hex_composition_parts.py"
       - ".github/workflows/publish-public-data-to-r2.yml"
 
 permissions:
@@ -30,10 +32,23 @@ jobs:
 
       - name: Validate R2 configuration
         run: |
-          test -n "${{ vars.R2_BUCKET_NAME }}" || { echo "Missing repo variable R2_BUCKET_NAME"; exit 1; }
-          test -n "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" || { echo "Missing secret CLOUDFLARE_ACCOUNT_ID"; exit 1; }
-          test -n "${{ secrets.R2_ACCESS_KEY_ID }}" || { echo "Missing secret R2_ACCESS_KEY_ID"; exit 1; }
-          test -n "${{ secrets.R2_SECRET_ACCESS_KEY }}" || { echo "Missing secret R2_SECRET_ACCESS_KEY"; exit 1; }
+          missing=0
+
+          require_value() {
+            local label="$1"
+            local value="$2"
+            if [ -z "$value" ]; then
+              echo "Missing ${label}"
+              missing=1
+            fi
+          }
+
+          require_value "repo variable R2_BUCKET_NAME" "${{ vars.R2_BUCKET_NAME }}"
+          require_value "secret CLOUDFLARE_ACCOUNT_ID" "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          require_value "secret R2_ACCESS_KEY_ID" "${{ secrets.R2_ACCESS_KEY_ID }}"
+          require_value "secret R2_SECRET_ACCESS_KEY" "${{ secrets.R2_SECRET_ACCESS_KEY }}"
+
+          test "$missing" -eq 0
 
       - name: Setup Python
         uses: actions/setup-python@v5

@@ -3,7 +3,7 @@ name: Refresh Opportunity Listings
 on:
   workflow_dispatch:
   schedule:
-#    - cron: "0 5 * * 1"
+    - cron: "0 5 * * 1"
 
 permissions:
   contents: write
@@ -18,6 +18,10 @@ jobs:
     timeout-minutes: 45
     env:
       PYTHONUTF8: "1"
+      R2_SYNC_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      R2_SYNC_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SYNC_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_SYNC_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME }}
 
     steps:
       - name: Checkout
@@ -44,8 +48,17 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r back/requirements-opportunity-weekly.txt
 
+      - name: Detect optional R2 sync configuration
+        id: r2-sync
+        run: |
+          if [ -n "$R2_SYNC_ACCOUNT_ID" ] && [ -n "$R2_SYNC_ACCESS_KEY_ID" ] && [ -n "$R2_SYNC_SECRET_ACCESS_KEY" ] && [ -n "$R2_SYNC_BUCKET_NAME" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install optional R2 sync dependency
-        if: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' && secrets.R2_ACCESS_KEY_ID != '' && secrets.R2_SECRET_ACCESS_KEY != '' && vars.R2_BUCKET_NAME != '' }}
+        if: steps.r2-sync.outputs.enabled == 'true'
         run: python -m pip install boto3
 
       - name: Scrape and rebuild listings
@@ -95,14 +108,14 @@ jobs:
           git push
 
       - name: Publish refreshed opportunity data to R2
-        if: ${{ steps.changes.outputs.changed == 'true' && secrets.CLOUDFLARE_ACCOUNT_ID != '' && secrets.R2_ACCESS_KEY_ID != '' && secrets.R2_SECRET_ACCESS_KEY != '' && vars.R2_BUCKET_NAME != '' }}
+        if: steps.changes.outputs.changed == 'true' && steps.r2-sync.outputs.enabled == 'true'
         env:
-          R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID: ${{ env.R2_SYNC_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ env.R2_SYNC_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ env.R2_SYNC_SECRET_ACCESS_KEY }}
         run: |
           python back/scripts/sync_public_data_to_r2.py \
             --source front/public/data/opportunities \
-            --bucket "${{ vars.R2_BUCKET_NAME }}" \
+            --bucket "${{ env.R2_SYNC_BUCKET_NAME }}" \
             --prefix "data/opportunities" \
             --delete-missing

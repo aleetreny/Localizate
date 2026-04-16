@@ -11,6 +11,7 @@ on:
       - "front/lib/**"
       - "front/package.json"
       - "front/package-lock.json"
+      - "front/tsconfig.json"
       - "front/next.config.mjs"
       - "front/scripts/**"
       - "front/.env.example"
@@ -37,9 +38,24 @@ jobs:
 
       - name: Validate deployment configuration
         run: |
-          test -n "$NEXT_PUBLIC_DATA_BASE_URL" || { echo "Missing repo variable NEXT_PUBLIC_DATA_BASE_URL"; exit 1; }
-          test -n "$NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT" || { echo "Missing repo variable NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT"; exit 1; }
-          test -n "${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}" || { echo "Missing repo variable CLOUDFLARE_PAGES_PROJECT_NAME"; exit 1; }
+          missing=0
+
+          require_value() {
+            local label="$1"
+            local value="$2"
+            if [ -z "$value" ]; then
+              echo "Missing ${label}"
+              missing=1
+            fi
+          }
+
+          require_value "repo variable NEXT_PUBLIC_DATA_BASE_URL" "$NEXT_PUBLIC_DATA_BASE_URL"
+          require_value "repo variable NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT" "$NEXT_PUBLIC_OPPORTUNITY_GEOCODE_ENDPOINT"
+          require_value "repo variable CLOUDFLARE_PAGES_PROJECT_NAME" "${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}"
+          require_value "secret CLOUDFLARE_API_TOKEN" "${{ secrets.CLOUDFLARE_API_TOKEN }}"
+          require_value "secret CLOUDFLARE_ACCOUNT_ID" "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+
+          test "$missing" -eq 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -62,4 +78,5 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: front
+          wranglerVersion: "4.83.0"
           command: pages deploy out --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}
