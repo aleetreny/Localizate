@@ -208,7 +208,7 @@ class AbtSurvivalTests(unittest.TestCase):
                     END AS section_same_activity_category_share
                 FROM context_enriched
                 """
-            ).iloc[0]
+            ).df().iloc[0]
         finally:
             con.close()
 

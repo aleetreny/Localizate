@@ -76,7 +76,7 @@ type DetailHeaderMetrics = {
 };
 
 type OpportunityFieldInsight = OpportunityBenchmarkContext["metrics"][keyof OpportunityBenchmarkContext["metrics"]];
-type RiskIndexDisplaySource = "section" | "barrio" | "district" | "city" | "none";
+type RiskIndexDisplaySource = "section" | "barrio" | "district" | "none";
 
 type AddressSearchStatus = "idle" | "loading" | "success" | "error";
 
@@ -317,7 +317,7 @@ export function OpportunityShell({ initialArtifacts, initialSectionIndex }: Oppo
         ...buildContextMetrics({
           scopeId: `section:${section.section_key}`,
           uniqueActivityCategories: section.section_unique_activity_category_count_start,
-          riskIndex: section.risk_score,
+          riskIndex: section.risk_percentile,
           shareForeign: section.share_foreign_start,
           shareYoung: section.share_age_15_29_start,
           shareSenior: section.share_age_65_plus_start,
@@ -353,7 +353,7 @@ export function OpportunityShell({ initialArtifacts, initialSectionIndex }: Oppo
       ...buildContextMetrics({
         scopeId: `listing:${selectedListing.listing_id}`,
         uniqueActivityCategories: selectedListing.section_unique_activity_category_count_start,
-        riskIndex: selectedListing.risk_score,
+        riskIndex: selectedListing.risk_percentile,
         shareForeign: selectedListing.share_foreign_start,
         shareYoung: selectedListing.share_age_15_29_start,
         shareSenior: selectedListing.share_age_65_plus_start,
@@ -2059,7 +2059,7 @@ function buildContextMetrics({
   inspeccionesTopEpigrafes: InspeccionEpigrafe[];
   indicadoresDistrito: IndicadorDistrito[];
 }): MetricDefinition[] {
-  const riskBenchmark = benchmarks?.metrics.risk_score;
+  const riskBenchmark = benchmarks?.metrics.risk_percentile;
   const riskDisplay = resolveRiskIndexDisplay(riskIndex, riskBenchmark);
 
   return [
@@ -2170,12 +2170,14 @@ function buildContextMetrics({
     },
     {
       id: `${scopeId}:risk-index`,
-      label: "Índice de riesgo",
+      label: "Índice de riesgo 0-1",
       value: formatRiskIndexValue(riskDisplay.value),
       summary: buildRiskIndexSummary(riskDisplay.value, riskDisplay.source),
       calculation: buildRiskIndexCalculation(riskDisplay.source),
       breakdownTitle: "Comparación territorial",
       breakdownItems: buildRiskIndexBreakdownItems({
+        displayValue: riskDisplay.value,
+        displaySource: riskDisplay.source,
         benchmark: riskBenchmark,
         districtName,
         barrioName,
@@ -2401,10 +2403,6 @@ function resolveRiskIndexDisplay(
     return { value: benchmark.districtMean, source: "district" };
   }
 
-  if (isFiniteNumber(benchmark?.cityMean)) {
-    return { value: benchmark.cityMean, source: "city" };
-  }
-
   return { value: null, source: "none" };
 }
 
@@ -2415,16 +2413,13 @@ function buildRiskIndexSourceLabel(source: RiskIndexDisplaySource) {
   if (source === "district") {
     return "distrito";
   }
-  if (source === "city") {
-    return "ciudad";
-  }
   return "sección";
 }
 
 function buildRiskIndexCalculation(source: RiskIndexDisplaySource) {
-  const baseCalculation = "Usamos el índice de riesgo modelado para la unidad pequeña visible (sección) cuando está disponible.";
+  const baseCalculation = "Usamos el índice 0-1 de riesgo relativo de la unidad pequeña visible (sección o hexágono) cuando está disponible.";
   if (source === "section") {
-    return `${baseCalculation} El valor resume la combinación de señales del entorno: cuanto más alto es el índice, más exigente es la zona.`;
+    return `${baseCalculation} Está normalizado en escala 0-1 y resume la combinación de señales del entorno: cuanto más alto es el índice, más exigente es la zona.`;
   }
 
   if (source === "none") {
@@ -2436,43 +2431,61 @@ function buildRiskIndexCalculation(source: RiskIndexDisplaySource) {
 
 function buildRiskIndexSummary(riskIndex: number | null, source: RiskIndexDisplaySource) {
   if (!isFiniteNumber(riskIndex)) {
-    return "No hay suficiente información para mostrar el índice de riesgo de esta zona.";
+    return "No hay suficiente información para mostrar el índice 0-1 de riesgo de esta zona.";
   }
 
   if (source !== "section") {
     return `La unidad pequeña visible no tiene índice disponible y mostramos la media del ${buildRiskIndexSourceLabel(source)}: ${formatRiskIndexValue(riskIndex)}.`;
   }
 
-  return `Índice de riesgo de la unidad pequeña visible. Valores más altos implican mayor riesgo relativo en esta zona.`;
+  return `Índice 0-1 de riesgo de la unidad pequeña visible. Valores más altos implican mayor riesgo relativo en esta zona.`;
 }
 
 function buildRiskIndexBreakdownItems({
+  displayValue,
+  displaySource,
   benchmark,
   districtName,
   barrioName,
 }: {
+  displayValue: number | null;
+  displaySource: RiskIndexDisplaySource;
   benchmark: OpportunityFieldInsight | null | undefined;
   districtName: string;
   barrioName: string;
 }): MetricBreakdownItem[] {
+  const visibleDetail = displaySource === "section"
+    ? "Unidad pequeña visible (sección o hexágono)"
+    : displaySource === "barrio"
+      ? "Sin índice en unidad pequeña: usamos media del barrio"
+      : displaySource === "district"
+        ? "Sin índice en unidad pequeña: usamos media del distrito"
+        : "Sin dato disponible en unidad pequeña";
+
   return [
     {
       rank: 1,
-      label: "Media Madrid",
-      value: formatRiskIndexValue(benchmark?.cityMean ?? null),
-      detail: formatCityPercentileDetail(benchmark?.cityPercentile ?? null),
+      label: "Unidad visible",
+      value: formatRiskIndexValue(displayValue),
+      detail: visibleDetail,
     },
     {
       rank: 2,
+      label: "Media barrio",
+      value: formatRiskIndexValue(benchmark?.barrioMean ?? null),
+      detail: barrioName || "Sin barrio",
+    },
+    {
+      rank: 3,
       label: "Media distrito",
       value: formatRiskIndexValue(benchmark?.districtMean ?? null),
       detail: districtName || "Sin distrito",
     },
     {
-      rank: 3,
-      label: "Media barrio",
-      value: formatRiskIndexValue(benchmark?.barrioMean ?? null),
-      detail: barrioName || "Sin barrio",
+      rank: 4,
+      label: "Media Madrid",
+      value: formatRiskIndexValue(benchmark?.cityMean ?? null),
+      detail: formatCityPercentileDetail(benchmark?.cityPercentile ?? null),
     },
   ];
 }
@@ -3285,7 +3298,7 @@ function buildMetricExample(metric: MetricDefinition) {
     return "Ejemplo: una edad media de 44 años no implica ausencia de jóvenes, sino que el equilibrio general del entorno es más maduro que otro barrio con media 36.";
   }
   if (metric.id.endsWith(":risk-index")) {
-    return "Ejemplo: un índice 1,35 frente a medias 0,92 en barrio y 0,88 en distrito sugiere un entorno más exigente que su contexto cercano.";
+    return "Ejemplo: un índice 0,73 frente a medias 0,52 en barrio y 0,49 en distrito sugiere un entorno más exigente que su contexto cercano.";
   }
   if (metric.id.endsWith(":senior-share")) {
     return "Ejemplo: un 24,5% significa que aproximadamente 1 de cada 4 residentes del entorno cae ya en el tramo de 65 años o más.";
