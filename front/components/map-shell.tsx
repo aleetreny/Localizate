@@ -1141,7 +1141,7 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
           </div>
         ) : activeMetric ? (
           <div className="map-overlay panel metric-banner">
-            <MetricExplainer metric={activeMetric} />
+            <MetricExplainer metric={activeMetric} onClose={() => setActiveMetricId(null)} />
           </div>
         ) : null}
 
@@ -1498,13 +1498,24 @@ function MetricGrid({
   );
 }
 
-function MetricExplainer({ metric }: { metric: MetricDefinition | null }) {
+function MetricExplainer({
+  metric,
+  onClose,
+}: {
+  metric: MetricDefinition | null;
+  onClose: () => void;
+}) {
   return (
     <div className="metric-explainer" data-empty={metric ? "false" : "true"}>
-      <div className="eyebrow">Qué significa este dato</div>
       {metric ? (
         <>
-          <h3>{metric.label}</h3>
+          <div className="eyebrow">Qué significa este dato</div>
+          <div className="metric-explainer-title-row">
+            <h3>{metric.label}</h3>
+            <button aria-label="Cerrar explicación de métrica" className="explain-banner-close metric-explainer-close" onClick={onClose} type="button">
+              Cerrar
+            </button>
+          </div>
           <div className="metric-explainer-block">
             <span className="metric-explainer-label">Qué significa</span>
             <p className="metric-explainer-copy">{metric.summary}</p>
@@ -1525,7 +1536,15 @@ function MetricExplainer({ metric }: { metric: MetricDefinition | null }) {
           ) : null}
         </>
       ) : (
-        <p className="metric-explainer-copy">Haz clic en cualquier tarjeta para ver qué significa, por qué es útil y cómo la calcula el producto.</p>
+        <>
+          <div className="metric-explainer-head-row">
+            <div className="eyebrow">Qué significa este dato</div>
+            <button aria-label="Cerrar explicación de métrica" className="explain-banner-close metric-explainer-close" onClick={onClose} type="button">
+              Cerrar
+            </button>
+          </div>
+          <p className="metric-explainer-copy">Haz clic en cualquier tarjeta para ver qué significa, por qué es útil y cómo la calcula el producto.</p>
+        </>
       )}
     </div>
   );

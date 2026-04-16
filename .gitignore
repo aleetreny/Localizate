@@ -32,3 +32,4 @@ ingestion_log.txt
 *.duckdb
 *.geojson
 *.gpkg
+!front/public/data/opportunities/sections/geometry.geojson

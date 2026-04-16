@@ -1614,6 +1614,22 @@ select {
   overflow: visible;
 }
 
+.metric-explainer-head-row,
+.metric-explainer-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.metric-explainer-title-row h3 {
+  margin: 0;
+}
+
+.metric-explainer-close {
+  flex: 0 0 auto;
+}
+
 .risk-explainer-overlay,
 .zone-explainer-overlay {
   left: 18px;

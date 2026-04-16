@@ -7,7 +7,7 @@ import pandas as pd
 
 from .censo import build_censo_snapshot_manifest, load_and_normalize_censo_snapshot, load_raw_manifest
 from .csv_utils import read_delimited_file
-from .paths import DATA_DIR, DOCS_DATA_DIR, RAW_DATA_DIR
+from .paths import DATA_DIR, DOCS_DATA_DIR, PROJECT_ROOT, RAW_DATA_DIR
 from .section_keys import (
     extract_renta_section_key_series,
     get_selected_source_row,
@@ -21,6 +21,9 @@ class DbfField:
     field_type: str
     length: int
     decimal_count: int
+
+
+FRONTEND_SECTION_GEOJSON_PATH = PROJECT_ROOT / "front" / "public" / "data" / "opportunities" / "sections" / "geometry.geojson"
 
 
 def read_dbf_table(path: str | Path, *, encoding: str = "utf-8") -> pd.DataFrame:
@@ -273,9 +276,6 @@ def write_section_geography_outputs(
 
 
 def load_section_geodataframe(raw_manifest: pd.DataFrame | None = None, *, raw_root: Path = RAW_DATA_DIR) -> "pd.DataFrame":
-    manifest = raw_manifest if raw_manifest is not None else load_raw_manifest()
-    selected = get_selected_source_row(manifest, "secciones_censales_shp")
-    shp_path = raw_root / selected["selected_relative_path"]
     try:
         import geopandas as gpd
     except ModuleNotFoundError as exc:
@@ -283,4 +283,45 @@ def load_section_geodataframe(raw_manifest: pd.DataFrame | None = None, *, raw_r
             "geopandas is required to read the section geometry. Install back/requirements.txt first."
         ) from exc
 
-    return gpd.read_file(shp_path)
+    resolved_shp_path: Path | None = None
+    manifest_error: Exception | None = None
+    try:
+        manifest = raw_manifest if raw_manifest is not None else load_raw_manifest()
+        selected = get_selected_source_row(manifest, "secciones_censales_shp")
+        resolved_shp_path = raw_root / selected["selected_relative_path"]
+    except Exception as exc:  # pragma: no cover - covered via fallback behaviour tests
+        manifest_error = exc
+
+    if resolved_shp_path is not None and resolved_shp_path.exists():
+        return gpd.read_file(resolved_shp_path)
+
+    if FRONTEND_SECTION_GEOJSON_PATH.exists():
+        fallback = gpd.read_file(FRONTEND_SECTION_GEOJSON_PATH)
+        rename_map = {
+            "section_key": "COD_SECCIO",
+            "district_code": "COD_DIS",
+            "district_name": "NOM_DIS",
+            "barrio_code": "COD_BAR",
+            "barrio_name": "NOM_BAR",
+        }
+        available_renames = {source: target for source, target in rename_map.items() if source in fallback.columns}
+        if available_renames:
+            fallback = fallback.rename(columns=available_renames)
+        for column in ["COD_SECCIO", "COD_DIS", "NOM_DIS", "COD_BAR", "NOM_BAR", "Area"]:
+            if column not in fallback.columns:
+                fallback[column] = pd.NA
+        return fallback
+
+    if manifest_error is not None:
+        raise FileNotFoundError(
+            "Section geometry is unavailable: neither the raw shapefile nor "
+            f"{FRONTEND_SECTION_GEOJSON_PATH} could be loaded."
+        ) from manifest_error
+
+    if resolved_shp_path is None:
+        raise FileNotFoundError("Section geometry shapefile path could not be resolved.")
+
+    raise FileNotFoundError(
+        "Section geometry shapefile not found at "
+        f"{resolved_shp_path} and no frontend fallback exists at {FRONTEND_SECTION_GEOJSON_PATH}."
+    )

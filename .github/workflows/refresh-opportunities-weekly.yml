@@ -1,0 +1,91 @@
+name: Refresh Opportunity Listings
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 * * 1"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-opportunities-weekly
+  cancel-in-progress: false
+
+jobs:
+  refresh-opportunities:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PYTHONUTF8: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: back/requirements-opportunity-weekly.txt
+
+      - name: Restore geocode cache
+        id: geocode-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: storage/data/intermediate/manual_available_locales_madrid_geocode_cache.csv
+          key: manual-available-locales-geocode-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            manual-available-locales-geocode-${{ runner.os }}-
+
+      - name: Install weekly refresh dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r back/requirements-opportunity-weekly.txt
+
+      - name: Scrape and rebuild listings
+        run: |
+          python back/scripts/build_manual_available_locales.py --request-delay-seconds 0.35 --geocode-delay-seconds 1.2 --request-timeout-seconds 30
+          python back/scripts/build_frontend_opportunity_listings.py
+
+      - name: Validate frontend payload
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path("front/public/data/opportunities/listings.json").read_text(encoding="utf-8"))
+          points = payload.get("points")
+          if not isinstance(points, list) or not points:
+              raise SystemExit("No opportunity points generated.")
+          stats = payload.get("stats") or {}
+          if stats.get("selected_listings") != len(points):
+              raise SystemExit("selected_listings does not match the number of points.")
+          print(f"Validated {len(points)} opportunity points.")
+          PY
+
+      - name: Detect frontend changes
+        id: changes
+        run: |
+          if git diff --quiet -- front/public/data/opportunities/listings.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Save geocode cache
+        if: success() && hashFiles('storage/data/intermediate/manual_available_locales_madrid_geocode_cache.csv') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: storage/data/intermediate/manual_available_locales_madrid_geocode_cache.csv
+          key: ${{ steps.geocode-cache.outputs.cache-primary-key }}
+
+      - name: Commit and push listings.json
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add front/public/data/opportunities/listings.json
+          git commit -m "chore: refresh opportunity listings"
+          git push
