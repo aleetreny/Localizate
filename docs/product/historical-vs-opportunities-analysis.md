@@ -18,7 +18,7 @@ Para este analisis se han revisado sobre todo estas piezas del repo:
 - frontend actual: `front/components/map-shell.tsx`, `front/components/opportunity-shell.tsx`, `front/components/view-tabs.tsx`, `front/components/madrid-map.tsx`, `front/components/opportunity-map.tsx`
 - contratos y carga de artefactos: `front/lib/types.ts`, `front/lib/public-data.ts`, `front/lib/opportunity-insights.ts`
 - builders y semantica de datos: `back/scripts/build_frontend_map_artifacts.py`, `back/scripts/build_frontend_opportunity_artifacts.py`
-- base documental: `README.md`, `docs/project/STATUS.md`, `docs/frontend/frontend_web_mvp.md`, `docs/data/external_datasets_report.md`, `docs/frontend/activity_taxonomy_web.md`
+- base documental: `README.md`, `docs/project/project-overview.md`, `docs/product/product-overview.md`, `docs/data/external_datasets_report.md`, `docs/product/web-activity-taxonomy.md`
 - senales de datos y modelado: `back/src/localizate/abt_survival.py`, `back/src/localizate/survival_features.py`
 - cobertura de tests ya existente en Python: `back/tests/`, con especial foco en `back/tests/test_build_frontend_map_artifacts.py` y `back/tests/test_build_frontend_opportunity_artifacts.py`
 
@@ -716,7 +716,7 @@ El proyecto ha avanzado mucho en soporte y semantica de nulos, pero sigue costan
 
 #### Evidencia
 
-- `docs/project/STATUS.md`
+- `docs/project/project-overview.md`
 - `back/scripts/build_frontend_map_artifacts.py`
 - `back/scripts/build_frontend_opportunity_artifacts.py`
 - memorias del repo sobre `frontend_map_artifact_semantics` y `opportunity_artifact_semantics`
@@ -766,7 +766,7 @@ El frontend ya descarga artefactos desde `public/data`, pero el crecimiento de c
 #### Evidencia
 
 - `front/lib/public-data.ts`
-- `docs/project/STATUS.md` ya menciona la duda sobre migrar comparativas client-side a API ligera cuando crezca el payload
+- `docs/project/project-overview.md` ya recoge la necesidad de seguir endureciendo la capa de artefactos y su mantenimiento operativo
 
 #### Viabilidad
 
@@ -784,11 +784,11 @@ Definir desde ya que partes deben seguir como artefacto estatico y que partes pa
 
 #### Problema actual
 
-`docs/project/STATUS.md` es una base excelente de contexto, pero no sustituye del todo a runbooks operativos cortos para reconstruir artefactos, validar resultados y depurar fallos.
+`docs/project/project-overview.md` resume bien el contexto publico del proyecto, pero no sustituye del todo a runbooks operativos cortos para reconstruir artefactos, validar resultados y depurar fallos.
 
 #### Evidencia
 
-- `docs/project/STATUS.md`
+- `docs/project/project-overview.md`
 - ausencia visible de runbooks dedicados en `docs/`
 
 #### Viabilidad
@@ -812,8 +812,8 @@ Hay pequenos desajustes de vocabulario entre docs, builders y frontend: predicci
 #### Evidencia
 
 - `README.md`
-- `docs/project/STATUS.md`
-- `docs/frontend/frontend_web_mvp.md`
+- `docs/project/project-overview.md`
+- `docs/product/product-overview.md`
 - `back/scripts/build_frontend_map_artifacts.py`
 - `back/scripts/build_frontend_opportunity_artifacts.py`
 

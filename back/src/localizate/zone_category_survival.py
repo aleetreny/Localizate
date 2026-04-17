@@ -11,7 +11,7 @@ from sksurv.nonparametric import kaplan_meier_estimator
 from sksurv.util import Surv
 
 from .activity_taxonomy import build_web_taxonomy, render_taxonomy_report
-from .paths import DATA_DIR, DOCS_FRONTEND_DIR, DOCS_MODELING_DIR, MODELS_DIR, PROJECT_ROOT, RAW_DATA_DIR
+from .paths import DATA_DIR, DOCS_MODELING_DIR, DOCS_PRODUCT_DIR, MODELS_DIR, PROJECT_ROOT, RAW_DATA_DIR
 
 
 @dataclass(frozen=True)
@@ -47,7 +47,7 @@ def build_zone_category_survival_analysis(
     resolved_activity_audit = activity_audit_csv or (DATA_DIR / "processed" / "activity_code_normalization_audit.csv")
     resolved_raw_manifest = raw_manifest_csv or (DATA_DIR / "intermediate" / "raw_manifest.csv")
     resolved_taxonomy_csv = taxonomy_csv or (DATA_DIR / "processed" / "web_activity_taxonomy.csv")
-    resolved_taxonomy_md = taxonomy_md or (DOCS_FRONTEND_DIR / "activity_taxonomy_web.md")
+    resolved_taxonomy_md = taxonomy_md or (DOCS_PRODUCT_DIR / "web-activity-taxonomy.md")
     resolved_district_csv = district_csv or (DATA_DIR / "exports" / "district_category_survival.csv")
     resolved_barrio_csv = barrio_csv or (DATA_DIR / "exports" / "barrio_category_survival.csv")
     resolved_stats_json = stats_json or (MODELS_DIR / "zone_category_survival_stats.json")
