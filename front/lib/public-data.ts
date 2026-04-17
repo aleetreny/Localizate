@@ -25,6 +25,9 @@ export const OPPORTUNITY_SECTION_INDEX_PATH = resolvePublicAssetUrl("/data/oppor
 export const HISTORICAL_RANKING_ARTIFACTS_PATH = resolvePublicAssetUrl("/data/map/historical/rankings.json");
 export const HEX_COMPOSITION_HISTORY_ARTIFACTS_PATH = resolvePublicAssetUrl("/data/map/historical/hex-composition.json");
 export const HEX_COMPOSITION_HISTORY_MANIFEST_PATH = resolvePublicAssetUrl("/data/map/historical/hex-composition.manifest.json");
+export const HEX_COMPOSITION_HISTORY_PREFIX_MANIFEST_PATH = resolvePublicAssetUrl(
+  "/data/map/historical/hex-composition.by-prefix.manifest.json",
+);
 export const ZONE_BOUNDARY_ARTIFACTS_PATH = resolvePublicAssetUrl("/data/map/zones/boundaries.json");
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
@@ -38,6 +41,20 @@ type HexCompositionHistoryYearPart = {
 type HexCompositionHistoryManifest = {
   meta: HexCompositionHistoryMeta;
   parts: HexCompositionHistoryYearPart[];
+};
+
+type HexCompositionHistoryPrefixManifest = {
+  meta: HexCompositionHistoryMeta;
+  prefix_length: number;
+  base_path: string;
+  shard_count: number;
+  min_rows_per_shard?: number;
+  max_rows_per_shard?: number;
+};
+
+type HexCompositionHistoryLoadOptions = {
+  year?: number;
+  h3Cell?: string | null;
 };
 
 export const FALLBACK_MAP_SHARED_ARTIFACTS: MapSharedArtifacts = {
@@ -194,7 +211,9 @@ let opportunityArtifactsPromise: Promise<OpportunityArtifacts> | null = null;
 let opportunitySectionIndexPromise: Promise<OpportunitySectionIndexArtifacts> | null = null;
 let historicalRankingArtifactsPromise: Promise<HistoricalRankingArtifacts> | null = null;
 let hexCompositionHistoryManifestPromise: Promise<HexCompositionHistoryManifest | null> | null = null;
+let hexCompositionHistoryPrefixManifestPromise: Promise<HexCompositionHistoryPrefixManifest | null> | null = null;
 const hexCompositionHistoryArtifactsPromises = new Map<number, Promise<HexCompositionHistoryArtifacts>>();
+const hexCompositionHistoryPrefixArtifactsPromises = new Map<string, Promise<HexCompositionHistoryArtifacts>>();
 let zoneBoundaryArtifactsPromise: Promise<ZoneBoundaryArtifacts> | null = null;
 
 export function loadMapSharedArtifactsFromPublic() {
@@ -278,8 +297,29 @@ export function loadHistoricalRankingsFromPublic() {
   return historicalRankingArtifactsPromise;
 }
 
-export function loadHexCompositionHistoryFromPublic(year?: number) {
-  return loadHexCompositionHistoryYearFromPublic(year);
+export async function loadHexCompositionHistoryMetaFromPublic() {
+  const prefixManifest = await loadHexCompositionHistoryPrefixManifestFromPublic();
+  if (prefixManifest) {
+    return prefixManifest.meta;
+  }
+
+  const yearlyManifest = await loadHexCompositionHistoryManifestFromPublic();
+  if (yearlyManifest) {
+    return yearlyManifest.meta;
+  }
+
+  const payload = await fetchPublicJson(HEX_COMPOSITION_HISTORY_ARTIFACTS_PATH, FALLBACK_HEX_COMPOSITION_HISTORY_ARTIFACTS);
+  return payload.meta;
+}
+
+export function loadHexCompositionHistoryFromPublic(
+  request?: number | HexCompositionHistoryLoadOptions,
+) {
+  const options = normalizeHexCompositionHistoryLoadOptions(request);
+  if (options.h3Cell) {
+    return loadHexCompositionHistoryByPrefixOrYearFromPublic(options);
+  }
+  return loadHexCompositionHistoryYearFromPublic(options.year);
 }
 
 export function loadHexCompositionHistoryYearFromPublic(year?: number) {
@@ -362,6 +402,37 @@ async function loadHexCompositionHistoryUsingManifestOrMonolith(year?: number): 
   return fetchPublicJson(HEX_COMPOSITION_HISTORY_ARTIFACTS_PATH, FALLBACK_HEX_COMPOSITION_HISTORY_ARTIFACTS);
 }
 
+async function loadHexCompositionHistoryByPrefixOrYearFromPublic(
+  options: HexCompositionHistoryLoadOptions,
+): Promise<HexCompositionHistoryArtifacts> {
+  const prefixManifest = await loadHexCompositionHistoryPrefixManifestFromPublic();
+  const h3Cell = options.h3Cell?.trim();
+
+  if (prefixManifest && h3Cell) {
+    const prefix = h3Cell.slice(0, prefixManifest.prefix_length);
+    const cached = hexCompositionHistoryPrefixArtifactsPromises.get(prefix);
+    if (cached) {
+      return cached;
+    }
+
+    const promise = fetchHexCompositionHistoryPrefixShard(prefixManifest, prefix).then((payload) => {
+      if (payload) {
+        return {
+          meta: prefixManifest.meta,
+          hexes: payload.hexes,
+        };
+      }
+      hexCompositionHistoryPrefixArtifactsPromises.delete(prefix);
+      return loadHexCompositionHistoryYearFromPublic(options.year);
+    });
+
+    hexCompositionHistoryPrefixArtifactsPromises.set(prefix, promise);
+    return promise;
+  }
+
+  return loadHexCompositionHistoryYearFromPublic(options.year);
+}
+
 async function loadHexCompositionHistoryManifestFromPublic() {
   if (!IS_PRODUCTION) {
     return fetchHexCompositionHistoryManifest();
@@ -371,6 +442,15 @@ async function loadHexCompositionHistoryManifestFromPublic() {
   return hexCompositionHistoryManifestPromise;
 }
 
+async function loadHexCompositionHistoryPrefixManifestFromPublic() {
+  if (!IS_PRODUCTION) {
+    return fetchHexCompositionHistoryPrefixManifest();
+  }
+
+  hexCompositionHistoryPrefixManifestPromise ??= fetchHexCompositionHistoryPrefixManifest();
+  return hexCompositionHistoryPrefixManifestPromise;
+}
+
 async function fetchHexCompositionHistoryManifest() {
   try {
     const response = await fetch(HEX_COMPOSITION_HISTORY_MANIFEST_PATH, { cache: IS_PRODUCTION ? "force-cache" : "no-store" });
@@ -378,6 +458,37 @@ async function fetchHexCompositionHistoryManifest() {
       return null;
     }
     return (await response.json()) as HexCompositionHistoryManifest;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchHexCompositionHistoryPrefixManifest() {
+  try {
+    const response = await fetch(HEX_COMPOSITION_HISTORY_PREFIX_MANIFEST_PATH, {
+      cache: IS_PRODUCTION ? "force-cache" : "no-store",
+    });
+    if (!response.ok) {
+      return null;
+    }
+    return (await response.json()) as HexCompositionHistoryPrefixManifest;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchHexCompositionHistoryPrefixShard(
+  manifest: HexCompositionHistoryPrefixManifest,
+  prefix: string,
+) {
+  try {
+    const response = await fetch(resolveHexCompositionHistoryShardPath(manifest.base_path, prefix), {
+      cache: IS_PRODUCTION ? "force-cache" : "no-store",
+    });
+    if (!response.ok) {
+      return null;
+    }
+    return (await response.json()) as { hexes: HexCompositionHistoryRecord[] };
   } catch {
     return null;
   }
@@ -393,6 +504,21 @@ function resolveHexCompositionHistoryYear(manifest: HexCompositionHistoryManifes
   }
 
   return manifest.parts[manifest.parts.length - 1]?.year ?? requestedYear ?? FALLBACK_HEX_COMPOSITION_HISTORY_ARTIFACTS.meta.latest_year;
+}
+
+function normalizeHexCompositionHistoryLoadOptions(
+  request?: number | HexCompositionHistoryLoadOptions,
+): HexCompositionHistoryLoadOptions {
+  if (typeof request === "number") {
+    return { year: request };
+  }
+  return request ?? {};
+}
+
+function resolveHexCompositionHistoryShardPath(basePath: string, prefix: string) {
+  const normalizedBasePath = basePath.replace(/\/+$/, "");
+  const shardPath = `${normalizedBasePath}/${prefix}.json`;
+  return /^https?:\/\//.test(shardPath) ? shardPath : resolvePublicAssetUrl(shardPath);
 }
 
 export function normalizeOpportunityArtifacts(artifacts: OpportunityArtifacts): OpportunityArtifacts {

@@ -12,6 +12,7 @@ export type HexCategoryCompositionItem = {
 };
 
 type HexCategoryCompositionProps = {
+  isLoading?: boolean;
   items: HexCategoryCompositionItem[];
   totalLocales: number;
   overlayBoundsRef: RefObject<HTMLElement | null>;
@@ -39,6 +40,7 @@ const DONUT_OUTER_RADIUS = 82;
 const DONUT_INNER_RADIUS = 52;
 
 export function HexCategoryComposition({
+  isLoading = false,
   items,
   totalLocales,
   overlayBoundsRef,
@@ -220,6 +222,10 @@ export function HexCategoryComposition({
               </svg>
             </div>
           </div>
+        ) : isLoading ? (
+          <p className="hex-category-composition-empty">
+            {`Cargando la mezcla historica del ${subjectLabel} para ${selectedYear}.`}
+          </p>
         ) : (
           <p className="hex-category-composition-empty">
             Este {subjectLabel} no conserva desglose histórico por categoría para {selectedYear}, aunque figure dentro de Todos los locales.

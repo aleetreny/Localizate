@@ -12,6 +12,7 @@ import { formatHorizonLongLabel, formatHorizonShortLabel, getHorizonSupport, get
 import {
   FALLBACK_MAP_ARTIFACTS,
   loadHexCompositionHistoryFromPublic,
+  loadHexCompositionHistoryMetaFromPublic,
   loadHistoricalRankingsFromPublic,
   loadMapArtifactsFromPublic,
   loadMapSharedArtifactsFromPublic,
@@ -23,6 +24,7 @@ import type {
   FrontendArtifacts,
   HexAggregate,
   HexCompositionHistoryArtifacts,
+  HexCompositionHistoryMeta,
   HexCompositionHistoryRecord,
   HistoricalRankingArtifacts,
   HistoricalZoneLevel,
@@ -151,6 +153,8 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
   const [activeZoneInsight, setActiveZoneInsight] = useState<ZoneActivityInsight | null>(null);
   const [historicalRankingArtifacts, setHistoricalRankingArtifacts] = useState<HistoricalRankingArtifacts | null>(null);
   const [hexCompositionHistoryArtifacts, setHexCompositionHistoryArtifacts] = useState<HexCompositionHistoryArtifacts | null>(null);
+  const [hexCompositionHistoryMeta, setHexCompositionHistoryMeta] = useState<HexCompositionHistoryMeta | null>(null);
+  const [hexCompositionHistorySelectionKey, setHexCompositionHistorySelectionKey] = useState("");
   const [zoneBoundaryArtifacts, setZoneBoundaryArtifacts] = useState<ZoneBoundaryArtifacts | null>(initialZoneBoundaries ?? null);
   const [compositionYear, setCompositionYear] = useState(HEX_COMPOSITION_YEAR_MAX);
   const [historicalZoneLevel, setHistoricalZoneLevel] = useState<HistoricalZoneLevel>("district");
@@ -160,16 +164,19 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
   const [comparisonRightZoneKey, setComparisonRightZoneKey] = useState("");
   const [isZoneComparisonOpen, setIsZoneComparisonOpen] = useState(false);
   const [isLoadingHistoricalRankings, setIsLoadingHistoricalRankings] = useState(false);
+  const [isLoadingHexCompositionMeta, setIsLoadingHexCompositionMeta] = useState(false);
+  const [, setIsLoadingHexCompositionHistory] = useState(false);
   const [isLoadingZoneBoundaries, setIsLoadingZoneBoundaries] = useState(false);
   const loadedArtifactsRef = useRef<Partial<Record<HexSize, FrontendArtifacts>>>(
     initialArtifacts && initialArtifacts.hexes.length > 0 ? { [DEFAULT_HEX_SIZE]: initialArtifacts } : {}
   );
   const historicalRankingsRequestRef = useRef<Promise<HistoricalRankingArtifacts> | null>(null);
+  const hexCompositionHistoryMetaRequestRef = useRef<Promise<HexCompositionHistoryMeta> | null>(null);
   const hexCompositionHistoryRequestRef = useRef<{
     promise: Promise<HexCompositionHistoryArtifacts>;
-    year: number;
+    key: string;
   } | null>(null);
-  const loadedHexCompositionYearsRef = useRef<Set<number>>(new Set());
+  const hexCompositionHistoryRequestVersionRef = useRef(0);
   const zoneBoundariesRequestRef = useRef<Promise<ZoneBoundaryArtifacts> | null>(null);
   const mapPanelRef = useRef<HTMLElement | null>(null);
 
@@ -197,35 +204,73 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
     return request;
   }, [historicalRankingArtifacts]);
 
-  const ensureHexCompositionHistoryLoaded = useCallback(async (targetYear: number = compositionYear) => {
-    if (hexCompositionHistoryArtifacts && loadedHexCompositionYearsRef.current.has(targetYear)) {
-      return hexCompositionHistoryArtifacts;
+  const ensureHexCompositionHistoryMetaLoaded = useCallback(async () => {
+    if (hexCompositionHistoryMeta) {
+      return hexCompositionHistoryMeta;
     }
 
-    if (hexCompositionHistoryRequestRef.current?.year === targetYear) {
-      return hexCompositionHistoryRequestRef.current.promise;
+    if (hexCompositionHistoryMetaRequestRef.current) {
+      return hexCompositionHistoryMetaRequestRef.current;
     }
 
-    const request = loadHexCompositionHistoryFromPublic(targetYear)
-      .then((nextArtifacts) => {
-        setHexCompositionHistoryArtifacts(nextArtifacts);
-        loadedHexCompositionYearsRef.current = new Set(nextArtifacts.hexes.map((row) => row.year));
-        return nextArtifacts;
+    setIsLoadingHexCompositionMeta(true);
+    const request = loadHexCompositionHistoryMetaFromPublic()
+      .then((nextMeta) => {
+        setHexCompositionHistoryMeta(nextMeta);
+        return nextMeta;
       })
       .finally(() => {
-        hexCompositionHistoryRequestRef.current = null;
+        hexCompositionHistoryMetaRequestRef.current = null;
+        setIsLoadingHexCompositionMeta(false);
       });
 
-    hexCompositionHistoryRequestRef.current = { promise: request, year: targetYear };
+    hexCompositionHistoryMetaRequestRef.current = request;
     return request;
-  }, [compositionYear, hexCompositionHistoryArtifacts]);
+  }, [hexCompositionHistoryMeta]);
 
   useEffect(() => {
     if (mapViewMode !== "hex" || selectedCategory !== "__all__") {
       return;
     }
-    void ensureHexCompositionHistoryLoaded(compositionYear);
-  }, [compositionYear, ensureHexCompositionHistoryLoaded, mapViewMode, selectedCategory]);
+    void ensureHexCompositionHistoryMetaLoaded();
+  }, [ensureHexCompositionHistoryMetaLoaded, mapViewMode, selectedCategory]);
+
+  const ensureHexCompositionHistoryLoaded = useCallback(async (options: { year?: number; h3Cell?: string | null } = {}) => {
+    const requestKey = `${options.year ?? -1}::${options.h3Cell ?? ""}`;
+    if (hexCompositionHistoryRequestRef.current?.key === requestKey) {
+      return hexCompositionHistoryRequestRef.current.promise;
+    }
+
+    const requestVersion = hexCompositionHistoryRequestVersionRef.current + 1;
+    hexCompositionHistoryRequestVersionRef.current = requestVersion;
+    setIsLoadingHexCompositionHistory(true);
+    const request = loadHexCompositionHistoryFromPublic(options)
+      .then((nextArtifacts) => {
+        if (hexCompositionHistoryRequestVersionRef.current === requestVersion) {
+          setHexCompositionHistoryArtifacts(nextArtifacts);
+          setHexCompositionHistorySelectionKey(requestKey);
+        }
+        return nextArtifacts;
+      })
+      .finally(() => {
+        if (hexCompositionHistoryRequestRef.current?.key === requestKey) {
+          hexCompositionHistoryRequestRef.current = null;
+        }
+        if (hexCompositionHistoryRequestVersionRef.current === requestVersion) {
+          setIsLoadingHexCompositionHistory(false);
+        }
+      });
+
+    hexCompositionHistoryRequestRef.current = { promise: request, key: requestKey };
+    return request;
+  }, []);
+
+  useEffect(() => {
+    if (mapViewMode !== "hex" || selectedCategory !== "__all__" || !selectedHex) {
+      return;
+    }
+    void ensureHexCompositionHistoryLoaded({ year: compositionYear, h3Cell: selectedHex.h3_cell });
+  }, [compositionYear, ensureHexCompositionHistoryLoaded, mapViewMode, selectedCategory, selectedHex]);
 
   const ensureZoneBoundariesLoaded = useCallback(async () => {
     if (zoneBoundaryArtifacts) {
@@ -467,8 +512,11 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
       : 0;
   const activeUnitLabelPlural = getMapViewUnitLabel(mapViewMode, true);
   const activeUnitLabelSingular = getMapViewUnitLabel(mapViewMode, false);
+  const currentHexCompositionSelectionKey = detailHex ? `${compositionYear}::${detailHex.h3_cell}` : "";
+  const isCurrentHexCompositionSelectionLoaded =
+    currentHexCompositionSelectionKey.length > 0 && hexCompositionHistorySelectionKey === currentHexCompositionSelectionKey;
 
-  const hasHexCompositionHistory = (hexCompositionHistoryArtifacts?.meta.years.length ?? 0) > 0;
+  const hasHexCompositionHistory = (hexCompositionHistoryMeta?.years.length ?? 0) > 0;
   const hexCategoryColorMap = useMemo(() => buildHexCategoryColorMap(artifacts.hexes), [artifacts.hexes]);
 
   const hexCompositionHistoryIndex = useMemo(() => {
@@ -533,12 +581,12 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
 
   const compositionYears = useMemo(() => {
     if (mapViewMode === "hex") {
-      return (hexCompositionHistoryArtifacts?.meta.years ?? []).filter(
+      return (hexCompositionHistoryMeta?.years ?? []).filter(
         (year) => year >= HEX_COMPOSITION_YEAR_MIN && year <= HEX_COMPOSITION_YEAR_MAX
       );
     }
     return historicalRankingArtifacts?.meta.years ?? [];
-  }, [hexCompositionHistoryArtifacts, historicalRankingArtifacts, mapViewMode]);
+  }, [hexCompositionHistoryMeta, historicalRankingArtifacts, mapViewMode]);
 
   useEffect(() => {
     if (compositionYears.length === 0) {
@@ -561,23 +609,37 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
 
   const detailCategoryCompositionState = useMemo(() => {
     if (selectedCategory !== "__all__") {
-      return { items: [], totalLocales: 0 };
+      return { items: [], totalLocales: 0, isLoading: false };
     }
 
     if (detailHex) {
+      if (isLoadingHexCompositionMeta && !hexCompositionHistoryMeta) {
+        return { items: [], totalLocales: detailHex.n_locales, isLoading: true };
+      }
+
       if (!hasHexCompositionHistory) {
         return {
           items: buildHexCategoryComposition(artifacts.hexes, detailHex, hexCategoryColorMap),
           totalLocales: detailHex.n_locales,
+          isLoading: false,
         };
       }
 
+      if (!isCurrentHexCompositionSelectionLoaded) {
+        return { items: [], totalLocales: detailHex.n_locales, isLoading: true };
+      }
+
       const historyRows = hexCompositionHistoryIndex.get(`${compositionYear}::${detailHex.h3_cell}`) ?? [];
-      return buildHexCategoryCompositionForYear(historyRows, hexCategoryColorMap);
+      const composition = buildHexCategoryCompositionForYear(historyRows, hexCategoryColorMap);
+      return {
+        items: composition.items,
+        totalLocales: composition.totalLocales > 0 ? composition.totalLocales : detailHex.n_locales,
+        isLoading: false,
+      };
     }
 
     if (!detailZone) {
-      return { items: [], totalLocales: 0 };
+      return { items: [], totalLocales: 0, isLoading: false };
     }
 
     if (!historicalRankingArtifacts) {
@@ -588,11 +650,17 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
           hexCategoryColorMap
         ),
         totalLocales: detailZone.n_locales,
+        isLoading: false,
       };
     }
 
     const historyRows = resolveZoneCompositionHistoryRows(zoneCompositionHistoryIndex, detailZone, compositionYear);
-    return buildZoneCategoryCompositionForYear(historyRows, hexCategoryColorMap);
+    const composition = buildZoneCategoryCompositionForYear(historyRows, hexCategoryColorMap);
+    return {
+      items: composition.items,
+      totalLocales: composition.totalLocales,
+      isLoading: false,
+    };
   }, [
     artifacts.hexes,
     artifacts.zones.barrio,
@@ -603,7 +671,10 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
     hasHexCompositionHistory,
     hexCategoryColorMap,
     hexCompositionHistoryIndex,
+    hexCompositionHistoryMeta,
     historicalRankingArtifacts,
+    isCurrentHexCompositionSelectionLoaded,
+    isLoadingHexCompositionMeta,
     selectedCategory,
     zoneCompositionHistoryIndex,
   ]);
@@ -1089,6 +1160,7 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
             <div className="eyebrow">{mapViewMode === "hex" ? "Mezcla del hexágono" : `Mezcla del ${activeUnitLabelSingular}`}</div>
             {detailHex || detailZone ? (
               <HexCategoryComposition
+                isLoading={detailCategoryCompositionState.isLoading}
                 items={detailCategoryComposition}
                 maxYear={compositionYears[compositionYears.length - 1] ?? HEX_COMPOSITION_YEAR_MAX}
                 minYear={compositionYears[0] ?? HEX_COMPOSITION_YEAR_MIN}

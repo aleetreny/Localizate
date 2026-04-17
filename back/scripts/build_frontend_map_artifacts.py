@@ -34,6 +34,9 @@ HISTORICAL_RANKING_OUTPUT = MAP_HISTORICAL_DATA_DIR / "rankings.json"
 HEX_COMPOSITION_HISTORY_OUTPUT = MAP_HISTORICAL_DATA_DIR / "hex-composition.json"
 HEX_COMPOSITION_HISTORY_PARTS_DIR = MAP_HISTORICAL_DATA_DIR / "hex-composition"
 HEX_COMPOSITION_HISTORY_MANIFEST_OUTPUT = MAP_HISTORICAL_DATA_DIR / "hex-composition.manifest.json"
+HEX_COMPOSITION_HISTORY_PREFIX_PARTS_DIR = MAP_HISTORICAL_DATA_DIR / "hex-composition-by-prefix"
+HEX_COMPOSITION_HISTORY_PREFIX_MANIFEST_OUTPUT = MAP_HISTORICAL_DATA_DIR / "hex-composition.by-prefix.manifest.json"
+HEX_COMPOSITION_HISTORY_PREFIX_LENGTH = 10
 ZONE_BOUNDARY_OUTPUT = MAP_ZONES_DATA_DIR / "boundaries.json"
 ACTIVITY_GLOSSARY = PROJECT_ROOT / "docs" / "reference" / "ACTIVITY_GLOSSARY.md"
 ACTIVITY_NORMALIZATION_AUDIT = PROJECT_ROOT / "storage" / "data" / "processed" / "activity_code_normalization_audit.csv"
@@ -115,6 +118,7 @@ def main() -> int:
     HISTORICAL_RANKING_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     HEX_COMPOSITION_HISTORY_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     HEX_COMPOSITION_HISTORY_PARTS_DIR.mkdir(parents=True, exist_ok=True)
+    HEX_COMPOSITION_HISTORY_PREFIX_PARTS_DIR.mkdir(parents=True, exist_ok=True)
     ZONE_BOUNDARY_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     section_geography = pd.read_csv(
         PROJECT_ROOT / "storage" / "data" / "processed" / "section_geography.csv",
@@ -213,6 +217,12 @@ def main() -> int:
     print(
         f"Wrote hex composition manifest: {HEX_COMPOSITION_HISTORY_MANIFEST_OUTPUT} "
         f"(parts={len(hex_composition_manifest['parts']):,})"
+    )
+    hex_composition_prefix_manifest = write_hex_composition_history_prefix_manifest(hex_composition_payload)
+    print(
+        f"Wrote hex composition prefix manifest: {HEX_COMPOSITION_HISTORY_PREFIX_MANIFEST_OUTPUT} "
+        f"(shards={hex_composition_prefix_manifest['shard_count']:,}, "
+        f"prefix_length={hex_composition_prefix_manifest['prefix_length']})"
     )
 
     hex_specs = build_hex_size_specs(base_h3_resolution)
@@ -974,6 +984,49 @@ def write_hex_composition_history_manifest(payload: dict[str, object]) -> dict[s
         "parts": parts,
     }
     HEX_COMPOSITION_HISTORY_MANIFEST_OUTPUT.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False),
+        encoding="utf-8",
+    )
+    return manifest
+
+
+def write_hex_composition_history_prefix_manifest(payload: dict[str, object]) -> dict[str, object]:
+    for existing_part in HEX_COMPOSITION_HISTORY_PREFIX_PARTS_DIR.glob("*.json"):
+        existing_part.unlink()
+
+    rows = payload.get("hexes")
+    if not isinstance(rows, list):
+        rows = []
+
+    rows_by_prefix: dict[str, list[dict[str, object]]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        h3_cell = str(row.get("h3_cell") or "").strip()
+        if not h3_cell:
+            continue
+        prefix = h3_cell[:HEX_COMPOSITION_HISTORY_PREFIX_LENGTH]
+        rows_by_prefix.setdefault(prefix, []).append(row)
+
+    shard_sizes: list[int] = []
+    for prefix in sorted(rows_by_prefix):
+        shard_rows = rows_by_prefix[prefix]
+        shard_sizes.append(len(shard_rows))
+        shard_path = HEX_COMPOSITION_HISTORY_PREFIX_PARTS_DIR / f"{prefix}.json"
+        shard_path.write_text(
+            json.dumps({"hexes": shard_rows}, ensure_ascii=False, separators=(",", ":"), allow_nan=False),
+            encoding="utf-8",
+        )
+
+    manifest = {
+        "meta": payload.get("meta", {}),
+        "prefix_length": HEX_COMPOSITION_HISTORY_PREFIX_LENGTH,
+        "base_path": "/data/map/historical/hex-composition-by-prefix",
+        "shard_count": len(rows_by_prefix),
+        "min_rows_per_shard": min(shard_sizes) if shard_sizes else 0,
+        "max_rows_per_shard": max(shard_sizes) if shard_sizes else 0,
+    }
+    HEX_COMPOSITION_HISTORY_PREFIX_MANIFEST_OUTPUT.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False),
         encoding="utf-8",
     )
