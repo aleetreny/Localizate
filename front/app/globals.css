@@ -2452,7 +2452,7 @@ select {
     position: fixed;
     top: 24px;
     right: 32px;
-    z-index: 50;
+    z-index: 5;
     border: 1px solid rgba(23, 32, 38, 0.12);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.86);
