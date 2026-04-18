@@ -1,6 +1,6 @@
-# Front
+﻿# Front
 
-Aplicacion publica de Localizate construida con `Next.js`, `TypeScript`, `MapLibre` y `deck.gl`.
+Aplicacion publica de Localízate construida con `Next.js`, `TypeScript`, `MapLibre` y `deck.gl`.
 
 ## Comandos
 

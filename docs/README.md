@@ -1,6 +1,6 @@
-# Documentacion
+﻿# Documentacion
 
-Este directorio recoge la version publica y ordenada de la documentacion de Localizate.
+Este directorio recoge la version publica y ordenada de la documentacion de Localízate.
 
 ## Lectura recomendada
 

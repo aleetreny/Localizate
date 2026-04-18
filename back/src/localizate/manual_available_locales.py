@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import dataclass
 from html import unescape
@@ -139,10 +139,10 @@ def build_manual_available_locales_dataset(
     geocode_cache_path: Path,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     listing_session = _build_http_session(
-        user_agent="LocalizateManualLocales/1.0 (+manual extraction for research)",
+        user_agent="LocalízateManualLocales/1.0 (+manual extraction for research)",
     )
     geocode_session = _build_http_session(
-        user_agent="LocalizateManualLocales-Geocoder/1.0 (+manual extraction for research)",
+        user_agent="LocalízateManualLocales-Geocoder/1.0 (+manual extraction for research)",
     )
 
     if config.resume_from_raw and raw_output_path.exists():

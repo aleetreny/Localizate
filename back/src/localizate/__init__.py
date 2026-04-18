@@ -1,1 +1,1 @@
-"""Core package for Localizate."""
+﻿"""Core package for Localízate."""

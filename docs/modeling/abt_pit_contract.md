@@ -1,6 +1,6 @@
-# ABT + Contrato Point-in-Time (PiT)
+﻿# ABT + Contrato Point-in-Time (PiT)
 
-Especificacion operativa para construir la ABT de supervivencia sin leakage temporal en Localizate.
+Especificacion operativa para construir la ABT de supervivencia sin leakage temporal en Localízate.
 
 ## 1) Objetivo
 

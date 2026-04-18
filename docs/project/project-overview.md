@@ -1,8 +1,8 @@
-# Resumen del proyecto
+﻿# Resumen del proyecto
 
 ## Resumen ejecutivo
 
-Localizate es un proyecto de inteligencia comercial para Madrid basado en datos abiertos, analitica geoespacial y modelado de supervivencia. Su salida principal es una web publica con dos lecturas complementarias:
+Localízate es un proyecto de inteligencia comercial para Madrid basado en datos abiertos, analitica geoespacial y modelado de supervivencia. Su salida principal es una web publica con dos lecturas complementarias:
 
 - `Historico`: como se comporta el tejido comercial por zona y categoria.
 - `Oportunidades`: como leer una ubicacion concreta, ya sea desde un local disponible o desde una direccion introducida por la persona usuaria.

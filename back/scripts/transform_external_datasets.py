@@ -1,5 +1,5 @@
-"""
-Transform and profile external datasets for the Localizate opportunity enrichment.
+﻿"""
+Transform and profile external datasets for the Localízate opportunity enrichment.
 
 Reads raw downloads from storage/data/external/, profiles each one, and produces
 standardized CSVs ready for integration into the opportunities pipeline.

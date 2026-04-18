@@ -1564,6 +1564,7 @@ select {
   border-radius: calc(var(--radius-xl) + 8px);
   min-height: 0;
   height: calc(100dvh - 36px);
+  backdrop-filter: none !important;
 }
 
 .map-panel::before {

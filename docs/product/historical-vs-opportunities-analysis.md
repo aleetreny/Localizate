@@ -1,10 +1,10 @@
-# Analisis estrategico: Historico vs Oportunidades
+﻿# Analisis estrategico: Historico vs Oportunidades
 
 Fecha: 2026-04-09
 
 ## Objetivo
 
-Este documento audita en profundidad la separacion entre la vista de Historico y la vista de Oportunidades del frontend web de Localizate. El alcance no se limita a la estructura actual: se valoran tambien cambios mas profundos de arquitectura de producto, narrativa y visualizacion, siempre apoyados en datos ya presentes en el repo o claramente accesibles desde los builders y datasets ya integrados.
+Este documento audita en profundidad la separacion entre la vista de Historico y la vista de Oportunidades del frontend web de Localízate. El alcance no se limita a la estructura actual: se valoran tambien cambios mas profundos de arquitectura de producto, narrativa y visualizacion, siempre apoyados en datos ya presentes en el repo o claramente accesibles desde los builders y datasets ya integrados.
 
 La pregunta central es doble:
 
@@ -868,7 +868,7 @@ No porque sobren datos, sino porque falta una jerarquia mas clara entre:
 - lo que el producto estima,
 - y lo que el mercado actual ofrece.
 
-La version final mas valida de Localizate no deberia ser un frontend con dos tabs parecidas. Deberia ser un sistema con dos modos de pensamiento:
+La version final mas valida de Localízate no deberia ser un frontend con dos tabs parecidas. Deberia ser un sistema con dos modos de pensamiento:
 
 - Mercado para entender.
 - Decision para actuar.
@@ -877,4 +877,4 @@ Los datos del repo ya permiten llegar bastante mas lejos de donde esta hoy el fr
 
 Si tuviera que resumir la recomendacion en una sola frase, seria esta:
 
-Localizate no necesita menos historico en Oportunidades; necesita que el historico deje de parecer el protagonista equivocado y pase a ser la evidencia correcta dentro de una herramienta de decision mucho mas clara.
+Localízate no necesita menos historico en Oportunidades; necesita que el historico deje de parecer el protagonista equivocado y pase a ser la evidencia correcta dentro de una herramienta de decision mucho mas clara.

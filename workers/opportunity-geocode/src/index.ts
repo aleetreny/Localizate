@@ -1,4 +1,4 @@
-export default {
+﻿export default {
   fetch(request: Request) {
     if (request.method === "OPTIONS") {
       return new Response(null, {
@@ -299,7 +299,7 @@ async function fetchNominatimCandidates(query: string): Promise<NominatimRecord[
         headers: {
           Accept: "application/json",
           "Accept-Language": "es",
-          "User-Agent": "Localizate/0.1 (opportunity address lookup)",
+          "User-Agent": "Localízate/0.1 (opportunity address lookup)",
         },
       });
 

@@ -1,8 +1,8 @@
-# Vision de producto
+﻿# Vision de producto
 
-## Que es Localizate
+## Que es Localízate
 
-Localizate es una web de lectura comercial para Madrid que combina datos historicos, contexto urbano y modelado de supervivencia para ayudar a explorar el mercado y evaluar ubicaciones concretas.
+Localízate es una web de lectura comercial para Madrid que combina datos historicos, contexto urbano y modelado de supervivencia para ayudar a explorar el mercado y evaluar ubicaciones concretas.
 
 ## Vistas principales
 

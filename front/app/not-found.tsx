@@ -1,10 +1,10 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 export default function NotFound() {
   return (
     <main className="app-shell not-found-page">
       <section className="sidebar panel">
-        <div className="eyebrow">Localizate / Madrid</div>
+        <div className="eyebrow">Localízate / Madrid</div>
         <h1>Ruta no encontrada.</h1>
         <p className="lede">La vista que intentas abrir no existe en esta versión actual de la web.</p>
         <Link className="chip" href="/">

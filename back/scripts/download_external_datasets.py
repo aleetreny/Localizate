@@ -1,4 +1,4 @@
-"""
+﻿"""
 Download external datasets from datos.madrid.es for opportunity enrichment.
 
 Selected datasets:
@@ -207,7 +207,7 @@ def download_file(url: str, filepath: str, description: str) -> bool:
         req = urllib.request.Request(
             url,
             headers={
-                "User-Agent": "Mozilla/5.0 (compatible; Localizate/1.0; research)",
+                "User-Agent": "Mozilla/5.0 (compatible; Localízate/1.0; research)",
                 "Accept": "*/*",
             },
         )

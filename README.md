@@ -1,10 +1,10 @@
-# Localizate
+﻿# Localízate
 
-Localizate es una web de inteligencia comercial para Madrid construida sobre datos abiertos, analitica geoespacial y modelos de supervivencia. Su objetivo es ayudar a explorar el tejido comercial de la ciudad y a evaluar ubicaciones concretas con una lectura visual, explicable y util para la toma de decisiones.
+Localízate es una web de inteligencia comercial para Madrid construida sobre datos abiertos, analitica geoespacial y modelos de supervivencia. Su objetivo es ayudar a explorar el tejido comercial de la ciudad y a evaluar ubicaciones concretas con una lectura visual, explicable y util para la toma de decisiones.
 
 Web publica: https://localizate.pages.dev/
 
-![Vista previa de Localizate](Preview.png)
+![Vista previa de Localízate](Preview.png)
 
 ## Que ofrece
 
@@ -67,7 +67,7 @@ $env:PYTHONPATH = "back/src"
 ## Estructura del repo
 
 ```text
-Localizate/
+Localízate/
 |- front/                  # web publica
 |- back/                   # pipeline, scripts y tests
 |- workers/                # servicios dinamicos

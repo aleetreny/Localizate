@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { type FormEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
@@ -584,7 +584,7 @@ export function OpportunityShell({ initialArtifacts, initialSectionIndex }: Oppo
       <aside className="sidebar panel">
         <div>
           <ViewTabs />
-          <div className="eyebrow">Localizate / Madrid</div>
+          <div className="eyebrow">Localízate / Madrid</div>
           <h1>Mapa de oportunidades.</h1>
         </div>
 

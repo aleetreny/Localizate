@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect } from "react";
 
@@ -47,7 +47,7 @@ export function AboutProject() {
             role="dialog"
           >
             <header className="about-project-header">
-              <h2>Sobre Localizate</h2>
+              <h2>Sobre Localízate</h2>
               <button 
                 aria-label="Cerrar vista" 
                 className="about-project-close explain-banner-close" 
@@ -74,9 +74,9 @@ export function AboutProject() {
             <div className="about-project-content" ref={contentRef}>
               {activeTab === "intro" && (
                 <div className="about-project-section">
-                  <h3>¿Qué es Localizate?</h3>
+                  <h3>¿Qué es Localízate?</h3>
                   <p>
-                    Localizate es una herramienta analítica y de visualización creada como parte de un proyecto de innovación de datos abiertos para el <strong>Ayuntamiento de Madrid</strong>.
+                    Localízate es una herramienta analítica y de visualización creada como parte de un proyecto de innovación de datos abiertos para el <strong>Ayuntamiento de Madrid</strong>.
                   </p>
                   <h3>¿Para qué sirve y qué valor aporta?</h3>
                   <p>

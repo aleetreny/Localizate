@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Manrope, Space_Grotesk } from "next/font/google";
 
 import { AboutProject } from "@/components/about-project";
@@ -15,7 +15,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Localizate Madrid",
+  title: "Localízate Madrid",
   description: "Mapa de supervivencia comercial por hexágono en Madrid."
 };
 

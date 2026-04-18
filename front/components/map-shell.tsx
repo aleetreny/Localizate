@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
@@ -818,7 +818,7 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
       <aside className="sidebar panel">
         <div>
           <ViewTabs />
-          <div className="eyebrow">Localizate / Madrid</div>
+          <div className="eyebrow">Localízate / Madrid</div>
           <h1>Mapa de supervivencia comercial.</h1>
         </div>
 

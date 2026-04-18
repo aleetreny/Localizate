@@ -1,4 +1,4 @@
-# Estudio: Google Maps Platform para Localizate
+﻿# Estudio: Google Maps Platform para Localízate
 
 **Fecha:** 2026-03-30  
 **Objetivo:** Evaluar qué podemos obtener gratis (o casi gratis) de Google Maps y cómo sumaría al proyecto
@@ -7,7 +7,7 @@
 
 ## Resumen Ejecutivo
 
-Google Maps Platform ofrece datos **extremadamente valiosos** para Localizate, pero **no es gratis**. El antiguo crédito mensual de $200/mes ya no existe — fue reemplazado por un sistema de "free usage caps" por SKU (uso gratuito limitado por API). El crédito de $300 para nuevos clientes de Google Cloud es una prueba única, no renovable.
+Google Maps Platform ofrece datos **extremadamente valiosos** para Localízate, pero **no es gratis**. El antiguo crédito mensual de $200/mes ya no existe — fue reemplazado por un sistema de "free usage caps" por SKU (uso gratuito limitado por API). El crédito de $300 para nuevos clientes de Google Cloud es una prueba única, no renovable.
 
 **Veredicto:** Se pueden obtener datos útiles dentro del free tier, pero con limitaciones importantes. El mayor valor está en **Nearby Search** (densidad comercial real) y **Geocoding** (validación de direcciones), pero las restricciones de TOS prohíben almacenar/cachear los datos fuera de Google Maps, lo cual limita su uso en nuestro pipeline de build estático.
 
@@ -49,7 +49,7 @@ Cada SKU tiene un "free usage cap" mensual (se resetea el día 1 de cada mes). D
 
 ---
 
-## 2. Qué Datos Puede Aportar Google Maps a Localizate
+## 2. Qué Datos Puede Aportar Google Maps a Localízate
 
 ### 2.1 Nearby Search — Densidad Comercial Real (★★★★★)
 
@@ -77,7 +77,7 @@ POST /v1/places:searchNearby
 | **Enterprise** (free: 1K/mes) | + rating, userRatingCount, priceLevel, teléfono, web, horarios actuales | $35/1K |
 | **Enterprise+Atmosphere** (free: 1K/mes) | + reviews, editorial summary, delivery/dineIn/takeout, parking, outdoor seating | $40/1K |
 
-**Valor para Localizate:**
+**Valor para Localízate:**
 - **Densidad competitiva real**: "Hay 23 restaurantes en 500m" vs "Hay 2 farmacias en 500m"
 - **Rating medio de la zona**: Zona con ratings altos = zona comercial sana
 - **Volumen de reviews**: Proxy de tráfico/popularidad real
@@ -103,7 +103,7 @@ POST /v1/places:searchNearby
 - Free: 10,000/mes
 - $5/1K requests
 
-**Valor para Localizate:**
+**Valor para Localízate:**
 - Verificar que las coordenadas de Nominatim (que usamos ahora) son correctas
 - Obtener coordenadas más precisas para locales que Nominatim resolvió a nivel de barrio
 - 207 requests << 10,000 free → **100% gratis**
@@ -128,7 +128,7 @@ POST /v1/places:searchNearby
 - Free: 10,000/mes
 - Modos: conducción, transporte público, bicicleta, a pie
 
-**Valor para Localizate:**
+**Valor para Localízate:**
 - "15 min andando a Sol" es más útil que "1,200m al metro más cercano"
 - Accesibilidad en transporte público (metro + bus + cercanías combinados)
 - 207 locales × 3-5 destinos clave = 600-1,000 requests → **Gratis**
@@ -161,7 +161,7 @@ POST /v1/places:searchNearby
 **Sección 3.2.3 (e):**
 > "Customer will not use the Google Maps Core Services with or near a non-Google Map in a Customer Application. For example, Customer will not (i) **display or use Places content on a non-Google Map**"
 
-**Impacto directo:** Localizate usa **MapLibre GL** (no Google Maps). Esto significa que **NO podemos mostrar datos de Places API en nuestro mapa MapLibre**. Tendríamos que:
+**Impacto directo:** Localízate usa **MapLibre GL** (no Google Maps). Esto significa que **NO podemos mostrar datos de Places API en nuestro mapa MapLibre**. Tendríamos que:
 - Usar Google Maps JS API en lugar de MapLibre (cambio gigante), o
 - Mostrar los datos de Google SOLO en paneles de texto/tarjetas, nunca sobre el mapa, o
 - No usar Places API en absoluto
@@ -175,7 +175,7 @@ POST /v1/places:searchNearby
 
 ---
 
-## 4. Análisis de Viabilidad para Localizate
+## 4. Análisis de Viabilidad para Localízate
 
 ### Escenario A: Build-time enrichment (nuestro pipeline actual)
 

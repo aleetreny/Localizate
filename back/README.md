@@ -1,6 +1,6 @@
-# Back
+﻿# Back
 
-`back/` contiene el pipeline analitico de Localizate: limpieza, integracion de fuentes, construccion de artefactos publicos, entrenamiento de modelos y pruebas.
+`back/` contiene el pipeline analitico de Localízate: limpieza, integracion de fuentes, construccion de artefactos publicos, entrenamiento de modelos y pruebas.
 
 ## Contenido
 

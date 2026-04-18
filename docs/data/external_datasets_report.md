@@ -1,4 +1,4 @@
-# Reporte: Datasets Externos para Enriquecimiento de Oportunidades
+﻿# Reporte: Datasets Externos para Enriquecimiento de Oportunidades
 
 **Fecha:** 2025-07-15  
 **Fuente principal:** [datos.madrid.es](https://datos.madrid.es) (Portal de datos abiertos del Ayuntamiento de Madrid)  
@@ -8,7 +8,7 @@
 
 ## Resumen Ejecutivo
 
-Se realizó un research exhaustivo del catálogo de datos abiertos de Madrid (678 datasets disponibles) buscando datasets que puedan enriquecer la sección de **Oportunidades** de Localizate. Se descargaron **29 archivos** de datos.madrid.es cubriendo:
+Se realizó un research exhaustivo del catálogo de datos abiertos de Madrid (678 datasets disponibles) buscando datasets que puedan enriquecer la sección de **Oportunidades** de Localízate. Se descargaron **29 archivos** de datos.madrid.es cubriendo:
 
 - **2,129 puntos de interés geocodificados** (equipamientos urbanos con coordenadas)
 - **116,930 registros** del Panel de Indicadores (381 indicadores socioeconómicos × 21 distritos × 131 barrios × 2008-2025)
