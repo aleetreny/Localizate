@@ -115,6 +115,8 @@ select {
   min-height: 0;
   overflow: auto;
   scrollbar-gutter: stable;
+  position: relative;
+  z-index: 10;
 }
 
 .sidebar::-webkit-scrollbar {
@@ -2452,7 +2454,7 @@ select {
     position: fixed;
     top: 24px;
     right: 32px;
-    z-index: 5;
+    z-index: 2;
     border: 1px solid rgba(23, 32, 38, 0.12);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.86);
