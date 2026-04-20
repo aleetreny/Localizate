@@ -68,7 +68,8 @@ jobs:
           python back/scripts/refresh_opportunity_listings_cloudflare.py \
             --max-pages 24 \
             --max-browser-requests 24 \
-            --min-browser-interval-seconds 11 \
+            --min-browser-interval-seconds 15 \
+            --max-browser-ms-per-run 240000 \
             --max-new-geocodes 40 \
             --geocode-delay-seconds 1.2
 

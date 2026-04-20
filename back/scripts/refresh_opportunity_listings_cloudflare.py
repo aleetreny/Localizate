@@ -106,7 +106,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--min-browser-interval-seconds",
         type=float,
-        default=11.0,
+        default=15.0,
         help="Espera minima entre requests Browser Run.",
     )
     parser.add_argument(
@@ -114,6 +114,12 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=90.0,
         help="Timeout HTTP por request Browser Run.",
+    )
+    parser.add_argument(
+        "--max-browser-ms-per-run",
+        type=int,
+        default=240000,
+        help="Tope conservador de tiempo total de Browser Run por ejecucion en milisegundos.",
     )
     parser.add_argument(
         "--max-new-geocodes",
@@ -169,6 +175,7 @@ def main() -> int:
                 "status": "skipped",
                 "reason": str(exc),
                 "request_count": browser_client.request_count,
+                "browser_ms_used_total": browser_client.browser_ms_used_total,
                 "snapshot_listing_count": int(len(previous_snapshot)),
             },
         )
@@ -197,6 +204,7 @@ def main() -> int:
                 "status": "skipped",
                 "reason": reason,
                 "request_count": browser_client.request_count,
+                "browser_ms_used_total": browser_client.browser_ms_used_total,
                 "snapshot_listing_count": int(len(previous_snapshot)),
                 "crawled_listing_count": int(len(listing_cards)),
                 "pending_geocodes": int(pending_geocodes),
@@ -222,6 +230,7 @@ def main() -> int:
         "city_slug": refresh_config.city_slug,
         "operations": list(_normalize_operations(refresh_config.operations)),
         "request_count": browser_client.request_count,
+        "browser_ms_used_total": browser_client.browser_ms_used_total,
         "listing_count": int(len(refreshed_snapshot)),
         "reused_context_count": int(plan.reused_context_count),
         "new_or_relocated_count": int(pending_geocodes),
@@ -255,6 +264,7 @@ def build_browser_run_client_from_env(args: argparse.Namespace) -> CloudflareBro
         max_requests=args.max_browser_requests,
         min_interval_seconds=args.min_browser_interval_seconds,
         timeout_seconds=args.browser_timeout_seconds,
+        max_browser_ms_per_run=args.max_browser_ms_per_run,
     )
     return CloudflareBrowserRunClient(config)
 
@@ -291,7 +301,8 @@ def crawl_listing_cards_with_browser_run(
             print(
                 f"Fetched {operation} page {page_number}: "
                 f"{len(page_records)} cards, {len(fresh_records)} fresh, "
-                f"{browser_client.request_count}/{browser_client.config.max_requests} Browser Run requests."
+                f"{browser_client.request_count}/{browser_client.config.max_requests} Browser Run requests, "
+                f"{browser_client.browser_ms_used_total} ms used."
             )
 
             if not fresh_records:

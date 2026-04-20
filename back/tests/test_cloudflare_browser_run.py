@@ -23,6 +23,7 @@ class CloudflareBrowserRunClientTests(unittest.TestCase):
         session = mock.Mock()
         response = mock.Mock()
         response.json.return_value = {"success": True, "result": {"html": "<html>ok</html>"}}
+        response.headers = {"X-Browser-Ms-Used": "1234"}
         session.post.return_value = response
         client = CloudflareBrowserRunClient(
             CloudflareBrowserRunConfig(account_id="acc", api_token="token"),
@@ -33,6 +34,7 @@ class CloudflareBrowserRunClientTests(unittest.TestCase):
 
         self.assertEqual(html, "<html>ok</html>")
         self.assertEqual(client.request_count, 1)
+        self.assertEqual(client.browser_ms_used_total, 1234)
         session.post.assert_called_once()
         _, kwargs = session.post.call_args
         self.assertIn("/accounts/acc/browser-rendering/content", kwargs.get("url", "") or session.post.call_args.args[0])
@@ -42,6 +44,7 @@ class CloudflareBrowserRunClientTests(unittest.TestCase):
         session = mock.Mock()
         response = mock.Mock()
         response.json.return_value = {"success": True, "result": "<html>ok</html>"}
+        response.headers = {}
         session.post.return_value = response
         sleep = mock.Mock()
         monotonic_values = iter([0.0, 0.0, 5.0, 5.0])
@@ -65,6 +68,7 @@ class CloudflareBrowserRunClientTests(unittest.TestCase):
         session = mock.Mock()
         response = mock.Mock()
         response.json.return_value = {"success": True, "result": "<html>ok</html>"}
+        response.headers = {}
         session.post.return_value = response
         client = CloudflareBrowserRunClient(
             CloudflareBrowserRunConfig(account_id="acc", api_token="token", max_requests=1),
@@ -74,6 +78,76 @@ class CloudflareBrowserRunClientTests(unittest.TestCase):
         client.fetch_html("https://example.com/one")
         with self.assertRaises(BrowserRunBudgetExceeded):
             client.fetch_html("https://example.com/two")
+
+    def test_fetch_html_retries_once_after_429(self) -> None:
+        session = mock.Mock()
+        rate_limited = mock.Mock()
+        rate_limited.status_code = 429
+        rate_limited.headers = {"Retry-After": "12"}
+
+        success = mock.Mock()
+        success.status_code = 200
+        success.headers = {"X-Browser-Ms-Used": "800"}
+        success.json.return_value = {"success": True, "result": "<html>ok</html>"}
+
+        session.post.side_effect = [rate_limited, success]
+        clock = {"now": 0.0}
+
+        def monotonic() -> float:
+            return clock["now"]
+
+        def sleep(seconds: float) -> None:
+            clock["now"] += seconds
+
+        client = CloudflareBrowserRunClient(
+            CloudflareBrowserRunConfig(
+                account_id="acc",
+                api_token="token",
+                min_interval_seconds=15.0,
+            ),
+            session=session,
+            sleep=sleep,
+            monotonic=monotonic,
+        )
+
+        html = client.fetch_html("https://example.com/one")
+
+        self.assertEqual(html, "<html>ok</html>")
+        self.assertEqual(client.request_count, 2)
+        self.assertEqual(client.browser_ms_used_total, 800)
+        self.assertEqual(clock["now"], 20.0)
+
+    def test_fetch_html_raises_budget_exceeded_after_repeated_429(self) -> None:
+        session = mock.Mock()
+        rate_limited = mock.Mock()
+        rate_limited.status_code = 429
+        rate_limited.headers = {"Retry-After": "10"}
+        session.post.side_effect = [rate_limited, rate_limited, rate_limited]
+        clock = {"now": 0.0}
+
+        def monotonic() -> float:
+            return clock["now"]
+
+        def sleep(seconds: float) -> None:
+            clock["now"] += seconds
+
+        client = CloudflareBrowserRunClient(
+            CloudflareBrowserRunConfig(
+                account_id="acc",
+                api_token="token",
+                max_rate_limit_retries=2,
+                min_interval_seconds=15.0,
+            ),
+            session=session,
+            sleep=sleep,
+            monotonic=monotonic,
+        )
+
+        with self.assertRaises(BrowserRunBudgetExceeded):
+            client.fetch_html("https://example.com/one")
+
+        self.assertEqual(client.request_count, 3)
+        self.assertEqual(clock["now"], 40.0)
 
 
 if __name__ == "__main__":
