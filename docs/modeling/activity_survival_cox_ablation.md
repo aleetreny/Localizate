@@ -2,7 +2,7 @@
 
 Ablation leave-one-block-out sobre `activity_survival` usando `cox_only` y los mismos folds rolling del benchmark temporal.
 
-## Configuracion
+## Configuración
 
 {
   "rows": 203828,
@@ -58,7 +58,7 @@ Ablation leave-one-block-out sobre `activity_survival` usando `cox_only` y los m
 ## Lectura ejecutiva
 
 - Baseline Cox afinado: valid Uno=0.6687, test Uno=0.6786, test mean AUC=0.7033.
-- El bloque cuya retirada mas dana el test Uno es `activity_identity` (Identidad de actividad), con delta=-0.1447.
+- El bloque cuya retirada más dana el test Uno es `activity_identity` (Identidad de actividad), con delta=-0.1447.
 - Hay al menos un bloque que parece ruidoso: quitar `competition_stock` mejora el test Uno en 0.0117.
 
 ## Resultados por bloque

@@ -11,10 +11,10 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
 
 ## Lectura ejecutiva
 
-- Quality gate canonico: pass.
-- Validacion: Uno=0.7756 (muy_bueno), mean Dynamic AUC=0.7928 (muy_bueno).
+- Quality gate canónico: pass.
+- Validación: Uno=0.7756 (muy_bueno), mean Dynamic AUC=0.7928 (muy_bueno).
 - Test: Uno=0.6050 (bueno), mean Dynamic AUC=0.9236 (muy_bueno).
-- Regimen de evento raro confirmado: valid=61 eventos, test=238 eventos.
+- Régimen de evento raro confirmado: valid=61 eventos, test=238 eventos.
 
 ## C-index por modelo
 
@@ -41,7 +41,7 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
   }
 }
 
-## Interpretacion de discriminacion
+## Interpretación de discriminación
 
 - En train, el ensemble marca Uno/IPCW C-index=0.7991 y se clasifica como muy_bueno.
 - En valid, el ensemble marca Uno/IPCW C-index=0.7756 y se clasifica como muy_bueno.
@@ -162,7 +162,7 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
   }
 }
 
-## Interpretacion por horizontes
+## Interpretación por horizontes
 
 - En valid, la media de Dynamic AUC es 0.7928 (muy_bueno).
 - valid:h6 -> AUC=0.8813, cases=8, controls=2638, estado=muy_bueno.
@@ -274,12 +274,12 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
   }
 }
 
-## Interpretacion de IBS
+## Interpretación de IBS
 
 - En valid, el mejor IBS base es rsf=0.0079 (muy_bueno; menor es mejor).
 - En test, el mejor IBS base es gbsa=0.0032 (muy_bueno; menor es mejor).
 
-Nota: el ensemble actual es rank-based; no se reporta IBS para el ensemble hasta definir una agregacion explicita de curvas de supervivencia.
+Nota: el ensemble actual es rank-based; no se reporta IBS para el ensemble hasta definir una agregación explicita de curvas de supervivencia.
 
 ## Calibration (12 meses)
 

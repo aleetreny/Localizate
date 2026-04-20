@@ -1,6 +1,6 @@
 # Censo Snapshot Profile
 
-Perfil operativo y de calidad de los snapshots canonicos del censo historico.
+Perfil operativo y de calidad de los snapshots canonicos del censo histórico.
 
 ## Resumen
 

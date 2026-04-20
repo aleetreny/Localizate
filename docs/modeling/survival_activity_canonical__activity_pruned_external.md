@@ -11,10 +11,10 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
 
 ## Lectura ejecutiva
 
-- Quality gate canonico: pass.
-- Validacion: Uno=0.6432 (bueno), mean Dynamic AUC=0.6607 (bueno).
-- Test: Uno=0.5221 (debil), mean Dynamic AUC=0.8833 (muy_bueno).
-- Regimen de evento raro confirmado: valid=61 eventos, test=238 eventos.
+- Quality gate canónico: pass.
+- Validación: Uno=0.6432 (bueno), mean Dynamic AUC=0.6607 (bueno).
+- Test: Uno=0.5221 (débil), mean Dynamic AUC=0.8833 (muy_bueno).
+- Régimen de evento raro confirmado: valid=61 eventos, test=238 eventos.
 
 ## C-index por modelo
 
@@ -41,11 +41,11 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
   }
 }
 
-## Interpretacion de discriminacion
+## Interpretación de discriminación
 
 - En train, el ensemble marca Uno/IPCW C-index=0.7605 y se clasifica como muy_bueno.
 - En valid, el ensemble marca Uno/IPCW C-index=0.6432 y se clasifica como bueno.
-- En test, el ensemble marca Uno/IPCW C-index=0.5221 y se clasifica como debil.
+- En test, el ensemble marca Uno/IPCW C-index=0.5221 y se clasifica como débil.
 
 ## Uno / IPCW C-index (ensemble)
 
@@ -162,7 +162,7 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
   }
 }
 
-## Interpretacion por horizontes
+## Interpretación por horizontes
 
 - En valid, la media de Dynamic AUC es 0.6607 (bueno).
 - valid:h6 -> AUC=0.7137, cases=8, controls=2638, estado=muy_bueno.
@@ -170,7 +170,7 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
 - valid:h24 -> AUC=0.6205, cases=35, controls=2611, estado=bueno.
 - En test, la media de Dynamic AUC es 0.8833 (muy_bueno).
 - test:h6 -> AUC=0.5640, cases=45, controls=51121, estado=usable.
-- test:h12 -> AUC=0.5410, cases=159, controls=50317, estado=debil.
+- test:h12 -> AUC=0.5410, cases=159, controls=50317, estado=débil.
 - test:h24 -> AUC=0.9338, cases=238, controls=81, estado=muy_bueno.
 
 ## Integrated Brier Score (modelos base)
@@ -274,12 +274,12 @@ Entrenamiento de modelos de supervivencia canónicos (Cox, RSF, GBSA) con reglas
   }
 }
 
-## Interpretacion de IBS
+## Interpretación de IBS
 
 - En valid, el mejor IBS base es rsf=0.0080 (muy_bueno; menor es mejor).
 - En test, el mejor IBS base es gbsa=0.0033 (muy_bueno; menor es mejor).
 
-Nota: el ensemble actual es rank-based; no se reporta IBS para el ensemble hasta definir una agregacion explicita de curvas de supervivencia.
+Nota: el ensemble actual es rank-based; no se reporta IBS para el ensemble hasta definir una agregación explicita de curvas de supervivencia.
 
 ## Calibration (12 meses)
 

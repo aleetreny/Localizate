@@ -1,6 +1,6 @@
 # Censo Snapshot Manifest
 
-Manifest canonico de snapshots del censo historico desde el corte de pureza 2015-01.
+Manifest canónico de snapshots del censo histórico desde el corte de pureza 2015-01.
 
 ## Resumen
 

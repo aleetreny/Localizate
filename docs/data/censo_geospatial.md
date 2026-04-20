@@ -1,6 +1,6 @@
 # Censo Geospatial
 
-Materializacion de lat/lon y H3 sobre snapshots normalizados de locales.
+Materialización de lat/lon y H3 sobre snapshots normalizados de locales.
 
 ## Resumen
 
@@ -10,10 +10,10 @@ Materializacion de lat/lon y H3 sobre snapshots normalizados de locales.
 
 - Filas materializadas: 20,212,017
 - Filas transformadas a WGS84: 18,873,903
-- Filas bloqueadas por transicion 2017-09: 142,878
+- Filas bloqueadas por transición 2017-09: 142,878
 - Filas con H3: 18,873,903
 
-## Ultimos periodos
+## Últimos periodos
 
 | Periodo | Estado | Filas | Transformadas | H3 | Transition bloqueadas |
 | --- | --- | ---: | ---: | ---: | ---: |

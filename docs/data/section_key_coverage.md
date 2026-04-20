@@ -1,23 +1,23 @@
 # Section Key Coverage
 
-Cobertura y solape de claves de seccion censal entre censo, padron y renta.
+Cobertura y solape de claves de sección censal entre censo, padrón y renta.
 
 ## Resumen
 
 - Periodo censo: `2026-03`
-- Periodo padron: `2026-02`
+- Periodo padrón: `2026-02`
 - Renta disponible entre `2015` y `2023`
 - Secciones unicas censo: 2499
-- Secciones unicas padron: 2462
+- Secciones unicas padrón: 2462
 - Secciones unicas renta Madrid capital: 2492
-- Interseccion censo-padron: 2427
+- Interseccion censo-padrón: 2427
 - Interseccion censo-renta: 2463
 - Interseccion triple: 2416
 
 ## Desajustes
 
-- Solo en censo frente a padron: 72
-- Solo en padron frente a censo: 35
+- Solo en censo frente a padrón: 72
+- Solo en padrón frente a censo: 35
 - Solo en renta frente a censo: 29
 
 ### censo_only_vs_padron

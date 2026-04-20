@@ -5,9 +5,9 @@ Baseline heuristico de riesgo para supervivencia, con split temporal bloqueado y
 ## Politicas aplicadas
 
 - `transition_policy`: exclude_transition
-- Filas bloqueadas por transicion CRS: 42
+- Filas bloqueadas por transición CRS: 42
 - `renta_max_year`: 2023
-- Mediana ciudad para imputacion de renta: 13366.0
+- Mediana ciudad para imputación de renta: 13366.0
 
 ## Split temporal
 

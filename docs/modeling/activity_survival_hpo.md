@@ -2,7 +2,7 @@
 
 Busqueda competitiva de hiperparametros sobre rolling backtest walk-forward para comparar `cox_only` y `ensemble_all_rank`.
 
-## Configuracion
+## Configuración
 
 {
   "transition_policy_train": "exclude_transition",
@@ -34,7 +34,7 @@ Busqueda competitiva de hiperparametros sobre rolling backtest walk-forward para
 
 ## Lectura ejecutiva
 
-- La mejor configuracion encontrada pertenece a `cox_only` con objective=0.6793, test Uno mean=0.6886 y valid Uno mean=0.6718.
+- La mejor configuración encontrada pertenece a `cox_only` con objective=0.6793, test Uno mean=0.6886 y valid Uno mean=0.6718.
 - Frente al mejor benchmark rolling previo, test Uno pasa de 0.6885 a 0.6886 y valid Uno de 0.6898 a 0.6718.
 - Se evaluaron 34 trials en tres fases: cribado, confirmacion y finalistas full-fidelity.
 

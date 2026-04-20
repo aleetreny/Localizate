@@ -1,6 +1,6 @@
-﻿# Documentacion
+# Documentación
 
-Este directorio recoge la version publica y ordenada de la documentacion de Localízate.
+Este directorio recoge la versión pública y ordenada de la documentación de Localízate.
 
 ## Lectura recomendada
 
@@ -8,17 +8,17 @@ Este directorio recoge la version publica y ordenada de la documentacion de Loca
 - [docs/product/product-overview.md](product/product-overview.md): funcionamiento de la web y vistas principales.
 - [docs/data/raw_data_inventory.md](data/raw_data_inventory.md): inventario y contratos de las fuentes base.
 - [docs/modeling/survival_canonical.md](modeling/survival_canonical.md): modelado principal de supervivencia.
-- [docs/reference/ACTIVITY_GLOSSARY.md](reference/ACTIVITY_GLOSSARY.md): glosario de categorias usadas en la interfaz.
+- [docs/reference/ACTIVITY_GLOSSARY.md](reference/ACTIVITY_GLOSSARY.md): glosario de categorías usadas en la interfaz.
 
 ## Estructura
 
 - `docs/product/`: decisiones de producto, UX y material funcional del frontend.
-- `docs/data/`: inventarios, perfiles de fuentes, geografia y paneles socioeconomicos.
+- `docs/data/`: inventarios, perfiles de fuentes, geografía y paneles socioeconómicos.
 - `docs/modeling/`: ABT, validaciones, entrenamientos y resultados de modelado.
-- `docs/project/`: resumen ejecutivo, auditoria inicial, roadmap y evolucion del proyecto.
+- `docs/project/`: resumen ejecutivo, auditoría inicial, roadmap y evolución del proyecto.
 - `docs/reference/`: glosarios e inventarios de variables.
-- `docs/source-docs/`: PDFs y materiales fuente originales usados como referencia metodologica.
+- `docs/source-docs/`: PDFs y materiales fuente originales usados como referencia metodológica.
 
 ## Criterio editorial
 
-La documentacion de este repo esta pensada para ser mostrable: explica el proyecto, sus decisiones y sus limites sin exponer credenciales, datos no publicos ni notas internas de operacion que no aporten valor en una revision externa.
+La documentación de este repo está pensada para ser mostrable: explica el proyecto, sus decisiones y sus límites sin exponer credenciales, datos no públicos ni notas internas de operación que no aporten valor en una revisión externa.

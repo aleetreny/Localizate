@@ -24,29 +24,29 @@ Inventario de variables del pipeline de supervivencia justo antes del siguiente 
 | n_divisions_start | new | activity | actividades | Número de divisiones activas del local en su primer mes observado. |
 | n_epigrafes_start | new | activity | actividades | Número de epígrafes activos del local en su primer mes observado. |
 | n_activity_categories_start | new | activity | actividades | Número de macrocategorías activas del local en su primer mes observado. |
-| section_local_count_start | new | competition | censo locales historico | Stock de locales observados en la sección en el mes previo al alta (`t-1`). |
-| section_unique_division_count_start | new | competition | censo actividades historico | Diversidad de divisiones presentes en la sección en `t-1`. |
-| section_unique_activity_category_count_start | new | competition | censo actividades historico | Diversidad de macrocategorías presentes en la sección en `t-1`. |
-| section_single_division_share_start | new | competition | censo actividades historico | Peso de locales single-division en la sección en `t-1`. |
-| section_same_division_local_count_start | new | competition | censo actividades historico | Número de competidores single-division de la misma división en la sección en `t-1`. |
-| section_same_division_share_start | new | competition | censo actividades historico | Cuota de competidores de la misma división dentro del stock de la sección en `t-1`. |
-| section_same_activity_category_local_count_start | new | competition | censo actividades historico | Número de competidores de la misma macrocategoría en la sección en `t-1`. |
-| section_same_activity_category_share_start | new | competition | censo actividades historico | Cuota de competidores de la misma macrocategoría dentro del stock de la sección en `t-1`. |
-| section_entry_count_3m_start | new | competition_flow | censo locales historico | Entradas de locales observadas en la sección durante los 3 meses previos a `t-1` (log-transform en modelado). |
-| section_entry_count_6m_start | new | competition_flow | censo locales historico | Entradas de locales observadas en la sección durante los 6 meses previos a `t-1` (log-transform en modelado). |
-| section_entry_count_12m_start | new | competition_flow | censo locales historico | Entradas de locales observadas en la sección durante los 12 meses previos a `t-1` (log-transform en modelado). |
-| section_exit_count_3m_start | new | competition_flow | censo locales historico | Salidas observadas en la sección durante los 3 meses previos a `t-1` (log-transform en modelado). |
-| section_exit_count_6m_start | new | competition_flow | censo locales historico | Salidas observadas en la sección durante los 6 meses previos a `t-1` (log-transform en modelado). |
-| section_exit_count_12m_start | new | competition_flow | censo locales historico | Salidas observadas en la sección durante los 12 meses previos a `t-1` (log-transform en modelado). |
-| section_entry_rate_12m_start | new | competition_flow | censo locales historico | Tasa de entradas sobre el stock de la sección en la ventana de 12 meses previa a `t-1`. |
-| section_exit_rate_12m_start | new | competition_flow | censo locales historico | Tasa de salidas sobre el stock de la sección en la ventana de 12 meses previa a `t-1`. |
-| section_net_flow_12m_start | new | competition_flow | censo locales historico | Balance neto de entradas menos salidas en la ventana de 12 meses previa a `t-1`. |
-| section_turnover_rate_12m_start | new | competition_flow | censo locales historico | Rotación total (entradas + salidas) sobre stock en la ventana de 12 meses previa a `t-1`. |
-| section_division_hhi_start | new | competition_concentration | censo actividades historico | Concentración HHI por divisiones dentro de la sección en `t-1`. |
-| section_division_top_share_start | new | competition_concentration | censo actividades historico | Cuota de la división dominante dentro de la sección en `t-1`. |
-| section_activity_category_hhi_start | new | competition_concentration | censo actividades historico | Concentración HHI por macrocategorías dentro de la sección en `t-1`. |
-| section_activity_category_top_share_start | new | competition_concentration | censo actividades historico | Cuota de la macrocategoría dominante dentro de la sección en `t-1`. |
-| section_local_count_delta_12m_start | new | zone_dynamics | censo locales historico | Cambio de stock de locales en la sección frente a 12 meses antes. |
+| section_local_count_start | new | competition | censo locales histórico | Stock de locales observados en la sección en el mes previo al alta (`t-1`). |
+| section_unique_division_count_start | new | competition | censo actividades histórico | Diversidad de divisiones presentes en la sección en `t-1`. |
+| section_unique_activity_category_count_start | new | competition | censo actividades histórico | Diversidad de macrocategorías presentes en la sección en `t-1`. |
+| section_single_division_share_start | new | competition | censo actividades histórico | Peso de locales single-division en la sección en `t-1`. |
+| section_same_division_local_count_start | new | competition | censo actividades histórico | Número de competidores single-division de la misma división en la sección en `t-1`. |
+| section_same_division_share_start | new | competition | censo actividades histórico | Cuota de competidores de la misma división dentro del stock de la sección en `t-1`. |
+| section_same_activity_category_local_count_start | new | competition | censo actividades histórico | Número de competidores de la misma macrocategoría en la sección en `t-1`. |
+| section_same_activity_category_share_start | new | competition | censo actividades histórico | Cuota de competidores de la misma macrocategoría dentro del stock de la sección en `t-1`. |
+| section_entry_count_3m_start | new | competition_flow | censo locales histórico | Entradas de locales observadas en la sección durante los 3 meses previos a `t-1` (log-transform en modelado). |
+| section_entry_count_6m_start | new | competition_flow | censo locales histórico | Entradas de locales observadas en la sección durante los 6 meses previos a `t-1` (log-transform en modelado). |
+| section_entry_count_12m_start | new | competition_flow | censo locales histórico | Entradas de locales observadas en la sección durante los 12 meses previos a `t-1` (log-transform en modelado). |
+| section_exit_count_3m_start | new | competition_flow | censo locales histórico | Salidas observadas en la sección durante los 3 meses previos a `t-1` (log-transform en modelado). |
+| section_exit_count_6m_start | new | competition_flow | censo locales histórico | Salidas observadas en la sección durante los 6 meses previos a `t-1` (log-transform en modelado). |
+| section_exit_count_12m_start | new | competition_flow | censo locales histórico | Salidas observadas en la sección durante los 12 meses previos a `t-1` (log-transform en modelado). |
+| section_entry_rate_12m_start | new | competition_flow | censo locales histórico | Tasa de entradas sobre el stock de la sección en la ventana de 12 meses previa a `t-1`. |
+| section_exit_rate_12m_start | new | competition_flow | censo locales histórico | Tasa de salidas sobre el stock de la sección en la ventana de 12 meses previa a `t-1`. |
+| section_net_flow_12m_start | new | competition_flow | censo locales histórico | Balance neto de entradas menos salidas en la ventana de 12 meses previa a `t-1`. |
+| section_turnover_rate_12m_start | new | competition_flow | censo locales histórico | Rotación total (entradas + salidas) sobre stock en la ventana de 12 meses previa a `t-1`. |
+| section_division_hhi_start | new | competition_concentration | censo actividades histórico | Concentración HHI por divisiones dentro de la sección en `t-1`. |
+| section_division_top_share_start | new | competition_concentration | censo actividades histórico | Cuota de la división dominante dentro de la sección en `t-1`. |
+| section_activity_category_hhi_start | new | competition_concentration | censo actividades histórico | Concentración HHI por macrocategorías dentro de la sección en `t-1`. |
+| section_activity_category_top_share_start | new | competition_concentration | censo actividades histórico | Cuota de la macrocategoría dominante dentro de la sección en `t-1`. |
+| section_local_count_delta_12m_start | new | zone_dynamics | censo locales histórico | Cambio de stock de locales en la sección frente a 12 meses antes. |
 | total_population_delta_12m_start | new | zone_dynamics | section_socioeconomic_panel | Cambio interanual de población total en la sección. |
 | share_foreign_delta_12m_start | new | zone_dynamics | section_socioeconomic_panel | Cambio interanual del peso de población extranjera. |
 | share_age_15_29_delta_12m_start | new | zone_dynamics | section_socioeconomic_panel | Cambio interanual del peso de población de 15-29 años. |
@@ -69,15 +69,15 @@ Inventario de variables del pipeline de supervivencia justo antes del siguiente 
 | district_panel_locales_closed_start | candidate | external_panel | panel_indicadores_2020_2025 | Locales dados de alta cerrados en el distrito con join anual lagged <= t-1. |
 | district_panel_unemployment_rate_start | candidate | external_panel | panel_indicadores_2020_2025 | Tasa de paro del distrito con join anual lagged <= t-1. |
 | district_panel_mean_age_start | candidate | external_panel | panel_indicadores_2020_2025 | Edad media del distrito con join anual lagged <= t-1. |
-| district_panel_dependency_index_start | candidate | external_panel | panel_indicadores_2020_2025 | Indice de dependencia del distrito con join anual lagged <= t-1. |
-| district_panel_migrant_share_start | candidate | external_panel | panel_indicadores_2020_2025 | Proporcion migrante del distrito con join anual lagged <= t-1. |
-| district_panel_density_start | candidate | external_panel | panel_indicadores_2020_2025 | Densidad de poblacion del distrito con join anual lagged <= t-1. |
-| district_iguala_vulnerability_global_start | candidate | external_vulnerability | iguala_global_distritos | Indice IGUALA agregado del distrito con join anual lagged <= t-1. |
-| district_iguala_bienestar_start | candidate | external_vulnerability | iguala_global_distritos | Indice IGUALA de bienestar del distrito con join anual lagged <= t-1. |
-| district_iguala_medio_ambiente_start | candidate | external_vulnerability | iguala_global_distritos | Indice IGUALA de medio ambiente del distrito con join anual lagged <= t-1. |
-| district_iguala_educacion_start | candidate | external_vulnerability | iguala_global_distritos | Indice IGUALA de educacion del distrito con join anual lagged <= t-1. |
-| district_iguala_economia_start | candidate | external_vulnerability | iguala_global_distritos | Indice IGUALA de economia del distrito con join anual lagged <= t-1. |
-| district_iguala_salud_start | candidate | external_vulnerability | iguala_global_distritos | Indice IGUALA de salud del distrito con join anual lagged <= t-1. |
+| district_panel_dependency_index_start | candidate | external_panel | panel_indicadores_2020_2025 | Índice de dependencia del distrito con join anual lagged <= t-1. |
+| district_panel_migrant_share_start | candidate | external_panel | panel_indicadores_2020_2025 | Proporción migrante del distrito con join anual lagged <= t-1. |
+| district_panel_density_start | candidate | external_panel | panel_indicadores_2020_2025 | Densidad de población del distrito con join anual lagged <= t-1. |
+| district_iguala_vulnerability_global_start | candidate | external_vulnerability | iguala_global_distritos | Índice IGUALA agregado del distrito con join anual lagged <= t-1. |
+| district_iguala_bienestar_start | candidate | external_vulnerability | iguala_global_distritos | Índice IGUALA de bienestar del distrito con join anual lagged <= t-1. |
+| district_iguala_medio_ambiente_start | candidate | external_vulnerability | iguala_global_distritos | Índice IGUALA de medio ambiente del distrito con join anual lagged <= t-1. |
+| district_iguala_educacion_start | candidate | external_vulnerability | iguala_global_distritos | Índice IGUALA de educación del distrito con join anual lagged <= t-1. |
+| district_iguala_economia_start | candidate | external_vulnerability | iguala_global_distritos | Índice IGUALA de economía del distrito con join anual lagged <= t-1. |
+| district_iguala_salud_start | candidate | external_vulnerability | iguala_global_distritos | Índice IGUALA de salud del distrito con join anual lagged <= t-1. |
 
 ## Variables auxiliares y de target
 
@@ -87,14 +87,14 @@ Inventario de variables del pipeline de supervivencia justo antes del siguiente 
 | barrio_code_start | new | join_helper | section_socioeconomic_panel | Código de barrio del local en el periodo inicial. |
 | division_code_start | new | join_helper | actividades | Firma/división principal single-division del local al alta. |
 | event_source | existing | target | abt_survival | Etiqueta unificada del objetivo: `cese_de_actividad` o `censored`. |
-| event_subtype | new | target | abt_survival | Subtipo solo de auditoría: `cambio_actividad`, `desaparicion` o `censored`. |
+| event_subtype | new | target | abt_survival | Subtipo solo de auditoría: `cambio_actividad`, `desaparición` o `censored`. |
 | event_subtype_detail | new | target | abt_survival | Detalle forense del cierre: fuente exacta del cambio robusto o subtipo final cuando no hay cambio de actividad. |
 | event_period | existing | target | abt_survival | Periodo en el que ocurre el evento objetivo. |
 | duration_months | existing | target | abt_survival | Duración observada en meses desde el alta hasta evento/censura. |
-| district_panel_year_start | candidate | join_helper | panel_indicadores_2020_2025 | Ano del panel distrital finalmente unido con politica lagged <= t-1. |
-| district_panel_lag_years_start | candidate | join_helper | panel_indicadores_2020_2025 | Diferencia en anos entre el corte del local y el ano del panel distrital unido. |
-| district_iguala_year_start | candidate | join_helper | iguala_global_distritos | Ano de IGUALA finalmente unido con politica lagged <= t-1. |
-| district_iguala_lag_years_start | candidate | join_helper | iguala_global_distritos | Diferencia en anos entre el corte del local y el ano de IGUALA unido. |
+| district_panel_year_start | candidate | join_helper | panel_indicadores_2020_2025 | Año del panel distrital finalmente unido con política lagged <= t-1. |
+| district_panel_lag_years_start | candidate | join_helper | panel_indicadores_2020_2025 | Diferencia en años entre el corte del local y el año del panel distrital unido. |
+| district_iguala_year_start | candidate | join_helper | iguala_global_distritos | Año de IGUALA finalmente unido con política lagged <= t-1. |
+| district_iguala_lag_years_start | candidate | join_helper | iguala_global_distritos | Diferencia en años entre el corte del local y el año de IGUALA unido. |
 
 ## Criterio de uso
 

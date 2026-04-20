@@ -2,7 +2,7 @@
 
 Walk-forward backtest temporal para medir estabilidad del ensemble survival sobre `activity_survival` usando multiples cortes contiguos en el tiempo.
 
-## Configuracion
+## Configuración
 
 - Filas evaluables: 203828
 - Folds ejecutados: 4
@@ -295,7 +295,7 @@ Walk-forward backtest temporal para medir estabilidad del ensemble survival sobr
   }
 ]
 
-## Comparacion con split unico
+## Comparación con split unico
 
 {
   "valid_uno": 0.775564210783449,

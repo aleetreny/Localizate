@@ -1,16 +1,16 @@
 # Section Socioeconomic Panel
 
-Panel canonico por seccion para enriquecer el censo con demografia, renta y metadata geografica.
+Panel canónico por sección para enriquecer el censo con demografía, renta y metadata geográfica.
 
 ## Resumen
 
-- Periodos mensuales agregados de padron: 134
+- Periodos mensuales agregados de padrón: 134
 - Periodos objetivo alineados al censo: 132
-- Filas panel padron: 324,742
-- Filas panel seccion-alineado: 319,856
-- Cobertura geometrica del panel: 98.78%
+- Filas panel padrón: 324,742
+- Filas panel sección-alineado: 319,856
+- Cobertura geométrica del panel: 98.78%
 
-## Lag padron
+## Lag padrón
 
 - 0 meses de lag: 131 periodos objetivo
 - 1 meses de lag: 1 periodos objetivo

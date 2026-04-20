@@ -1,22 +1,22 @@
 # Zone Category Survival
 
-Comparacion de supervivencia por categoria comercial amigable y por zona para soportar la web de recomendacion de apertura.
+Comparación de supervivencia por categoría comercial amigable y por zona para soportar la web de recomendacion de apertura.
 
 ## Resumen
 
 - Epigrafes validos unicos: 457
-- Categorias web: 146
+- Categorías web: 146
 - Filas investables: 76172
 - Filas investables con distrito conocido: 74955
-- Categorias investables observadas: 143
+- Categorías investables observadas: 143
 
 ## Lectura ejecutiva
 
-- Distritos con diferencias significativas entre categorias: 15
-- Categorias con diferencias significativas entre distritos: 5
+- Distritos con diferencias significativas entre categorías: 15
+- Categorías con diferencias significativas entre distritos: 5
 - La recomendacion web debe mostrarse como supervivencia esperada con evidencia suficiente, no como certeza determinista.
 
-## Mejores categorias por distrito
+## Mejores categorías por distrito
 
 - Latina -> Fruteria: surv12=1.0000, surv24=1.0000, locales=200, eventos=16, confianza=medium
 - Centro -> Muebles: surv12=1.0000, surv24=1.0000, locales=81, eventos=5, confianza=low
@@ -42,19 +42,19 @@ Comparacion de supervivencia por categoria comercial amigable y por zona para so
 
 ## Distritos con evidencia estadistica
 
-- Centro (1.0) -> p=0.000000, categorias soportadas=20, lider=Cafeteria, lider_mejor_que_todas=False
-- Latina (10.0) -> p=0.000000, categorias soportadas=7, lider=Fruteria, lider_mejor_que_todas=False
-- Carabanchel (11.0) -> p=0.000000, categorias soportadas=13, lider=Tienda de alimentacion, lider_mejor_que_todas=False
-- Usera (12.0) -> p=0.000072, categorias soportadas=5, lider=Tienda de alimentacion, lider_mejor_que_todas=False
-- Puente de Vallecas (13.0) -> p=0.000000, categorias soportadas=8, lider=Bar con cocina, lider_mejor_que_todas=False
-- Ciudad Lineal (15.0) -> p=0.000000, categorias soportadas=8, lider=Bar con cocina, lider_mejor_que_todas=True
-- Arganzuela (2.0) -> p=0.000000, categorias soportadas=7, lider=Fruteria, lider_mejor_que_todas=False
-- San Blas - Canillejas (20.0) -> p=0.000001, categorias soportadas=4, lider=Logistica y movilidad, lider_mejor_que_todas=False
-- Retiro (3.0) -> p=0.000813, categorias soportadas=3, lider=Peluqueria, lider_mejor_que_todas=False
-- Salamanca (4.0) -> p=0.000000, categorias soportadas=12, lider=Restaurante, lider_mejor_que_todas=False
-- Chamartín (5.0) -> p=0.000000, categorias soportadas=6, lider=Logistica y movilidad, lider_mejor_que_todas=False
-- Tetuán (6.0) -> p=0.000000, categorias soportadas=8, lider=Bar con cocina, lider_mejor_que_todas=False
-- Chamberí (7.0) -> p=0.000000, categorias soportadas=11, lider=Restaurante, lider_mejor_que_todas=False
-- Fuencarral - El Pardo (8.0) -> p=0.000000, categorias soportadas=4, lider=Peluqueria, lider_mejor_que_todas=False
-- Moncloa - Aravaca (9.0) -> p=0.008208, categorias soportadas=3, lider=Moda, lider_mejor_que_todas=False
+- Centro (1.0) -> p=0.000000, categorías soportadas=20, lider=Cafeteria, lider_mejor_que_todas=False
+- Latina (10.0) -> p=0.000000, categorías soportadas=7, lider=Fruteria, lider_mejor_que_todas=False
+- Carabanchel (11.0) -> p=0.000000, categorías soportadas=13, lider=Tienda de alimentacion, lider_mejor_que_todas=False
+- Usera (12.0) -> p=0.000072, categorías soportadas=5, lider=Tienda de alimentacion, lider_mejor_que_todas=False
+- Puente de Vallecas (13.0) -> p=0.000000, categorías soportadas=8, lider=Bar con cocina, lider_mejor_que_todas=False
+- Ciudad Lineal (15.0) -> p=0.000000, categorías soportadas=8, lider=Bar con cocina, lider_mejor_que_todas=True
+- Arganzuela (2.0) -> p=0.000000, categorías soportadas=7, lider=Fruteria, lider_mejor_que_todas=False
+- San Blas - Canillejas (20.0) -> p=0.000001, categorías soportadas=4, lider=Logistica y movilidad, lider_mejor_que_todas=False
+- Retiro (3.0) -> p=0.000813, categorías soportadas=3, lider=Peluqueria, lider_mejor_que_todas=False
+- Salamanca (4.0) -> p=0.000000, categorías soportadas=12, lider=Restaurante, lider_mejor_que_todas=False
+- Chamartín (5.0) -> p=0.000000, categorías soportadas=6, lider=Logistica y movilidad, lider_mejor_que_todas=False
+- Tetuán (6.0) -> p=0.000000, categorías soportadas=8, lider=Bar con cocina, lider_mejor_que_todas=False
+- Chamberí (7.0) -> p=0.000000, categorías soportadas=11, lider=Restaurante, lider_mejor_que_todas=False
+- Fuencarral - El Pardo (8.0) -> p=0.000000, categorías soportadas=4, lider=Peluqueria, lider_mejor_que_todas=False
+- Moncloa - Aravaca (9.0) -> p=0.008208, categorías soportadas=3, lider=Moda, lider_mejor_que_todas=False
 

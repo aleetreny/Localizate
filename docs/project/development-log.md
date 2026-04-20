@@ -1,20 +1,20 @@
-# Evolucion del proyecto
+# Evolución del proyecto
 
 ## Hitos principales
 
 ### Marzo 2026
 
-- Estructuracion del repositorio y separacion entre frontend, backend, docs y almacenamiento local.
-- Inventario de fuentes, normalizacion inicial del censo historico y definicion de las uniones territoriales base.
-- Construccion de la capa geografica de secciones y del panel socioeconomico.
+- Estructuración del repositorio y separación entre frontend, backend, docs y almacenamiento local.
+- Inventario de fuentes, normalización inicial del censo histórico y definición de las uniones territoriales base.
+- Construcción de la capa geográfica de secciones y del panel socioeconómico.
 
 ### Abril 2026
 
-- Materializacion de los artefactos publicos para `Historico` y `Oportunidades`.
-- Evolucion del frontend hacia una experiencia web completa y publica.
-- Integracion de despliegue estatico, publicacion de datos y geocodificacion bajo Cloudflare.
-- Cierre documental y curacion del repo para exposicion publica.
+- Materialización de los artefactos públicos para `Histórico` y `Oportunidades`.
+- Evolución del frontend hacia una experiencia web completa y pública.
+- Integración de despliegue estático, publicación de datos y geocodificación bajo Cloudflare.
+- Cierre documental y curación del repo para exposición pública.
 
 ## Criterio de este log
 
-Este documento resume hitos de producto y arquitectura. La experimentacion detallada de datos y modelos vive en los documentos especificos de `docs/data/` y `docs/modeling/`.
+Este documento resume hitos de producto y arquitectura. La experimentación detallada de datos y modelos vive en los documentos específicos de `docs/data/` y `docs/modeling/`.

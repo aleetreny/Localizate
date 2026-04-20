@@ -1,22 +1,22 @@
-﻿# Vision de producto
+# Visión de producto
 
-## Que es Localízate
+## Qué es Localízate
 
-Localízate es una web de lectura comercial para Madrid que combina datos historicos, contexto urbano y modelado de supervivencia para ayudar a explorar el mercado y evaluar ubicaciones concretas.
+Localízate es una web de lectura comercial para Madrid que combina datos históricos, contexto urbano y modelado de supervivencia para ayudar a explorar el mercado y evaluar ubicaciones concretas.
 
 ## Vistas principales
 
-### Historico
+### Histórico
 
-- Explora el comportamiento del tejido comercial por categoria.
-- Permite leer Madrid por distrito, barrio y hexagono.
-- Resume ranking, supervivencia observada, indice relativo y comparativas territoriales.
+- Explora el comportamiento del tejido comercial por categoría.
+- Permite leer Madrid por distrito, barrio y hexágono.
+- Resume ranking, supervivencia observada, índice relativo y comparativas territoriales.
 
 ### Oportunidades
 
-- Parte de locales disponibles o de una direccion introducida manualmente.
-- Abre una ficha contextual por seccion censal.
-- Combina riesgo esperado, benchmarks, actividades sugeridas y contexto socioeconomico y urbano.
+- Parte de locales disponibles o de una dirección introducida manualmente.
+- Abre una ficha contextual por sección censal.
+- Combina riesgo esperado, benchmarks, actividades sugeridas y contexto socioeconómico y urbano.
 
 ## Stack del producto
 
@@ -24,7 +24,7 @@ Localízate es una web de lectura comercial para Madrid que combina datos histor
 - `TypeScript`
 - `MapLibre GL`
 - `deck.gl`
-- artefactos estaticos generados offline desde el pipeline Python
+- artefactos estáticos generados offline desde el pipeline Python
 
 ## Artefactos que consume la web
 
@@ -65,6 +65,6 @@ npm run build
 ## Criterios de producto
 
 - La experiencia prioriza claridad visual y tiempos de carga bajos.
-- El frontend no debe recalcular analitica pesada en cliente.
-- Cuando una metrica no tiene soporte suficiente, la interfaz debe ser prudente y explicarlo.
-- Las vistas estan pensadas como apoyo a la decision, no como un sustituto del analisis comercial completo.
+- El frontend no debe recalcular analítica pesada en cliente.
+- Cuando una métrica no tiene soporte suficiente, la interfaz debe ser prudente y explicarlo.
+- Las vistas están pensadas como apoyo a la decisión, no como un sustituto del análisis comercial completo.

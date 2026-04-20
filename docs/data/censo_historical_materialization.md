@@ -1,6 +1,6 @@
 # Censo Historical Materialization
 
-Materializacion historica incremental de snapshots normalizados del censo (locales + actividades).
+Materialización histórica incremental de snapshots normalizados del censo (locales + actividades).
 
 ## Resumen
 
@@ -12,7 +12,7 @@ Materializacion historica incremental de snapshots normalizados del censo (local
 
 ## Calidad coordenadas (locales)
 
-- Filas locales (materializadas en esta ejecucion): 19,866,257
+- Filas locales (materializadas en esta ejecución): 19,866,257
 - Filas con coordenada best disponible: 18,717,019
 - Filas con coordenada missing: 1,149,238
 - Cobertura coordenada best: 94.22%
@@ -21,7 +21,7 @@ Materializacion historica incremental de snapshots normalizados del censo (local
 
 - Periodos sin actividades en manifest: 2017-12, 2022-04
 
-## Ultimos periodos
+## Últimos periodos
 
 | Periodo | Dataset | Estado | Filas | Reader mode |
 | --- | --- | --- | ---: | --- |

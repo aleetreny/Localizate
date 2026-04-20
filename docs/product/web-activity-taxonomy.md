@@ -1,16 +1,16 @@
 # Taxonomia Comercial Web
 
-Taxonomia de producto derivada desde epigrafes normalizados para exponer categorias comprensibles en la web.
+Taxonomia de producto derivada desde epigrafes normalizados para exponer categorías comprensibles en la web.
 
 ## Resumen
 
 - Epigrafes validos unicos: 457
-- Categorias web: 146
+- Categorías web: 146
 - Supercategorias web: 12
 - Epigrafes priorizables para inversor: 272
 - Filas pendientes de revision manual: 0
 
-## Cobertura por categoria
+## Cobertura por categoría
 
 - Peluqueria [Belleza y cuidado personal / Peluqueria y estetica] -> epigrafes=1, source_rows=670,144, investable=True
 - Bar con cocina [Hosteleria / Bar y cafeteria] -> epigrafes=1, source_rows=572,319, investable=True
@@ -26,14 +26,14 @@ Taxonomia de producto derivada desde epigrafes normalizados para exponer categor
 - Otros comercios [Retail especializado / Otros comercios] -> epigrafes=27, source_rows=287,358, investable=True
 - Banco y caja [Finanzas / Finanzas y seguros] -> epigrafes=1, source_rows=259,420, investable=True
 - Centro de estetica [Belleza y cuidado personal / Peluqueria y estetica] -> epigrafes=1, source_rows=258,695, investable=True
-- Formacion no reglada [Educacion / Formacion] -> epigrafes=1, source_rows=251,805, investable=True
+- Formacion no reglada [Educación / Formacion] -> epigrafes=1, source_rows=251,805, investable=True
 - Farmacia [Salud y bienestar / Salud retail] -> epigrafes=1, source_rows=237,855, investable=True
 - Panaderia [Alimentacion / Panaderia y pasteleria] -> epigrafes=2, source_rows=235,175, investable=True
 - Comedor colectivo [Hosteleria / Catering y colectividades] -> epigrafes=3, source_rows=215,704, investable=True
 - Bar sin cocina [Hosteleria / Bar y cafeteria] -> epigrafes=1, source_rows=215,083, investable=True
 - Taller mecanica [Automocion / Taller y reparacion] -> epigrafes=1, source_rows=202,373, investable=True
 - Bazar y precio unico [Retail especializado / Conveniencia] -> epigrafes=1, source_rows=176,870, investable=True
-- Educacion y formacion [Educacion / Formacion] -> epigrafes=14, source_rows=174,230, investable=True
+- Educación y formacion [Educación / Formacion] -> epigrafes=14, source_rows=174,230, investable=True
 - Ocio y entretenimiento [Deporte y ocio / Ocio y entretenimiento] -> epigrafes=14, source_rows=162,166, investable=True
 - Carniceria [Alimentacion / Alimentacion fresca] -> epigrafes=1, source_rows=145,231, investable=True
 - Joyeria y relojeria [Retail especializado / Moda y complementos] -> epigrafes=1, source_rows=141,966, investable=True
@@ -51,7 +51,7 @@ Taxonomia de producto derivada desde epigrafes normalizados para exponer categor
 - Reparacion especializada [Servicios / Servicios personales] -> epigrafes=4, source_rows=121,598, investable=True
 - Alimentacion envasada [Alimentacion / Supermercado y conveniencia] -> epigrafes=1, source_rows=117,344, investable=True
 - Asesoria y contabilidad [Servicios / Servicios profesionales] -> epigrafes=1, source_rows=111,636, investable=True
-- Escuela infantil [Educacion / Educacion infantil] -> epigrafes=2, source_rows=105,232, investable=True
+- Escuela infantil [Educación / Educación infantil] -> epigrafes=2, source_rows=105,232, investable=True
 - Clinicas y consultas [Salud y bienestar / Clinicas y consultas] -> epigrafes=11, source_rows=102,977, investable=True
 - Perfumeria y cosmetica [Belleza y cuidado personal / Cosmetica y perfumeria] -> epigrafes=1, source_rows=98,947, investable=True
 - Muebles [Retail especializado / Hogar y decoracion] -> epigrafes=1, source_rows=95,303, investable=True
@@ -73,14 +73,14 @@ Taxonomia de producto derivada desde epigrafes normalizados para exponer categor
 - Clinica medica [Salud y bienestar / Clinicas y consultas] -> epigrafes=1, source_rows=75,784, investable=True
 - Ferreteria [Retail especializado / Hogar y reformas] -> epigrafes=1, source_rows=75,528, investable=True
 - Herbolario [Salud y bienestar / Salud retail] -> epigrafes=1, source_rows=72,298, investable=True
-- Comida rapida [Hosteleria / Restauracion] -> epigrafes=1, source_rows=72,198, investable=True
+- Comida rápida [Hosteleria / Restauracion] -> epigrafes=1, source_rows=72,198, investable=True
 - Salud retail [Salud y bienestar / Salud retail] -> epigrafes=3, source_rows=68,960, investable=True
 - Frutos secos y encurtidos [Alimentacion / Especialistas alimentacion] -> epigrafes=1, source_rows=64,106, investable=True
 - Despacho juridico [Servicios / Servicios profesionales] -> epigrafes=2, source_rows=61,141, investable=True
 - Libreria [Retail especializado / Cultura y ocio] -> epigrafes=1, source_rows=61,068, investable=True
 - Belleza y cuidado personal [Belleza y cuidado personal / Servicios personales] -> epigrafes=8, source_rows=59,940, investable=True
 - Instituto de belleza [Belleza y cuidado personal / Peluqueria y estetica] -> epigrafes=1, source_rows=59,553, investable=True
-- Autoescuela [Educacion / Formacion] -> epigrafes=1, source_rows=57,166, investable=True
+- Autoescuela [Educación / Formacion] -> epigrafes=1, source_rows=57,166, investable=True
 - Floristeria [Retail especializado / Hogar y regalos] -> epigrafes=1, source_rows=55,635, investable=True
 - Taller automovil [Automocion / Taller y reparacion] -> epigrafes=1, source_rows=48,718, investable=True
 - Reparacion de calzado [Servicios / Servicios personales] -> epigrafes=1, source_rows=47,463, investable=True
@@ -89,7 +89,7 @@ Taxonomia de producto derivada desde epigrafes normalizados para exponer categor
 - Hotel [Alojamiento / Alojamiento turistico] -> epigrafes=1, source_rows=42,775, investable=True
 - Seguros [Finanzas / Finanzas y seguros] -> epigrafes=1, source_rows=42,727, investable=True
 - Fotodepilacion [Belleza y cuidado personal / Peluqueria y estetica] -> epigrafes=1, source_rows=41,300, investable=True
-- Idiomas [Educacion / Formacion] -> epigrafes=1, source_rows=40,715, investable=True
+- Idiomas [Educación / Formacion] -> epigrafes=1, source_rows=40,715, investable=True
 - Tecnologia y software [Servicios / Servicios profesionales] -> epigrafes=1, source_rows=40,507, investable=True
 - Deporte [Retail especializado / Cultura y ocio] -> epigrafes=1, source_rows=39,574, investable=True
 

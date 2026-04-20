@@ -6,28 +6,28 @@ Chequeo continuo de calidad para asegurar que el paso a modelos de supervivencia
 
 ## Lectura ejecutiva
 
-- Estado final: ready_with_caveats; gate canonico: pass.
-- Discriminacion ensemble: valid Uno=0.6863, test Uno=0.6418.
-- Horizontes dinamicos: valid mean AUC=0.7398, test mean AUC=0.8773.
+- Estado final: ready_with_caveats; gate canónico: pass.
+- Discriminación ensemble: valid Uno=0.6863, test Uno=0.6418.
+- Horizontes dinámicos: valid mean AUC=0.7398, test mean AUC=0.8773.
 - La robustez post-fit ya está materializada con bootstrap; usa los anchos de CI para distinguir mejora real de ruido estadístico.
-- La pipeline sirve para export operativo y comparacion iterativa, pero todavia no para afirmar excelencia robusta fuera de muestra.
+- La pipeline sirve para export operativo y comparación iterativa, pero todavía no para afirmar excelencia robusta fuera de muestra.
 
 ## Resumen
 
 - Filas ABT: 203,870
 - Eventos totales: 15,241
 - Tasa de evento: 0.07475842448619219
-- Mediana duracion (meses): 135.0
+- Mediana duración (meses): 135.0
 - Cobertura H3: 0.8065973414430765
 - Cobertura renta observada: 0.7672389267670574
-- Filas marcadas por transicion CRS: 142878
-- Quality gate canonico: pass
+- Filas marcadas por transición CRS: 142878
+- Quality gate canónico: pass
 - Robustez post-fit: pass_with_caveats
 - Uno C-index valid: 0.6863451102961386
 - Uno C-index test: 0.6418470390192624
 - Dynamic AUC valid: 0.7397564434685907
 - Dynamic AUC test: 0.8772892767478985
-- IBS valido disponible: True
+- IBS válido disponible: True
 - IBS test disponible: True
 - Robustez disponible: True
 - CI width Uno valid: 0.12580080587315778

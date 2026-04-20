@@ -5,10 +5,10 @@ Metadata base y cobertura del bundle geometrico de secciones censales.
 ## Resumen
 
 - Periodo censo de referencia: `2026-03`
-- Periodo padron de referencia: `2026-02`
+- Periodo padrón de referencia: `2026-02`
 - Secciones unicas en geometria: 2461
 - Interseccion geometria-censo: 2426
-- Interseccion geometria-padron: 2461
+- Interseccion geometria-padrón: 2461
 - Interseccion geometria-renta: 2442
 - Secciones solo en censo frente a geometria: 73
 - Secciones solo en renta frente a geometria: 50
