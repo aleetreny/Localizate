@@ -63,8 +63,22 @@ jobs:
 
       - name: Scrape and rebuild listings
         run: |
-          python back/scripts/build_manual_available_locales.py --request-delay-seconds 0.35 --geocode-delay-seconds 1.2 --request-timeout-seconds 30
-          python back/scripts/build_frontend_opportunity_listings.py
+          set +e
+          python back/scripts/build_manual_available_locales.py --request-delay-seconds 0.35 --geocode-delay-seconds 1.2 --request-timeout-seconds 30 2>&1 | tee refresh-opportunities.log
+          scrape_exit_code=${PIPESTATUS[0]}
+          set -e
+
+          if [ "$scrape_exit_code" -eq 0 ]; then
+            python back/scripts/build_frontend_opportunity_listings.py
+            exit 0
+          fi
+
+          if grep -Eq "403 Client Error: Forbidden for url: https://www\\.locales\\.es/|curl fallback failed for https://www\\.locales\\.es/" refresh-opportunities.log; then
+            echo "locales.es blocked the GitHub Actions runner; reusing the committed frontend opportunity payload for this run."
+            exit 0
+          fi
+
+          exit "$scrape_exit_code"
 
       - name: Validate frontend payload
         run: |
