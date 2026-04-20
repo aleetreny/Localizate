@@ -21,6 +21,19 @@ from .section_keys import normalize_section_key_series
 
 
 LOCALES_ES_BASE_URL = "https://www.locales.es"
+LOCALES_ES_BROWSER_USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
+)
+LOCALES_ES_BROWSER_HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+    "Cache-Control": "no-cache",
+    "Pragma": "no-cache",
+    "Referer": f"{LOCALES_ES_BASE_URL}/",
+    "Upgrade-Insecure-Requests": "1",
+}
+NOMINATIM_USER_AGENT = "LocalizateManualLocales-Geocoder/1.0 (+manual extraction for research)"
 MADRID_BBOX = {
     "min_lon": -3.8885,
     "max_lon": -3.5174,
@@ -138,11 +151,9 @@ def build_manual_available_locales_dataset(
     summary_path: Path,
     geocode_cache_path: Path,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
-    listing_session = _build_http_session(
-        user_agent="LocalízateManualLocales/1.0 (+manual extraction for research)",
-    )
+    listing_session = _build_locales_es_session()
     geocode_session = _build_http_session(
-        user_agent="LocalízateManualLocales-Geocoder/1.0 (+manual extraction for research)",
+        user_agent=NOMINATIM_USER_AGENT,
     )
 
     if config.resume_from_raw and raw_output_path.exists():
@@ -427,7 +438,18 @@ def build_manual_available_locales_summary(
     }
 
 
-def _build_http_session(*, user_agent: str) -> requests.Session:
+def _build_locales_es_session() -> requests.Session:
+    return _build_http_session(
+        user_agent=LOCALES_ES_BROWSER_USER_AGENT,
+        extra_headers=LOCALES_ES_BROWSER_HEADERS,
+    )
+
+
+def _build_http_session(
+    *,
+    user_agent: str,
+    extra_headers: dict[str, str] | None = None,
+) -> requests.Session:
     session = requests.Session()
     retry = Retry(
         total=3,
@@ -437,12 +459,13 @@ def _build_http_session(*, user_agent: str) -> requests.Session:
     )
     adapter = HTTPAdapter(max_retries=retry)
     session.mount("https://", adapter)
-    session.headers.update(
-        {
-            "User-Agent": user_agent,
-            "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
-        }
-    )
+    headers = {
+        "User-Agent": user_agent,
+        "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+    }
+    if extra_headers:
+        headers.update(extra_headers)
+    session.headers.update(headers)
     return session
 
 
