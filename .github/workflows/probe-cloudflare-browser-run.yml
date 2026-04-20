@@ -1,0 +1,95 @@
+name: Probe Cloudflare Browser Run
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe-browser-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Validate Cloudflare configuration
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          missing=0
+
+          require_value() {
+            local label="$1"
+            local value="$2"
+            if [ -z "$value" ]; then
+              echo "Missing ${label}"
+              missing=1
+            fi
+          }
+
+          require_value "secret CLOUDFLARE_ACCOUNT_ID" "$CLOUDFLARE_ACCOUNT_ID"
+          require_value "secret CLOUDFLARE_API_TOKEN" "$CLOUDFLARE_API_TOKEN"
+
+          test "$missing" -eq 0
+
+      - name: Probe locales.es through Browser Run
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import sys
+          import urllib.error
+          import urllib.request
+
+          account_id = os.environ["CLOUDFLARE_ACCOUNT_ID"]
+          api_token = os.environ["CLOUDFLARE_API_TOKEN"]
+          url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/browser-rendering/content"
+          payload = {
+              "url": "https://www.locales.es/madrid/venta/locales?page=1",
+              "gotoOptions": {"waitUntil": "networkidle2"},
+              "rejectResourceTypes": ["image", "media", "font"],
+          }
+          request = urllib.request.Request(
+              url,
+              data=json.dumps(payload).encode("utf-8"),
+              headers={
+                  "Authorization": f"Bearer {api_token}",
+                  "Content-Type": "application/json",
+              },
+              method="POST",
+          )
+
+          try:
+              with urllib.request.urlopen(request, timeout=90) as response:
+                  body = response.read().decode("utf-8", errors="replace")
+                  status = response.status
+          except urllib.error.HTTPError as exc:
+              body = exc.read().decode("utf-8", errors="replace")
+              print(body)
+              raise SystemExit(f"Browser Run probe failed with HTTP {exc.code}") from exc
+
+          print(f"HTTP status: {status}")
+          data = json.loads(body)
+          if not data.get("success"):
+              raise SystemExit(f"Browser Run reported success=false: {json.dumps(data, ensure_ascii=False)}")
+
+          result = data.get("result")
+          if isinstance(result, dict):
+              html = result.get("html", "")
+          else:
+              html = result or ""
+
+          html = str(html)
+          print(f"HTML length: {len(html)}")
+          print(f"Contains expected title: {'Venta de locales comerciales en Madrid' in html}")
+          print(f"Contains card marker: {'js-card' in html}")
+          preview = html[:800].replace("\n", " ")
+          print(preview)
+
+          if "Venta de locales comerciales en Madrid" not in html:
+              raise SystemExit("Browser Run did not return the expected locales.es page content.")
+          PY
