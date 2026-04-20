@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import math
 from pathlib import Path
@@ -175,8 +176,10 @@ def main() -> int:
     args.summary_output_json.parent.mkdir(parents=True, exist_ok=True)
     args.summary_output_json.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    existing_meta = load_existing_frontend_meta(args.existing_frontend_json)
+    existing_payload = load_existing_frontend_payload(args.existing_frontend_json)
+    existing_meta = extract_existing_frontend_meta(existing_payload)
     frontend_payload = build_frontend_artifacts(selected_scored, filter_summary, existing_meta=existing_meta)
+    frontend_payload = preserve_existing_generated_at_if_unchanged(frontend_payload, existing_payload)
     point_count = len(frontend_payload.get("points", []))
     if point_count <= 0:
         raise ValueError("The weekly opportunity refresh generated an empty frontend payload.")
@@ -393,12 +396,49 @@ def build_frontend_artifacts(
     }
 
 
-def load_existing_frontend_meta(path: Path) -> dict[str, object] | None:
+def load_existing_frontend_payload(path: Path) -> dict[str, object] | None:
     if not path.exists():
         return None
     payload = json.loads(path.read_text(encoding="utf-8"))
+    return payload if isinstance(payload, dict) else None
+
+
+def extract_existing_frontend_meta(payload: dict[str, object] | None) -> dict[str, object] | None:
+    if not isinstance(payload, dict):
+        return None
     meta = payload.get("meta")
     return meta if isinstance(meta, dict) else None
+
+
+def preserve_existing_generated_at_if_unchanged(
+    payload: dict[str, object],
+    existing_payload: dict[str, object] | None,
+) -> dict[str, object]:
+    if not isinstance(existing_payload, dict):
+        return payload
+
+    comparable_payload = copy.deepcopy(payload)
+    comparable_existing = copy.deepcopy(existing_payload)
+    comparable_payload_meta = comparable_payload.get("meta")
+    comparable_existing_meta = comparable_existing.get("meta")
+    if isinstance(comparable_payload_meta, dict):
+        comparable_payload_meta.pop("generated_at", None)
+    if isinstance(comparable_existing_meta, dict):
+        comparable_existing_meta.pop("generated_at", None)
+
+    if comparable_payload != comparable_existing:
+        return payload
+
+    existing_meta = existing_payload.get("meta") if isinstance(existing_payload.get("meta"), dict) else None
+    existing_generated_at = existing_meta.get("generated_at") if isinstance(existing_meta, dict) else None
+    if not existing_generated_at:
+        return payload
+
+    preserved = copy.deepcopy(payload)
+    meta = preserved.get("meta")
+    if isinstance(meta, dict):
+        meta["generated_at"] = str(existing_generated_at)
+    return preserved
 
 
 def build_point_payload(row: object) -> dict[str, object]:

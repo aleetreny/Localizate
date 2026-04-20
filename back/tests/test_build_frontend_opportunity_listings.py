@@ -11,6 +11,7 @@ from scripts.build_frontend_opportunity_listings import (
     attach_section_context,
     build_frontend_artifacts,
     load_section_profiles_from_index_json,
+    preserve_existing_generated_at_if_unchanged,
 )
 
 
@@ -162,6 +163,24 @@ class WeeklyOpportunityListingsTests(unittest.TestCase):
         self.assertEqual(payload["meta"]["section_geojson_path"], "/data/opportunities/sections/geometry.geojson?v=stable")
         self.assertEqual(len(payload["points"]), 1)
         self.assertEqual(payload["points"][0]["listing_id"], "1")
+
+    def test_preserve_existing_generated_at_if_unchanged_keeps_stable_timestamp(self) -> None:
+        payload = {
+            "meta": {"title": "Madrid Opportunity Map", "generated_at": "2026-04-20T10:00:00+00:00"},
+            "filters": {"selected_listings": 1},
+            "stats": {"selected_listings": 1},
+            "points": [{"listing_id": "1"}],
+        }
+        existing = {
+            "meta": {"title": "Madrid Opportunity Map", "generated_at": "2026-04-19T10:00:00+00:00"},
+            "filters": {"selected_listings": 1},
+            "stats": {"selected_listings": 1},
+            "points": [{"listing_id": "1"}],
+        }
+
+        preserved = preserve_existing_generated_at_if_unchanged(payload, existing)
+
+        self.assertEqual(preserved["meta"]["generated_at"], "2026-04-19T10:00:00+00:00")
 
 
 if __name__ == "__main__":

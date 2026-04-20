@@ -18,6 +18,8 @@ jobs:
     timeout-minutes: 45
     env:
       PYTHONUTF8: "1"
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_BROWSER_RUN_API_TOKEN: ${{ secrets.CLOUDFLARE_BROWSER_RUN_API_TOKEN }}
       R2_SYNC_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       R2_SYNC_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       R2_SYNC_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -61,24 +63,19 @@ jobs:
         if: steps.r2-sync.outputs.enabled == 'true'
         run: python -m pip install boto3
 
-      - name: Scrape and rebuild listings
+      - name: Refresh snapshot with Cloudflare Browser Run
         run: |
-          set +e
-          python back/scripts/build_manual_available_locales.py --request-delay-seconds 0.35 --geocode-delay-seconds 1.2 --request-timeout-seconds 30 2>&1 | tee refresh-opportunities.log
-          scrape_exit_code=${PIPESTATUS[0]}
-          set -e
+          python back/scripts/refresh_opportunity_listings_cloudflare.py \
+            --max-pages 24 \
+            --max-browser-requests 24 \
+            --min-browser-interval-seconds 11 \
+            --max-new-geocodes 40 \
+            --geocode-delay-seconds 1.2
 
-          if [ "$scrape_exit_code" -eq 0 ]; then
-            python back/scripts/build_frontend_opportunity_listings.py
-            exit 0
-          fi
-
-          if grep -Eq "403 Client Error: Forbidden for url: https://www\\.locales\\.es/|curl fallback failed for https://www\\.locales\\.es/" refresh-opportunities.log; then
-            echo "locales.es blocked the GitHub Actions runner; reusing the committed frontend opportunity payload for this run."
-            exit 0
-          fi
-
-          exit "$scrape_exit_code"
+      - name: Rebuild frontend listings payload
+        run: |
+          python back/scripts/build_frontend_opportunity_listings.py \
+            --input-listings-csv back/data/opportunities/manual_available_locales_madrid_snapshot.csv
 
       - name: Validate frontend payload
         run: |
@@ -96,10 +93,22 @@ jobs:
           print(f"Validated {len(points)} opportunity points.")
           PY
 
-      - name: Detect frontend changes
+      - name: Detect opportunity refresh changes
         id: changes
         run: |
+          if git diff --quiet -- back/data/opportunities/manual_available_locales_madrid_snapshot.csv; then
+            echo "snapshot_changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "snapshot_changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
           if git diff --quiet -- front/public/data/opportunities/listings.json; then
+            echo "frontend_changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "frontend_changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+          if git diff --quiet -- back/data/opportunities/manual_available_locales_madrid_snapshot.csv front/public/data/opportunities/listings.json; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -112,17 +121,18 @@ jobs:
           path: storage/data/intermediate/manual_available_locales_madrid_geocode_cache.csv
           key: ${{ steps.geocode-cache.outputs.cache-primary-key }}
 
-      - name: Commit and push listings.json
+      - name: Commit and push opportunity refresh
         if: steps.changes.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add back/data/opportunities/manual_available_locales_madrid_snapshot.csv
           git add front/public/data/opportunities/listings.json
           git commit -m "chore: refresh opportunity listings"
           git push
 
       - name: Publish refreshed opportunity data to R2
-        if: steps.changes.outputs.changed == 'true' && steps.r2-sync.outputs.enabled == 'true'
+        if: steps.changes.outputs.frontend_changed == 'true' && steps.r2-sync.outputs.enabled == 'true'
         env:
           R2_ACCOUNT_ID: ${{ env.R2_SYNC_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ env.R2_SYNC_ACCESS_KEY_ID }}
