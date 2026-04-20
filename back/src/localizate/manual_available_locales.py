@@ -5,9 +5,11 @@ from html import unescape
 import json
 from pathlib import Path
 import re
+import shutil
+import subprocess
 import time
 from typing import Any, Iterable, Sequence
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -470,9 +472,107 @@ def _build_http_session(
 
 
 def _fetch_html(session: requests.Session, url: str, *, timeout_seconds: float) -> str:
-    response = session.get(url, timeout=timeout_seconds)
-    response.raise_for_status()
-    return response.text
+    response: requests.Response | None = None
+    try:
+        response = session.get(url, timeout=timeout_seconds)
+        response.raise_for_status()
+        return response.text
+    except requests.HTTPError:
+        if _should_retry_with_curl(url, response):
+            return _fetch_html_with_curl(session, url, timeout_seconds=timeout_seconds)
+        raise
+
+
+def _should_retry_with_curl(url: str, response: requests.Response | None) -> bool:
+    if response is None:
+        return False
+    if not _is_locales_es_url(url):
+        return False
+    if response.status_code != 403:
+        return False
+
+    challenge_header = _normalize_whitespace(response.headers.get("Cf-Mitigated"))
+    if challenge_header and challenge_header.lower() == "challenge":
+        return True
+
+    response_text = response.text[:2048] if response.text else ""
+    return "Just a moment" in response_text or "cf-challenge" in response_text.lower()
+
+
+def _fetch_html_with_curl(session: requests.Session, url: str, *, timeout_seconds: float) -> str:
+    curl_binary = shutil.which("curl")
+    if not curl_binary:
+        raise RuntimeError("curl is required for the Cloudflare fallback, but it is not installed")
+
+    curl_user_agent = _resolve_curl_user_agent(session.headers, url)
+    command = [
+        curl_binary,
+        "--location",
+        "--silent",
+        "--show-error",
+        "--compressed",
+        "--fail",
+        "--user-agent",
+        curl_user_agent,
+        "--max-time",
+        str(int(max(1, round(timeout_seconds)))),
+        url,
+    ]
+    for header_name, header_value in _iter_curl_headers(session.headers, url=url):
+        command.extend(["--header", f"{header_name}: {header_value}"])
+
+    completed = subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=max(5, int(round(timeout_seconds)) + 5),
+        check=False,
+    )
+    if completed.returncode != 0:
+        stderr = _normalize_whitespace(completed.stderr) or f"curl exited with code {completed.returncode}"
+        raise RuntimeError(f"curl fallback failed for {url}: {stderr}")
+    return completed.stdout
+
+
+def _resolve_curl_user_agent(headers: requests.structures.CaseInsensitiveDict[str], url: str) -> str:
+    if _is_locales_es_url(url):
+        return LOCALES_ES_BROWSER_USER_AGENT
+    return _normalize_whitespace(headers.get("User-Agent")) or NOMINATIM_USER_AGENT
+
+
+def _iter_curl_headers(
+    headers: requests.structures.CaseInsensitiveDict[str],
+    *,
+    url: str,
+) -> Iterable[tuple[str, str]]:
+    effective_headers: dict[str, str] = {}
+    if _is_locales_es_url(url):
+        effective_headers.update(LOCALES_ES_BROWSER_HEADERS)
+    for header_name, header_value in headers.items():
+        normalized_name = _normalize_whitespace(header_name)
+        normalized_value = _normalize_whitespace(header_value)
+        if not normalized_name or not normalized_value:
+            continue
+        if normalized_name == "User-Agent":
+            continue
+        effective_headers.setdefault(normalized_name, normalized_value)
+
+    skipped_headers = {"Accept-Encoding", "Connection", "Content-Length", "Host"}
+    for header_name, header_value in effective_headers.items():
+        normalized_name = _normalize_whitespace(header_name)
+        normalized_value = _normalize_whitespace(header_value)
+        if not normalized_name or not normalized_value:
+            continue
+        if normalized_name in skipped_headers:
+            continue
+        yield normalized_name, normalized_value
+
+
+def _is_locales_es_url(url: str) -> bool:
+    parsed = urlparse(url)
+    return parsed.scheme in {"http", "https"} and parsed.netloc.lower() == "www.locales.es"
 
 
 def _extract_card_metrics(card: BeautifulSoup) -> dict[str, Any]:
