@@ -3,7 +3,7 @@ name: Refresh Opportunity Listings
 on:
   workflow_dispatch:
   schedule:
-    - cron: "25 13 27 4 *"
+    - cron: "40 13 27 4 *"
     - cron: "0 5 * * 1"
 
 permissions:
