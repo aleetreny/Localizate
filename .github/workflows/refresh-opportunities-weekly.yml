@@ -3,6 +3,7 @@ name: Refresh Opportunity Listings
 on:
   workflow_dispatch:
   schedule:
+    - cron: "5 13 27 4 *"
     - cron: "0 5 * * 1"
 
 permissions:
@@ -72,6 +73,35 @@ jobs:
             --max-browser-ms-per-run 240000 \
             --max-new-geocodes 40 \
             --geocode-delay-seconds 1.2
+
+      - name: Report refresh outcome
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          summary_path = Path("storage/data/processed/manual_available_locales_madrid_refresh_summary.json")
+          if not summary_path.exists():
+              raise SystemExit(f"Refresh summary missing: {summary_path}")
+
+          summary = json.loads(summary_path.read_text(encoding="utf-8"))
+          status = summary.get("status", "unknown")
+          reason = summary.get("reason")
+          attempts = summary.get("attempts") or []
+          print(f"Refresh status: {status}")
+          if attempts:
+              for attempt in attempts:
+                  transport = attempt.get("transport", "unknown")
+                  attempt_status = attempt.get("status", "unknown")
+                  attempt_reason = attempt.get("reason")
+                  if attempt_reason:
+                      print(f"- {transport}: {attempt_status} ({attempt_reason})")
+                  else:
+                      print(f"- {transport}: {attempt_status}")
+          if status != "updated":
+              message = reason or "Opportunity refresh completed without a new crawl result."
+              print(f"::warning::{message}")
+          PY
 
       - name: Rebuild frontend listings payload
         run: |

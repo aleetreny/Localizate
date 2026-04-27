@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from bs4 import BeautifulSoup
 from dataclasses import dataclass
 import json
 import os
@@ -12,6 +13,7 @@ import unicodedata
 from typing import Any
 
 import pandas as pd
+import requests
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -32,6 +34,8 @@ from localizate.manual_available_locales import (  # noqa: E402
     _assign_h3_cells,
     _assign_section_geography,
     _build_http_session,
+    _build_locales_es_session,
+    _fetch_html,
     _finalize_output_columns,
     _geocode_locales_listings,
     _load_geocode_cache,
@@ -80,6 +84,23 @@ class SnapshotRefreshPlan:
     geocode_row_indexes: tuple[int, ...]
     reused_context_count: int
     removed_count: int
+
+
+class ListingCardsUnavailable(RuntimeError):
+    def __init__(self, *, transport: str, page_samples: list[dict[str, Any]]) -> None:
+        self.transport = transport
+        self.page_samples = tuple(page_samples)
+        sample_descriptions: list[str] = []
+        for sample in self.page_samples[:4]:
+            title = sample.get("title") or "n/a"
+            sample_descriptions.append(
+                f"{sample.get('operation')} page {sample.get('page_number')} "
+                f"title={title!r} js_card_count={sample.get('js_card_count')} "
+                f"card_link_count={sample.get('card_link_count')} "
+                f"challenge_detected={sample.get('challenge_detected')}"
+            )
+        suffix = f" Samples: {'; '.join(sample_descriptions)}" if sample_descriptions else ""
+        super().__init__(f"{transport} returned zero listing cards.{suffix}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -155,7 +176,6 @@ def main() -> int:
         )
 
     previous_snapshot = load_snapshot_frame(args.snapshot_csv)
-    browser_client = build_browser_run_client_from_env(args)
     refresh_config = ManualAvailableLocalesConfig(
         city_slug=args.city.lower().strip(),
         operations=tuple(args.operations),
@@ -165,17 +185,70 @@ def main() -> int:
         h3_resolution=args.h3_resolution,
     )
 
+    listing_cards: pd.DataFrame | None = None
+    browser_client: CloudflareBrowserRunClient | None = None
+    fetch_attempts: list[dict[str, Any]] = []
+
     try:
-        listing_cards = crawl_listing_cards_with_browser_run(browser_client, config=refresh_config)
-    except BrowserRunBudgetExceeded as exc:
+        listing_cards = crawl_listing_cards_with_http_session(config=refresh_config)
+        fetch_attempts.append(
+            {
+                "transport": "direct_http",
+                "status": "success",
+                "listing_count": int(len(listing_cards)),
+            }
+        )
+    except (requests.RequestException, RuntimeError, ListingCardsUnavailable) as exc:
+        fetch_attempts.append(_build_failed_fetch_attempt("direct_http", exc))
+
+    try:
+        if listing_cards is None:
+            browser_client = build_browser_run_client_from_env(args)
+            listing_cards = crawl_listing_cards_with_browser_run(browser_client, config=refresh_config)
+            fetch_attempts.append(
+                {
+                    "transport": "browser_run",
+                    "status": "success",
+                    "listing_count": int(len(listing_cards)),
+                    "request_count": browser_client.request_count,
+                    "browser_ms_used_total": browser_client.browser_ms_used_total,
+                }
+            )
+    except (BrowserRunBudgetExceeded, requests.RequestException, RuntimeError, ListingCardsUnavailable) as exc:
+        fetch_attempts.append(
+            _build_failed_fetch_attempt(
+                "browser_run",
+                exc,
+                request_count=browser_client.request_count,
+                browser_ms_used_total=browser_client.browser_ms_used_total,
+            )
+        )
+        reason = _compose_skip_reason(fetch_attempts)
         print(f"Skipped Cloudflare refresh: {exc}")
         write_refresh_summary(
             args.summary_json,
             {
                 "status": "skipped",
-                "reason": str(exc),
-                "request_count": browser_client.request_count,
-                "browser_ms_used_total": browser_client.browser_ms_used_total,
+                "reason": reason,
+                "attempts": fetch_attempts,
+                "request_count": int(browser_client.request_count) if browser_client is not None else 0,
+                "browser_ms_used_total": int(browser_client.browser_ms_used_total) if browser_client is not None else 0,
+                "snapshot_listing_count": int(len(previous_snapshot)),
+            },
+        )
+        return 0
+
+    if listing_cards is None:
+        reason = _compose_skip_reason(fetch_attempts)
+        print(reason)
+        write_refresh_summary(
+            args.summary_json,
+            {
+                "status": "skipped",
+                "reason": reason,
+                "attempts": fetch_attempts,
+                "request_count": int(browser_client.request_count) if browser_client is not None else 0,
+                "browser_ms_used_total": int(browser_client.browser_ms_used_total) if browser_client is not None else 0,
                 "snapshot_listing_count": int(len(previous_snapshot)),
             },
         )
@@ -229,8 +302,9 @@ def main() -> int:
         "status": "updated",
         "city_slug": refresh_config.city_slug,
         "operations": list(_normalize_operations(refresh_config.operations)),
-        "request_count": browser_client.request_count,
-        "browser_ms_used_total": browser_client.browser_ms_used_total,
+        "attempts": fetch_attempts,
+        "request_count": int(browser_client.request_count) if browser_client is not None else 0,
+        "browser_ms_used_total": int(browser_client.browser_ms_used_total) if browser_client is not None else 0,
         "listing_count": int(len(refreshed_snapshot)),
         "reused_context_count": int(plan.reused_context_count),
         "new_or_relocated_count": int(pending_geocodes),
@@ -279,18 +353,51 @@ def crawl_listing_cards_with_browser_run(
     *,
     config: ManualAvailableLocalesConfig,
 ) -> pd.DataFrame:
+    return _crawl_listing_cards(
+        fetch_html=browser_client.fetch_html,
+        config=config,
+        transport="browser_run",
+        request_count_getter=lambda: browser_client.request_count,
+        browser_ms_used_total_getter=lambda: browser_client.browser_ms_used_total,
+    )
+
+
+def crawl_listing_cards_with_http_session(*, config: ManualAvailableLocalesConfig) -> pd.DataFrame:
+    session = _build_locales_es_session()
+    return _crawl_listing_cards(
+        fetch_html=lambda url: _fetch_html(session, url, timeout_seconds=config.request_timeout_seconds),
+        config=config,
+        transport="direct_http",
+    )
+
+
+def _crawl_listing_cards(
+    fetch_html,
+    *,
+    config: ManualAvailableLocalesConfig,
+    transport: str,
+    request_count_getter=None,
+    browser_ms_used_total_getter=None,
+) -> pd.DataFrame:
     operations = _normalize_operations(config.operations)
     if not operations:
         raise ValueError("At least one operation must be provided")
 
     seen_keys: set[str] = set()
     records: list[dict[str, Any]] = []
+    empty_page_samples: list[dict[str, Any]] = []
 
     for operation in operations:
         consecutive_empty_pages = 0
         for page_number in range(1, config.max_pages + 1):
             page_url = build_locales_search_url(config.city_slug, operation, page_number)
-            html = browser_client.fetch_html(page_url)
+            html = fetch_html(page_url)
+            page_sample = _summarize_listing_page(
+                html,
+                operation=operation,
+                page_number=page_number,
+                url=page_url,
+            )
             page_records = extract_listing_cards(
                 html,
                 city_slug=config.city_slug,
@@ -298,12 +405,23 @@ def crawl_listing_cards_with_browser_run(
                 page_number=page_number,
             )
             fresh_records = [record for record in page_records if record["listing_key"] not in seen_keys]
-            print(
-                f"Fetched {operation} page {page_number}: "
-                f"{len(page_records)} cards, {len(fresh_records)} fresh, "
-                f"{browser_client.request_count}/{browser_client.config.max_requests} Browser Run requests, "
-                f"{browser_client.browser_ms_used_total} ms used."
-            )
+            status_parts = [
+                f"Fetched {operation} page {page_number}: {len(page_records)} cards, {len(fresh_records)} fresh",
+            ]
+            if request_count_getter is not None:
+                status_parts.append(f"{request_count_getter()} Browser Run requests")
+            if browser_ms_used_total_getter is not None:
+                status_parts.append(f"{browser_ms_used_total_getter()} ms used")
+            print(", ".join(status_parts) + ".")
+
+            if not page_records:
+                empty_page_samples.append(page_sample)
+                print(
+                    f"{transport} returned an empty listing page for {operation} page {page_number}: "
+                    f"title={page_sample['title']!r}, js_card_count={page_sample['js_card_count']}, "
+                    f"card_link_count={page_sample['card_link_count']}, "
+                    f"challenge_detected={page_sample['challenge_detected']}."
+                )
 
             if not fresh_records:
                 consecutive_empty_pages += 1
@@ -318,13 +436,71 @@ def crawl_listing_cards_with_browser_run(
                 break
 
     if not records:
-        raise ValueError("Cloudflare Browser Run returned zero listing cards.")
+        raise ListingCardsUnavailable(transport=transport, page_samples=empty_page_samples)
 
     frame = pd.DataFrame.from_records(records)
     frame = frame.sort_values(["operation", "page_number", "listing_id"]).reset_index(drop=True)
     frame = _prepare_frame_for_enrichment(frame)
     frame["detail_fetch_status"] = "card_only"
     return _finalize_output_columns(frame)
+
+
+def _build_failed_fetch_attempt(
+    transport: str,
+    exc: Exception,
+    *,
+    request_count: int | None = None,
+    browser_ms_used_total: int | None = None,
+) -> dict[str, Any]:
+    attempt = {
+        "transport": transport,
+        "status": "failed",
+        "error_type": type(exc).__name__,
+        "reason": str(exc),
+    }
+    if isinstance(exc, ListingCardsUnavailable):
+        attempt["page_samples"] = list(exc.page_samples)
+    if request_count is not None:
+        attempt["request_count"] = int(request_count)
+    if browser_ms_used_total is not None:
+        attempt["browser_ms_used_total"] = int(browser_ms_used_total)
+    return attempt
+
+
+def _compose_skip_reason(fetch_attempts: list[dict[str, Any]]) -> str:
+    if not fetch_attempts:
+        return "Skipped Cloudflare refresh: no listing fetch attempts were recorded."
+    descriptions = []
+    for attempt in fetch_attempts:
+        transport = attempt.get("transport") or "unknown"
+        status = attempt.get("status") or "unknown"
+        reason = attempt.get("reason")
+        if reason:
+            descriptions.append(f"{transport} ({status}): {reason}")
+        else:
+            descriptions.append(f"{transport} ({status})")
+    return "Skipped Cloudflare refresh after all fetch transports failed. " + " | ".join(descriptions)
+
+
+def _summarize_listing_page(html: str, *, operation: str, page_number: int, url: str) -> dict[str, Any]:
+    soup = BeautifulSoup(html, "html.parser")
+    title = None
+    if soup.title is not None:
+        title = soup.title.get_text(" ", strip=True) or None
+    preview = html[:4096].lower()
+    return {
+        "operation": operation,
+        "page_number": int(page_number),
+        "url": url,
+        "title": title,
+        "html_length": int(len(html)),
+        "js_card_count": int(html.count("js-card")),
+        "card_link_count": int(html.count("card__link")),
+        "challenge_detected": any(
+            marker in preview
+            for marker in ("cf-challenge", "just a moment", "attention required")
+        ),
+    }
 
 
 def build_snapshot_refresh_plan(
