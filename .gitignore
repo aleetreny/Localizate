@@ -24,6 +24,7 @@ front/tsconfig.tsbuildinfo
 
 storage/raw/
 storage/data/
+storage/logs/
 storage/models/
 ingestion_log.txt
 
