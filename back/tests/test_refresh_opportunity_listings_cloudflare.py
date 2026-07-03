@@ -128,6 +128,24 @@ def _previous_snapshot(address_text: str) -> pd.DataFrame:
 
 
 class RefreshOpportunityListingsCloudflareTests(unittest.TestCase):
+    def test_crawl_stops_after_partial_last_page(self) -> None:
+        config = refresh_script.ManualAvailableLocalesConfig(operations=("venta",), max_pages=5)
+        calls = 0
+
+        def fetch_html(_url: str) -> str:
+            nonlocal calls
+            calls += 1
+            cards = "".join(
+                f'<div class="card card__wrp"><a class="card__link" href="/madrid/venta/local{calls}{index:02d}">Local {index}</a></div>'
+                for index in range(30 if calls == 1 else 3)
+            )
+            return f"<html><body>{cards}</body></html>"
+
+        frame = _crawl_listing_cards(fetch_html=fetch_html, config=config, transport="direct_http")
+
+        self.assertEqual(calls, 2)
+        self.assertEqual(len(frame), 33)
+
     def test_normalize_match_text_ignores_accents_and_case(self) -> None:
         self.assertEqual(
             normalize_match_text("Calle de Alcalá, Madrid"),

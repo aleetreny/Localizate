@@ -23,6 +23,7 @@ from .section_keys import normalize_section_key_series
 
 
 LOCALES_ES_BASE_URL = "https://www.locales.es"
+LOCALES_ES_RESULTS_PER_PAGE = 30
 LOCALES_ES_BROWSER_USER_AGENT = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
@@ -248,7 +249,9 @@ def extract_listing_cards(
     soup = BeautifulSoup(html, "html.parser")
     records: list[dict[str, Any]] = []
 
-    for card in soup.select(".js-card"):
+    # Locales.es no longer adds ``js-card`` to every listing. ``card__wrp`` is
+    # the stable wrapper shared by both the JS-enhanced and plain cards.
+    for card in soup.select(".card__wrp"):
         anchor = card.select_one("a.card__link[href*='/local']")
         if anchor is None:
             continue

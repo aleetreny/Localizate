@@ -22,10 +22,28 @@ from localizate.manual_available_locales import (  # noqa: E402
     _build_locales_es_session,
     _fetch_html,
     _should_retry_with_curl,
+    extract_listing_cards,
 )
 
 
 class ManualAvailableLocalesSessionTests(unittest.TestCase):
+    def test_extract_listing_cards_includes_plain_card_wrappers(self) -> None:
+        html = """
+        <div class="card card__wrp">
+          <a class="card__link" href="/madrid/venta/local123?offerType=1">
+            <span class="card__caption">Local comercial en Venta en Calle Mayor, Madrid</span>
+          </a>
+          <span class="card__heading">150 000 €</span>
+          <p class="card__article">Local disponible</p>
+        </div>
+        """
+
+        records = extract_listing_cards(html, city_slug="madrid", operation="venta", page_number=1)
+
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]["listing_key"], "venta:123")
+        self.assertEqual(records[0]["price_eur"], 150000.0)
+
     def test_locales_es_session_uses_browser_like_headers(self) -> None:
         session = _build_locales_es_session()
 

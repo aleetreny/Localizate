@@ -6,6 +6,7 @@ import copy
 import json
 import math
 from pathlib import Path
+import re
 import sys
 
 import numpy as np
@@ -289,6 +290,8 @@ def build_selected_available_listings(path: Path) -> tuple[pd.DataFrame, dict[st
 
     selected = precise.loc[precise["has_commercial_fields"] & precise["outlier_flag_count"].le(1)].copy()
     selected = selected.sort_values(["operation", "district_name", "barrio_name", "listing_id"], na_position="last").reset_index(drop=True)
+    selected_before_deduplication = len(selected)
+    selected = drop_duplicate_property_offers(selected)
 
     summary = {
         "total_listings": int(len(frame)),
@@ -296,11 +299,30 @@ def build_selected_available_listings(path: Path) -> tuple[pd.DataFrame, dict[st
         "selected_listings": int(len(selected)),
         "excluded_incomplete": int((~precise["has_commercial_fields"]).sum()),
         "excluded_outliers": int((precise["has_commercial_fields"] & precise["outlier_flag_count"].gt(1)).sum()),
+        "excluded_duplicates": int(selected_before_deduplication - len(selected)),
         "operations": {
             str(key): int(value) for key, value in selected["operation"].astype("string").value_counts(dropna=False).to_dict().items()
         },
     }
     return selected, summary
+
+
+def drop_duplicate_property_offers(frame: pd.DataFrame) -> pd.DataFrame:
+    """Drop exact duplicate offers while preserving distinct sale/rent options."""
+    if frame.empty:
+        return frame.copy()
+
+    address = frame.get("address_text", pd.Series(pd.NA, index=frame.index)).astype("string")
+    normalized_address = address.fillna("").map(lambda value: re.sub(r"\s+", " ", value).strip().casefold())
+    price = pd.to_numeric(frame.get("price_eur"), errors="coerce")
+    area = pd.to_numeric(frame.get("area_m2"), errors="coerce")
+    operation = frame.get("operation", pd.Series(pd.NA, index=frame.index)).astype("string").fillna("")
+
+    specific_address = normalized_address.str.contains(",", regex=False) & normalized_address.str.len().gt(8)
+    eligible = specific_address & price.notna() & area.notna() & operation.ne("")
+    fingerprint = operation + "|" + normalized_address + "|" + price.astype("string") + "|" + area.astype("string")
+    duplicate_mask = eligible & fingerprint.duplicated(keep="first")
+    return frame.loc[~duplicate_mask].reset_index(drop=True)
 
 
 def compute_outlier_flags(frame: pd.DataFrame) -> tuple[pd.Series, pd.Series]:

@@ -10,6 +10,7 @@ import pandas as pd
 from scripts.build_frontend_opportunity_listings import (
     attach_section_context,
     build_frontend_artifacts,
+    drop_duplicate_property_offers,
     load_section_profiles_from_index_json,
     preserve_existing_generated_at_if_unchanged,
 )
@@ -82,6 +83,19 @@ def _sample_section_payload() -> dict[str, object]:
 
 
 class WeeklyOpportunityListingsTests(unittest.TestCase):
+    def test_drop_duplicate_property_offers_keeps_distinct_operations(self) -> None:
+        frame = pd.DataFrame(
+            [
+                {"listing_id": "1", "operation": "venta", "address_text": "Avenida de Daroca, Madrid", "price_eur": 450000.0, "area_m2": 320.0},
+                {"listing_id": "2", "operation": "venta", "address_text": " avenida  de daroca, madrid ", "price_eur": 450000.0, "area_m2": 320.0},
+                {"listing_id": "3", "operation": "alquiler", "address_text": "Avenida de Daroca, Madrid", "price_eur": 2000.0, "area_m2": 320.0},
+            ]
+        )
+
+        deduplicated = drop_duplicate_property_offers(frame)
+
+        self.assertEqual(deduplicated["listing_id"].tolist(), ["1", "3"])
+
     def test_load_section_profiles_from_index_json_normalizes_codes(self) -> None:
         payload = {"meta": {"generated_at": "2026-04-15T18:41:56Z"}, "sections": [_sample_section_payload()]}
 

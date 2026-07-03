@@ -29,6 +29,7 @@ from localizate.cloudflare_browser_run import (  # noqa: E402
 )
 from localizate.manual_available_locales import (  # noqa: E402
     ManualAvailableLocalesConfig,
+    LOCALES_ES_RESULTS_PER_PAGE,
     NOMINATIM_USER_AGENT,
     OUTPUT_COLUMNS,
     _assign_h3_cells,
@@ -276,8 +277,8 @@ def main() -> int:
             {
                 "status": "skipped",
                 "reason": reason,
-                "request_count": browser_client.request_count,
-                "browser_ms_used_total": browser_client.browser_ms_used_total,
+                "request_count": int(browser_client.request_count) if browser_client is not None else 0,
+                "browser_ms_used_total": int(browser_client.browser_ms_used_total) if browser_client is not None else 0,
                 "snapshot_listing_count": int(len(previous_snapshot)),
                 "crawled_listing_count": int(len(listing_cards)),
                 "pending_geocodes": int(pending_geocodes),
@@ -431,6 +432,9 @@ def _crawl_listing_cards(
             for record in fresh_records:
                 seen_keys.add(record["listing_key"])
                 records.append(record)
+
+            if page_records and len(page_records) < LOCALES_ES_RESULTS_PER_PAGE:
+                break
 
             if consecutive_empty_pages >= 2:
                 break
