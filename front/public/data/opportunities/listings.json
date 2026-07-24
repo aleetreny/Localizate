@@ -2,7 +2,7 @@
   "meta": {
     "title": "Madrid Opportunity Map",
     "subtitle": "Locales disponibles y recomendación de actividad",
-    "generated_at": "2026-07-20T07:57:49.901645+00:00",
+    "generated_at": "2026-07-24T17:15:13.191372+00:00",
     "section_index_path": "/data/opportunities/sections/index.json?v=20260416T163801",
     "section_geojson_path": "/data/opportunities/sections/geometry.geojson?v=20260416T163801",
     "map_bounds": {
@@ -15,23 +15,23 @@
     }
   },
   "filters": {
-    "total_listings": 639,
-    "precise_candidates": 366,
-    "selected_listings": 360,
+    "total_listings": 638,
+    "precise_candidates": 365,
+    "selected_listings": 359,
     "excluded_incomplete": 1,
     "excluded_outliers": 5,
     "excluded_duplicates": 0,
     "operations": {
-      "venta": 211,
-      "alquiler": 149
+      "venta": 212,
+      "alquiler": 147
     }
   },
   "stats": {
-    "selected_listings": 360,
+    "selected_listings": 359,
     "districts": 10,
-    "barrios": 90,
+    "barrios": 87,
     "median_survival_24m": 0.9750227066303361,
-    "median_price_per_m2": 1253.15
+    "median_price_per_m2": 1300.0
   },
   "points": [
     {
@@ -46651,464 +46651,6 @@
       ]
     },
     {
-      "listing_id": "149523",
-      "listing_url": "https://www.locales.es/madrid/alquiler/local149523#offerType=2&estateType=3&settlement=6773",
-      "card_title": "Local comercial en Alquiler en Calle de Martín de los Heros, Argüelles, Madrid",
-      "address_text": "Calle de Martín de los Heros, Argüelles, Madrid",
-      "operation": "alquiler",
-      "price_eur": 2800.0,
-      "price_per_m2_eur": 24.78,
-      "area_m2": 113.0,
-      "lat_wgs84": 40.4243724,
-      "lon_wgs84": -3.7134869,
-      "section_key": "09014",
-      "district_code": "90",
-      "district_name": "Moncloa-Aravaca",
-      "barrio_code": "020",
-      "barrio_name": "Arguelles",
-      "risk_score": -0.6756848912495755,
-      "risk_percentile": 0.23227427046333182,
-      "expected_survival_12m": 0.9859569871354218,
-      "expected_survival_24m": 0.9695279413283752,
-      "opportunity_tier": "Solida",
-      "city_rank": 155,
-      "city_total_sections": 2461,
-      "district_rank": 13,
-      "district_total_sections": 90,
-      "barrio_rank": 3,
-      "barrio_total_sections": 20,
-      "renta_effective_eur": 31156.0,
-      "renta_reference_year": 2023.0,
-      "renta_granularity_used": "section",
-      "renta_outlier_adjusted": false,
-      "total_population_start": 2099.0,
-      "population_density_km2_start": 20946.394193293105,
-      "age_mean_start": 45.70509766555502,
-      "share_foreign_start": 0.2324916626965221,
-      "share_age_15_29_start": 0.162934730824202,
-      "share_age_65_plus_start": 0.2267746545974273,
-      "metro_distance_m_start": 126.35771128975944,
-      "metro_access_count_500m_start": 11.0,
-      "metro_access_count_1000m_start": 33.0,
-      "metro_station_count_500m_start": 3.0,
-      "metro_station_count_1000m_start": 8.0,
-      "metro_nearest_name_start": "Plaza de España",
-      "metro_nearest_station_name_start": "Plaza de España",
-      "metro_access_names_500m_start": [
-        "Ascensor",
-        "Princesa",
-        "Coliseum",
-        "Plaza de España",
-        "Leganitos",
-        "Reyes"
-      ],
-      "metro_access_names_1000m_start": [
-        "Ascensor",
-        "Princesa",
-        "Coliseum",
-        "Campomanes",
-        "Plaza de España",
-        "Alberto Aguilera, 70"
-      ],
-      "metro_station_names_500m_start": [
-        "Plaza de España",
-        "Ventura Rodríguez",
-        "Noviciado"
-      ],
-      "metro_station_names_1000m_start": [
-        "Plaza de España",
-        "Ventura Rodríguez",
-        "Argüelles",
-        "Ópera",
-        "Santo Domingo",
-        "Noviciado"
-      ],
-      "avisos_barrio_per_1000_prev_year": 241.7542877703594,
-      "avisos_district_per_1000_prev_year": 225.04810573798935,
-      "top_avisos_barrio_categories": [
-        {
-          "rank": 1,
-          "label": "Retirada de elementos",
-          "count": 1680,
-          "share_of_zone": 0.27782371423846536
-        },
-        {
-          "rank": 2,
-          "label": "Cubos y contenedores",
-          "count": 1485,
-          "share_of_zone": 0.24557631883578634
-        },
-        {
-          "rank": 3,
-          "label": "Limpieza y pintadas",
-          "count": 1289,
-          "share_of_zone": 0.21316355217463204
-        }
-      ],
-      "top_avisos_district_categories": [
-        {
-          "rank": 1,
-          "label": "Retirada de elementos",
-          "count": 7034,
-          "share_of_zone": 0.24648701685531066
-        },
-        {
-          "rank": 2,
-          "label": "Cubos y contenedores",
-          "count": 5169,
-          "share_of_zone": 0.18113326558502996
-        },
-        {
-          "rank": 3,
-          "label": "Limpieza y pintadas",
-          "count": 5004,
-          "share_of_zone": 0.17535129831446894
-        }
-      ],
-      "section_local_count_start": 145.0,
-      "section_unique_activity_category_count_start": 23.0,
-      "section_turnover_rate_12m_start": 0.0068965517241379,
-      "section_same_activity_category_share_start": 0.0482758620689655,
-      "best_activity_label": "Bar y cafetería",
-      "best_activity_risk": 0.07954657710871621,
-      "best_activity_survival_24m": 0.9830371567043619,
-      "top_activities": [
-        {
-          "rank": 1,
-          "source_zone": "district",
-          "display_label": "Bar y cafetería",
-          "web_supercategory": "Hostelería",
-          "web_category": "Bar y cafetería",
-          "event_rate": 0.06596306068601583,
-          "activity_risk": 0.07954657710871621,
-          "survival_12m": 0.9955520411189087,
-          "survival_24m": 0.9830371567043619,
-          "n_locales": 379,
-          "confidence_tier": "high",
-          "supported_for_stats": true
-        },
-        {
-          "rank": 2,
-          "source_zone": "district",
-          "display_label": "Belleza y cuidado personal",
-          "web_supercategory": "Belleza y cuidado personal",
-          "web_category": "Peluquería y estética",
-          "event_rate": 0.15606936416184972,
-          "activity_risk": 0.09301539833610249,
-          "survival_12m": 0.9955520411189087,
-          "survival_24m": 0.9830371567043619,
-          "n_locales": 173,
-          "confidence_tier": "high",
-          "supported_for_stats": true
-        },
-        {
-          "rank": 3,
-          "source_zone": "district",
-          "display_label": "Bazar, regalos y retail variado",
-          "web_supercategory": "Retail especializado",
-          "web_category": "Conveniencia",
-          "event_rate": 0.20408163265306123,
-          "activity_risk": 0.10332568834289298,
-          "survival_12m": 0.9980326578792051,
-          "survival_24m": 0.9962773382968823,
-          "n_locales": 147,
-          "confidence_tier": "medium",
-          "supported_for_stats": true
-        },
-        {
-          "rank": 4,
-          "source_zone": "district",
-          "display_label": "Farmacia, óptica y salud retail",
-          "web_supercategory": "Salud y bienestar",
-          "web_category": "Salud retail",
-          "event_rate": 0.07936507936507936,
-          "activity_risk": 0.11206682384484676,
-          "survival_12m": 0.9955520411189087,
-          "survival_24m": 0.9830371567043619,
-          "n_locales": 126,
-          "confidence_tier": "low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 5,
-          "source_zone": "district",
-          "display_label": "Tienda de alimentación",
-          "web_supercategory": "Alimentación",
-          "web_category": "Supermercado y conveniencia",
-          "event_rate": 0.11494252873563218,
-          "activity_risk": 0.11682751814778963,
-          "survival_12m": 0.9955520411189087,
-          "survival_24m": 0.9830371567043619,
-          "n_locales": 87,
-          "confidence_tier": "low",
-          "supported_for_stats": false
-        }
-      ],
-      "facilities_tier": "Abundantes",
-      "facilities_200m": 4,
-      "facilities_500m": 16,
-      "facilities_1000m": 56,
-      "facilities_by_category": [
-        {
-          "category": "bicimad",
-          "label": "BiciMAD",
-          "count_200m": 2,
-          "count_500m": 7,
-          "count_1000m": 34
-        },
-        {
-          "category": "parques",
-          "label": "Parques",
-          "count_200m": 1,
-          "count_500m": 4,
-          "count_1000m": 7
-        },
-        {
-          "category": "instalaciones_deportivas",
-          "label": "Inst. deportivas",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 4
-        },
-        {
-          "category": "centros_culturales",
-          "label": "Centros culturales",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 3
-        },
-        {
-          "category": "bibliotecas",
-          "label": "Bibliotecas",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 2
-        },
-        {
-          "category": "colegios",
-          "label": "Colegios",
-          "count_200m": 1,
-          "count_500m": 1,
-          "count_1000m": 2
-        },
-        {
-          "category": "mercados",
-          "label": "Mercados",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 2
-        },
-        {
-          "category": "centros_mayores",
-          "label": "Centros mayores",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 1
-        },
-        {
-          "category": "mercadillos",
-          "label": "Mercadillos",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 1
-        },
-        {
-          "category": "aparcamientos",
-          "label": "Aparcamientos",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        },
-        {
-          "category": "polideportivos",
-          "label": "Polideportivos",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        },
-        {
-          "category": "servicios_sociales",
-          "label": "Servicios sociales",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        }
-      ],
-      "vulnerabilidad_global": 3.65,
-      "vulnerabilidad_global_media_ciudad": 4.83,
-      "vulnerabilidad_esferas": [
-        {
-          "key": "bienestar",
-          "label": "Bienestar social",
-          "valor": 3.62,
-          "media_ciudad": 4.73
-        },
-        {
-          "key": "medio_ambiente",
-          "label": "Medio ambiente",
-          "valor": 3.34,
-          "media_ciudad": 4.76
-        },
-        {
-          "key": "educacion",
-          "label": "Educación y cultura",
-          "valor": 2.95,
-          "media_ciudad": 4.98
-        },
-        {
-          "key": "economia",
-          "label": "Economía y empleo",
-          "valor": 3.2,
-          "media_ciudad": 4.96
-        },
-        {
-          "key": "salud",
-          "label": "Salud",
-          "valor": 5.39,
-          "media_ciudad": 4.73
-        }
-      ],
-      "inspecciones_distrito_total": 177.0,
-      "inspecciones_ciudad_media": 200.9,
-      "inspecciones_top_epigrafes": [
-        {
-          "label": "Comercio menor prendas de vestir en establec. especializados",
-          "count": 41,
-          "share": 0.232
-        },
-        {
-          "label": "Complementos, bisuteria y artesania",
-          "count": 41,
-          "share": 0.232
-        },
-        {
-          "label": "Reparacion de calzado",
-          "count": 17,
-          "share": 0.096
-        },
-        {
-          "label": "Comercio menor calzado y artic.cuero en establec.especializ.",
-          "count": 14,
-          "share": 0.079
-        },
-        {
-          "label": "Locutorios",
-          "count": 8,
-          "share": 0.045
-        }
-      ],
-      "indicadores_distrito": [
-        {
-          "id": "locales_abiertos",
-          "label": "Locales abiertos",
-          "valor": 5082.0,
-          "media_ciudad": 6607.2
-        },
-        {
-          "id": "locales_cerrados",
-          "label": "Locales cerrados",
-          "valor": 801.0,
-          "media_ciudad": 1786.1
-        },
-        {
-          "id": "tasa_paro",
-          "label": "Tasa de paro (%)",
-          "valor": 4.13,
-          "media_ciudad": 5.6
-        },
-        {
-          "id": "habitantes_distrito",
-          "label": "Habitantes",
-          "valor": 126978.0,
-          "media_ciudad": 167996.4
-        },
-        {
-          "id": "edad_media_distrito",
-          "label": "Edad media",
-          "valor": 44.76,
-          "media_ciudad": 44.2
-        },
-        {
-          "id": "indice_dependencia",
-          "label": "Índice de dependencia",
-          "valor": 0.56,
-          "media_ciudad": 0.5
-        },
-        {
-          "id": "proporcion_migrantes",
-          "label": "Proporción migrante",
-          "valor": 0.08,
-          "media_ciudad": 0.1
-        },
-        {
-          "id": "densidad_distrito",
-          "label": "Densidad del distrito",
-          "valor": 27.29,
-          "media_ciudad": 151.7
-        },
-        {
-          "id": "zonas_verdes_por_10k",
-          "label": "Zonas verdes por 10.000 hab.",
-          "valor": 189.1,
-          "media_ciudad": 163.3
-        },
-        {
-          "id": "mercados_municipales",
-          "label": "Mercados municipales",
-          "valor": 3.0,
-          "media_ciudad": 2.1
-        },
-        {
-          "id": "bibliotecas_municipales",
-          "label": "Bibliotecas municipales",
-          "valor": 0.0,
-          "media_ciudad": 1.6
-        },
-        {
-          "id": "centros_culturales_distrito",
-          "label": "Centros culturales",
-          "valor": 6.0,
-          "media_ciudad": 5.1
-        },
-        {
-          "id": "centros_deportivos_municipales",
-          "label": "Centros deportivos",
-          "valor": 9.0,
-          "media_ciudad": 3.9
-        },
-        {
-          "id": "instalaciones_deportivas_basicas",
-          "label": "Instalaciones deportivas básicas",
-          "valor": 23.0,
-          "media_ciudad": 24.0
-        },
-        {
-          "id": "centros_municipales_mayores",
-          "label": "Centros de mayores",
-          "valor": 14956.0,
-          "media_ciudad": 18565.0
-        },
-        {
-          "id": "apartamentos_municipales_mayores",
-          "label": "Apartamentos para mayores",
-          "valor": 0.0,
-          "media_ciudad": 0.1
-        },
-        {
-          "id": "socios_centros_mayores",
-          "label": "Personas socias centros mayores",
-          "valor": 14956.0,
-          "media_ciudad": 18565.0
-        },
-        {
-          "id": "valor_catastral",
-          "label": "Valor catastral medio (€)",
-          "valor": 201677.02,
-          "media_ciudad": 121796.8
-        }
-      ]
-    },
-    {
       "listing_id": "175067",
       "listing_url": "https://www.locales.es/madrid/alquiler/local175067#offerType=2&estateType=3&settlement=6773",
       "card_title": "Local comercial en Alquiler en Avenida del Doctor García Tapia, Media Legua, Madrid",
@@ -60646,463 +60188,6 @@
       ]
     },
     {
-      "listing_id": "177944",
-      "listing_url": "https://www.locales.es/madrid/alquiler/local177944#offerType=2&estateType=3&settlement=6773",
-      "card_title": "Local comercial en Alquiler en Calle de Raimundo Fernández Villaverde, Cuatro Caminos, Madrid",
-      "address_text": "Calle de Raimundo Fernández Villaverde, Cuatro Caminos, Madrid",
-      "operation": "alquiler",
-      "price_eur": 5799.0,
-      "price_per_m2_eur": 20.42,
-      "area_m2": 284.0,
-      "lat_wgs84": 40.4469188,
-      "lon_wgs84": -3.7034296,
-      "section_key": "06024",
-      "district_code": "60",
-      "district_name": "Tetuan",
-      "barrio_code": "020",
-      "barrio_name": "Cuatro Caminos",
-      "risk_score": -0.3687451787119008,
-      "risk_percentile": 0.3752870066919167,
-      "expected_survival_12m": 0.9882156535402141,
-      "expected_survival_24m": 0.973135659346784,
-      "opportunity_tier": "Solida",
-      "city_rank": 353,
-      "city_total_sections": 2461,
-      "district_rank": 14,
-      "district_total_sections": 117,
-      "barrio_rank": 5,
-      "barrio_total_sections": 29,
-      "renta_effective_eur": 23474.0,
-      "renta_reference_year": 2023.0,
-      "renta_granularity_used": "section",
-      "renta_outlier_adjusted": false,
-      "total_population_start": 767.0,
-      "population_density_km2_start": 48861.66727622649,
-      "age_mean_start": 42.8122555410691,
-      "share_foreign_start": 0.2359843546284224,
-      "share_age_15_29_start": 0.18122555410691,
-      "share_age_65_plus_start": 0.1916558018252933,
-      "metro_distance_m_start": 129.05755785724156,
-      "metro_access_count_500m_start": 8.0,
-      "metro_access_count_1000m_start": 35.0,
-      "metro_station_count_500m_start": 2.0,
-      "metro_station_count_1000m_start": 7.0,
-      "metro_nearest_name_start": "Santa Engracia",
-      "metro_nearest_station_name_start": "Cuatro Caminos",
-      "metro_access_names_500m_start": [
-        "Reina Victoria",
-        "Bravo Murillo",
-        "Ascensor exterior",
-        "Santa Engracia",
-        "Maudes",
-        "Bravo Murillo impares"
-      ],
-      "metro_access_names_1000m_start": [
-        "Ascensor",
-        "Guzmán el Bueno",
-        "Los Vascos",
-        "Reina Victoria",
-        "Bravo Murillo impares",
-        "Bravo Murillo"
-      ],
-      "metro_station_names_500m_start": [
-        "Cuatro Caminos",
-        "Alvarado"
-      ],
-      "metro_station_names_1000m_start": [
-        "Guzmán el Bueno",
-        "Cuatro Caminos",
-        "Canal",
-        "Ríos Rosas",
-        "Nuevos Ministerios",
-        "Alvarado"
-      ],
-      "avisos_barrio_per_1000_prev_year": 202.68616873366332,
-      "avisos_district_per_1000_prev_year": 199.4738342399696,
-      "top_avisos_barrio_categories": [
-        {
-          "rank": 1,
-          "label": "Cubos y contenedores",
-          "count": 2076,
-          "share_of_zone": 0.2848127315132391
-        },
-        {
-          "rank": 2,
-          "label": "Retirada de elementos",
-          "count": 1848,
-          "share_of_zone": 0.2535327205377967
-        },
-        {
-          "rank": 3,
-          "label": "Limpieza y pintadas",
-          "count": 1504,
-          "share_of_zone": 0.2063383180134449
-        }
-      ],
-      "top_avisos_district_categories": [
-        {
-          "rank": 1,
-          "label": "Retirada de elementos",
-          "count": 8562,
-          "share_of_zone": 0.25490487957367
-        },
-        {
-          "rank": 2,
-          "label": "Limpieza y pintadas",
-          "count": 8524,
-          "share_of_zone": 0.2537735568191968
-        },
-        {
-          "rank": 3,
-          "label": "Cubos y contenedores",
-          "count": 6981,
-          "share_of_zone": 0.2078358986572985
-        }
-      ],
-      "section_local_count_start": 40.0,
-      "section_unique_activity_category_count_start": 14.0,
-      "section_turnover_rate_12m_start": 0.025,
-      "section_same_activity_category_share_start": 0.025,
-      "best_activity_label": "Hogar y decoración",
-      "best_activity_risk": 0.033792582565315574,
-      "best_activity_survival_24m": 0.9830371567043619,
-      "top_activities": [
-        {
-          "rank": 1,
-          "source_zone": "barrio",
-          "display_label": "Hogar y decoración",
-          "web_supercategory": "Retail especializado",
-          "web_category": "Hogar y decoración",
-          "event_rate": 0.20454545454545456,
-          "activity_risk": 0.033792582565315574,
-          "survival_12m": 0.9955520411189087,
-          "survival_24m": 0.9830371567043619,
-          "n_locales": 44,
-          "confidence_tier": "low",
-          "supported_for_stats": true
-        },
-        {
-          "rank": 2,
-          "source_zone": "barrio",
-          "display_label": "Bar y cafetería",
-          "web_supercategory": "Hostelería",
-          "web_category": "Bar y cafetería",
-          "event_rate": 0.11797752808988764,
-          "activity_risk": 0.041081458575702126,
-          "survival_12m": 0.9955520411189087,
-          "survival_24m": 0.9830371567043619,
-          "n_locales": 178,
-          "confidence_tier": "medium",
-          "supported_for_stats": true
-        },
-        {
-          "rank": 3,
-          "source_zone": "barrio",
-          "display_label": "Belleza y cuidado personal",
-          "web_supercategory": "Belleza y cuidado personal",
-          "web_category": "Peluquería y estética",
-          "event_rate": 0.13541666666666666,
-          "activity_risk": 0.04604343798207673,
-          "survival_12m": 0.9955520411189087,
-          "survival_24m": 0.9830371567043619,
-          "n_locales": 96,
-          "confidence_tier": "medium",
-          "supported_for_stats": true
-        },
-        {
-          "rank": 4,
-          "source_zone": "barrio",
-          "display_label": "Farmacia, óptica y salud retail",
-          "web_supercategory": "Salud y bienestar",
-          "web_category": "Salud retail",
-          "event_rate": 0.11764705882352941,
-          "activity_risk": 0.07402626573163505,
-          "survival_12m": 0.9955520411189087,
-          "survival_24m": 0.9830371567043619,
-          "n_locales": 51,
-          "confidence_tier": "very_low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 5,
-          "source_zone": "barrio",
-          "display_label": "Tienda de alimentación",
-          "web_supercategory": "Alimentación",
-          "web_category": "Supermercado y conveniencia",
-          "event_rate": 0.12195121951219512,
-          "activity_risk": 0.07627093539216202,
-          "survival_12m": 0.9955520411189087,
-          "survival_24m": 0.9830371567043619,
-          "n_locales": 41,
-          "confidence_tier": "very_low",
-          "supported_for_stats": false
-        }
-      ],
-      "facilities_tier": "Medias",
-      "facilities_200m": 6,
-      "facilities_500m": 11,
-      "facilities_1000m": 42,
-      "facilities_by_category": [
-        {
-          "category": "bicimad",
-          "label": "BiciMAD",
-          "count_200m": 3,
-          "count_500m": 4,
-          "count_1000m": 18
-        },
-        {
-          "category": "parques",
-          "label": "Parques",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 5
-        },
-        {
-          "category": "colegios",
-          "label": "Colegios",
-          "count_200m": 1,
-          "count_500m": 1,
-          "count_1000m": 4
-        },
-        {
-          "category": "instalaciones_deportivas",
-          "label": "Inst. deportivas",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 4
-        },
-        {
-          "category": "polideportivos",
-          "label": "Polideportivos",
-          "count_200m": 1,
-          "count_500m": 1,
-          "count_1000m": 4
-        },
-        {
-          "category": "centros_mayores",
-          "label": "Centros mayores",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 3
-        },
-        {
-          "category": "centros_culturales",
-          "label": "Centros culturales",
-          "count_200m": 0,
-          "count_500m": 2,
-          "count_1000m": 2
-        },
-        {
-          "category": "bibliotecas",
-          "label": "Bibliotecas",
-          "count_200m": 1,
-          "count_500m": 1,
-          "count_1000m": 1
-        },
-        {
-          "category": "mercados",
-          "label": "Mercados",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 1
-        },
-        {
-          "category": "aparcamientos",
-          "label": "Aparcamientos",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        },
-        {
-          "category": "mercadillos",
-          "label": "Mercadillos",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        },
-        {
-          "category": "servicios_sociales",
-          "label": "Servicios sociales",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        }
-      ],
-      "vulnerabilidad_global": 4.69,
-      "vulnerabilidad_global_media_ciudad": 4.83,
-      "vulnerabilidad_esferas": [
-        {
-          "key": "bienestar",
-          "label": "Bienestar social",
-          "valor": 3.78,
-          "media_ciudad": 4.73
-        },
-        {
-          "key": "medio_ambiente",
-          "label": "Medio ambiente",
-          "valor": 5.83,
-          "media_ciudad": 4.76
-        },
-        {
-          "key": "educacion",
-          "label": "Educación y cultura",
-          "valor": 4.96,
-          "media_ciudad": 4.98
-        },
-        {
-          "key": "economia",
-          "label": "Economía y empleo",
-          "valor": 4.98,
-          "media_ciudad": 4.96
-        },
-        {
-          "key": "salud",
-          "label": "Salud",
-          "valor": 4.18,
-          "media_ciudad": 4.73
-        }
-      ],
-      "inspecciones_distrito_total": 174.0,
-      "inspecciones_ciudad_media": 200.9,
-      "inspecciones_top_epigrafes": [
-        {
-          "label": "Locutorios",
-          "count": 32,
-          "share": 0.184
-        },
-        {
-          "label": "Comercio menor prendas de vestir en establec. especializados",
-          "count": 20,
-          "share": 0.115
-        },
-        {
-          "label": "Comercio al por menor de muebles",
-          "count": 11,
-          "share": 0.063
-        },
-        {
-          "label": "Comercio al por menor de material electrico",
-          "count": 10,
-          "share": 0.057
-        },
-        {
-          "label": "Comercio menor productos precio unico, bazares y asimilables",
-          "count": 9,
-          "share": 0.052
-        }
-      ],
-      "indicadores_distrito": [
-        {
-          "id": "locales_abiertos",
-          "label": "Locales abiertos",
-          "valor": 9102.0,
-          "media_ciudad": 6607.2
-        },
-        {
-          "id": "locales_cerrados",
-          "label": "Locales cerrados",
-          "valor": 2822.0,
-          "media_ciudad": 1786.1
-        },
-        {
-          "id": "tasa_paro",
-          "label": "Tasa de paro (%)",
-          "valor": 5.29,
-          "media_ciudad": 5.6
-        },
-        {
-          "id": "habitantes_distrito",
-          "label": "Habitantes",
-          "valor": 169479.0,
-          "media_ciudad": 167996.4
-        },
-        {
-          "id": "edad_media_distrito",
-          "label": "Edad media",
-          "valor": 43.87,
-          "media_ciudad": 44.2
-        },
-        {
-          "id": "indice_dependencia",
-          "label": "Índice de dependencia",
-          "valor": 0.42,
-          "media_ciudad": 0.5
-        },
-        {
-          "id": "proporcion_migrantes",
-          "label": "Proporción migrante",
-          "valor": 0.17,
-          "media_ciudad": 0.1
-        },
-        {
-          "id": "densidad_distrito",
-          "label": "Densidad del distrito",
-          "valor": 315.33,
-          "media_ciudad": 151.7
-        },
-        {
-          "id": "zonas_verdes_por_10k",
-          "label": "Zonas verdes por 10.000 hab.",
-          "valor": 63.1,
-          "media_ciudad": 163.3
-        },
-        {
-          "id": "mercados_municipales",
-          "label": "Mercados municipales",
-          "valor": 3.0,
-          "media_ciudad": 2.1
-        },
-        {
-          "id": "bibliotecas_municipales",
-          "label": "Bibliotecas municipales",
-          "valor": 2.0,
-          "media_ciudad": 1.6
-        },
-        {
-          "id": "centros_culturales_distrito",
-          "label": "Centros culturales",
-          "valor": 4.0,
-          "media_ciudad": 5.1
-        },
-        {
-          "id": "centros_deportivos_municipales",
-          "label": "Centros deportivos",
-          "valor": 5.0,
-          "media_ciudad": 3.9
-        },
-        {
-          "id": "instalaciones_deportivas_basicas",
-          "label": "Instalaciones deportivas básicas",
-          "valor": 9.0,
-          "media_ciudad": 24.0
-        },
-        {
-          "id": "centros_municipales_mayores",
-          "label": "Centros de mayores",
-          "valor": 15377.0,
-          "media_ciudad": 18565.0
-        },
-        {
-          "id": "apartamentos_municipales_mayores",
-          "label": "Apartamentos para mayores",
-          "valor": 0.0,
-          "media_ciudad": 0.1
-        },
-        {
-          "id": "socios_centros_mayores",
-          "label": "Personas socias centros mayores",
-          "valor": 15377.0,
-          "media_ciudad": 18565.0
-        },
-        {
-          "id": "valor_catastral",
-          "label": "Valor catastral medio (€)",
-          "valor": 114026.35,
-          "media_ciudad": 121796.8
-        }
-      ]
-    },
-    {
       "listing_id": "174968",
       "listing_url": "https://www.locales.es/madrid/alquiler-traspaso/local174968#offerType=2&estateType=3&settlement=6773",
       "card_title": "Local comercial en Alquiler en Avenida de Asturias, Almenara, Madrid",
@@ -71429,6 +70514,447 @@
       ]
     },
     {
+      "listing_id": "140160",
+      "listing_url": "https://www.locales.es/madrid/venta/local140160#offerType=1&estateType=3&settlement=6773",
+      "card_title": "Local comercial en Venta en Calle de Algemesí, Timón, Madrid",
+      "address_text": "Calle de Algemesí, Timón, Madrid",
+      "operation": "venta",
+      "price_eur": 192000.0,
+      "price_per_m2_eur": 2823.5,
+      "area_m2": 68.0,
+      "lat_wgs84": 40.4722523,
+      "lon_wgs84": -3.5836195,
+      "section_key": "21022",
+      "district_code": "10",
+      "district_name": "Barajas",
+      "barrio_code": "140",
+      "barrio_name": "Timón",
+      "risk_score": 0.42642891559666585,
+      "risk_percentile": 0.7201169613595777,
+      "expected_survival_12m": 0.9936939599960587,
+      "expected_survival_24m": 0.9814217520319959,
+      "opportunity_tier": "Fragil",
+      "city_rank": 1305,
+      "city_total_sections": 2461,
+      "district_rank": 18,
+      "district_total_sections": 32,
+      "barrio_rank": 6,
+      "barrio_total_sections": 8,
+      "renta_effective_eur": 17059.0,
+      "renta_reference_year": 2023.0,
+      "renta_granularity_used": "section",
+      "renta_outlier_adjusted": false,
+      "total_population_start": 1713.0,
+      "population_density_km2_start": 16979.401654450925,
+      "age_mean_start": 44.95504962054874,
+      "share_foreign_start": 0.1225919439579684,
+      "share_age_15_29_start": 0.1938120256859311,
+      "share_age_65_plus_start": 0.1780502043199066,
+      "metro_distance_m_start": 318.51795347607566,
+      "metro_access_count_500m_start": 2.0,
+      "metro_access_count_1000m_start": 2.0,
+      "metro_station_count_500m_start": 1.0,
+      "metro_station_count_1000m_start": 1.0,
+      "metro_nearest_name_start": "",
+      "metro_nearest_station_name_start": "Barajas",
+      "metro_access_names_500m_start": [
+        "Avda. de Logroño"
+      ],
+      "metro_access_names_1000m_start": [
+        "Avda. de Logroño"
+      ],
+      "metro_station_names_500m_start": [
+        "Barajas"
+      ],
+      "metro_station_names_1000m_start": [
+        "Barajas"
+      ],
+      "avisos_barrio_per_1000_prev_year": 150.51861381362065,
+      "avisos_district_per_1000_prev_year": 151.70333569907737,
+      "top_avisos_barrio_categories": [
+        {
+          "rank": 1,
+          "label": "Retirada de elementos",
+          "count": 481,
+          "share_of_zone": 0.2569444444444444
+        },
+        {
+          "rank": 2,
+          "label": "Cubos y contenedores",
+          "count": 350,
+          "share_of_zone": 0.18696581196581197
+        },
+        {
+          "rank": 3,
+          "label": "Arboles y parques",
+          "count": 252,
+          "share_of_zone": 0.1346153846153846
+        }
+      ],
+      "top_avisos_district_categories": [
+        {
+          "rank": 1,
+          "label": "Retirada de elementos",
+          "count": 2117,
+          "share_of_zone": 0.2751137102014295
+        },
+        {
+          "rank": 2,
+          "label": "Cubos y contenedores",
+          "count": 1458,
+          "share_of_zone": 0.18947368421052632
+        },
+        {
+          "rank": 3,
+          "label": "Calzadas y aceras",
+          "count": 1037,
+          "share_of_zone": 0.13476283300844705
+        }
+      ],
+      "section_local_count_start": 55.0,
+      "section_unique_activity_category_count_start": 15.0,
+      "section_turnover_rate_12m_start": 0.0,
+      "section_same_activity_category_share_start": 0.08181818181818179,
+      "best_activity_label": "Hogar y decoración",
+      "best_activity_risk": 0.18254131759068312,
+      "best_activity_survival_24m": 0.9659963849977407,
+      "top_activities": [
+        {
+          "rank": 1,
+          "source_zone": "district",
+          "display_label": "Hogar y decoración",
+          "web_supercategory": "Retail especializado",
+          "web_category": "Hogar y decoración",
+          "event_rate": 0.21052631578947367,
+          "activity_risk": 0.18254131759068312,
+          "survival_12m": 0.9881279434850864,
+          "survival_24m": 0.9659963849977407,
+          "n_locales": 19,
+          "confidence_tier": "low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 2,
+          "source_zone": "district",
+          "display_label": "Farmacia, óptica y salud retail",
+          "web_supercategory": "Salud y bienestar",
+          "web_category": "Salud retail",
+          "event_rate": 0.10869565217391304,
+          "activity_risk": 0.18676363999970622,
+          "survival_12m": 0.9941101403749877,
+          "survival_24m": 0.9810356422326832,
+          "n_locales": 46,
+          "confidence_tier": "low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 3,
+          "source_zone": "district",
+          "display_label": "Servicios al consumidor",
+          "web_supercategory": "Servicios",
+          "web_category": "Servicios al consumidor",
+          "event_rate": 0.16666666666666666,
+          "activity_risk": 0.19041368903736514,
+          "survival_12m": 0.9935236973800412,
+          "survival_24m": 0.9794927145169995,
+          "n_locales": 6,
+          "confidence_tier": "low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 4,
+          "source_zone": "district",
+          "display_label": "Belleza y cuidado personal",
+          "web_supercategory": "Belleza y cuidado personal",
+          "web_category": "Peluquería y estética",
+          "event_rate": 0.11594202898550725,
+          "activity_risk": 0.2088742205917236,
+          "survival_12m": 0.9935236973800412,
+          "survival_24m": 0.9794927145169995,
+          "n_locales": 69,
+          "confidence_tier": "low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 5,
+          "source_zone": "district",
+          "display_label": "Ocio y entretenimiento",
+          "web_supercategory": "Deporte y ocio",
+          "web_category": "Ocio y entretenimiento",
+          "event_rate": 0.5,
+          "activity_risk": 0.21928737753354113,
+          "survival_12m": 0.9946030811500344,
+          "survival_24m": 0.9869099011279766,
+          "n_locales": 8,
+          "confidence_tier": "low",
+          "supported_for_stats": false
+        }
+      ],
+      "facilities_tier": "Medias",
+      "facilities_200m": 4,
+      "facilities_500m": 11,
+      "facilities_1000m": 20,
+      "facilities_by_category": [
+        {
+          "category": "instalaciones_deportivas",
+          "label": "Inst. deportivas",
+          "count_200m": 3,
+          "count_500m": 5,
+          "count_1000m": 8
+        },
+        {
+          "category": "bicimad",
+          "label": "BiciMAD",
+          "count_200m": 1,
+          "count_500m": 3,
+          "count_1000m": 6
+        },
+        {
+          "category": "colegios",
+          "label": "Colegios",
+          "count_200m": 0,
+          "count_500m": 1,
+          "count_1000m": 2
+        },
+        {
+          "category": "centros_culturales",
+          "label": "Centros culturales",
+          "count_200m": 0,
+          "count_500m": 1,
+          "count_1000m": 1
+        },
+        {
+          "category": "centros_mayores",
+          "label": "Centros mayores",
+          "count_200m": 0,
+          "count_500m": 1,
+          "count_1000m": 1
+        },
+        {
+          "category": "mercadillos",
+          "label": "Mercadillos",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 1
+        },
+        {
+          "category": "parques",
+          "label": "Parques",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 1
+        },
+        {
+          "category": "aparcamientos",
+          "label": "Aparcamientos",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        },
+        {
+          "category": "bibliotecas",
+          "label": "Bibliotecas",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        },
+        {
+          "category": "mercados",
+          "label": "Mercados",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        },
+        {
+          "category": "polideportivos",
+          "label": "Polideportivos",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        },
+        {
+          "category": "servicios_sociales",
+          "label": "Servicios sociales",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        }
+      ],
+      "vulnerabilidad_global": 3.78,
+      "vulnerabilidad_global_media_ciudad": 4.83,
+      "vulnerabilidad_esferas": [
+        {
+          "key": "bienestar",
+          "label": "Bienestar social",
+          "valor": 5.13,
+          "media_ciudad": 4.73
+        },
+        {
+          "key": "medio_ambiente",
+          "label": "Medio ambiente",
+          "valor": 2.92,
+          "media_ciudad": 4.76
+        },
+        {
+          "key": "educacion",
+          "label": "Educación y cultura",
+          "valor": 2.48,
+          "media_ciudad": 4.98
+        },
+        {
+          "key": "economia",
+          "label": "Economía y empleo",
+          "valor": 3.1,
+          "media_ciudad": 4.96
+        },
+        {
+          "key": "salud",
+          "label": "Salud",
+          "valor": 4.96,
+          "media_ciudad": 4.73
+        }
+      ],
+      "inspecciones_distrito_total": 93.0,
+      "inspecciones_ciudad_media": 200.9,
+      "inspecciones_top_epigrafes": [
+        {
+          "label": "Comercio menor prendas de vestir en establec. especializados",
+          "count": 25,
+          "share": 0.269
+        },
+        {
+          "label": "Interm.com.textil,prend.vestir,peleteria,calzado,art.cuero",
+          "count": 9,
+          "share": 0.097
+        },
+        {
+          "label": "Activ.inmobilia.(compraventa, alquiler, agentes propiedad)",
+          "count": 8,
+          "share": 0.086
+        },
+        {
+          "label": "Comercio menor productos precio unico, bazares y asimilables",
+          "count": 7,
+          "share": 0.075
+        },
+        {
+          "label": "Complementos, bisuteria y artesania",
+          "count": 5,
+          "share": 0.054
+        }
+      ],
+      "indicadores_distrito": [
+        {
+          "id": "locales_abiertos",
+          "label": "Locales abiertos",
+          "valor": 2125.0,
+          "media_ciudad": 6607.2
+        },
+        {
+          "id": "locales_cerrados",
+          "label": "Locales cerrados",
+          "valor": 499.0,
+          "media_ciudad": 1786.1
+        },
+        {
+          "id": "tasa_paro",
+          "label": "Tasa de paro (%)",
+          "valor": 4.89,
+          "media_ciudad": 5.6
+        },
+        {
+          "id": "habitantes_distrito",
+          "label": "Habitantes",
+          "valor": 50539.0,
+          "media_ciudad": 167996.4
+        },
+        {
+          "id": "edad_media_distrito",
+          "label": "Edad media",
+          "valor": 43.62,
+          "media_ciudad": 44.2
+        },
+        {
+          "id": "indice_dependencia",
+          "label": "Índice de dependencia",
+          "valor": 0.53,
+          "media_ciudad": 0.5
+        },
+        {
+          "id": "proporcion_migrantes",
+          "label": "Proporción migrante",
+          "valor": 0.06,
+          "media_ciudad": 0.1
+        },
+        {
+          "id": "densidad_distrito",
+          "label": "Densidad del distrito",
+          "valor": 12.11,
+          "media_ciudad": 151.7
+        },
+        {
+          "id": "zonas_verdes_por_10k",
+          "label": "Zonas verdes por 10.000 hab.",
+          "valor": 106.36,
+          "media_ciudad": 163.3
+        },
+        {
+          "id": "mercados_municipales",
+          "label": "Mercados municipales",
+          "valor": 0.0,
+          "media_ciudad": 2.1
+        },
+        {
+          "id": "bibliotecas_municipales",
+          "label": "Bibliotecas municipales",
+          "valor": 1.0,
+          "media_ciudad": 1.6
+        },
+        {
+          "id": "centros_culturales_distrito",
+          "label": "Centros culturales",
+          "valor": 3.0,
+          "media_ciudad": 5.1
+        },
+        {
+          "id": "centros_deportivos_municipales",
+          "label": "Centros deportivos",
+          "valor": 2.0,
+          "media_ciudad": 3.9
+        },
+        {
+          "id": "instalaciones_deportivas_basicas",
+          "label": "Instalaciones deportivas básicas",
+          "valor": 18.0,
+          "media_ciudad": 24.0
+        },
+        {
+          "id": "centros_municipales_mayores",
+          "label": "Centros de mayores",
+          "valor": 6349.0,
+          "media_ciudad": 18565.0
+        },
+        {
+          "id": "apartamentos_municipales_mayores",
+          "label": "Apartamentos para mayores",
+          "valor": 0.0,
+          "media_ciudad": 0.1
+        },
+        {
+          "id": "socios_centros_mayores",
+          "label": "Personas socias centros mayores",
+          "valor": 6349.0,
+          "media_ciudad": 18565.0
+        },
+        {
+          "id": "valor_catastral",
+          "label": "Valor catastral medio (€)",
+          "valor": 135892.0,
+          "media_ciudad": 121796.8
+        }
+      ]
+    },
+    {
       "listing_id": "50001",
       "listing_url": "https://www.locales.es/madrid/venta/local50001#offerType=1&estateType=3&settlement=6773",
       "card_title": "Local comercial en Venta en calle alaro, Timón, Madrid",
@@ -74541,450 +74067,6 @@
       ]
     },
     {
-      "listing_id": "103389",
-      "listing_url": "https://www.locales.es/madrid/traspaso-venta/local103389#offerType=1&estateType=3&settlement=6773",
-      "card_title": "Local comercial en Venta en Calle de Antonio López, Comillas, Madrid",
-      "address_text": "Calle de Antonio López, Comillas, Madrid",
-      "operation": "venta",
-      "price_eur": 850000.0,
-      "price_per_m2_eur": 3541.7,
-      "area_m2": 240.0,
-      "lat_wgs84": 40.3936716,
-      "lon_wgs84": -3.7070428,
-      "section_key": "11004",
-      "district_code": "10",
-      "district_name": "Carabanchel",
-      "barrio_code": "110",
-      "barrio_name": "Comillas",
-      "risk_score": 0.6307869921454293,
-      "risk_percentile": 0.7682506819475244,
-      "expected_survival_12m": 0.9921929044371973,
-      "expected_survival_24m": 0.9745023852607336,
-      "opportunity_tier": "Fragil",
-      "city_rank": 1622,
-      "city_total_sections": 2461,
-      "district_rank": 122,
-      "district_total_sections": 182,
-      "barrio_rank": 10,
-      "barrio_total_sections": 17,
-      "renta_effective_eur": 19371.0,
-      "renta_reference_year": 2023.0,
-      "renta_granularity_used": "section",
-      "renta_outlier_adjusted": false,
-      "total_population_start": 1515.0,
-      "population_density_km2_start": 31057.90777414014,
-      "age_mean_start": 49.22442244224423,
-      "share_foreign_start": 0.1221122112211221,
-      "share_age_15_29_start": 0.1161716171617161,
-      "share_age_65_plus_start": 0.3135313531353135,
-      "metro_distance_m_start": 728.4932100942777,
-      "metro_access_count_500m_start": 0.0,
-      "metro_access_count_1000m_start": 9.0,
-      "metro_station_count_500m_start": 0.0,
-      "metro_station_count_1000m_start": 4.0,
-      "metro_nearest_name_start": "Usera (Mirasierra)",
-      "metro_nearest_station_name_start": "Usera",
-      "metro_access_names_500m_start": [],
-      "metro_access_names_1000m_start": [
-        "Calle de Amparo Usera, 46",
-        "Usera (Amparo Usera)",
-        "Usera (Mirasierra)",
-        "Pirámides",
-        "Beata María Ana de Jesús"
-      ],
-      "metro_station_names_500m_start": [],
-      "metro_station_names_1000m_start": [
-        "Usera",
-        "Pirámides",
-        "Marqués de Vadillo",
-        "Legazpi"
-      ],
-      "avisos_barrio_per_1000_prev_year": 165.74631513390077,
-      "avisos_district_per_1000_prev_year": 158.68527438499913,
-      "top_avisos_barrio_categories": [
-        {
-          "rank": 1,
-          "label": "Retirada de elementos",
-          "count": 1039,
-          "share_of_zone": 0.26027054108216435
-        },
-        {
-          "rank": 2,
-          "label": "Limpieza y pintadas",
-          "count": 790,
-          "share_of_zone": 0.19789579158316634
-        },
-        {
-          "rank": 3,
-          "label": "Cubos y contenedores",
-          "count": 634,
-          "share_of_zone": 0.15881763527054107
-        }
-      ],
-      "top_avisos_district_categories": [
-        {
-          "rank": 1,
-          "label": "Retirada de elementos",
-          "count": 10721,
-          "share_of_zone": 0.24213474264290716
-        },
-        {
-          "rank": 2,
-          "label": "Limpieza y pintadas",
-          "count": 8975,
-          "share_of_zone": 0.2027011766831538
-        },
-        {
-          "rank": 3,
-          "label": "Cubos y contenedores",
-          "count": 8444,
-          "share_of_zone": 0.19070849425209477
-        }
-      ],
-      "section_local_count_start": 42.0,
-      "section_unique_activity_category_count_start": 14.0,
-      "section_turnover_rate_12m_start": 0.0,
-      "section_same_activity_category_share_start": 0.0595238095238095,
-      "best_activity_label": "Especialistas de alimentación",
-      "best_activity_risk": 0.19967160200934936,
-      "best_activity_survival_24m": 0.9659963849977407,
-      "top_activities": [
-        {
-          "rank": 1,
-          "source_zone": "barrio",
-          "display_label": "Especialistas de alimentación",
-          "web_supercategory": "Alimentación",
-          "web_category": "Especialistas de alimentación",
-          "event_rate": 0.0,
-          "activity_risk": 0.19967160200934936,
-          "survival_12m": 0.9881279434850864,
-          "survival_24m": 0.9659963849977407,
-          "n_locales": 5,
-          "confidence_tier": "very_low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 2,
-          "source_zone": "barrio",
-          "display_label": "Servicios personales y reparación ligera",
-          "web_supercategory": "Servicios",
-          "web_category": "Servicios personales",
-          "event_rate": 0.038461538461538464,
-          "activity_risk": 0.2127443632461871,
-          "survival_12m": 0.9945054945054945,
-          "survival_24m": 0.9796348314606742,
-          "n_locales": 26,
-          "confidence_tier": "very_low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 3,
-          "source_zone": "barrio",
-          "display_label": "Finanzas y seguros",
-          "web_supercategory": "Finanzas",
-          "web_category": "Finanzas y seguros",
-          "event_rate": 0.2777777777777778,
-          "activity_risk": 0.23784813820225562,
-          "survival_12m": 0.988815854017463,
-          "survival_24m": 0.9685452162516383,
-          "n_locales": 18,
-          "confidence_tier": "very_low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 4,
-          "source_zone": "barrio",
-          "display_label": "Restaurante",
-          "web_supercategory": "Hostelería",
-          "web_category": "Restauración",
-          "event_rate": 0.0,
-          "activity_risk": 0.24950516319474364,
-          "survival_12m": 0.9941101403749877,
-          "survival_24m": 0.9810356422326832,
-          "n_locales": 9,
-          "confidence_tier": "very_low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 5,
-          "source_zone": "barrio",
-          "display_label": "Belleza y cuidado personal",
-          "web_supercategory": "Belleza y cuidado personal",
-          "web_category": "Peluquería y estética",
-          "event_rate": 0.16,
-          "activity_risk": 0.25280527176778406,
-          "survival_12m": 0.9945054945054945,
-          "survival_24m": 0.9796348314606742,
-          "n_locales": 50,
-          "confidence_tier": "low",
-          "supported_for_stats": true
-        }
-      ],
-      "facilities_tier": "Medias",
-      "facilities_200m": 2,
-      "facilities_500m": 13,
-      "facilities_1000m": 62,
-      "facilities_by_category": [
-        {
-          "category": "bicimad",
-          "label": "BiciMAD",
-          "count_200m": 1,
-          "count_500m": 3,
-          "count_1000m": 18
-        },
-        {
-          "category": "instalaciones_deportivas",
-          "label": "Inst. deportivas",
-          "count_200m": 1,
-          "count_500m": 8,
-          "count_1000m": 18
-        },
-        {
-          "category": "centros_culturales",
-          "label": "Centros culturales",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 8
-        },
-        {
-          "category": "parques",
-          "label": "Parques",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 6
-        },
-        {
-          "category": "colegios",
-          "label": "Colegios",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 5
-        },
-        {
-          "category": "mercados",
-          "label": "Mercados",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 2
-        },
-        {
-          "category": "polideportivos",
-          "label": "Polideportivos",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 2
-        },
-        {
-          "category": "bibliotecas",
-          "label": "Bibliotecas",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 1
-        },
-        {
-          "category": "centros_mayores",
-          "label": "Centros mayores",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 1
-        },
-        {
-          "category": "servicios_sociales",
-          "label": "Servicios sociales",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 1
-        },
-        {
-          "category": "aparcamientos",
-          "label": "Aparcamientos",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        },
-        {
-          "category": "mercadillos",
-          "label": "Mercadillos",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        }
-      ],
-      "vulnerabilidad_global": 5.44,
-      "vulnerabilidad_global_media_ciudad": 4.83,
-      "vulnerabilidad_esferas": [
-        {
-          "key": "bienestar",
-          "label": "Bienestar social",
-          "valor": 4.71,
-          "media_ciudad": 4.73
-        },
-        {
-          "key": "medio_ambiente",
-          "label": "Medio ambiente",
-          "valor": 4.17,
-          "media_ciudad": 4.76
-        },
-        {
-          "key": "educacion",
-          "label": "Educación y cultura",
-          "valor": 7.07,
-          "media_ciudad": 4.98
-        },
-        {
-          "key": "economia",
-          "label": "Economía y empleo",
-          "valor": 6.65,
-          "media_ciudad": 4.96
-        },
-        {
-          "key": "salud",
-          "label": "Salud",
-          "valor": 4.38,
-          "media_ciudad": 4.73
-        }
-      ],
-      "inspecciones_distrito_total": 186.0,
-      "inspecciones_ciudad_media": 200.9,
-      "inspecciones_top_epigrafes": [
-        {
-          "label": "Comercio menor prendas de vestir en establec. especializados",
-          "count": 66,
-          "share": 0.355
-        },
-        {
-          "label": "Complementos, bisuteria y artesania",
-          "count": 21,
-          "share": 0.113
-        },
-        {
-          "label": "Locutorios",
-          "count": 13,
-          "share": 0.07
-        },
-        {
-          "label": "Comercio al por menor de muebles",
-          "count": 12,
-          "share": 0.065
-        },
-        {
-          "label": "Comercio al por menor de juegos y juguetes",
-          "count": 9,
-          "share": 0.048
-        }
-      ],
-      "indicadores_distrito": [
-        {
-          "id": "locales_abiertos",
-          "label": "Locales abiertos",
-          "valor": 8182.0,
-          "media_ciudad": 6607.2
-        },
-        {
-          "id": "locales_cerrados",
-          "label": "Locales cerrados",
-          "valor": 4022.0,
-          "media_ciudad": 1786.1
-        },
-        {
-          "id": "tasa_paro",
-          "label": "Tasa de paro (%)",
-          "valor": 6.9,
-          "media_ciudad": 5.6
-        },
-        {
-          "id": "habitantes_distrito",
-          "label": "Habitantes",
-          "valor": 280685.0,
-          "media_ciudad": 167996.4
-        },
-        {
-          "id": "edad_media_distrito",
-          "label": "Edad media",
-          "valor": 43.38,
-          "media_ciudad": 44.2
-        },
-        {
-          "id": "indice_dependencia",
-          "label": "Índice de dependencia",
-          "valor": 0.45,
-          "media_ciudad": 0.5
-        },
-        {
-          "id": "proporcion_migrantes",
-          "label": "Proporción migrante",
-          "valor": 0.19,
-          "media_ciudad": 0.1
-        },
-        {
-          "id": "densidad_distrito",
-          "label": "Densidad del distrito",
-          "valor": 199.8,
-          "media_ciudad": 151.7
-        },
-        {
-          "id": "zonas_verdes_por_10k",
-          "label": "Zonas verdes por 10.000 hab.",
-          "valor": 255.76,
-          "media_ciudad": 163.3
-        },
-        {
-          "id": "mercados_municipales",
-          "label": "Mercados municipales",
-          "valor": 2.0,
-          "media_ciudad": 2.1
-        },
-        {
-          "id": "bibliotecas_municipales",
-          "label": "Bibliotecas municipales",
-          "valor": 2.0,
-          "media_ciudad": 1.6
-        },
-        {
-          "id": "centros_culturales_distrito",
-          "label": "Centros culturales",
-          "valor": 5.0,
-          "media_ciudad": 5.1
-        },
-        {
-          "id": "centros_deportivos_municipales",
-          "label": "Centros deportivos",
-          "valor": 3.0,
-          "media_ciudad": 3.9
-        },
-        {
-          "id": "instalaciones_deportivas_basicas",
-          "label": "Instalaciones deportivas básicas",
-          "valor": 35.0,
-          "media_ciudad": 24.0
-        },
-        {
-          "id": "centros_municipales_mayores",
-          "label": "Centros de mayores",
-          "valor": 27303.0,
-          "media_ciudad": 18565.0
-        },
-        {
-          "id": "apartamentos_municipales_mayores",
-          "label": "Apartamentos para mayores",
-          "valor": 0.0,
-          "media_ciudad": 0.1
-        },
-        {
-          "id": "socios_centros_mayores",
-          "label": "Personas socias centros mayores",
-          "valor": 27303.0,
-          "media_ciudad": 18565.0
-        },
-        {
-          "id": "valor_catastral",
-          "label": "Valor catastral medio (€)",
-          "valor": 64617.88,
-          "media_ciudad": 121796.8
-        }
-      ]
-    },
-    {
       "listing_id": "149211",
       "listing_url": "https://www.locales.es/madrid/venta/local149211#offerType=1&estateType=3&settlement=6773",
       "card_title": "Local comercial en Venta en Calle de Baleares, Comillas, Madrid",
@@ -76145,6 +75227,450 @@
         {
           "category": "aparcamientos",
           "label": "Aparcamientos",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        }
+      ],
+      "vulnerabilidad_global": 5.44,
+      "vulnerabilidad_global_media_ciudad": 4.83,
+      "vulnerabilidad_esferas": [
+        {
+          "key": "bienestar",
+          "label": "Bienestar social",
+          "valor": 4.71,
+          "media_ciudad": 4.73
+        },
+        {
+          "key": "medio_ambiente",
+          "label": "Medio ambiente",
+          "valor": 4.17,
+          "media_ciudad": 4.76
+        },
+        {
+          "key": "educacion",
+          "label": "Educación y cultura",
+          "valor": 7.07,
+          "media_ciudad": 4.98
+        },
+        {
+          "key": "economia",
+          "label": "Economía y empleo",
+          "valor": 6.65,
+          "media_ciudad": 4.96
+        },
+        {
+          "key": "salud",
+          "label": "Salud",
+          "valor": 4.38,
+          "media_ciudad": 4.73
+        }
+      ],
+      "inspecciones_distrito_total": 186.0,
+      "inspecciones_ciudad_media": 200.9,
+      "inspecciones_top_epigrafes": [
+        {
+          "label": "Comercio menor prendas de vestir en establec. especializados",
+          "count": 66,
+          "share": 0.355
+        },
+        {
+          "label": "Complementos, bisuteria y artesania",
+          "count": 21,
+          "share": 0.113
+        },
+        {
+          "label": "Locutorios",
+          "count": 13,
+          "share": 0.07
+        },
+        {
+          "label": "Comercio al por menor de muebles",
+          "count": 12,
+          "share": 0.065
+        },
+        {
+          "label": "Comercio al por menor de juegos y juguetes",
+          "count": 9,
+          "share": 0.048
+        }
+      ],
+      "indicadores_distrito": [
+        {
+          "id": "locales_abiertos",
+          "label": "Locales abiertos",
+          "valor": 8182.0,
+          "media_ciudad": 6607.2
+        },
+        {
+          "id": "locales_cerrados",
+          "label": "Locales cerrados",
+          "valor": 4022.0,
+          "media_ciudad": 1786.1
+        },
+        {
+          "id": "tasa_paro",
+          "label": "Tasa de paro (%)",
+          "valor": 6.9,
+          "media_ciudad": 5.6
+        },
+        {
+          "id": "habitantes_distrito",
+          "label": "Habitantes",
+          "valor": 280685.0,
+          "media_ciudad": 167996.4
+        },
+        {
+          "id": "edad_media_distrito",
+          "label": "Edad media",
+          "valor": 43.38,
+          "media_ciudad": 44.2
+        },
+        {
+          "id": "indice_dependencia",
+          "label": "Índice de dependencia",
+          "valor": 0.45,
+          "media_ciudad": 0.5
+        },
+        {
+          "id": "proporcion_migrantes",
+          "label": "Proporción migrante",
+          "valor": 0.19,
+          "media_ciudad": 0.1
+        },
+        {
+          "id": "densidad_distrito",
+          "label": "Densidad del distrito",
+          "valor": 199.8,
+          "media_ciudad": 151.7
+        },
+        {
+          "id": "zonas_verdes_por_10k",
+          "label": "Zonas verdes por 10.000 hab.",
+          "valor": 255.76,
+          "media_ciudad": 163.3
+        },
+        {
+          "id": "mercados_municipales",
+          "label": "Mercados municipales",
+          "valor": 2.0,
+          "media_ciudad": 2.1
+        },
+        {
+          "id": "bibliotecas_municipales",
+          "label": "Bibliotecas municipales",
+          "valor": 2.0,
+          "media_ciudad": 1.6
+        },
+        {
+          "id": "centros_culturales_distrito",
+          "label": "Centros culturales",
+          "valor": 5.0,
+          "media_ciudad": 5.1
+        },
+        {
+          "id": "centros_deportivos_municipales",
+          "label": "Centros deportivos",
+          "valor": 3.0,
+          "media_ciudad": 3.9
+        },
+        {
+          "id": "instalaciones_deportivas_basicas",
+          "label": "Instalaciones deportivas básicas",
+          "valor": 35.0,
+          "media_ciudad": 24.0
+        },
+        {
+          "id": "centros_municipales_mayores",
+          "label": "Centros de mayores",
+          "valor": 27303.0,
+          "media_ciudad": 18565.0
+        },
+        {
+          "id": "apartamentos_municipales_mayores",
+          "label": "Apartamentos para mayores",
+          "valor": 0.0,
+          "media_ciudad": 0.1
+        },
+        {
+          "id": "socios_centros_mayores",
+          "label": "Personas socias centros mayores",
+          "valor": 27303.0,
+          "media_ciudad": 18565.0
+        },
+        {
+          "id": "valor_catastral",
+          "label": "Valor catastral medio (€)",
+          "valor": 64617.88,
+          "media_ciudad": 121796.8
+        }
+      ]
+    },
+    {
+      "listing_id": "172473",
+      "listing_url": "https://www.locales.es/madrid/venta/local172473#offerType=1&estateType=3&settlement=6773",
+      "card_title": "Local comercial en Venta en Bypass Sur, Comillas, Madrid",
+      "address_text": "Bypass Sur, Comillas, Madrid",
+      "operation": "venta",
+      "price_eur": 200000.0,
+      "price_per_m2_eur": 2531.6,
+      "area_m2": 79.0,
+      "lat_wgs84": 40.3949795,
+      "lon_wgs84": -3.7051793,
+      "section_key": "11004",
+      "district_code": "10",
+      "district_name": "Carabanchel",
+      "barrio_code": "110",
+      "barrio_name": "Comillas",
+      "risk_score": 0.6307869921454293,
+      "risk_percentile": 0.7682506819475244,
+      "expected_survival_12m": 0.9921929044371973,
+      "expected_survival_24m": 0.9745023852607336,
+      "opportunity_tier": "Fragil",
+      "city_rank": 1622,
+      "city_total_sections": 2461,
+      "district_rank": 122,
+      "district_total_sections": 182,
+      "barrio_rank": 10,
+      "barrio_total_sections": 17,
+      "renta_effective_eur": 19371.0,
+      "renta_reference_year": 2023.0,
+      "renta_granularity_used": "section",
+      "renta_outlier_adjusted": false,
+      "total_population_start": 1515.0,
+      "population_density_km2_start": 31057.90777414014,
+      "age_mean_start": 49.22442244224423,
+      "share_foreign_start": 0.1221122112211221,
+      "share_age_15_29_start": 0.1161716171617161,
+      "share_age_65_plus_start": 0.3135313531353135,
+      "metro_distance_m_start": 728.4932100942777,
+      "metro_access_count_500m_start": 0.0,
+      "metro_access_count_1000m_start": 9.0,
+      "metro_station_count_500m_start": 0.0,
+      "metro_station_count_1000m_start": 4.0,
+      "metro_nearest_name_start": "Usera (Mirasierra)",
+      "metro_nearest_station_name_start": "Usera",
+      "metro_access_names_500m_start": [],
+      "metro_access_names_1000m_start": [
+        "Calle de Amparo Usera, 46",
+        "Usera (Amparo Usera)",
+        "Usera (Mirasierra)",
+        "Pirámides",
+        "Beata María Ana de Jesús"
+      ],
+      "metro_station_names_500m_start": [],
+      "metro_station_names_1000m_start": [
+        "Usera",
+        "Pirámides",
+        "Marqués de Vadillo",
+        "Legazpi"
+      ],
+      "avisos_barrio_per_1000_prev_year": 165.74631513390077,
+      "avisos_district_per_1000_prev_year": 158.68527438499913,
+      "top_avisos_barrio_categories": [
+        {
+          "rank": 1,
+          "label": "Retirada de elementos",
+          "count": 1039,
+          "share_of_zone": 0.26027054108216435
+        },
+        {
+          "rank": 2,
+          "label": "Limpieza y pintadas",
+          "count": 790,
+          "share_of_zone": 0.19789579158316634
+        },
+        {
+          "rank": 3,
+          "label": "Cubos y contenedores",
+          "count": 634,
+          "share_of_zone": 0.15881763527054107
+        }
+      ],
+      "top_avisos_district_categories": [
+        {
+          "rank": 1,
+          "label": "Retirada de elementos",
+          "count": 10721,
+          "share_of_zone": 0.24213474264290716
+        },
+        {
+          "rank": 2,
+          "label": "Limpieza y pintadas",
+          "count": 8975,
+          "share_of_zone": 0.2027011766831538
+        },
+        {
+          "rank": 3,
+          "label": "Cubos y contenedores",
+          "count": 8444,
+          "share_of_zone": 0.19070849425209477
+        }
+      ],
+      "section_local_count_start": 42.0,
+      "section_unique_activity_category_count_start": 14.0,
+      "section_turnover_rate_12m_start": 0.0,
+      "section_same_activity_category_share_start": 0.0595238095238095,
+      "best_activity_label": "Especialistas de alimentación",
+      "best_activity_risk": 0.19967160200934936,
+      "best_activity_survival_24m": 0.9659963849977407,
+      "top_activities": [
+        {
+          "rank": 1,
+          "source_zone": "barrio",
+          "display_label": "Especialistas de alimentación",
+          "web_supercategory": "Alimentación",
+          "web_category": "Especialistas de alimentación",
+          "event_rate": 0.0,
+          "activity_risk": 0.19967160200934936,
+          "survival_12m": 0.9881279434850864,
+          "survival_24m": 0.9659963849977407,
+          "n_locales": 5,
+          "confidence_tier": "very_low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 2,
+          "source_zone": "barrio",
+          "display_label": "Servicios personales y reparación ligera",
+          "web_supercategory": "Servicios",
+          "web_category": "Servicios personales",
+          "event_rate": 0.038461538461538464,
+          "activity_risk": 0.2127443632461871,
+          "survival_12m": 0.9945054945054945,
+          "survival_24m": 0.9796348314606742,
+          "n_locales": 26,
+          "confidence_tier": "very_low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 3,
+          "source_zone": "barrio",
+          "display_label": "Finanzas y seguros",
+          "web_supercategory": "Finanzas",
+          "web_category": "Finanzas y seguros",
+          "event_rate": 0.2777777777777778,
+          "activity_risk": 0.23784813820225562,
+          "survival_12m": 0.988815854017463,
+          "survival_24m": 0.9685452162516383,
+          "n_locales": 18,
+          "confidence_tier": "very_low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 4,
+          "source_zone": "barrio",
+          "display_label": "Restaurante",
+          "web_supercategory": "Hostelería",
+          "web_category": "Restauración",
+          "event_rate": 0.0,
+          "activity_risk": 0.24950516319474364,
+          "survival_12m": 0.9941101403749877,
+          "survival_24m": 0.9810356422326832,
+          "n_locales": 9,
+          "confidence_tier": "very_low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 5,
+          "source_zone": "barrio",
+          "display_label": "Belleza y cuidado personal",
+          "web_supercategory": "Belleza y cuidado personal",
+          "web_category": "Peluquería y estética",
+          "event_rate": 0.16,
+          "activity_risk": 0.25280527176778406,
+          "survival_12m": 0.9945054945054945,
+          "survival_24m": 0.9796348314606742,
+          "n_locales": 50,
+          "confidence_tier": "low",
+          "supported_for_stats": true
+        }
+      ],
+      "facilities_tier": "Medias",
+      "facilities_200m": 2,
+      "facilities_500m": 13,
+      "facilities_1000m": 62,
+      "facilities_by_category": [
+        {
+          "category": "bicimad",
+          "label": "BiciMAD",
+          "count_200m": 1,
+          "count_500m": 3,
+          "count_1000m": 18
+        },
+        {
+          "category": "instalaciones_deportivas",
+          "label": "Inst. deportivas",
+          "count_200m": 1,
+          "count_500m": 8,
+          "count_1000m": 18
+        },
+        {
+          "category": "centros_culturales",
+          "label": "Centros culturales",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 8
+        },
+        {
+          "category": "parques",
+          "label": "Parques",
+          "count_200m": 0,
+          "count_500m": 1,
+          "count_1000m": 6
+        },
+        {
+          "category": "colegios",
+          "label": "Colegios",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 5
+        },
+        {
+          "category": "mercados",
+          "label": "Mercados",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 2
+        },
+        {
+          "category": "polideportivos",
+          "label": "Polideportivos",
+          "count_200m": 0,
+          "count_500m": 1,
+          "count_1000m": 2
+        },
+        {
+          "category": "bibliotecas",
+          "label": "Bibliotecas",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 1
+        },
+        {
+          "category": "centros_mayores",
+          "label": "Centros mayores",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 1
+        },
+        {
+          "category": "servicios_sociales",
+          "label": "Servicios sociales",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 1
+        },
+        {
+          "category": "aparcamientos",
+          "label": "Aparcamientos",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        },
+        {
+          "category": "mercadillos",
+          "label": "Mercadillos",
           "count_200m": 0,
           "count_500m": 0,
           "count_1000m": 0
@@ -78393,6 +77919,463 @@
         {
           "category": "bibliotecas",
           "label": "Bibliotecas",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        }
+      ],
+      "vulnerabilidad_global": 5.44,
+      "vulnerabilidad_global_media_ciudad": 4.83,
+      "vulnerabilidad_esferas": [
+        {
+          "key": "bienestar",
+          "label": "Bienestar social",
+          "valor": 4.71,
+          "media_ciudad": 4.73
+        },
+        {
+          "key": "medio_ambiente",
+          "label": "Medio ambiente",
+          "valor": 4.17,
+          "media_ciudad": 4.76
+        },
+        {
+          "key": "educacion",
+          "label": "Educación y cultura",
+          "valor": 7.07,
+          "media_ciudad": 4.98
+        },
+        {
+          "key": "economia",
+          "label": "Economía y empleo",
+          "valor": 6.65,
+          "media_ciudad": 4.96
+        },
+        {
+          "key": "salud",
+          "label": "Salud",
+          "valor": 4.38,
+          "media_ciudad": 4.73
+        }
+      ],
+      "inspecciones_distrito_total": 186.0,
+      "inspecciones_ciudad_media": 200.9,
+      "inspecciones_top_epigrafes": [
+        {
+          "label": "Comercio menor prendas de vestir en establec. especializados",
+          "count": 66,
+          "share": 0.355
+        },
+        {
+          "label": "Complementos, bisuteria y artesania",
+          "count": 21,
+          "share": 0.113
+        },
+        {
+          "label": "Locutorios",
+          "count": 13,
+          "share": 0.07
+        },
+        {
+          "label": "Comercio al por menor de muebles",
+          "count": 12,
+          "share": 0.065
+        },
+        {
+          "label": "Comercio al por menor de juegos y juguetes",
+          "count": 9,
+          "share": 0.048
+        }
+      ],
+      "indicadores_distrito": [
+        {
+          "id": "locales_abiertos",
+          "label": "Locales abiertos",
+          "valor": 8182.0,
+          "media_ciudad": 6607.2
+        },
+        {
+          "id": "locales_cerrados",
+          "label": "Locales cerrados",
+          "valor": 4022.0,
+          "media_ciudad": 1786.1
+        },
+        {
+          "id": "tasa_paro",
+          "label": "Tasa de paro (%)",
+          "valor": 6.9,
+          "media_ciudad": 5.6
+        },
+        {
+          "id": "habitantes_distrito",
+          "label": "Habitantes",
+          "valor": 280685.0,
+          "media_ciudad": 167996.4
+        },
+        {
+          "id": "edad_media_distrito",
+          "label": "Edad media",
+          "valor": 43.38,
+          "media_ciudad": 44.2
+        },
+        {
+          "id": "indice_dependencia",
+          "label": "Índice de dependencia",
+          "valor": 0.45,
+          "media_ciudad": 0.5
+        },
+        {
+          "id": "proporcion_migrantes",
+          "label": "Proporción migrante",
+          "valor": 0.19,
+          "media_ciudad": 0.1
+        },
+        {
+          "id": "densidad_distrito",
+          "label": "Densidad del distrito",
+          "valor": 199.8,
+          "media_ciudad": 151.7
+        },
+        {
+          "id": "zonas_verdes_por_10k",
+          "label": "Zonas verdes por 10.000 hab.",
+          "valor": 255.76,
+          "media_ciudad": 163.3
+        },
+        {
+          "id": "mercados_municipales",
+          "label": "Mercados municipales",
+          "valor": 2.0,
+          "media_ciudad": 2.1
+        },
+        {
+          "id": "bibliotecas_municipales",
+          "label": "Bibliotecas municipales",
+          "valor": 2.0,
+          "media_ciudad": 1.6
+        },
+        {
+          "id": "centros_culturales_distrito",
+          "label": "Centros culturales",
+          "valor": 5.0,
+          "media_ciudad": 5.1
+        },
+        {
+          "id": "centros_deportivos_municipales",
+          "label": "Centros deportivos",
+          "valor": 3.0,
+          "media_ciudad": 3.9
+        },
+        {
+          "id": "instalaciones_deportivas_basicas",
+          "label": "Instalaciones deportivas básicas",
+          "valor": 35.0,
+          "media_ciudad": 24.0
+        },
+        {
+          "id": "centros_municipales_mayores",
+          "label": "Centros de mayores",
+          "valor": 27303.0,
+          "media_ciudad": 18565.0
+        },
+        {
+          "id": "apartamentos_municipales_mayores",
+          "label": "Apartamentos para mayores",
+          "valor": 0.0,
+          "media_ciudad": 0.1
+        },
+        {
+          "id": "socios_centros_mayores",
+          "label": "Personas socias centros mayores",
+          "valor": 27303.0,
+          "media_ciudad": 18565.0
+        },
+        {
+          "id": "valor_catastral",
+          "label": "Valor catastral medio (€)",
+          "valor": 64617.88,
+          "media_ciudad": 121796.8
+        }
+      ]
+    },
+    {
+      "listing_id": "162757",
+      "listing_url": "https://www.locales.es/madrid/venta/local162757#offerType=1&estateType=3&settlement=6773",
+      "card_title": "Local comercial en Venta en Travesía del Pinzón, Vista Alegre, Madrid",
+      "address_text": "Travesía del Pinzón, Vista Alegre, Madrid",
+      "operation": "venta",
+      "price_eur": 40000.0,
+      "price_per_m2_eur": 1333.3,
+      "area_m2": 30.0,
+      "lat_wgs84": 40.3918207,
+      "lon_wgs84": -3.7412937,
+      "section_key": "11081",
+      "district_code": "10",
+      "district_name": "Carabanchel",
+      "barrio_code": "140",
+      "barrio_name": "Vista Alegre",
+      "risk_score": 0.0773853389590338,
+      "risk_percentile": 0.5990491983437015,
+      "expected_survival_12m": 0.99242573283494,
+      "expected_survival_24m": 0.9825645552858089,
+      "opportunity_tier": "Intermedia",
+      "city_rank": 813,
+      "city_total_sections": 2461,
+      "district_rank": 20,
+      "district_total_sections": 182,
+      "barrio_rank": 3,
+      "barrio_total_sections": 34,
+      "renta_effective_eur": 11734.0,
+      "renta_reference_year": 2023.0,
+      "renta_granularity_used": "section",
+      "renta_outlier_adjusted": false,
+      "total_population_start": 2170.0,
+      "population_density_km2_start": 45386.8370066922,
+      "age_mean_start": 42.23041474654378,
+      "share_foreign_start": 0.3778801843317972,
+      "share_age_15_29_start": 0.2004608294930875,
+      "share_age_65_plus_start": 0.1612903225806451,
+      "metro_distance_m_start": 152.35403857724066,
+      "metro_access_count_500m_start": 7.0,
+      "metro_access_count_1000m_start": 14.0,
+      "metro_station_count_500m_start": 3.0,
+      "metro_station_count_1000m_start": 5.0,
+      "metro_nearest_name_start": "Ascensor 1",
+      "metro_nearest_station_name_start": "Carpetana",
+      "metro_access_names_500m_start": [
+        "Carabanchel",
+        "Vía Carpetana",
+        "Ascensor 1",
+        "Oca, 69",
+        "Oca, 43 (Esq. Eduardo Morales)",
+        "Ascensor 2"
+      ],
+      "metro_access_names_1000m_start": [
+        "Carabanchel",
+        "Alhambra",
+        "Vía Carpetana",
+        "Ascensor 1",
+        "General Ricardos",
+        "Oca, 69"
+      ],
+      "metro_station_names_500m_start": [
+        "Carabanchel",
+        "Carpetana",
+        "Vista Alegre"
+      ],
+      "metro_station_names_1000m_start": [
+        "Carabanchel",
+        "Laguna",
+        "Carpetana",
+        "Oporto",
+        "Vista Alegre"
+      ],
+      "avisos_barrio_per_1000_prev_year": 156.27839001461467,
+      "avisos_district_per_1000_prev_year": 158.68527438499913,
+      "top_avisos_barrio_categories": [
+        {
+          "rank": 1,
+          "label": "Retirada de elementos",
+          "count": 1937,
+          "share_of_zone": 0.24478705926955643
+        },
+        {
+          "rank": 2,
+          "label": "Limpieza y pintadas",
+          "count": 1745,
+          "share_of_zone": 0.22052318968785542
+        },
+        {
+          "rank": 3,
+          "label": "Cubos y contenedores",
+          "count": 1716,
+          "share_of_zone": 0.21685833438645266
+        }
+      ],
+      "top_avisos_district_categories": [
+        {
+          "rank": 1,
+          "label": "Retirada de elementos",
+          "count": 10721,
+          "share_of_zone": 0.24213474264290716
+        },
+        {
+          "rank": 2,
+          "label": "Limpieza y pintadas",
+          "count": 8975,
+          "share_of_zone": 0.2027011766831538
+        },
+        {
+          "rank": 3,
+          "label": "Cubos y contenedores",
+          "count": 8444,
+          "share_of_zone": 0.19070849425209477
+        }
+      ],
+      "section_local_count_start": 135.0,
+      "section_unique_activity_category_count_start": 25.0,
+      "section_turnover_rate_12m_start": 0.0,
+      "section_same_activity_category_share_start": 0.0074074074074074,
+      "best_activity_label": "Ocio y entretenimiento",
+      "best_activity_risk": 0.21740958907990784,
+      "best_activity_survival_24m": 0.9810356422326832,
+      "top_activities": [
+        {
+          "rank": 1,
+          "source_zone": "barrio",
+          "display_label": "Ocio y entretenimiento",
+          "web_supercategory": "Deporte y ocio",
+          "web_category": "Ocio y entretenimiento",
+          "event_rate": 0.05555555555555555,
+          "activity_risk": 0.21740958907990784,
+          "survival_12m": 0.9941101403749877,
+          "survival_24m": 0.9810356422326832,
+          "n_locales": 18,
+          "confidence_tier": "very_low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 2,
+          "source_zone": "barrio",
+          "display_label": "Servicios al consumidor",
+          "web_supercategory": "Servicios",
+          "web_category": "Servicios al consumidor",
+          "event_rate": 0.2926829268292683,
+          "activity_risk": 0.2929957575772788,
+          "survival_12m": 0.984401059550672,
+          "survival_24m": 0.9562744004461796,
+          "n_locales": 41,
+          "confidence_tier": "low",
+          "supported_for_stats": true
+        },
+        {
+          "rank": 3,
+          "source_zone": "barrio",
+          "display_label": "Educación infantil",
+          "web_supercategory": "Educación",
+          "web_category": "Educación infantil",
+          "event_rate": 0.0,
+          "activity_risk": 0.38392952310229456,
+          "survival_12m": 0.9955839057899902,
+          "survival_24m": 0.9888137356919875,
+          "n_locales": 9,
+          "confidence_tier": "very_low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 4,
+          "source_zone": "barrio",
+          "display_label": "Gasolinera y servicios automoción",
+          "web_supercategory": "Automoción",
+          "web_category": "Servicios automoción",
+          "event_rate": 0.0,
+          "activity_risk": 0.3862896058472286,
+          "survival_12m": 0.9955839057899902,
+          "survival_24m": 0.9888137356919875,
+          "n_locales": 1,
+          "confidence_tier": "very_low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 5,
+          "source_zone": "barrio",
+          "display_label": "Alojamiento turístico",
+          "web_supercategory": "Alojamiento",
+          "web_category": "Alojamiento turístico",
+          "event_rate": 0.0,
+          "activity_risk": 0.5252889433210213,
+          "survival_12m": 0.9969578017664377,
+          "survival_24m": 0.9922013470400567,
+          "n_locales": 3,
+          "confidence_tier": "very_low",
+          "supported_for_stats": false
+        }
+      ],
+      "facilities_tier": "Medias",
+      "facilities_200m": 2,
+      "facilities_500m": 9,
+      "facilities_1000m": 31,
+      "facilities_by_category": [
+        {
+          "category": "bicimad",
+          "label": "BiciMAD",
+          "count_200m": 1,
+          "count_500m": 3,
+          "count_1000m": 11
+        },
+        {
+          "category": "colegios",
+          "label": "Colegios",
+          "count_200m": 0,
+          "count_500m": 2,
+          "count_1000m": 4
+        },
+        {
+          "category": "instalaciones_deportivas",
+          "label": "Inst. deportivas",
+          "count_200m": 1,
+          "count_500m": 1,
+          "count_1000m": 4
+        },
+        {
+          "category": "servicios_sociales",
+          "label": "Servicios sociales",
+          "count_200m": 0,
+          "count_500m": 2,
+          "count_1000m": 4
+        },
+        {
+          "category": "parques",
+          "label": "Parques",
+          "count_200m": 0,
+          "count_500m": 1,
+          "count_1000m": 2
+        },
+        {
+          "category": "polideportivos",
+          "label": "Polideportivos",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 2
+        },
+        {
+          "category": "bibliotecas",
+          "label": "Bibliotecas",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 1
+        },
+        {
+          "category": "centros_culturales",
+          "label": "Centros culturales",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 1
+        },
+        {
+          "category": "centros_mayores",
+          "label": "Centros mayores",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 1
+        },
+        {
+          "category": "mercados",
+          "label": "Mercados",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 1
+        },
+        {
+          "category": "aparcamientos",
+          "label": "Aparcamientos",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        },
+        {
+          "category": "mercadillos",
+          "label": "Mercadillos",
           "count_200m": 0,
           "count_500m": 0,
           "count_1000m": 0
@@ -87729,47 +87712,47 @@
     {
       "listing_id": "106097",
       "listing_url": "https://www.locales.es/madrid/venta/local106097#offerType=1&estateType=3&settlement=6773",
-      "card_title": "Local comercial en Venta en Calle de San Hermenegildo, Universidad, Madrid",
-      "address_text": "Calle de San Hermenegildo, Universidad, Madrid",
+      "card_title": "Local comercial en Venta en Calle de San Andrés, Universidad, Madrid",
+      "address_text": "Calle de San Andrés, Universidad, Madrid",
       "operation": "venta",
       "price_eur": 650000.0,
       "price_per_m2_eur": 7831.3,
       "area_m2": 83.0,
-      "lat_wgs84": 40.4283348,
-      "lon_wgs84": -3.7078805,
-      "section_key": "01103",
+      "lat_wgs84": 40.4272784,
+      "lon_wgs84": -3.7036106,
+      "section_key": "01093",
       "district_code": "10",
       "district_name": "Centro",
-      "barrio_code": "050",
+      "barrio_code": "150",
       "barrio_name": "Universidad",
-      "risk_score": -0.3868916072973182,
-      "risk_percentile": 0.3658378632965049,
-      "expected_survival_12m": 0.9882156535402141,
-      "expected_survival_24m": 0.973135659346784,
-      "opportunity_tier": "Solida",
-      "city_rank": 336,
+      "risk_score": -0.17494669865036375,
+      "risk_percentile": 0.48033636203073177,
+      "expected_survival_12m": 0.9895812856300373,
+      "expected_survival_24m": 0.9750227066303361,
+      "opportunity_tier": "Intermedia",
+      "city_rank": 516,
       "city_total_sections": 2461,
-      "district_rank": 25,
+      "district_rank": 38,
       "district_total_sections": 110,
-      "barrio_rank": 10,
+      "barrio_rank": 16,
       "barrio_total_sections": 27,
-      "renta_effective_eur": 30158.0,
+      "renta_effective_eur": 20706.0,
       "renta_reference_year": 2023.0,
       "renta_granularity_used": "section",
       "renta_outlier_adjusted": false,
-      "total_population_start": 1419.0,
-      "population_density_km2_start": 39803.93990277406,
-      "age_mean_start": 47.353770260747005,
-      "share_foreign_start": 0.1888653981677237,
-      "share_age_15_29_start": 0.1684284707540521,
-      "share_age_65_plus_start": 0.2452431289640592,
-      "metro_distance_m_start": 150.41870230176713,
-      "metro_access_count_500m_start": 8.0,
-      "metro_access_count_1000m_start": 48.0,
-      "metro_station_count_500m_start": 3.0,
-      "metro_station_count_1000m_start": 12.0,
-      "metro_nearest_name_start": "Alberto Aguilera",
-      "metro_nearest_station_name_start": "San Bernardo",
+      "total_population_start": 1593.0,
+      "population_density_km2_start": 56806.79200390773,
+      "age_mean_start": 42.3954802259887,
+      "share_foreign_start": 0.3383553044569993,
+      "share_age_15_29_start": 0.2121782799748901,
+      "share_age_65_plus_start": 0.1343377275580665,
+      "metro_distance_m_start": 157.11739654622843,
+      "metro_access_count_500m_start": 12.0,
+      "metro_access_count_1000m_start": 50.0,
+      "metro_station_count_500m_start": 5.0,
+      "metro_station_count_1000m_start": 13.0,
+      "metro_nearest_name_start": "Fuencarral",
+      "metro_nearest_station_name_start": "Tribunal",
       "metro_access_names_500m_start": [
         "Ministerio de Justicia",
         "Noviciado",
@@ -87783,21 +87766,23 @@
         "Princesa",
         "Coliseum",
         "Plaza de España",
-        "Alberto Aguilera, 70",
-        "Guzmán el Bueno"
+        "Gran Vía",
+        "Leganitos"
       ],
       "metro_station_names_500m_start": [
         "Noviciado",
         "San Bernardo",
-        "Bilbao"
+        "Bilbao",
+        "Alonso Martínez",
+        "Tribunal"
       ],
       "metro_station_names_1000m_start": [
         "Plaza de España",
         "Ventura Rodríguez",
-        "Argüelles",
         "Santo Domingo",
         "Noviciado",
-        "Callao"
+        "Callao",
+        "San Bernardo"
       ],
       "avisos_barrio_per_1000_prev_year": 328.29985973917456,
       "avisos_district_per_1000_prev_year": 380.94703455244615,
@@ -87846,8 +87831,8 @@
       "section_turnover_rate_12m_start": 0.0,
       "section_same_activity_category_share_start": 0.0512820512820512,
       "best_activity_label": "Ocio y entretenimiento",
-      "best_activity_risk": 0.22239812295214664,
-      "best_activity_survival_24m": 0.9810356422326832,
+      "best_activity_risk": 0.19825143160702854,
+      "best_activity_survival_24m": 0.9869099011279766,
       "top_activities": [
         {
           "rank": 1,
@@ -87856,9 +87841,9 @@
           "web_supercategory": "Deporte y ocio",
           "web_category": "Ocio y entretenimiento",
           "event_rate": 0.25,
-          "activity_risk": 0.22239812295214664,
-          "survival_12m": 0.9941101403749877,
-          "survival_24m": 0.9810356422326832,
+          "activity_risk": 0.19825143160702854,
+          "survival_12m": 0.9946030811500344,
+          "survival_24m": 0.9869099011279766,
           "n_locales": 12,
           "confidence_tier": "very_low",
           "supported_for_stats": false
@@ -87870,7 +87855,7 @@
           "web_supercategory": "Servicios",
           "web_category": "Servicios al consumidor",
           "event_rate": 0.3157894736842105,
-          "activity_risk": 0.4377019624545485,
+          "activity_risk": 0.3951302650029567,
           "survival_12m": 0.984401059550672,
           "survival_24m": 0.9562744004461796,
           "n_locales": 19,
@@ -87880,124 +87865,124 @@
         {
           "rank": 3,
           "source_zone": "barrio",
-          "display_label": "Finanzas y seguros",
-          "web_supercategory": "Finanzas",
-          "web_category": "Finanzas y seguros",
-          "event_rate": 0.5384615384615384,
-          "activity_risk": 0.4652649158891386,
-          "survival_12m": 0.9806673209028459,
-          "survival_24m": 0.9504241489478903,
-          "n_locales": 39,
+          "display_label": "Gasolinera y servicios automoción",
+          "web_supercategory": "Automoción",
+          "web_category": "Servicios automoción",
+          "event_rate": 0.0,
+          "activity_risk": 0.45905925866971414,
+          "survival_12m": 0.9966601178781925,
+          "survival_24m": 0.9862641098871209,
+          "n_locales": 1,
           "confidence_tier": "very_low",
           "supported_for_stats": false
         },
         {
           "rank": 4,
           "source_zone": "barrio",
-          "display_label": "Ocio nocturno",
+          "display_label": "Bar y cafetería",
           "web_supercategory": "Hostelería",
-          "web_category": "Ocio nocturno",
-          "event_rate": 0.13636363636363635,
-          "activity_risk": 0.4825486593546996,
-          "survival_12m": 0.9907752698724239,
-          "survival_24m": 0.9710481309552895,
-          "n_locales": 22,
-          "confidence_tier": "very_low",
-          "supported_for_stats": false
+          "web_category": "Bar y cafetería",
+          "event_rate": 0.05333333333333334,
+          "activity_risk": 0.5142952462850541,
+          "survival_12m": 0.9935236973800412,
+          "survival_24m": 0.9794927145169995,
+          "n_locales": 300,
+          "confidence_tier": "medium",
+          "supported_for_stats": true
         },
         {
           "rank": 5,
           "source_zone": "barrio",
-          "display_label": "Servicios creativos y tecnología",
-          "web_supercategory": "Servicios",
-          "web_category": "Servicios profesionales",
-          "event_rate": 0.6,
-          "activity_risk": 0.4766524185188521,
-          "survival_12m": 0.988815854017463,
-          "survival_24m": 0.9685452162516383,
-          "n_locales": 10,
+          "display_label": "Mascotas",
+          "web_supercategory": "Retail especializado",
+          "web_category": "Mascotas",
+          "event_rate": 1.0,
+          "activity_risk": 0.5565351276680537,
+          "survival_12m": 0.9763540031397174,
+          "survival_24m": 0.9384715729970649,
+          "n_locales": 1,
           "confidence_tier": "very_low",
           "supported_for_stats": false
         }
       ],
       "facilities_tier": "Abundantes",
-      "facilities_200m": 2,
-      "facilities_500m": 16,
-      "facilities_1000m": 69,
+      "facilities_200m": 6,
+      "facilities_500m": 20,
+      "facilities_1000m": 63,
       "facilities_by_category": [
         {
           "category": "bicimad",
           "label": "BiciMAD",
-          "count_200m": 2,
-          "count_500m": 9,
-          "count_1000m": 34
+          "count_200m": 4,
+          "count_500m": 10,
+          "count_1000m": 37
         },
         {
           "category": "parques",
           "label": "Parques",
           "count_200m": 0,
           "count_500m": 1,
-          "count_1000m": 7
-        },
-        {
-          "category": "colegios",
-          "label": "Colegios",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 5
+          "count_1000m": 6
         },
         {
           "category": "mercados",
           "label": "Mercados",
           "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 5
+          "count_500m": 1,
+          "count_1000m": 4
         },
         {
           "category": "bibliotecas",
           "label": "Bibliotecas",
           "count_200m": 0,
           "count_500m": 1,
-          "count_1000m": 4
-        },
-        {
-          "category": "centros_culturales",
-          "label": "Centros culturales",
-          "count_200m": 0,
-          "count_500m": 2,
-          "count_1000m": 3
-        },
-        {
-          "category": "centros_mayores",
-          "label": "Centros mayores",
-          "count_200m": 0,
-          "count_500m": 0,
           "count_1000m": 3
         },
         {
           "category": "instalaciones_deportivas",
           "label": "Inst. deportivas",
           "count_200m": 0,
-          "count_500m": 1,
+          "count_500m": 0,
           "count_1000m": 3
+        },
+        {
+          "category": "centros_culturales",
+          "label": "Centros culturales",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 2
+        },
+        {
+          "category": "centros_mayores",
+          "label": "Centros mayores",
+          "count_200m": 0,
+          "count_500m": 1,
+          "count_1000m": 2
+        },
+        {
+          "category": "colegios",
+          "label": "Colegios",
+          "count_200m": 1,
+          "count_500m": 2,
+          "count_1000m": 2
         },
         {
           "category": "polideportivos",
           "label": "Polideportivos",
           "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 2
-        },
-        {
-          "category": "servicios_sociales",
-          "label": "Servicios sociales",
-          "count_200m": 0,
-          "count_500m": 0,
+          "count_500m": 2,
           "count_1000m": 2
         },
         {
           "category": "mercadillos",
           "label": "Mercadillos",
+          "count_200m": 1,
+          "count_500m": 1,
+          "count_1000m": 1
+        },
+        {
+          "category": "servicios_sociales",
+          "label": "Servicios sociales",
           "count_200m": 0,
           "count_500m": 1,
           "count_1000m": 1
@@ -92310,457 +92295,6 @@
       ]
     },
     {
-      "listing_id": "171286",
-      "listing_url": "https://www.locales.es/madrid/venta/local171286#offerType=1&estateType=3&settlement=6773",
-      "card_title": "Local comercial en Venta en Calle de Gustavo Fernández Balbuena, Ciudad Jardín, Madrid",
-      "address_text": "Calle de Gustavo Fernández Balbuena, Ciudad Jardín, Madrid",
-      "operation": "venta",
-      "price_eur": 495000.0,
-      "price_per_m2_eur": 5500.0,
-      "area_m2": 90.0,
-      "lat_wgs84": 40.451602,
-      "lon_wgs84": -3.6690206,
-      "section_key": "05038",
-      "district_code": "50",
-      "district_name": "Chamartin",
-      "barrio_code": "030",
-      "barrio_name": "Ciudad Jardin",
-      "risk_score": -0.8605875050501723,
-      "risk_percentile": 0.17156622250132464,
-      "expected_survival_12m": 0.9865382725754152,
-      "expected_survival_24m": 0.9694043504777394,
-      "opportunity_tier": "Alta",
-      "city_rank": 80,
-      "city_total_sections": 2461,
-      "district_rank": 20,
-      "district_total_sections": 101,
-      "barrio_rank": 1,
-      "barrio_total_sections": 13,
-      "renta_effective_eur": 33546.0,
-      "renta_reference_year": 2023.0,
-      "renta_granularity_used": "section",
-      "renta_outlier_adjusted": false,
-      "total_population_start": 1914.0,
-      "population_density_km2_start": 8103.949797001991,
-      "age_mean_start": 43.07993730407524,
-      "share_foreign_start": 0.106060606060606,
-      "share_age_15_29_start": 0.177115987460815,
-      "share_age_65_plus_start": 0.2079414838035527,
-      "metro_distance_m_start": 335.9104015370743,
-      "metro_access_count_500m_start": 1.0,
-      "metro_access_count_1000m_start": 13.0,
-      "metro_station_count_500m_start": 1.0,
-      "metro_station_count_1000m_start": 6.0,
-      "metro_nearest_name_start": "Clara del Rey",
-      "metro_nearest_station_name_start": "Alfonso XIII",
-      "metro_access_names_500m_start": [
-        "Clara del Rey"
-      ],
-      "metro_access_names_1000m_start": [
-        "Cruz del Rayo",
-        "Concha Espina",
-        "Plaza Prosperidad",
-        "Clara del Rey",
-        "Ramón y Cajal",
-        "Avda. de la Paz"
-      ],
-      "metro_station_names_500m_start": [
-        "Alfonso XIII"
-      ],
-      "metro_station_names_1000m_start": [
-        "Cruz del Rayo",
-        "Concha Espina",
-        "Prosperidad",
-        "Alfonso XIII",
-        "Avenida de la Paz",
-        "Colombia"
-      ],
-      "avisos_barrio_per_1000_prev_year": 206.94952063138936,
-      "avisos_district_per_1000_prev_year": 171.47514701622737,
-      "top_avisos_barrio_categories": [
-        {
-          "rank": 1,
-          "label": "Cubos y contenedores",
-          "count": 1202,
-          "share_of_zone": 0.30765293063731763
-        },
-        {
-          "rank": 2,
-          "label": "Retirada de elementos",
-          "count": 869,
-          "share_of_zone": 0.22242129511133862
-        },
-        {
-          "rank": 3,
-          "label": "Limpieza y pintadas",
-          "count": 470,
-          "share_of_zone": 0.12029690299462503
-        }
-      ],
-      "top_avisos_district_categories": [
-        {
-          "rank": 1,
-          "label": "Cubos y contenedores",
-          "count": 7329,
-          "share_of_zone": 0.2879085480829667
-        },
-        {
-          "rank": 2,
-          "label": "Retirada de elementos",
-          "count": 5282,
-          "share_of_zone": 0.20749528598365807
-        },
-        {
-          "rank": 3,
-          "label": "Limpieza y pintadas",
-          "count": 2750,
-          "share_of_zone": 0.10802954116907605
-        }
-      ],
-      "section_local_count_start": 59.0,
-      "section_unique_activity_category_count_start": 14.0,
-      "section_turnover_rate_12m_start": 0.0,
-      "section_same_activity_category_share_start": 0.10169491525423724,
-      "best_activity_label": "Servicios al consumidor",
-      "best_activity_risk": 0.490886028023165,
-      "best_activity_survival_24m": 0.9504241489478903,
-      "top_activities": [
-        {
-          "rank": 1,
-          "source_zone": "district",
-          "display_label": "Servicios al consumidor",
-          "web_supercategory": "Servicios",
-          "web_category": "Servicios al consumidor",
-          "event_rate": 0.38095238095238093,
-          "activity_risk": 0.490886028023165,
-          "survival_12m": 0.9806673209028459,
-          "survival_24m": 0.9504241489478903,
-          "n_locales": 21,
-          "confidence_tier": "low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 2,
-          "source_zone": "district",
-          "display_label": "Ocio y entretenimiento",
-          "web_supercategory": "Deporte y ocio",
-          "web_category": "Ocio y entretenimiento",
-          "event_rate": 0.18518518518518517,
-          "activity_risk": 0.5134949356572925,
-          "survival_12m": 0.9907752698724239,
-          "survival_24m": 0.9710481309552895,
-          "n_locales": 54,
-          "confidence_tier": "low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 3,
-          "source_zone": "district",
-          "display_label": "Finanzas y seguros",
-          "web_supercategory": "Finanzas",
-          "web_category": "Finanzas y seguros",
-          "event_rate": 0.354014598540146,
-          "activity_risk": 0.5889161469142847,
-          "survival_12m": 0.9763540031397174,
-          "survival_24m": 0.9384715729970649,
-          "n_locales": 274,
-          "confidence_tier": "high",
-          "supported_for_stats": true
-        },
-        {
-          "rank": 4,
-          "source_zone": "city",
-          "display_label": "Mascotas",
-          "web_supercategory": "Retail especializado",
-          "web_category": "Mascotas",
-          "event_rate": 0.2857142857142857,
-          "activity_risk": 0.594020459687148,
-          "survival_12m": 0.9763540031397174,
-          "survival_24m": 0.9384715729970649,
-          "n_locales": 7,
-          "confidence_tier": "very_low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 5,
-          "source_zone": "district",
-          "display_label": "Clínicas y consultas",
-          "web_supercategory": "Salud y bienestar",
-          "web_category": "Clínicas y consultas",
-          "event_rate": 0.13839285714285715,
-          "activity_risk": 0.6092573230201617,
-          "survival_12m": 0.9912676609105181,
-          "survival_24m": 0.9759217456734387,
-          "n_locales": 224,
-          "confidence_tier": "high",
-          "supported_for_stats": true
-        }
-      ],
-      "facilities_tier": "Medias",
-      "facilities_200m": 1,
-      "facilities_500m": 7,
-      "facilities_1000m": 41,
-      "facilities_by_category": [
-        {
-          "category": "instalaciones_deportivas",
-          "label": "Inst. deportivas",
-          "count_200m": 0,
-          "count_500m": 3,
-          "count_1000m": 12
-        },
-        {
-          "category": "bicimad",
-          "label": "BiciMAD",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 11
-        },
-        {
-          "category": "colegios",
-          "label": "Colegios",
-          "count_200m": 1,
-          "count_500m": 1,
-          "count_1000m": 4
-        },
-        {
-          "category": "parques",
-          "label": "Parques",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 4
-        },
-        {
-          "category": "centros_culturales",
-          "label": "Centros culturales",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 2
-        },
-        {
-          "category": "centros_mayores",
-          "label": "Centros mayores",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 2
-        },
-        {
-          "category": "mercados",
-          "label": "Mercados",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 2
-        },
-        {
-          "category": "polideportivos",
-          "label": "Polideportivos",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 2
-        },
-        {
-          "category": "bibliotecas",
-          "label": "Bibliotecas",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 1
-        },
-        {
-          "category": "servicios_sociales",
-          "label": "Servicios sociales",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 1
-        },
-        {
-          "category": "aparcamientos",
-          "label": "Aparcamientos",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        },
-        {
-          "category": "mercadillos",
-          "label": "Mercadillos",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        }
-      ],
-      "vulnerabilidad_global": 3.97,
-      "vulnerabilidad_global_media_ciudad": 4.83,
-      "vulnerabilidad_esferas": [
-        {
-          "key": "bienestar",
-          "label": "Bienestar social",
-          "valor": 4.36,
-          "media_ciudad": 4.73
-        },
-        {
-          "key": "medio_ambiente",
-          "label": "Medio ambiente",
-          "valor": 5.43,
-          "media_ciudad": 4.76
-        },
-        {
-          "key": "educacion",
-          "label": "Educación y cultura",
-          "valor": 2.93,
-          "media_ciudad": 4.98
-        },
-        {
-          "key": "economia",
-          "label": "Economía y empleo",
-          "valor": 2.78,
-          "media_ciudad": 4.96
-        },
-        {
-          "key": "salud",
-          "label": "Salud",
-          "valor": 4.76,
-          "media_ciudad": 4.73
-        }
-      ],
-      "inspecciones_distrito_total": 156.0,
-      "inspecciones_ciudad_media": 200.9,
-      "inspecciones_top_epigrafes": [
-        {
-          "label": "Comercio menor prendas de vestir en establec. especializados",
-          "count": 40,
-          "share": 0.256
-        },
-        {
-          "label": "Comercio al por menor de muebles",
-          "count": 34,
-          "share": 0.218
-        },
-        {
-          "label": "Com.men.estab.no espec.c/predomin.alim.y beb.(autoservicio)",
-          "count": 10,
-          "share": 0.064
-        },
-        {
-          "label": "Comercio menor productos precio unico, bazares y asimilables",
-          "count": 9,
-          "share": 0.058
-        },
-        {
-          "label": "Otro comercio al por menor del articulos nuevos n.c.o.p.",
-          "count": 8,
-          "share": 0.051
-        }
-      ],
-      "indicadores_distrito": [
-        {
-          "id": "locales_abiertos",
-          "label": "Locales abiertos",
-          "valor": 8863.0,
-          "media_ciudad": 6607.2
-        },
-        {
-          "id": "locales_cerrados",
-          "label": "Locales cerrados",
-          "valor": 1027.0,
-          "media_ciudad": 1786.1
-        },
-        {
-          "id": "tasa_paro",
-          "label": "Tasa de paro (%)",
-          "valor": 4.05,
-          "media_ciudad": 5.6
-        },
-        {
-          "id": "habitantes_distrito",
-          "label": "Habitantes",
-          "valor": 149654.0,
-          "media_ciudad": 167996.4
-        },
-        {
-          "id": "edad_media_distrito",
-          "label": "Edad media",
-          "valor": 45.58,
-          "media_ciudad": 44.2
-        },
-        {
-          "id": "indice_dependencia",
-          "label": "Índice de dependencia",
-          "valor": 0.59,
-          "media_ciudad": 0.5
-        },
-        {
-          "id": "proporcion_migrantes",
-          "label": "Proporción migrante",
-          "valor": 0.07,
-          "media_ciudad": 0.1
-        },
-        {
-          "id": "densidad_distrito",
-          "label": "Densidad del distrito",
-          "valor": 163.1,
-          "media_ciudad": 151.7
-        },
-        {
-          "id": "zonas_verdes_por_10k",
-          "label": "Zonas verdes por 10.000 hab.",
-          "valor": 56.09,
-          "media_ciudad": 163.3
-        },
-        {
-          "id": "mercados_municipales",
-          "label": "Mercados municipales",
-          "valor": 3.0,
-          "media_ciudad": 2.1
-        },
-        {
-          "id": "bibliotecas_municipales",
-          "label": "Bibliotecas municipales",
-          "valor": 2.0,
-          "media_ciudad": 1.6
-        },
-        {
-          "id": "centros_culturales_distrito",
-          "label": "Centros culturales",
-          "valor": 2.0,
-          "media_ciudad": 5.1
-        },
-        {
-          "id": "centros_deportivos_municipales",
-          "label": "Centros deportivos",
-          "valor": 2.0,
-          "media_ciudad": 3.9
-        },
-        {
-          "id": "instalaciones_deportivas_basicas",
-          "label": "Instalaciones deportivas básicas",
-          "valor": 17.0,
-          "media_ciudad": 24.0
-        },
-        {
-          "id": "centros_municipales_mayores",
-          "label": "Centros de mayores",
-          "valor": 13970.0,
-          "media_ciudad": 18565.0
-        },
-        {
-          "id": "apartamentos_municipales_mayores",
-          "label": "Apartamentos para mayores",
-          "valor": 0.0,
-          "media_ciudad": 0.1
-        },
-        {
-          "id": "socios_centros_mayores",
-          "label": "Personas socias centros mayores",
-          "valor": 13970.0,
-          "media_ciudad": 18565.0
-        },
-        {
-          "id": "valor_catastral",
-          "label": "Valor catastral medio (€)",
-          "valor": 205686.39,
-          "media_ciudad": 121796.8
-        }
-      ]
-    },
-    {
       "listing_id": "172321",
       "listing_url": "https://www.locales.es/madrid/venta/local172321#offerType=1&estateType=3&settlement=6773",
       "card_title": "Local comercial en Venta en calle de rafael herrera, Castilla, Madrid",
@@ -93479,6 +93013,459 @@
           "label": "Servicios sociales",
           "count_200m": 0,
           "count_500m": 0,
+          "count_1000m": 1
+        },
+        {
+          "category": "aparcamientos",
+          "label": "Aparcamientos",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        },
+        {
+          "category": "mercadillos",
+          "label": "Mercadillos",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        }
+      ],
+      "vulnerabilidad_global": 3.97,
+      "vulnerabilidad_global_media_ciudad": 4.83,
+      "vulnerabilidad_esferas": [
+        {
+          "key": "bienestar",
+          "label": "Bienestar social",
+          "valor": 4.36,
+          "media_ciudad": 4.73
+        },
+        {
+          "key": "medio_ambiente",
+          "label": "Medio ambiente",
+          "valor": 5.43,
+          "media_ciudad": 4.76
+        },
+        {
+          "key": "educacion",
+          "label": "Educación y cultura",
+          "valor": 2.93,
+          "media_ciudad": 4.98
+        },
+        {
+          "key": "economia",
+          "label": "Economía y empleo",
+          "valor": 2.78,
+          "media_ciudad": 4.96
+        },
+        {
+          "key": "salud",
+          "label": "Salud",
+          "valor": 4.76,
+          "media_ciudad": 4.73
+        }
+      ],
+      "inspecciones_distrito_total": 156.0,
+      "inspecciones_ciudad_media": 200.9,
+      "inspecciones_top_epigrafes": [
+        {
+          "label": "Comercio menor prendas de vestir en establec. especializados",
+          "count": 40,
+          "share": 0.256
+        },
+        {
+          "label": "Comercio al por menor de muebles",
+          "count": 34,
+          "share": 0.218
+        },
+        {
+          "label": "Com.men.estab.no espec.c/predomin.alim.y beb.(autoservicio)",
+          "count": 10,
+          "share": 0.064
+        },
+        {
+          "label": "Comercio menor productos precio unico, bazares y asimilables",
+          "count": 9,
+          "share": 0.058
+        },
+        {
+          "label": "Otro comercio al por menor del articulos nuevos n.c.o.p.",
+          "count": 8,
+          "share": 0.051
+        }
+      ],
+      "indicadores_distrito": [
+        {
+          "id": "locales_abiertos",
+          "label": "Locales abiertos",
+          "valor": 8863.0,
+          "media_ciudad": 6607.2
+        },
+        {
+          "id": "locales_cerrados",
+          "label": "Locales cerrados",
+          "valor": 1027.0,
+          "media_ciudad": 1786.1
+        },
+        {
+          "id": "tasa_paro",
+          "label": "Tasa de paro (%)",
+          "valor": 4.05,
+          "media_ciudad": 5.6
+        },
+        {
+          "id": "habitantes_distrito",
+          "label": "Habitantes",
+          "valor": 149654.0,
+          "media_ciudad": 167996.4
+        },
+        {
+          "id": "edad_media_distrito",
+          "label": "Edad media",
+          "valor": 45.58,
+          "media_ciudad": 44.2
+        },
+        {
+          "id": "indice_dependencia",
+          "label": "Índice de dependencia",
+          "valor": 0.59,
+          "media_ciudad": 0.5
+        },
+        {
+          "id": "proporcion_migrantes",
+          "label": "Proporción migrante",
+          "valor": 0.07,
+          "media_ciudad": 0.1
+        },
+        {
+          "id": "densidad_distrito",
+          "label": "Densidad del distrito",
+          "valor": 163.1,
+          "media_ciudad": 151.7
+        },
+        {
+          "id": "zonas_verdes_por_10k",
+          "label": "Zonas verdes por 10.000 hab.",
+          "valor": 56.09,
+          "media_ciudad": 163.3
+        },
+        {
+          "id": "mercados_municipales",
+          "label": "Mercados municipales",
+          "valor": 3.0,
+          "media_ciudad": 2.1
+        },
+        {
+          "id": "bibliotecas_municipales",
+          "label": "Bibliotecas municipales",
+          "valor": 2.0,
+          "media_ciudad": 1.6
+        },
+        {
+          "id": "centros_culturales_distrito",
+          "label": "Centros culturales",
+          "valor": 2.0,
+          "media_ciudad": 5.1
+        },
+        {
+          "id": "centros_deportivos_municipales",
+          "label": "Centros deportivos",
+          "valor": 2.0,
+          "media_ciudad": 3.9
+        },
+        {
+          "id": "instalaciones_deportivas_basicas",
+          "label": "Instalaciones deportivas básicas",
+          "valor": 17.0,
+          "media_ciudad": 24.0
+        },
+        {
+          "id": "centros_municipales_mayores",
+          "label": "Centros de mayores",
+          "valor": 13970.0,
+          "media_ciudad": 18565.0
+        },
+        {
+          "id": "apartamentos_municipales_mayores",
+          "label": "Apartamentos para mayores",
+          "valor": 0.0,
+          "media_ciudad": 0.1
+        },
+        {
+          "id": "socios_centros_mayores",
+          "label": "Personas socias centros mayores",
+          "valor": 13970.0,
+          "media_ciudad": 18565.0
+        },
+        {
+          "id": "valor_catastral",
+          "label": "Valor catastral medio (€)",
+          "valor": 205686.39,
+          "media_ciudad": 121796.8
+        }
+      ]
+    },
+    {
+      "listing_id": "171286",
+      "listing_url": "https://www.locales.es/madrid/venta/local171286#offerType=1&estateType=3&settlement=6773",
+      "card_title": "Local comercial en Venta en Calle de Sánchez Pacheco, Ciudad Jardín, Madrid",
+      "address_text": "Calle de Sánchez Pacheco, Ciudad Jardín, Madrid",
+      "operation": "venta",
+      "price_eur": 495000.0,
+      "price_per_m2_eur": 5500.0,
+      "area_m2": 90.0,
+      "lat_wgs84": 40.4475874,
+      "lon_wgs84": -3.6722494,
+      "section_key": "05040",
+      "district_code": "50",
+      "district_name": "Chamartín",
+      "barrio_code": "530",
+      "barrio_name": "Ciudad Jardín",
+      "risk_score": 0.3172957869632047,
+      "risk_percentile": 0.6889485252271523,
+      "expected_survival_12m": 0.9761623325453113,
+      "expected_survival_24m": 0.9623252051311684,
+      "opportunity_tier": "Intermedia",
+      "city_rank": 1114,
+      "city_total_sections": 2461,
+      "district_rank": 89,
+      "district_total_sections": 101,
+      "barrio_rank": 13,
+      "barrio_total_sections": 13,
+      "renta_effective_eur": 22297.0,
+      "renta_reference_year": 2023.0,
+      "renta_granularity_used": "section",
+      "renta_outlier_adjusted": false,
+      "total_population_start": 718.0,
+      "population_density_km2_start": 59040.15328848196,
+      "age_mean_start": 45.89554317548747,
+      "share_foreign_start": 0.1142061281337047,
+      "share_age_15_29_start": 0.1420612813370473,
+      "share_age_65_plus_start": 0.2534818941504178,
+      "metro_distance_m_start": 344.6207103669658,
+      "metro_access_count_500m_start": 2.0,
+      "metro_access_count_1000m_start": 11.0,
+      "metro_station_count_500m_start": 2.0,
+      "metro_station_count_1000m_start": 7.0,
+      "metro_nearest_name_start": "Clara del Rey",
+      "metro_nearest_station_name_start": "Alfonso XIII",
+      "metro_access_names_500m_start": [
+        "Plaza Prosperidad",
+        "Clara del Rey"
+      ],
+      "metro_access_names_1000m_start": [
+        "Metro Cruz del Rayo",
+        "Cruz del Rayo",
+        "Concha Espina",
+        "Plaza Prosperidad",
+        "Clara del Rey",
+        "Avda. de América"
+      ],
+      "metro_station_names_500m_start": [
+        "Prosperidad",
+        "Alfonso XIII"
+      ],
+      "metro_station_names_1000m_start": [
+        "Cruz del Rayo",
+        "Concha Espina",
+        "Avenida de América",
+        "Prosperidad",
+        "Alfonso XIII",
+        "Cartagena"
+      ],
+      "avisos_barrio_per_1000_prev_year": 206.94952063138936,
+      "avisos_district_per_1000_prev_year": 171.47514701622737,
+      "top_avisos_barrio_categories": [
+        {
+          "rank": 1,
+          "label": "Cubos y contenedores",
+          "count": 1202,
+          "share_of_zone": 0.30765293063731763
+        },
+        {
+          "rank": 2,
+          "label": "Retirada de elementos",
+          "count": 869,
+          "share_of_zone": 0.22242129511133862
+        },
+        {
+          "rank": 3,
+          "label": "Limpieza y pintadas",
+          "count": 470,
+          "share_of_zone": 0.12029690299462503
+        }
+      ],
+      "top_avisos_district_categories": [
+        {
+          "rank": 1,
+          "label": "Cubos y contenedores",
+          "count": 7329,
+          "share_of_zone": 0.2879085480829667
+        },
+        {
+          "rank": 2,
+          "label": "Retirada de elementos",
+          "count": 5282,
+          "share_of_zone": 0.20749528598365807
+        },
+        {
+          "rank": 3,
+          "label": "Limpieza y pintadas",
+          "count": 2750,
+          "share_of_zone": 0.10802954116907605
+        }
+      ],
+      "section_local_count_start": 41.0,
+      "section_unique_activity_category_count_start": 17.0,
+      "section_turnover_rate_12m_start": 0.0,
+      "section_same_activity_category_share_start": 0.048780487804878,
+      "best_activity_label": "Ocio nocturno",
+      "best_activity_risk": 0.48328250783448395,
+      "best_activity_survival_24m": 0.9710481309552895,
+      "top_activities": [
+        {
+          "rank": 1,
+          "source_zone": "district",
+          "display_label": "Ocio nocturno",
+          "web_supercategory": "Hostelería",
+          "web_category": "Ocio nocturno",
+          "event_rate": 0.15,
+          "activity_risk": 0.48328250783448395,
+          "survival_12m": 0.9907752698724239,
+          "survival_24m": 0.9710481309552895,
+          "n_locales": 20,
+          "confidence_tier": "low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 2,
+          "source_zone": "district",
+          "display_label": "Finanzas y seguros",
+          "web_supercategory": "Finanzas",
+          "web_category": "Finanzas y seguros",
+          "event_rate": 0.354014598540146,
+          "activity_risk": 0.5681576103813033,
+          "survival_12m": 0.9763540031397174,
+          "survival_24m": 0.9384715729970649,
+          "n_locales": 274,
+          "confidence_tier": "high",
+          "supported_for_stats": true
+        },
+        {
+          "rank": 3,
+          "source_zone": "district",
+          "display_label": "Restaurante",
+          "web_supercategory": "Hostelería",
+          "web_category": "Restauración",
+          "event_rate": 0.041916167664670656,
+          "activity_risk": 0.5303452899020065,
+          "survival_12m": 0.988815854017463,
+          "survival_24m": 0.9685452162516383,
+          "n_locales": 167,
+          "confidence_tier": "low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 4,
+          "source_zone": "district",
+          "display_label": "Servicios creativos y tecnología",
+          "web_supercategory": "Servicios",
+          "web_category": "Servicios profesionales",
+          "event_rate": 0.3157894736842105,
+          "activity_risk": 0.6122127795707955,
+          "survival_12m": 0.984401059550672,
+          "survival_24m": 0.9562744004461796,
+          "n_locales": 38,
+          "confidence_tier": "low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 5,
+          "source_zone": "district",
+          "display_label": "Clínicas y consultas",
+          "web_supercategory": "Salud y bienestar",
+          "web_category": "Clínicas y consultas",
+          "event_rate": 0.13839285714285715,
+          "activity_risk": 0.6430266339197561,
+          "survival_12m": 0.9912676609105181,
+          "survival_24m": 0.9759217456734387,
+          "n_locales": 224,
+          "confidence_tier": "high",
+          "supported_for_stats": true
+        }
+      ],
+      "facilities_tier": "Medias",
+      "facilities_200m": 0,
+      "facilities_500m": 15,
+      "facilities_1000m": 33,
+      "facilities_by_category": [
+        {
+          "category": "bicimad",
+          "label": "BiciMAD",
+          "count_200m": 0,
+          "count_500m": 4,
+          "count_1000m": 11
+        },
+        {
+          "category": "instalaciones_deportivas",
+          "label": "Inst. deportivas",
+          "count_200m": 0,
+          "count_500m": 3,
+          "count_1000m": 8
+        },
+        {
+          "category": "colegios",
+          "label": "Colegios",
+          "count_200m": 0,
+          "count_500m": 1,
+          "count_1000m": 3
+        },
+        {
+          "category": "parques",
+          "label": "Parques",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 3
+        },
+        {
+          "category": "centros_culturales",
+          "label": "Centros culturales",
+          "count_200m": 0,
+          "count_500m": 1,
+          "count_1000m": 2
+        },
+        {
+          "category": "centros_mayores",
+          "label": "Centros mayores",
+          "count_200m": 0,
+          "count_500m": 2,
+          "count_1000m": 2
+        },
+        {
+          "category": "bibliotecas",
+          "label": "Bibliotecas",
+          "count_200m": 0,
+          "count_500m": 1,
+          "count_1000m": 1
+        },
+        {
+          "category": "mercados",
+          "label": "Mercados",
+          "count_200m": 0,
+          "count_500m": 1,
+          "count_1000m": 1
+        },
+        {
+          "category": "polideportivos",
+          "label": "Polideportivos",
+          "count_200m": 0,
+          "count_500m": 1,
+          "count_1000m": 1
+        },
+        {
+          "category": "servicios_sociales",
+          "label": "Servicios sociales",
+          "count_200m": 0,
+          "count_500m": 1,
           "count_1000m": 1
         },
         {
@@ -112250,458 +112237,6 @@
       ]
     },
     {
-      "listing_id": "176461",
-      "listing_url": "https://www.locales.es/madrid/venta/local176461#offerType=1&estateType=3&settlement=6773",
-      "card_title": "Local comercial en Venta en Calle de la Virgen de África, San Pascual, Madrid",
-      "address_text": "Calle de la Virgen de África, San Pascual, Madrid",
-      "operation": "venta",
-      "price_eur": 170000.0,
-      "price_per_m2_eur": 2266.7,
-      "area_m2": 75.0,
-      "lat_wgs84": 40.4383145,
-      "lon_wgs84": -3.6540714,
-      "section_key": "15136",
-      "district_code": "50",
-      "district_name": "Ciudad Lineal",
-      "barrio_code": "550",
-      "barrio_name": "San Pascual",
-      "risk_score": 0.33198093415156493,
-      "risk_percentile": 0.6931236140275134,
-      "expected_survival_12m": 0.9761623325453113,
-      "expected_survival_24m": 0.9623252051311684,
-      "opportunity_tier": "Intermedia",
-      "city_rank": 1142,
-      "city_total_sections": 2461,
-      "district_rank": 75,
-      "district_total_sections": 168,
-      "barrio_rank": 7,
-      "barrio_total_sections": 13,
-      "renta_effective_eur": 17492.0,
-      "renta_reference_year": 2023.0,
-      "renta_granularity_used": "section",
-      "renta_outlier_adjusted": false,
-      "total_population_start": 1090.0,
-      "population_density_km2_start": 60688.56159975271,
-      "age_mean_start": 47.61559633027523,
-      "share_foreign_start": 0.1724770642201835,
-      "share_age_15_29_start": 0.1504587155963302,
-      "share_age_65_plus_start": 0.2660550458715596,
-      "metro_distance_m_start": 113.34004781406087,
-      "metro_access_count_500m_start": 3.0,
-      "metro_access_count_1000m_start": 18.0,
-      "metro_station_count_500m_start": 1.0,
-      "metro_station_count_1000m_start": 5.0,
-      "metro_nearest_name_start": "Martínez Villegas",
-      "metro_nearest_station_name_start": "Barrio de la Concepción",
-      "metro_access_names_500m_start": [
-        "Virgen del sagrario",
-        "Ascensor",
-        "Martínez Villegas"
-      ],
-      "metro_access_names_1000m_start": [
-        "El Carmen",
-        "Avda. de Bruselas",
-        "Virgen del sagrario",
-        "Ascensor",
-        "Quintana",
-        "Emilio Ferrari"
-      ],
-      "metro_station_names_500m_start": [
-        "Barrio de la Concepción"
-      ],
-      "metro_station_names_1000m_start": [
-        "El Carmen",
-        "Parque de las Avenidas",
-        "Barrio de la Concepción",
-        "Quintana",
-        "Pueblo Nuevo"
-      ],
-      "avisos_barrio_per_1000_prev_year": 178.9440734557596,
-      "avisos_district_per_1000_prev_year": 221.8690675419137,
-      "top_avisos_barrio_categories": [
-        {
-          "rank": 1,
-          "label": "Retirada de elementos",
-          "count": 978,
-          "share_of_zone": 0.285131195335277
-        },
-        {
-          "rank": 2,
-          "label": "Limpieza y pintadas",
-          "count": 770,
-          "share_of_zone": 0.22448979591836735
-        },
-        {
-          "rank": 3,
-          "label": "Cubos y contenedores",
-          "count": 571,
-          "share_of_zone": 0.16647230320699707
-        }
-      ],
-      "top_avisos_district_categories": [
-        {
-          "rank": 1,
-          "label": "Retirada de elementos",
-          "count": 14547,
-          "share_of_zone": 0.2835285633539283
-        },
-        {
-          "rank": 2,
-          "label": "Limpieza y pintadas",
-          "count": 14544,
-          "share_of_zone": 0.2834700918003391
-        },
-        {
-          "rank": 3,
-          "label": "Cubos y contenedores",
-          "count": 7915,
-          "share_of_zone": 0.1542674488861169
-        }
-      ],
-      "section_local_count_start": 215.0,
-      "section_unique_activity_category_count_start": 23.0,
-      "section_turnover_rate_12m_start": 0.0,
-      "section_same_activity_category_share_start": 0.0093023255813953,
-      "best_activity_label": "Ocio y entretenimiento",
-      "best_activity_risk": 0.21181299253806177,
-      "best_activity_survival_24m": 0.9810356422326832,
-      "top_activities": [
-        {
-          "rank": 1,
-          "source_zone": "barrio",
-          "display_label": "Ocio y entretenimiento",
-          "web_supercategory": "Deporte y ocio",
-          "web_category": "Ocio y entretenimiento",
-          "event_rate": 0.5,
-          "activity_risk": 0.21181299253806177,
-          "survival_12m": 0.9941101403749877,
-          "survival_24m": 0.9810356422326832,
-          "n_locales": 4,
-          "confidence_tier": "very_low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 2,
-          "source_zone": "barrio",
-          "display_label": "Servicios al consumidor",
-          "web_supercategory": "Servicios",
-          "web_category": "Servicios al consumidor",
-          "event_rate": 0.0,
-          "activity_risk": 0.25216543606006514,
-          "survival_12m": 0.988815854017463,
-          "survival_24m": 0.9685452162516383,
-          "n_locales": 3,
-          "confidence_tier": "very_low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 3,
-          "source_zone": "district",
-          "display_label": "Ocio nocturno",
-          "web_supercategory": "Hostelería",
-          "web_category": "Ocio nocturno",
-          "event_rate": 0.2,
-          "activity_risk": 0.3595889898122374,
-          "survival_12m": 0.9946030811500344,
-          "survival_24m": 0.9869099011279766,
-          "n_locales": 10,
-          "confidence_tier": "low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 4,
-          "source_zone": "barrio",
-          "display_label": "Clínicas y consultas",
-          "web_supercategory": "Salud y bienestar",
-          "web_category": "Clínicas y consultas",
-          "event_rate": 0.25,
-          "activity_risk": 0.3627089672467026,
-          "survival_12m": 0.9941101403749877,
-          "survival_24m": 0.9810356422326832,
-          "n_locales": 20,
-          "confidence_tier": "very_low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 5,
-          "source_zone": "barrio",
-          "display_label": "Cultura, papelería y ocio retail",
-          "web_supercategory": "Retail especializado",
-          "web_category": "Cultura y ocio",
-          "event_rate": 0.2,
-          "activity_risk": 0.36972237483483583,
-          "survival_12m": 0.9806673209028459,
-          "survival_24m": 0.9504241489478903,
-          "n_locales": 5,
-          "confidence_tier": "very_low",
-          "supported_for_stats": false
-        }
-      ],
-      "facilities_tier": "Abundantes",
-      "facilities_200m": 1,
-      "facilities_500m": 17,
-      "facilities_1000m": 39,
-      "facilities_by_category": [
-        {
-          "category": "bicimad",
-          "label": "BiciMAD",
-          "count_200m": 0,
-          "count_500m": 3,
-          "count_1000m": 10
-        },
-        {
-          "category": "instalaciones_deportivas",
-          "label": "Inst. deportivas",
-          "count_200m": 0,
-          "count_500m": 4,
-          "count_1000m": 10
-        },
-        {
-          "category": "colegios",
-          "label": "Colegios",
-          "count_200m": 0,
-          "count_500m": 2,
-          "count_1000m": 5
-        },
-        {
-          "category": "parques",
-          "label": "Parques",
-          "count_200m": 0,
-          "count_500m": 2,
-          "count_1000m": 4
-        },
-        {
-          "category": "centros_culturales",
-          "label": "Centros culturales",
-          "count_200m": 0,
-          "count_500m": 2,
-          "count_1000m": 3
-        },
-        {
-          "category": "mercados",
-          "label": "Mercados",
-          "count_200m": 1,
-          "count_500m": 1,
-          "count_1000m": 3
-        },
-        {
-          "category": "centros_mayores",
-          "label": "Centros mayores",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 2
-        },
-        {
-          "category": "polideportivos",
-          "label": "Polideportivos",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 1
-        },
-        {
-          "category": "servicios_sociales",
-          "label": "Servicios sociales",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 1
-        },
-        {
-          "category": "aparcamientos",
-          "label": "Aparcamientos",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        },
-        {
-          "category": "bibliotecas",
-          "label": "Bibliotecas",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        },
-        {
-          "category": "mercadillos",
-          "label": "Mercadillos",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        }
-      ],
-      "vulnerabilidad_global": 4.34,
-      "vulnerabilidad_global_media_ciudad": 4.83,
-      "vulnerabilidad_esferas": [
-        {
-          "key": "bienestar",
-          "label": "Bienestar social",
-          "valor": 4.05,
-          "media_ciudad": 4.73
-        },
-        {
-          "key": "medio_ambiente",
-          "label": "Medio ambiente",
-          "valor": 4.73,
-          "media_ciudad": 4.76
-        },
-        {
-          "key": "educacion",
-          "label": "Educación y cultura",
-          "valor": 4.24,
-          "media_ciudad": 4.98
-        },
-        {
-          "key": "economia",
-          "label": "Economía y empleo",
-          "valor": 4.54,
-          "media_ciudad": 4.96
-        },
-        {
-          "key": "salud",
-          "label": "Salud",
-          "valor": 4.18,
-          "media_ciudad": 4.73
-        }
-      ],
-      "inspecciones_distrito_total": 379.0,
-      "inspecciones_ciudad_media": 200.9,
-      "inspecciones_top_epigrafes": [
-        {
-          "label": "Comercio menor prendas de vestir en establec. especializados",
-          "count": 74,
-          "share": 0.195
-        },
-        {
-          "label": "Locutorios",
-          "count": 65,
-          "share": 0.172
-        },
-        {
-          "label": "Comercio al por menor de muebles",
-          "count": 33,
-          "share": 0.087
-        },
-        {
-          "label": "478001 -",
-          "count": 30,
-          "share": 0.079
-        },
-        {
-          "label": "Comercio menor calzado y artic.cuero en establec.especializ.",
-          "count": 17,
-          "share": 0.045
-        }
-      ],
-      "indicadores_distrito": [
-        {
-          "id": "locales_abiertos",
-          "label": "Locales abiertos",
-          "valor": 8056.0,
-          "media_ciudad": 6607.2
-        },
-        {
-          "id": "locales_cerrados",
-          "label": "Locales cerrados",
-          "valor": 3433.0,
-          "media_ciudad": 1786.1
-        },
-        {
-          "id": "tasa_paro",
-          "label": "Tasa de paro (%)",
-          "valor": 5.8,
-          "media_ciudad": 5.6
-        },
-        {
-          "id": "habitantes_distrito",
-          "label": "Habitantes",
-          "valor": 234075.0,
-          "media_ciudad": 167996.4
-        },
-        {
-          "id": "edad_media_distrito",
-          "label": "Edad media",
-          "valor": 45.75,
-          "media_ciudad": 44.2
-        },
-        {
-          "id": "indice_dependencia",
-          "label": "Índice de dependencia",
-          "valor": 0.51,
-          "media_ciudad": 0.5
-        },
-        {
-          "id": "proporcion_migrantes",
-          "label": "Proporción migrante",
-          "valor": 0.13,
-          "media_ciudad": 0.1
-        },
-        {
-          "id": "densidad_distrito",
-          "label": "Densidad del distrito",
-          "valor": 204.87,
-          "media_ciudad": 151.7
-        },
-        {
-          "id": "zonas_verdes_por_10k",
-          "label": "Zonas verdes por 10.000 hab.",
-          "valor": 134.96,
-          "media_ciudad": 163.3
-        },
-        {
-          "id": "mercados_municipales",
-          "label": "Mercados municipales",
-          "valor": 3.0,
-          "media_ciudad": 2.1
-        },
-        {
-          "id": "bibliotecas_municipales",
-          "label": "Bibliotecas municipales",
-          "valor": 3.0,
-          "media_ciudad": 1.6
-        },
-        {
-          "id": "centros_culturales_distrito",
-          "label": "Centros culturales",
-          "valor": 7.0,
-          "media_ciudad": 5.1
-        },
-        {
-          "id": "centros_deportivos_municipales",
-          "label": "Centros deportivos",
-          "valor": 4.0,
-          "media_ciudad": 3.9
-        },
-        {
-          "id": "instalaciones_deportivas_basicas",
-          "label": "Instalaciones deportivas básicas",
-          "valor": 29.0,
-          "media_ciudad": 24.0
-        },
-        {
-          "id": "centros_municipales_mayores",
-          "label": "Centros de mayores",
-          "valor": 32171.0,
-          "media_ciudad": 18565.0
-        },
-        {
-          "id": "apartamentos_municipales_mayores",
-          "label": "Apartamentos para mayores",
-          "valor": 0.0,
-          "media_ciudad": 0.1
-        },
-        {
-          "id": "socios_centros_mayores",
-          "label": "Personas socias centros mayores",
-          "valor": 32171.0,
-          "media_ciudad": 18565.0
-        },
-        {
-          "id": "valor_catastral",
-          "label": "Valor catastral medio (€)",
-          "valor": 106833.05,
-          "media_ciudad": 121796.8
-        }
-      ]
-    },
-    {
       "listing_id": "176692",
       "listing_url": "https://www.locales.es/madrid/venta/local176692#offerType=1&estateType=3&settlement=6773",
       "card_title": "Local comercial en Venta en Calle de los Derechos Humanos, San Pascual, Madrid",
@@ -123206,458 +122741,6 @@
           "label": "Servicios sociales",
           "count_200m": 0,
           "count_500m": 1,
-          "count_1000m": 1
-        },
-        {
-          "category": "aparcamientos",
-          "label": "Aparcamientos",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        },
-        {
-          "category": "bibliotecas",
-          "label": "Bibliotecas",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        },
-        {
-          "category": "mercadillos",
-          "label": "Mercadillos",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        },
-        {
-          "category": "mercados",
-          "label": "Mercados",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 0
-        }
-      ],
-      "vulnerabilidad_global": 4.97,
-      "vulnerabilidad_global_media_ciudad": 4.83,
-      "vulnerabilidad_esferas": [
-        {
-          "key": "bienestar",
-          "label": "Bienestar social",
-          "valor": 4.46,
-          "media_ciudad": 4.73
-        },
-        {
-          "key": "medio_ambiente",
-          "label": "Medio ambiente",
-          "valor": 4.08,
-          "media_ciudad": 4.76
-        },
-        {
-          "key": "educacion",
-          "label": "Educación y cultura",
-          "valor": 5.92,
-          "media_ciudad": 4.98
-        },
-        {
-          "key": "economia",
-          "label": "Economía y empleo",
-          "valor": 5.74,
-          "media_ciudad": 4.96
-        },
-        {
-          "key": "salud",
-          "label": "Salud",
-          "valor": 4.5,
-          "media_ciudad": 4.73
-        }
-      ],
-      "inspecciones_distrito_total": 122.0,
-      "inspecciones_ciudad_media": 200.9,
-      "inspecciones_top_epigrafes": [
-        {
-          "label": "Comercio menor prendas de vestir en establec. especializados",
-          "count": 50,
-          "share": 0.41
-        },
-        {
-          "label": "Locutorios",
-          "count": 20,
-          "share": 0.164
-        },
-        {
-          "label": "Comercio menor calzado y artic.cuero en establec.especializ.",
-          "count": 10,
-          "share": 0.082
-        },
-        {
-          "label": "Otro comercio al por menor del articulos nuevos n.c.o.p.",
-          "count": 6,
-          "share": 0.049
-        },
-        {
-          "label": "Comercio al por menor de muebles",
-          "count": 6,
-          "share": 0.049
-        }
-      ],
-      "indicadores_distrito": [
-        {
-          "id": "locales_abiertos",
-          "label": "Locales abiertos",
-          "valor": 5905.0,
-          "media_ciudad": 6607.2
-        },
-        {
-          "id": "locales_cerrados",
-          "label": "Locales cerrados",
-          "valor": 2914.0,
-          "media_ciudad": 1786.1
-        },
-        {
-          "id": "tasa_paro",
-          "label": "Tasa de paro (%)",
-          "valor": 6.73,
-          "media_ciudad": 5.6
-        },
-        {
-          "id": "habitantes_distrito",
-          "label": "Habitantes",
-          "valor": 254161.0,
-          "media_ciudad": 167996.4
-        },
-        {
-          "id": "edad_media_distrito",
-          "label": "Edad media",
-          "valor": 46.29,
-          "media_ciudad": 44.2
-        },
-        {
-          "id": "indice_dependencia",
-          "label": "Índice de dependencia",
-          "valor": 0.54,
-          "media_ciudad": 0.5
-        },
-        {
-          "id": "proporcion_migrantes",
-          "label": "Proporción migrante",
-          "valor": 0.15,
-          "media_ciudad": 0.1
-        },
-        {
-          "id": "densidad_distrito",
-          "label": "Densidad del distrito",
-          "valor": 99.96,
-          "media_ciudad": 151.7
-        },
-        {
-          "id": "zonas_verdes_por_10k",
-          "label": "Zonas verdes por 10.000 hab.",
-          "valor": 260.89,
-          "media_ciudad": 163.3
-        },
-        {
-          "id": "mercados_municipales",
-          "label": "Mercados municipales",
-          "valor": 2.0,
-          "media_ciudad": 2.1
-        },
-        {
-          "id": "bibliotecas_municipales",
-          "label": "Bibliotecas municipales",
-          "valor": 2.0,
-          "media_ciudad": 1.6
-        },
-        {
-          "id": "centros_culturales_distrito",
-          "label": "Centros culturales",
-          "valor": 9.0,
-          "media_ciudad": 5.1
-        },
-        {
-          "id": "centros_deportivos_municipales",
-          "label": "Centros deportivos",
-          "valor": 4.0,
-          "media_ciudad": 3.9
-        },
-        {
-          "id": "instalaciones_deportivas_basicas",
-          "label": "Instalaciones deportivas básicas",
-          "valor": 32.0,
-          "media_ciudad": 24.0
-        },
-        {
-          "id": "centros_municipales_mayores",
-          "label": "Centros de mayores",
-          "valor": 27903.0,
-          "media_ciudad": 18565.0
-        },
-        {
-          "id": "apartamentos_municipales_mayores",
-          "label": "Apartamentos para mayores",
-          "valor": 0.0,
-          "media_ciudad": 0.1
-        },
-        {
-          "id": "socios_centros_mayores",
-          "label": "Personas socias centros mayores",
-          "valor": 27903.0,
-          "media_ciudad": 18565.0
-        },
-        {
-          "id": "valor_catastral",
-          "label": "Valor catastral medio (€)",
-          "valor": 73880.88,
-          "media_ciudad": 121796.8
-        }
-      ]
-    },
-    {
-      "listing_id": "162757",
-      "listing_url": "https://www.locales.es/madrid/venta/local162757#offerType=1&estateType=3&settlement=6773",
-      "card_title": "Local comercial en Venta en Avenida de Nuestra Señora de Valvanera, Cármenes, Madrid",
-      "address_text": "Avenida de Nuestra Señora de Valvanera, Cármenes, Madrid",
-      "operation": "venta",
-      "price_eur": 40000.0,
-      "price_per_m2_eur": 1333.3,
-      "area_m2": 30.0,
-      "lat_wgs84": 40.3951134,
-      "lon_wgs84": -3.7433778,
-      "section_key": "10001",
-      "district_code": "00",
-      "district_name": "Latina",
-      "barrio_code": "010",
-      "barrio_name": "Los Carmenes",
-      "risk_score": 0.09433616262588859,
-      "risk_percentile": 0.6057165845713052,
-      "expected_survival_12m": 0.9945892769306444,
-      "expected_survival_24m": 0.9831894593366651,
-      "opportunity_tier": "Intermedia",
-      "city_rank": 834,
-      "city_total_sections": 2461,
-      "district_rank": 14,
-      "district_total_sections": 196,
-      "barrio_rank": 4,
-      "barrio_total_sections": 14,
-      "renta_effective_eur": 12622.0,
-      "renta_reference_year": 2023.0,
-      "renta_granularity_used": "section",
-      "renta_outlier_adjusted": false,
-      "total_population_start": 1169.0,
-      "population_density_km2_start": 19133.86152042982,
-      "age_mean_start": 43.2814371257485,
-      "share_foreign_start": 0.2831479897348161,
-      "share_age_15_29_start": 0.1924721984602224,
-      "share_age_65_plus_start": 0.1967493584260051,
-      "metro_distance_m_start": 176.08020767461565,
-      "metro_access_count_500m_start": 4.0,
-      "metro_access_count_1000m_start": 10.0,
-      "metro_station_count_500m_start": 1.0,
-      "metro_station_count_1000m_start": 4.0,
-      "metro_nearest_name_start": "Nuestra Señora de Valvanera",
-      "metro_nearest_station_name_start": "Carpetana",
-      "metro_access_names_500m_start": [
-        "Vía Carpetana",
-        "Ascensor 1",
-        "Ascensor 2",
-        "Nuestra Señora de Valvanera"
-      ],
-      "metro_access_names_1000m_start": [
-        "Carabanchel",
-        "Alhambra",
-        "Vía Carpetana",
-        "Ascensor 1",
-        "Oca, 69",
-        "Oca, 43 (Esq. Eduardo Morales)"
-      ],
-      "metro_station_names_500m_start": [
-        "Carpetana"
-      ],
-      "metro_station_names_1000m_start": [
-        "Carabanchel",
-        "Laguna",
-        "Carpetana",
-        "Vista Alegre"
-      ],
-      "avisos_barrio_per_1000_prev_year": 251.42488439617162,
-      "avisos_district_per_1000_prev_year": 193.0566576733852,
-      "top_avisos_barrio_categories": [
-        {
-          "rank": 1,
-          "label": "Limpieza y pintadas",
-          "count": 1278,
-          "share_of_zone": 0.27331052181351584
-        },
-        {
-          "rank": 2,
-          "label": "Retirada de elementos",
-          "count": 1044,
-          "share_of_zone": 0.223267750213858
-        },
-        {
-          "rank": 3,
-          "label": "Arboles y parques",
-          "count": 713,
-          "share_of_zone": 0.15248075278015397
-        }
-      ],
-      "top_avisos_district_categories": [
-        {
-          "rank": 1,
-          "label": "Retirada de elementos",
-          "count": 12664,
-          "share_of_zone": 0.2602655267376382
-        },
-        {
-          "rank": 2,
-          "label": "Limpieza y pintadas",
-          "count": 11596,
-          "share_of_zone": 0.23831641251181718
-        },
-        {
-          "rank": 3,
-          "label": "Cubos y contenedores",
-          "count": 6315,
-          "share_of_zone": 0.12978338608245304
-        }
-      ],
-      "section_local_count_start": 159.0,
-      "section_unique_activity_category_count_start": 21.0,
-      "section_turnover_rate_12m_start": 0.0,
-      "section_same_activity_category_share_start": 0.0251572327044025,
-      "best_activity_label": "Servicios al consumidor",
-      "best_activity_risk": 0.24306397072378505,
-      "best_activity_survival_24m": 0.9659963849977407,
-      "top_activities": [
-        {
-          "rank": 1,
-          "source_zone": "district",
-          "display_label": "Servicios al consumidor",
-          "web_supercategory": "Servicios",
-          "web_category": "Servicios al consumidor",
-          "event_rate": 0.25,
-          "activity_risk": 0.24306397072378505,
-          "survival_12m": 0.9881279434850864,
-          "survival_24m": 0.9659963849977407,
-          "n_locales": 84,
-          "confidence_tier": "medium",
-          "supported_for_stats": true
-        },
-        {
-          "rank": 2,
-          "source_zone": "district",
-          "display_label": "Ocio y entretenimiento",
-          "web_supercategory": "Deporte y ocio",
-          "web_category": "Ocio y entretenimiento",
-          "event_rate": 0.21951219512195122,
-          "activity_risk": 0.2920668933924564,
-          "survival_12m": 0.9935236973800412,
-          "survival_24m": 0.9794927145169995,
-          "n_locales": 41,
-          "confidence_tier": "low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 3,
-          "source_zone": "district",
-          "display_label": "Educación infantil",
-          "web_supercategory": "Educación",
-          "web_category": "Educación infantil",
-          "event_rate": 0.08108108108108109,
-          "activity_risk": 0.3245322631968985,
-          "survival_12m": 0.9967608951707891,
-          "survival_24m": 0.9918042965354527,
-          "n_locales": 37,
-          "confidence_tier": "low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 4,
-          "source_zone": "district",
-          "display_label": "Servicios personales y reparación ligera",
-          "web_supercategory": "Servicios",
-          "web_category": "Servicios personales",
-          "event_rate": 0.06015037593984962,
-          "activity_risk": 0.3558935975556477,
-          "survival_12m": 0.9907752698724239,
-          "survival_24m": 0.9710481309552895,
-          "n_locales": 133,
-          "confidence_tier": "low",
-          "supported_for_stats": false
-        },
-        {
-          "rank": 5,
-          "source_zone": "district",
-          "display_label": "Gasolinera y servicios automoción",
-          "web_supercategory": "Automoción",
-          "web_category": "Servicios automoción",
-          "event_rate": 0.0,
-          "activity_risk": 0.4369591657336899,
-          "survival_12m": 0.9966601178781925,
-          "survival_24m": 0.9862641098871209,
-          "n_locales": 4,
-          "confidence_tier": "low",
-          "supported_for_stats": false
-        }
-      ],
-      "facilities_tier": "Medias",
-      "facilities_200m": 1,
-      "facilities_500m": 10,
-      "facilities_1000m": 33,
-      "facilities_by_category": [
-        {
-          "category": "bicimad",
-          "label": "BiciMAD",
-          "count_200m": 0,
-          "count_500m": 3,
-          "count_1000m": 9
-        },
-        {
-          "category": "instalaciones_deportivas",
-          "label": "Inst. deportivas",
-          "count_200m": 0,
-          "count_500m": 2,
-          "count_1000m": 9
-        },
-        {
-          "category": "colegios",
-          "label": "Colegios",
-          "count_200m": 1,
-          "count_500m": 2,
-          "count_1000m": 4
-        },
-        {
-          "category": "servicios_sociales",
-          "label": "Servicios sociales",
-          "count_200m": 0,
-          "count_500m": 2,
-          "count_1000m": 4
-        },
-        {
-          "category": "centros_culturales",
-          "label": "Centros culturales",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 2
-        },
-        {
-          "category": "parques",
-          "label": "Parques",
-          "count_200m": 0,
-          "count_500m": 1,
-          "count_1000m": 2
-        },
-        {
-          "category": "polideportivos",
-          "label": "Polideportivos",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 2
-        },
-        {
-          "category": "centros_mayores",
-          "label": "Centros mayores",
-          "count_200m": 0,
-          "count_500m": 0,
           "count_1000m": 1
         },
         {
@@ -158097,6 +157180,449 @@
       ]
     },
     {
+      "listing_id": "152394",
+      "listing_url": "https://www.locales.es/madrid/venta/local152394#offerType=1&estateType=3&settlement=6773",
+      "card_title": "Local comercial en Venta en Calle de Efigenia, Casco Histórico de Vicálvaro, Madrid",
+      "address_text": "Calle de Efigenia, Casco Histórico de Vicálvaro, Madrid",
+      "operation": "venta",
+      "price_eur": 550000.0,
+      "price_per_m2_eur": 4296.9,
+      "area_m2": 128.0,
+      "lat_wgs84": 40.4043357,
+      "lon_wgs84": -3.6009443,
+      "section_key": "19008",
+      "district_code": "90",
+      "district_name": "Vicálvaro",
+      "barrio_code": "910",
+      "barrio_name": "Casco Histórico De Vicálvaro",
+      "risk_score": 0.7413323625520009,
+      "risk_percentile": 0.7912357477873501,
+      "expected_survival_12m": 0.9921929044371973,
+      "expected_survival_24m": 0.9745023852607336,
+      "opportunity_tier": "Fragil",
+      "city_rank": 1781,
+      "city_total_sections": 2461,
+      "district_rank": 35,
+      "district_total_sections": 56,
+      "barrio_rank": 12,
+      "barrio_total_sections": 28,
+      "renta_effective_eur": 11429.0,
+      "renta_reference_year": 2023.0,
+      "renta_granularity_used": "section",
+      "renta_outlier_adjusted": false,
+      "total_population_start": 1433.0,
+      "population_density_km2_start": 20462.35636029953,
+      "age_mean_start": 43.16329378925332,
+      "share_foreign_start": 0.3063503140265178,
+      "share_age_15_29_start": 0.1835310537334263,
+      "share_age_65_plus_start": 0.206559665038381,
+      "metro_distance_m_start": 191.12536585920344,
+      "metro_access_count_500m_start": 3.0,
+      "metro_access_count_1000m_start": 6.0,
+      "metro_station_count_500m_start": 1.0,
+      "metro_station_count_1000m_start": 2.0,
+      "metro_nearest_name_start": "",
+      "metro_nearest_station_name_start": "San Cipriano",
+      "metro_access_names_500m_start": [
+        "San Cipriano"
+      ],
+      "metro_access_names_1000m_start": [
+        "San Cipriano",
+        "Vicálvaro (Ascensor)"
+      ],
+      "metro_station_names_500m_start": [
+        "San Cipriano"
+      ],
+      "metro_station_names_1000m_start": [
+        "Vicálvaro",
+        "San Cipriano"
+      ],
+      "avisos_barrio_per_1000_prev_year": 133.7233818258486,
+      "avisos_district_per_1000_prev_year": 128.35564464170665,
+      "top_avisos_barrio_categories": [
+        {
+          "rank": 1,
+          "label": "Retirada de elementos",
+          "count": 1347,
+          "share_of_zone": 0.2654710287741427
+        },
+        {
+          "rank": 2,
+          "label": "Limpieza y pintadas",
+          "count": 899,
+          "share_of_zone": 0.1771777690185258
+        },
+        {
+          "rank": 3,
+          "label": "Cubos y contenedores",
+          "count": 696,
+          "share_of_zone": 0.13716988569176192
+        }
+      ],
+      "top_avisos_district_categories": [
+        {
+          "rank": 1,
+          "label": "Retirada de elementos",
+          "count": 3155,
+          "share_of_zone": 0.251374392478687
+        },
+        {
+          "rank": 2,
+          "label": "Limpieza y pintadas",
+          "count": 2147,
+          "share_of_zone": 0.17106206676758823
+        },
+        {
+          "rank": 3,
+          "label": "Cubos y contenedores",
+          "count": 1944,
+          "share_of_zone": 0.15488805672854752
+        }
+      ],
+      "section_local_count_start": 26.0,
+      "section_unique_activity_category_count_start": 6.0,
+      "section_turnover_rate_12m_start": 0.0,
+      "section_same_activity_category_share_start": 0.0384615384615384,
+      "best_activity_label": "Bar y cafetería",
+      "best_activity_risk": 0.15787350190641333,
+      "best_activity_survival_24m": 0.9888137356919875,
+      "top_activities": [
+        {
+          "rank": 1,
+          "source_zone": "district",
+          "display_label": "Bar y cafetería",
+          "web_supercategory": "Hostelería",
+          "web_category": "Bar y cafetería",
+          "event_rate": 0.08552631578947369,
+          "activity_risk": 0.15787350190641333,
+          "survival_12m": 0.9955839057899902,
+          "survival_24m": 0.9888137356919875,
+          "n_locales": 152,
+          "confidence_tier": "medium",
+          "supported_for_stats": true
+        },
+        {
+          "rank": 2,
+          "source_zone": "district",
+          "display_label": "Servicios personales y reparación ligera",
+          "web_supercategory": "Servicios",
+          "web_category": "Servicios personales",
+          "event_rate": 0.041666666666666664,
+          "activity_risk": 0.1697836176943416,
+          "survival_12m": 0.9946030811500344,
+          "survival_24m": 0.9869099011279766,
+          "n_locales": 24,
+          "confidence_tier": "low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 3,
+          "source_zone": "district",
+          "display_label": "Taller y reparación de vehículos",
+          "web_supercategory": "Automoción",
+          "web_category": "Taller y reparación",
+          "event_rate": 0.0,
+          "activity_risk": 0.17754443493808764,
+          "survival_12m": 0.9967608951707891,
+          "survival_24m": 0.9918042965354527,
+          "n_locales": 4,
+          "confidence_tier": "low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 4,
+          "source_zone": "district",
+          "display_label": "Belleza y cuidado personal",
+          "web_supercategory": "Belleza y cuidado personal",
+          "web_category": "Peluquería y estética",
+          "event_rate": 0.17391304347826086,
+          "activity_risk": 0.18948929456693883,
+          "survival_12m": 0.9941101403749877,
+          "survival_24m": 0.9810356422326832,
+          "n_locales": 69,
+          "confidence_tier": "low",
+          "supported_for_stats": false
+        },
+        {
+          "rank": 5,
+          "source_zone": "district",
+          "display_label": "Ocio y entretenimiento",
+          "web_supercategory": "Deporte y ocio",
+          "web_category": "Ocio y entretenimiento",
+          "event_rate": 0.2,
+          "activity_risk": 0.18955761998393797,
+          "survival_12m": 0.9955839057899902,
+          "survival_24m": 0.9888137356919875,
+          "n_locales": 15,
+          "confidence_tier": "low",
+          "supported_for_stats": false
+        }
+      ],
+      "facilities_tier": "Medias",
+      "facilities_200m": 3,
+      "facilities_500m": 11,
+      "facilities_1000m": 30,
+      "facilities_by_category": [
+        {
+          "category": "bicimad",
+          "label": "BiciMAD",
+          "count_200m": 1,
+          "count_500m": 4,
+          "count_1000m": 9
+        },
+        {
+          "category": "colegios",
+          "label": "Colegios",
+          "count_200m": 1,
+          "count_500m": 3,
+          "count_1000m": 5
+        },
+        {
+          "category": "centros_culturales",
+          "label": "Centros culturales",
+          "count_200m": 1,
+          "count_500m": 1,
+          "count_1000m": 3
+        },
+        {
+          "category": "instalaciones_deportivas",
+          "label": "Inst. deportivas",
+          "count_200m": 0,
+          "count_500m": 2,
+          "count_1000m": 3
+        },
+        {
+          "category": "parques",
+          "label": "Parques",
+          "count_200m": 0,
+          "count_500m": 1,
+          "count_1000m": 3
+        },
+        {
+          "category": "polideportivos",
+          "label": "Polideportivos",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 2
+        },
+        {
+          "category": "bibliotecas",
+          "label": "Bibliotecas",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 1
+        },
+        {
+          "category": "centros_mayores",
+          "label": "Centros mayores",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 1
+        },
+        {
+          "category": "mercadillos",
+          "label": "Mercadillos",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 1
+        },
+        {
+          "category": "mercados",
+          "label": "Mercados",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 1
+        },
+        {
+          "category": "servicios_sociales",
+          "label": "Servicios sociales",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 1
+        },
+        {
+          "category": "aparcamientos",
+          "label": "Aparcamientos",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        }
+      ],
+      "vulnerabilidad_global": 4.72,
+      "vulnerabilidad_global_media_ciudad": 4.83,
+      "vulnerabilidad_esferas": [
+        {
+          "key": "bienestar",
+          "label": "Bienestar social",
+          "valor": 4.99,
+          "media_ciudad": 4.73
+        },
+        {
+          "key": "medio_ambiente",
+          "label": "Medio ambiente",
+          "valor": 3.6,
+          "media_ciudad": 4.76
+        },
+        {
+          "key": "educacion",
+          "label": "Educación y cultura",
+          "valor": 5.15,
+          "media_ciudad": 4.98
+        },
+        {
+          "key": "economia",
+          "label": "Economía y empleo",
+          "valor": 5.16,
+          "media_ciudad": 4.96
+        },
+        {
+          "key": "salud",
+          "label": "Salud",
+          "valor": 4.33,
+          "media_ciudad": 4.73
+        }
+      ],
+      "inspecciones_distrito_total": 55.0,
+      "inspecciones_ciudad_media": 200.9,
+      "inspecciones_top_epigrafes": [
+        {
+          "label": "Servicio de peluqueria",
+          "count": 8,
+          "share": 0.145
+        },
+        {
+          "label": "Comercio menor productos de telefonia y telecomunicaciones",
+          "count": 4,
+          "share": 0.073
+        },
+        {
+          "label": "Comercio al por menor de muebles",
+          "count": 3,
+          "share": 0.055
+        },
+        {
+          "label": "Locutorios",
+          "count": 3,
+          "share": 0.055
+        },
+        {
+          "label": "Consulta de protesicos e higienistas dentales",
+          "count": 2,
+          "share": 0.036
+        }
+      ],
+      "indicadores_distrito": [
+        {
+          "id": "locales_abiertos",
+          "label": "Locales abiertos",
+          "valor": 1530.0,
+          "media_ciudad": 6607.2
+        },
+        {
+          "id": "locales_cerrados",
+          "label": "Locales cerrados",
+          "valor": 597.0,
+          "media_ciudad": 1786.1
+        },
+        {
+          "id": "tasa_paro",
+          "label": "Tasa de paro (%)",
+          "valor": 6.68,
+          "media_ciudad": 5.6
+        },
+        {
+          "id": "habitantes_distrito",
+          "label": "Habitantes",
+          "valor": 95233.0,
+          "media_ciudad": 167996.4
+        },
+        {
+          "id": "edad_media_distrito",
+          "label": "Edad media",
+          "valor": 40.81,
+          "media_ciudad": 44.2
+        },
+        {
+          "id": "indice_dependencia",
+          "label": "Índice de dependencia",
+          "valor": 0.41,
+          "media_ciudad": 0.5
+        },
+        {
+          "id": "proporcion_migrantes",
+          "label": "Proporción migrante",
+          "valor": 0.1,
+          "media_ciudad": 0.1
+        },
+        {
+          "id": "densidad_distrito",
+          "label": "Densidad del distrito",
+          "valor": 27.0,
+          "media_ciudad": 151.7
+        },
+        {
+          "id": "zonas_verdes_por_10k",
+          "label": "Zonas verdes por 10.000 hab.",
+          "valor": 197.41,
+          "media_ciudad": 163.3
+        },
+        {
+          "id": "mercados_municipales",
+          "label": "Mercados municipales",
+          "valor": 1.0,
+          "media_ciudad": 2.1
+        },
+        {
+          "id": "bibliotecas_municipales",
+          "label": "Bibliotecas municipales",
+          "valor": 2.0,
+          "media_ciudad": 1.6
+        },
+        {
+          "id": "centros_culturales_distrito",
+          "label": "Centros culturales",
+          "valor": 4.0,
+          "media_ciudad": 5.1
+        },
+        {
+          "id": "centros_deportivos_municipales",
+          "label": "Centros deportivos",
+          "valor": 3.0,
+          "media_ciudad": 3.9
+        },
+        {
+          "id": "instalaciones_deportivas_basicas",
+          "label": "Instalaciones deportivas básicas",
+          "valor": 7.0,
+          "media_ciudad": 24.0
+        },
+        {
+          "id": "centros_municipales_mayores",
+          "label": "Centros de mayores",
+          "valor": 9418.0,
+          "media_ciudad": 18565.0
+        },
+        {
+          "id": "apartamentos_municipales_mayores",
+          "label": "Apartamentos para mayores",
+          "valor": 0.0,
+          "media_ciudad": 0.1
+        },
+        {
+          "id": "socios_centros_mayores",
+          "label": "Personas socias centros mayores",
+          "valor": 9418.0,
+          "media_ciudad": 18565.0
+        },
+        {
+          "id": "valor_catastral",
+          "label": "Valor catastral medio (€)",
+          "valor": 90459.99,
+          "media_ciudad": 121796.8
+        }
+      ]
+    },
+    {
       "listing_id": "55502",
       "listing_url": "https://www.locales.es/madrid/venta/local55502#offerType=1&estateType=3&settlement=6773",
       "card_title": "Local comercial en Venta en Camino de las Hormigueras, Casco Histórico de Vallecas, Madrid",
@@ -160741,60 +160267,53 @@
       ]
     },
     {
-      "listing_id": "171455",
-      "listing_url": "https://www.locales.es/madrid/venta/local171455#offerType=1&estateType=3&settlement=6773",
-      "card_title": "Local comercial en Venta en Calle del Estaño, Villaverde Alto, Madrid",
-      "address_text": "Calle del Estaño, Villaverde Alto, Madrid",
+      "listing_id": "152393",
+      "listing_url": "https://www.locales.es/madrid/venta/local152393#offerType=1&estateType=3&settlement=6773",
+      "card_title": "Local comercial en Venta en Calle de San Erasmo, Villaverde Alto, Madrid",
+      "address_text": "Calle de San Erasmo, Villaverde Alto, Madrid",
       "operation": "venta",
-      "price_eur": 95000.0,
-      "price_per_m2_eur": 2065.2,
-      "area_m2": 46.0,
-      "lat_wgs84": 40.3445265,
-      "lon_wgs84": -3.7025451,
-      "section_key": "17029",
+      "price_eur": 400000.0,
+      "price_per_m2_eur": 1538.5,
+      "area_m2": 260.0,
+      "lat_wgs84": 40.3378461,
+      "lon_wgs84": -3.7065829,
+      "section_key": "17106",
       "district_code": "70",
       "district_name": "Villaverde",
-      "barrio_code": "010",
-      "barrio_name": "Villaverde Alto C.H.",
-      "risk_score": 0.24102086736456482,
-      "risk_percentile": 0.6619061169221108,
-      "expected_survival_12m": 0.9761623325453113,
-      "expected_survival_24m": 0.9623252051311684,
+      "barrio_code": "710",
+      "barrio_name": "Villaverde Alto, Casco Histórico De Villaverde",
+      "risk_score": -0.050509434739972235,
+      "risk_percentile": 0.5410051612143572,
+      "expected_survival_12m": 0.9920369642154935,
+      "expected_survival_24m": 0.9789345979927209,
       "opportunity_tier": "Intermedia",
-      "city_rank": 1020,
+      "city_rank": 653,
       "city_total_sections": 2461,
-      "district_rank": 8,
+      "district_rank": 5,
       "district_total_sections": 108,
-      "barrio_rank": 2,
+      "barrio_rank": 1,
       "barrio_total_sections": 34,
-      "renta_effective_eur": 15945.0,
+      "renta_effective_eur": 12120.0,
       "renta_reference_year": 2023.0,
       "renta_granularity_used": "section",
       "renta_outlier_adjusted": false,
-      "total_population_start": 1707.0,
-      "population_density_km2_start": 4630.111168361487,
-      "age_mean_start": 41.29701230228471,
-      "share_foreign_start": 0.1921499707088459,
-      "share_age_15_29_start": 0.1482132396016403,
-      "share_age_65_plus_start": 0.1247803163444639,
-      "metro_distance_m_start": 748.0287611165965,
+      "total_population_start": 2057.0,
+      "population_density_km2_start": 449.19714567078495,
+      "age_mean_start": 37.59893048128343,
+      "share_foreign_start": 0.3266893534273213,
+      "share_age_15_29_start": 0.269810403500243,
+      "share_age_65_plus_start": 0.0666018473505104,
+      "metro_distance_m_start": 1119.286760601555,
       "metro_access_count_500m_start": 0.0,
-      "metro_access_count_1000m_start": 4.0,
+      "metro_access_count_1000m_start": 0.0,
       "metro_station_count_500m_start": 0.0,
-      "metro_station_count_1000m_start": 2.0,
-      "metro_nearest_name_start": "Avda. Andalucía pares",
-      "metro_nearest_station_name_start": "San Cristóbal",
+      "metro_station_count_1000m_start": 0.0,
+      "metro_nearest_name_start": "Valle de Tobalina",
+      "metro_nearest_station_name_start": "Villaverde Alto",
       "metro_access_names_500m_start": [],
-      "metro_access_names_1000m_start": [
-        "Santiago Amón",
-        "Moncada",
-        "Avda. Andalucía pares"
-      ],
+      "metro_access_names_1000m_start": [],
       "metro_station_names_500m_start": [],
-      "metro_station_names_1000m_start": [
-        "Villaverde Bajo - Cruce",
-        "San Cristóbal"
-      ],
+      "metro_station_names_1000m_start": [],
       "avisos_barrio_per_1000_prev_year": 144.88805325863822,
       "avisos_district_per_1000_prev_year": 131.87460648455686,
       "top_avisos_barrio_categories": [
@@ -160837,135 +160356,107 @@
           "share_of_zone": 0.16434515987735435
         }
       ],
-      "section_local_count_start": 254.0,
-      "section_unique_activity_category_count_start": 12.0,
-      "section_turnover_rate_12m_start": 0.0,
-      "section_same_activity_category_share_start": 0.2322834645669291,
-      "best_activity_label": "Servicios personales y reparación ligera",
-      "best_activity_risk": 0.2217972118259864,
-      "best_activity_survival_24m": 0.9796348314606742,
+      "section_local_count_start": 1672.0,
+      "section_unique_activity_category_count_start": 30.0,
+      "section_turnover_rate_12m_start": 0.0023923444976076,
+      "section_same_activity_category_share_start": 0.0747889022919179,
+      "best_activity_label": "Tienda de alimentación",
+      "best_activity_risk": 0.039773232674504944,
+      "best_activity_survival_24m": 0.6666666666666666,
       "top_activities": [
         {
           "rank": 1,
           "source_zone": "district",
-          "display_label": "Servicios personales y reparación ligera",
-          "web_supercategory": "Servicios",
-          "web_category": "Servicios personales",
-          "event_rate": 0.10526315789473684,
-          "activity_risk": 0.2217972118259864,
-          "survival_12m": 0.9945054945054945,
-          "survival_24m": 0.9796348314606742,
-          "n_locales": 57,
-          "confidence_tier": "low",
-          "supported_for_stats": false
+          "display_label": "Tienda de alimentación",
+          "web_supercategory": "Alimentación",
+          "web_category": "Supermercado y conveniencia",
+          "event_rate": 0.1,
+          "activity_risk": 0.039773232674504944,
+          "survival_12m": 0.9957769355711965,
+          "survival_24m": 0.6666666666666666,
+          "n_locales": 120,
+          "confidence_tier": "medium",
+          "supported_for_stats": true
         },
         {
           "rank": 2,
           "source_zone": "district",
-          "display_label": "Educación infantil",
-          "web_supercategory": "Educación",
-          "web_category": "Educación infantil",
-          "event_rate": 0.0,
-          "activity_risk": 0.26908953958879606,
-          "survival_12m": 0.9969578017664377,
-          "survival_24m": 0.9922013470400567,
-          "n_locales": 12,
-          "confidence_tier": "low",
-          "supported_for_stats": false
+          "display_label": "Belleza y cuidado personal",
+          "web_supercategory": "Belleza y cuidado personal",
+          "web_category": "Peluquería y estética",
+          "event_rate": 0.08629441624365482,
+          "activity_risk": 0.04421748269781618,
+          "survival_12m": 0.9957769355711965,
+          "survival_24m": 0.6666666666666666,
+          "n_locales": 197,
+          "confidence_tier": "medium",
+          "supported_for_stats": true
         },
         {
           "rank": 3,
           "source_zone": "district",
-          "display_label": "Finanzas y seguros",
-          "web_supercategory": "Finanzas",
-          "web_category": "Finanzas y seguros",
-          "event_rate": 0.3448275862068966,
-          "activity_risk": 0.2976561867487922,
-          "survival_12m": 0.984401059550672,
-          "survival_24m": 0.9562744004461796,
-          "n_locales": 87,
-          "confidence_tier": "medium",
+          "display_label": "Bar y cafetería",
+          "web_supercategory": "Hostelería",
+          "web_category": "Bar y cafetería",
+          "event_rate": 0.0700280112044818,
+          "activity_risk": 0.04540477234915049,
+          "survival_12m": 0.9957769355711965,
+          "survival_24m": 0.6666666666666666,
+          "n_locales": 357,
+          "confidence_tier": "high",
           "supported_for_stats": true
         },
         {
           "rank": 4,
           "source_zone": "district",
-          "display_label": "Clínicas y consultas",
-          "web_supercategory": "Salud y bienestar",
-          "web_category": "Clínicas y consultas",
-          "event_rate": 0.11538461538461539,
-          "activity_risk": 0.3180483025601434,
-          "survival_12m": 0.9941101403749877,
-          "survival_24m": 0.9810356422326832,
-          "n_locales": 104,
-          "confidence_tier": "medium",
+          "display_label": "Bazar, regalos y retail variado",
+          "web_supercategory": "Retail especializado",
+          "web_category": "Conveniencia",
+          "event_rate": 0.2138728323699422,
+          "activity_risk": 0.049280692175688555,
+          "survival_12m": 0.9957769355711965,
+          "survival_24m": 0.6666666666666666,
+          "n_locales": 173,
+          "confidence_tier": "high",
           "supported_for_stats": true
         },
         {
           "rank": 5,
           "source_zone": "district",
-          "display_label": "Restaurante",
-          "web_supercategory": "Hostelería",
-          "web_category": "Restauración",
-          "event_rate": 0.1111111111111111,
-          "activity_risk": 0.3451020161143422,
-          "survival_12m": 0.9945054945054945,
-          "survival_24m": 0.9796348314606742,
-          "n_locales": 18,
-          "confidence_tier": "low",
-          "supported_for_stats": false
+          "display_label": "Finanzas y seguros",
+          "web_supercategory": "Finanzas",
+          "web_category": "Finanzas y seguros",
+          "event_rate": 0.3448275862068966,
+          "activity_risk": 0.06964212975393505,
+          "survival_12m": 0.9957769355711965,
+          "survival_24m": 0.6666666666666666,
+          "n_locales": 87,
+          "confidence_tier": "medium",
+          "supported_for_stats": true
         }
       ],
       "facilities_tier": "Escasas",
       "facilities_200m": 0,
-      "facilities_500m": 4,
-      "facilities_1000m": 35,
+      "facilities_500m": 2,
+      "facilities_1000m": 4,
       "facilities_by_category": [
         {
           "category": "bicimad",
           "label": "BiciMAD",
           "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 7
-        },
-        {
-          "category": "colegios",
-          "label": "Colegios",
-          "count_200m": 0,
-          "count_500m": 3,
-          "count_1000m": 7
-        },
-        {
-          "category": "instalaciones_deportivas",
-          "label": "Inst. deportivas",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 6
-        },
-        {
-          "category": "centros_mayores",
-          "label": "Centros mayores",
-          "count_200m": 0,
           "count_500m": 1,
-          "count_1000m": 4
-        },
-        {
-          "category": "parques",
-          "label": "Parques",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 4
+          "count_1000m": 1
         },
         {
           "category": "centros_culturales",
           "label": "Centros culturales",
           "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 2
+          "count_500m": 1,
+          "count_1000m": 1
         },
         {
-          "category": "bibliotecas",
-          "label": "Bibliotecas",
+          "category": "instalaciones_deportivas",
+          "label": "Inst. deportivas",
           "count_200m": 0,
           "count_500m": 0,
           "count_1000m": 1
@@ -160978,29 +160469,57 @@
           "count_1000m": 1
         },
         {
+          "category": "aparcamientos",
+          "label": "Aparcamientos",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        },
+        {
+          "category": "bibliotecas",
+          "label": "Bibliotecas",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        },
+        {
+          "category": "centros_mayores",
+          "label": "Centros mayores",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        },
+        {
+          "category": "colegios",
+          "label": "Colegios",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
+        },
+        {
           "category": "mercados",
           "label": "Mercados",
           "count_200m": 0,
           "count_500m": 0,
-          "count_1000m": 1
+          "count_1000m": 0
+        },
+        {
+          "category": "parques",
+          "label": "Parques",
+          "count_200m": 0,
+          "count_500m": 0,
+          "count_1000m": 0
         },
         {
           "category": "polideportivos",
           "label": "Polideportivos",
           "count_200m": 0,
           "count_500m": 0,
-          "count_1000m": 1
+          "count_1000m": 0
         },
         {
           "category": "servicios_sociales",
           "label": "Servicios sociales",
-          "count_200m": 0,
-          "count_500m": 0,
-          "count_1000m": 1
-        },
-        {
-          "category": "aparcamientos",
-          "label": "Aparcamientos",
           "count_200m": 0,
           "count_500m": 0,
           "count_1000m": 0
@@ -161181,16 +160700,16 @@
       ]
     },
     {
-      "listing_id": "152393",
-      "listing_url": "https://www.locales.es/madrid/venta/local152393#offerType=1&estateType=3&settlement=6773",
-      "card_title": "Local comercial en Venta en Calle de San Erasmo, Villaverde Alto, Madrid",
-      "address_text": "Calle de San Erasmo, Villaverde Alto, Madrid",
+      "listing_id": "178752",
+      "listing_url": "https://www.locales.es/madrid/venta/local178752#offerType=1&estateType=3&settlement=6773",
+      "card_title": "Local comercial en Venta en Laguna del Marquesado, Villaverde Alto, Madrid",
+      "address_text": "Laguna del Marquesado, Villaverde Alto, Madrid",
       "operation": "venta",
-      "price_eur": 400000.0,
-      "price_per_m2_eur": 1538.5,
-      "area_m2": 260.0,
-      "lat_wgs84": 40.3378461,
-      "lon_wgs84": -3.7065829,
+      "price_eur": 185000.0,
+      "price_per_m2_eur": 1401.5,
+      "area_m2": 132.0,
+      "lat_wgs84": 40.3337577,
+      "lon_wgs84": -3.7039492,
       "section_key": "17106",
       "district_code": "70",
       "district_name": "Villaverde",
