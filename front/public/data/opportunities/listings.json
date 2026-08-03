@@ -2,7 +2,7 @@
   "meta": {
     "title": "Madrid Opportunity Map",
     "subtitle": "Locales disponibles y recomendación de actividad",
-    "generated_at": "2026-07-27T08:26:43.580491+00:00",
+    "generated_at": "2026-08-03T08:25:35.043356+00:00",
     "section_index_path": "/data/opportunities/sections/index.json?v=20260416T163801",
     "section_geojson_path": "/data/opportunities/sections/geometry.geojson?v=20260416T163801",
     "map_bounds": {
@@ -15,7 +15,7 @@
     }
   },
   "filters": {
-    "total_listings": 631,
+    "total_listings": 630,
     "precise_candidates": 360,
     "selected_listings": 354,
     "excluded_incomplete": 1,
