@@ -1,0 +1,20 @@
+{
+  "generated_at_utc": "2026-03-28T20:11:14Z",
+  "source_portal": "locales.es",
+  "city_slug": "madrid",
+  "operations": [
+    "venta",
+    "alquiler"
+  ],
+  "max_pages": 250,
+  "listing_count": 3,
+  "unique_listing_ids": 3,
+  "geocoded_count": 3,
+  "street_precision_count": 3,
+  "zone_precision_count": 0,
+  "h3_count": 3,
+  "section_key_count": 3,
+  "records_by_operation": {
+    "alquiler": 3
+  }
+}

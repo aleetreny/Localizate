@@ -1,0 +1,472 @@
+{
+  "policy": {
+    "transition_policy": "exclude_transition",
+    "transition_rows_blocked": 42,
+    "renta_max_year": 2023,
+    "renta_city_median": 13366.0,
+    "renta_imputation_counts": {
+      "observed": 156375,
+      "district_median": 46298,
+      "city_median": 1155
+    }
+  },
+  "rows": 203828,
+  "event_rate": 0.07474929842808642,
+  "feature_count": 35,
+  "features_with_p_lt_0_05": 32,
+  "features_with_missing_rate_le_0_20": 14,
+  "top_features_by_signal": [
+    {
+      "feature": "metro_access_count_1000m_start",
+      "missing_rate": 0.0,
+      "mean_event": 17.72912838015227,
+      "mean_non_event": 11.650138924238568,
+      "standardized_mean_diff": 0.4688127669276173,
+      "mann_whitney_p": 0.0,
+      "point_biserial": 0.12684704571601768
+    },
+    {
+      "feature": "metro_access_count_500m_start",
+      "missing_rate": 0.0,
+      "mean_event": 5.142228931478078,
+      "mean_non_event": 3.308724654280139,
+      "standardized_mean_diff": 0.4161956192492743,
+      "mann_whitney_p": 0.0,
+      "point_biserial": 0.11532517226239475
+    },
+    {
+      "feature": "section_local_count_start",
+      "missing_rate": 0.0031791510489236024,
+      "mean_event": 4.435281043517176,
+      "mean_non_event": 4.738651696093272,
+      "standardized_mean_diff": -0.35731840978643653,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.08552000955462229
+    },
+    {
+      "feature": "section_unique_division_count_start",
+      "missing_rate": 0.0031791510489236024,
+      "mean_event": 12.405158834339721,
+      "mean_non_event": 17.156438237040806,
+      "standardized_mean_diff": -0.52956117748095,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.11209972368385147
+    },
+    {
+      "feature": "missing_metro_distance_start",
+      "missing_rate": 0.0,
+      "mean_event": 0.025072197427146233,
+      "mean_non_event": 0.20719860863663359,
+      "standardized_mean_diff": -0.5929108572393343,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.12122473215063777
+    },
+    {
+      "feature": "missing_h3",
+      "missing_rate": 0.0,
+      "mean_event": 0.024940929377789446,
+      "mean_non_event": 0.20705544243658267,
+      "standardized_mean_diff": -0.5932000137115068,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.12125068616275879
+    },
+    {
+      "feature": "renta_carry_forward_years",
+      "missing_rate": 0.0,
+      "mean_event": 0.018377526909950117,
+      "mean_non_event": 0.28502269449393397,
+      "standardized_mean_diff": -0.7569616332231268,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.15031641998571277
+    },
+    {
+      "feature": "section_single_division_share_start",
+      "missing_rate": 0.0031791510489236024,
+      "mean_event": 0.6617162793106133,
+      "mean_non_event": 0.6092202340045187,
+      "standardized_mean_diff": 0.2999182598270223,
+      "mann_whitney_p": 3.4986414456372016e-237,
+      "point_biserial": 0.07518831169001979
+    },
+    {
+      "feature": "metro_distance_m_start",
+      "missing_rate": 0.19358478717349922,
+      "mean_event": 5.469353075184777,
+      "mean_non_event": 5.674870163236517,
+      "standardized_mean_diff": -0.24975075695201576,
+      "mann_whitney_p": 3.4199143092478605e-203,
+      "point_biserial": -0.06868737969233495
+    },
+    {
+      "feature": "share_age_00_14_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.11815223751500076,
+      "mean_non_event": 0.12082373566281417,
+      "standardized_mean_diff": -0.06812625844409513,
+      "mann_whitney_p": 4.129316258968296e-108,
+      "point_biserial": -0.019047288006303006
+    },
+    {
+      "feature": "avisos_district_per_1000_prev_year",
+      "missing_rate": 0.0,
+      "mean_event": 0.06327092779392703,
+      "mean_non_event": 0.2531771798130486,
+      "standardized_mean_diff": -0.22002692944877017,
+      "mann_whitney_p": 2.0870536347035635e-100,
+      "point_biserial": -0.04714244112354097
+    },
+    {
+      "feature": "avisos_barrio_per_1000_prev_year",
+      "missing_rate": 0.0,
+      "mean_event": 0.06454468249817892,
+      "mean_non_event": 0.2551589943847846,
+      "standardized_mean_diff": -0.2182538999738042,
+      "mann_whitney_p": 6.601480416842046e-100,
+      "point_biserial": -0.046871799341896246
+    },
+    {
+      "feature": "renta_best_eur_delta_12m_start",
+      "missing_rate": 0.23281884726337893,
+      "mean_event": 2321.3221317931216,
+      "mean_non_event": 1306.4231621701874,
+      "standardized_mean_diff": 0.12460741893348558,
+      "mann_whitney_p": 2.1760552518236576e-94,
+      "point_biserial": 0.037279549626410946
+    },
+    {
+      "feature": "section_same_division_local_count_start",
+      "missing_rate": 0.29317856231724787,
+      "mean_event": 2.1380788369336674,
+      "mean_non_event": 2.293101325182975,
+      "standardized_mean_diff": -0.14143516817533985,
+      "mann_whitney_p": 2.7109741667583937e-87,
+      "point_biserial": -0.03890102038042466
+    },
+    {
+      "feature": "share_male_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.4634722747970469,
+      "mean_non_event": 0.46582849338819776,
+      "standardized_mean_diff": -0.09498982828170154,
+      "mann_whitney_p": 4.190158234213115e-70,
+      "point_biserial": -0.026908573587712183
+    }
+  ],
+  "all_features": [
+    {
+      "feature": "metro_access_count_1000m_start",
+      "missing_rate": 0.0,
+      "mean_event": 17.72912838015227,
+      "mean_non_event": 11.650138924238568,
+      "standardized_mean_diff": 0.4688127669276173,
+      "mann_whitney_p": 0.0,
+      "point_biserial": 0.12684704571601768
+    },
+    {
+      "feature": "metro_access_count_500m_start",
+      "missing_rate": 0.0,
+      "mean_event": 5.142228931478078,
+      "mean_non_event": 3.308724654280139,
+      "standardized_mean_diff": 0.4161956192492743,
+      "mann_whitney_p": 0.0,
+      "point_biserial": 0.11532517226239475
+    },
+    {
+      "feature": "section_local_count_start",
+      "missing_rate": 0.0031791510489236024,
+      "mean_event": 4.435281043517176,
+      "mean_non_event": 4.738651696093272,
+      "standardized_mean_diff": -0.35731840978643653,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.08552000955462229
+    },
+    {
+      "feature": "section_unique_division_count_start",
+      "missing_rate": 0.0031791510489236024,
+      "mean_event": 12.405158834339721,
+      "mean_non_event": 17.156438237040806,
+      "standardized_mean_diff": -0.52956117748095,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.11209972368385147
+    },
+    {
+      "feature": "missing_metro_distance_start",
+      "missing_rate": 0.0,
+      "mean_event": 0.025072197427146233,
+      "mean_non_event": 0.20719860863663359,
+      "standardized_mean_diff": -0.5929108572393343,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.12122473215063777
+    },
+    {
+      "feature": "missing_h3",
+      "missing_rate": 0.0,
+      "mean_event": 0.024940929377789446,
+      "mean_non_event": 0.20705544243658267,
+      "standardized_mean_diff": -0.5932000137115068,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.12125068616275879
+    },
+    {
+      "feature": "renta_carry_forward_years",
+      "missing_rate": 0.0,
+      "mean_event": 0.018377526909950117,
+      "mean_non_event": 0.28502269449393397,
+      "standardized_mean_diff": -0.7569616332231268,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.15031641998571277
+    },
+    {
+      "feature": "section_single_division_share_start",
+      "missing_rate": 0.0031791510489236024,
+      "mean_event": 0.6617162793106133,
+      "mean_non_event": 0.6092202340045187,
+      "standardized_mean_diff": 0.2999182598270223,
+      "mann_whitney_p": 3.4986414456372016e-237,
+      "point_biserial": 0.07518831169001979
+    },
+    {
+      "feature": "metro_distance_m_start",
+      "missing_rate": 0.19358478717349922,
+      "mean_event": 5.469353075184777,
+      "mean_non_event": 5.674870163236517,
+      "standardized_mean_diff": -0.24975075695201576,
+      "mann_whitney_p": 3.4199143092478605e-203,
+      "point_biserial": -0.06868737969233495
+    },
+    {
+      "feature": "share_age_00_14_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.11815223751500076,
+      "mean_non_event": 0.12082373566281417,
+      "standardized_mean_diff": -0.06812625844409513,
+      "mann_whitney_p": 4.129316258968296e-108,
+      "point_biserial": -0.019047288006303006
+    },
+    {
+      "feature": "avisos_district_per_1000_prev_year",
+      "missing_rate": 0.0,
+      "mean_event": 0.06327092779392703,
+      "mean_non_event": 0.2531771798130486,
+      "standardized_mean_diff": -0.22002692944877017,
+      "mann_whitney_p": 2.0870536347035635e-100,
+      "point_biserial": -0.04714244112354097
+    },
+    {
+      "feature": "avisos_barrio_per_1000_prev_year",
+      "missing_rate": 0.0,
+      "mean_event": 0.06454468249817892,
+      "mean_non_event": 0.2551589943847846,
+      "standardized_mean_diff": -0.2182538999738042,
+      "mann_whitney_p": 6.601480416842046e-100,
+      "point_biserial": -0.046871799341896246
+    },
+    {
+      "feature": "renta_best_eur_delta_12m_start",
+      "missing_rate": 0.23281884726337893,
+      "mean_event": 2321.3221317931216,
+      "mean_non_event": 1306.4231621701874,
+      "standardized_mean_diff": 0.12460741893348558,
+      "mann_whitney_p": 2.1760552518236576e-94,
+      "point_biserial": 0.037279549626410946
+    },
+    {
+      "feature": "section_same_division_local_count_start",
+      "missing_rate": 0.29317856231724787,
+      "mean_event": 2.1380788369336674,
+      "mean_non_event": 2.293101325182975,
+      "standardized_mean_diff": -0.14143516817533985,
+      "mann_whitney_p": 2.7109741667583937e-87,
+      "point_biserial": -0.03890102038042466
+    },
+    {
+      "feature": "share_male_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.4634722747970469,
+      "mean_non_event": 0.46582849338819776,
+      "standardized_mean_diff": -0.09498982828170154,
+      "mann_whitney_p": 4.190158234213115e-70,
+      "point_biserial": -0.026908573587712183
+    },
+    {
+      "feature": "share_foreign_delta_12m_start",
+      "missing_rate": 0.23281884726337893,
+      "mean_event": 0.007707601506316203,
+      "mean_non_event": 0.00896486629228533,
+      "standardized_mean_diff": -0.10693081146310053,
+      "mann_whitney_p": 5.878214973258475e-64,
+      "point_biserial": -0.02864403986757624
+    },
+    {
+      "feature": "age_mean_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 44.26497773154216,
+      "mean_non_event": 43.983567664030694,
+      "standardized_mean_diff": 0.0780917789027004,
+      "mann_whitney_p": 1.3440870572065016e-52,
+      "point_biserial": 0.021436329170289658
+    },
+    {
+      "feature": "share_foreign_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.15209789594508918,
+      "mean_non_event": 0.1580775872883845,
+      "standardized_mean_diff": -0.07968296291223272,
+      "mann_whitney_p": 1.5300971545258113e-49,
+      "point_biserial": -0.021901381669904615
+    },
+    {
+      "feature": "avisos_barrio_share_of_district_prev_year",
+      "missing_rate": 0.0,
+      "mean_event": 0.015948110612669698,
+      "mean_non_event": 0.022703315059164772,
+      "standardized_mean_diff": -0.11288976073993896,
+      "mann_whitney_p": 1.2717239000479485e-45,
+      "point_biserial": -0.027841645193181275
+    },
+    {
+      "feature": "share_age_65_plus_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.20927913419839558,
+      "mean_non_event": 0.20394593662596816,
+      "standardized_mean_diff": 0.08078806630492229,
+      "mann_whitney_p": 2.439220110351276e-39,
+      "point_biserial": 0.022251074772505076
+    },
+    {
+      "feature": "share_age_15_29_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.15516497809788282,
+      "mean_non_event": 0.15797843606008644,
+      "standardized_mean_diff": -0.11004648491171982,
+      "mann_whitney_p": 6.065255940396404e-39,
+      "point_biserial": -0.02989985156450359
+    },
+    {
+      "feature": "total_population_delta_12m_start",
+      "missing_rate": 0.23281884726337893,
+      "mean_event": 3.000721974271462,
+      "mean_non_event": 5.840035632476457,
+      "standardized_mean_diff": -0.016322370490554072,
+      "mann_whitney_p": 2.2609787426430886e-29,
+      "point_biserial": -0.004406931639192465
+    },
+    {
+      "feature": "renta_effective_eur",
+      "missing_rate": 0.0,
+      "mean_event": 16066.258926227356,
+      "mean_non_event": 15344.233116993299,
+      "standardized_mean_diff": 0.09480875015094557,
+      "mann_whitney_p": 7.019107526234634e-28,
+      "point_biserial": 0.025886119056142944
+    },
+    {
+      "feature": "share_age_45_64_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.27455983652136884,
+      "mean_non_event": 0.2764989077569105,
+      "standardized_mean_diff": -0.05729574549482007,
+      "mann_whitney_p": 1.9254884262032745e-24,
+      "point_biserial": -0.01564301287528805
+    },
+    {
+      "feature": "population_density_km2_start",
+      "missing_rate": 0.23484015935004024,
+      "mean_event": 33191.42676782106,
+      "mean_non_event": 31762.96532531526,
+      "standardized_mean_diff": 0.08291234969424169,
+      "mann_whitney_p": 4.455608734508622e-24,
+      "point_biserial": 0.022840954985725793
+    },
+    {
+      "feature": "share_age_30_44_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.2419921988078782,
+      "mean_non_event": 0.23714107953104374,
+      "standardized_mean_diff": 0.09792885454687822,
+      "mann_whitney_p": 9.55054097663335e-21,
+      "point_biserial": 0.027710700910823585
+    },
+    {
+      "feature": "section_local_count_delta_12m_start",
+      "missing_rate": 0.0033410522597484152,
+      "mean_event": 4.803885534260961,
+      "mean_non_event": 16.449997879019257,
+      "standardized_mean_diff": -0.18250722567736438,
+      "mann_whitney_p": 1.5310118315885716e-18,
+      "point_biserial": -0.0365178285391565
+    },
+    {
+      "feature": "share_age_15_29_delta_12m_start",
+      "missing_rate": 0.23281884726337893,
+      "mean_event": 0.0038750482157887925,
+      "mean_non_event": 0.004385638049284352,
+      "standardized_mean_diff": -0.0617066484160142,
+      "mann_whitney_p": 5.320815777710909e-17,
+      "point_biserial": -0.017195365970783832
+    },
+    {
+      "feature": "population_density_km2_delta_12m_start",
+      "missing_rate": 0.23484997154463566,
+      "mean_event": 382.4729841835029,
+      "mean_non_event": 409.3889413121111,
+      "standardized_mean_diff": -0.011558438673820866,
+      "mann_whitney_p": 1.1825818320811892e-13,
+      "point_biserial": -0.003407074149060249
+    },
+    {
+      "feature": "section_same_division_share_start",
+      "missing_rate": 0.29317856231724787,
+      "mean_event": 0.1512393688411754,
+      "mean_non_event": 0.12653761214329082,
+      "standardized_mean_diff": 0.17001431567036146,
+      "mann_whitney_p": 7.072710524935617e-09,
+      "point_biserial": 0.04767201186976502
+    },
+    {
+      "feature": "total_population_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 7.2025377089827245,
+      "mean_non_event": 7.217934462925807,
+      "standardized_mean_diff": -0.05329159325434038,
+      "mann_whitney_p": 2.6376190963561846e-08,
+      "point_biserial": -0.014642687610969195
+    },
+    {
+      "feature": "n_divisions_start",
+      "missing_rate": 0.27378475969935434,
+      "mean_event": 1.0079417169860856,
+      "mean_non_event": 1.013091753626877,
+      "standardized_mean_diff": -0.04662919022660634,
+      "mann_whitney_p": 1.0300735015729498e-06,
+      "point_biserial": -0.010983947780740702
+    },
+    {
+      "feature": "geometry_available_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.9942898398529798,
+      "mean_non_event": 0.9935893357088318,
+      "standardized_mean_diff": 0.009025765678763734,
+      "mann_whitney_p": 0.29538594781546057,
+      "point_biserial": 0.0023177068136895967
+    },
+    {
+      "feature": "n_epigrafes_start",
+      "missing_rate": 0.27378475969935434,
+      "mean_event": 1.0489629824100815,
+      "mean_non_event": 1.0470592602019173,
+      "standardized_mean_diff": 0.004918597834037225,
+      "mann_whitney_p": 0.38143513891457137,
+      "point_biserial": 0.0013362976638108138
+    },
+    {
+      "feature": "padron_lag_months_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.0,
+      "mean_non_event": 5.302451853737168e-06,
+      "standardized_mean_diff": -0.0032565257468295606,
+      "mann_whitney_p": 0.7762464491179684,
+      "point_biserial": -0.0006295685034840306
+    }
+  ]
+}

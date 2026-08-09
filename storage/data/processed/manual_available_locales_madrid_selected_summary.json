@@ -1,0 +1,24 @@
+{
+  "generated_at": "2026-07-24T17:15:12.847423+00:00",
+  "filter_summary": {
+    "total_listings": 638,
+    "precise_candidates": 365,
+    "selected_listings": 359,
+    "excluded_incomplete": 1,
+    "excluded_outliers": 5,
+    "excluded_duplicates": 0,
+    "operations": {
+      "venta": 212,
+      "alquiler": 147
+    }
+  },
+  "selected_listings": 359,
+  "districts": 10,
+  "barrios": 87,
+  "operations": {
+    "venta": 212,
+    "alquiler": 147
+  },
+  "median_risk_percentile": 0.5181231234177837,
+  "median_survival_24m": 0.9750227066303361
+}

@@ -1,0 +1,23 @@
+{
+  "status": "updated",
+  "city_slug": "madrid",
+  "operations": [
+    "venta",
+    "alquiler"
+  ],
+  "attempts": [
+    {
+      "transport": "direct_http",
+      "status": "success",
+      "listing_count": 638
+    }
+  ],
+  "request_count": 0,
+  "browser_ms_used_total": 0,
+  "listing_count": 638,
+  "reused_context_count": 625,
+  "new_or_relocated_count": 13,
+  "removed_count": 4,
+  "street_precision_count": 374,
+  "section_key_count": 365
+}

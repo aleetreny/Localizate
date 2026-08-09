@@ -1,0 +1,2 @@
+censo_period,padron_period,renta_period_min,renta_period_max,censo_unique_sections,padron_unique_sections,renta_unique_sections,censo_padron_intersection,censo_renta_intersection,padron_renta_intersection,triple_intersection,censo_only_sections,padron_only_sections,renta_only_sections_vs_censo,renta_only_sections_vs_padron,local_rows_without_section_key
+2026-03,2026-02,2015,2023,2499,2462,2492,2427,2463,2443,2416,72,35,29,49,1

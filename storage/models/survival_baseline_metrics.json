@@ -1,0 +1,269 @@
+{
+  "policy": {
+    "transition_policy": "exclude_transition",
+    "transition_rows_blocked": 42,
+    "renta_max_year": 2023,
+    "renta_city_median": 13366.0,
+    "renta_imputation_counts": {
+      "observed": 156375,
+      "district_median": 46298,
+      "city_median": 1155
+    }
+  },
+  "rows": 203828,
+  "split_counts": {
+    "train": 149213,
+    "test": 51873,
+    "valid": 2742
+  },
+  "split_event_counts": {
+    "test": 266,
+    "train": 14918,
+    "valid": 52
+  },
+  "split_event_rates": {
+    "test": 0.005127908545871648,
+    "train": 0.09997788396453391,
+    "valid": 0.018964259664478483
+  },
+  "c_index": {
+    "train": 0.4493215542095379,
+    "valid": 0.3995656894679696,
+    "test": 0.4966650786088614
+  },
+  "horizon_metrics": {
+    "train": {
+      "h6": {
+        "rows": 149213,
+        "events": 819,
+        "auc": 0.43636819862273724,
+        "brier": 0.2613290106373431
+      },
+      "h12": {
+        "rows": 149213,
+        "events": 1492,
+        "auc": 0.45080694335871513,
+        "brier": 0.2618069994693564
+      },
+      "h24": {
+        "rows": 149213,
+        "events": 2934,
+        "auc": 0.4482248203332276,
+        "brier": 0.26310743933870806
+      }
+    },
+    "valid": {
+      "h6": {
+        "rows": 2742,
+        "events": 5,
+        "auc": 0.3596638655462185,
+        "brier": 0.26550967357179867
+      },
+      "h12": {
+        "rows": 2742,
+        "events": 16,
+        "auc": 0.3309909207630227,
+        "brier": 0.2671429851398653
+      },
+      "h24": {
+        "rows": 2742,
+        "events": 28,
+        "auc": 0.4132737656595431,
+        "brier": 0.2673088386232743
+      }
+    },
+    "test": {
+      "h6": {
+        "rows": 51873,
+        "events": 56,
+        "auc": 0.4910398958973751,
+        "brier": 0.39878309021500524
+      },
+      "h12": {
+        "rows": 51873,
+        "events": 182,
+        "auc": 0.4740558912948691,
+        "brier": 0.39830358901705415
+      },
+      "h24": {
+        "rows": 51873,
+        "events": 266,
+        "auc": 0.4817436755607118,
+        "brier": 0.39795026462053207
+      }
+    }
+  },
+  "calibration": {
+    "train": [
+      {
+        "decile": 1,
+        "rows": 19783,
+        "event_rate": 0.010969013799727038
+      },
+      {
+        "decile": 2,
+        "rows": 18603,
+        "event_rate": 0.01091221845938827
+      },
+      {
+        "decile": 3,
+        "rows": 16208,
+        "event_rate": 0.009378084896347482
+      },
+      {
+        "decile": 4,
+        "rows": 16725,
+        "event_rate": 0.023079222720478326
+      },
+      {
+        "decile": 5,
+        "rows": 16094,
+        "event_rate": 0.0068969802410836336
+      },
+      {
+        "decile": 6,
+        "rows": 13783,
+        "event_rate": 0.004788507581803671
+      },
+      {
+        "decile": 7,
+        "rows": 8208,
+        "event_rate": 0.008528265107212475
+      },
+      {
+        "decile": 8,
+        "rows": 18246,
+        "event_rate": 0.007344075413789323
+      },
+      {
+        "decile": 9,
+        "rows": 9914,
+        "event_rate": 0.008472866653217672
+      },
+      {
+        "decile": 10,
+        "rows": 11649,
+        "event_rate": 0.005923255215039918
+      }
+    ],
+    "valid": [
+      {
+        "decile": 1,
+        "rows": 576,
+        "event_rate": 0.013888888888888888
+      },
+      {
+        "decile": 2,
+        "rows": 327,
+        "event_rate": 0.0030581039755351682
+      },
+      {
+        "decile": 3,
+        "rows": 214,
+        "event_rate": 0.004672897196261682
+      },
+      {
+        "decile": 4,
+        "rows": 242,
+        "event_rate": 0.0
+      },
+      {
+        "decile": 5,
+        "rows": 239,
+        "event_rate": 0.008368200836820083
+      },
+      {
+        "decile": 6,
+        "rows": 242,
+        "event_rate": 0.0
+      },
+      {
+        "decile": 7,
+        "rows": 117,
+        "event_rate": 0.0
+      },
+      {
+        "decile": 8,
+        "rows": 188,
+        "event_rate": 0.02127659574468085
+      },
+      {
+        "decile": 9,
+        "rows": 218,
+        "event_rate": 0.0
+      },
+      {
+        "decile": 10,
+        "rows": 379,
+        "event_rate": 0.0
+      }
+    ],
+    "test": [
+      {
+        "decile": 1,
+        "rows": 41,
+        "event_rate": 0.04878048780487805
+      },
+      {
+        "decile": 2,
+        "rows": 1377,
+        "event_rate": 0.007262164124909223
+      },
+      {
+        "decile": 3,
+        "rows": 4634,
+        "event_rate": 0.001294777729823047
+      },
+      {
+        "decile": 4,
+        "rows": 2801,
+        "event_rate": 0.003570153516601214
+      },
+      {
+        "decile": 5,
+        "rows": 4040,
+        "event_rate": 0.006683168316831683
+      },
+      {
+        "decile": 6,
+        "rows": 8413,
+        "event_rate": 0.004160228218233686
+      },
+      {
+        "decile": 7,
+        "rows": 9996,
+        "event_rate": 0.0020008003201280513
+      },
+      {
+        "decile": 8,
+        "rows": 1913,
+        "event_rate": 0.004181913225300575
+      },
+      {
+        "decile": 9,
+        "rows": 11594,
+        "event_rate": 0.0031913058478523376
+      },
+      {
+        "decile": 10,
+        "rows": 7064,
+        "event_rate": 0.0038221970554926385
+      }
+    ]
+  },
+  "quality_gate": {
+    "status": "pass",
+    "checks": {
+      "events_train_positive": true,
+      "events_valid_positive": true,
+      "events_test_positive": true,
+      "c_index_train_finite": true,
+      "c_index_valid_finite": true,
+      "c_index_test_finite": true
+    },
+    "warnings": [
+      "c_index_train_outside_expected_range",
+      "c_index_valid_outside_expected_range"
+    ]
+  }
+}

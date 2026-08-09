@@ -1,0 +1,135 @@
+{
+  "downloaded": [
+    {
+      "file": "mercados_municipales.json",
+      "description": "Mercados municipales con coordenadas"
+    },
+    {
+      "file": "inspecciones_consumo.csv",
+      "description": "Inspecciones de consumo en establecimientos"
+    },
+    {
+      "file": "ranking_vulnerabilidad.csv",
+      "description": "Ranking vulnerabilidad distritos y barrios"
+    },
+    {
+      "file": "poblacion_distrito_barrio.csv",
+      "description": "Población por distrito y barrio a 1 de enero"
+    },
+    {
+      "file": "parques_jardines.json",
+      "description": "Principales parques y jardines municipales con coordenadas"
+    },
+    {
+      "file": "centros_culturales.json",
+      "description": "Centros culturales municipales con coordenadas"
+    },
+    {
+      "file": "instalaciones_deportivas.json",
+      "description": "Instalaciones deportivas básicas municipales con coordenadas"
+    },
+    {
+      "file": "polideportivos.json",
+      "description": "Centros deportivos municipales (polideportivos) con coordenadas"
+    },
+    {
+      "file": "colegios_publicos.json",
+      "description": "Colegios públicos de Madrid con coordenadas"
+    },
+    {
+      "file": "bibliotecas.json",
+      "description": "Bibliotecas de Madrid con coordenadas"
+    },
+    {
+      "file": "centros_mayores.json",
+      "description": "Centros municipales de mayores con coordenadas"
+    },
+    {
+      "file": "centros_servicios_sociales.json",
+      "description": "Centros de servicios sociales municipales con coordenadas"
+    },
+    {
+      "file": "aparcamientos_publicos.json",
+      "description": "Aparcamientos públicos municipales disuasorios con coordenadas"
+    },
+    {
+      "file": "superficie_parques_zonas_verdes.csv",
+      "description": "Superficie de parques y zonas verdes por distrito"
+    },
+    {
+      "file": "inventario_zonas_verdes.csv",
+      "description": "Inventario de zonas verdes"
+    },
+    {
+      "file": "mercadillos_via_publica.json",
+      "description": "Mercadillos en vía pública con coordenadas"
+    }
+  ],
+  "failed": [
+    {
+      "file": "iae_empresas_actividad_economica.csv",
+      "url": "https://datos.madrid.es/egob/catalogo/204307-0-iae-2013.csv",
+      "description": "IAE: Empresas por epígrafe actividad económica por distrito/barrio"
+    },
+    {
+      "file": "comercios_centenarios.csv",
+      "url": "https://datos.madrid.es/egob/catalogo/300290-0-comercios-centenarios.csv",
+      "description": "Comercios centenarios de Madrid"
+    },
+    {
+      "file": "panel_indicadores_distritos_barrios.csv",
+      "url": "https://datos.madrid.es/egob/catalogo/300087-0-indicadores-distritos.csv",
+      "description": "Panel indicadores socioeconómicos distritos y barrios"
+    },
+    {
+      "file": "iguala_vulnerabilidad.xlsx",
+      "url": "https://datos.madrid.es/egob/catalogo/300577-0-iguala-vulnerabilidad.xlsx",
+      "description": "IGUALA: Índice de vulnerabilidad territorial agregado"
+    },
+    {
+      "file": "bicimad_estaciones.json",
+      "url": "https://datos.madrid.es/egob/catalogo/208327-0-transporte-bicicletas-bicimad.json",
+      "description": "Estaciones BiciMAD con coordenadas"
+    },
+    {
+      "file": "paradas_taxi.csv",
+      "url": "https://datos.madrid.es/egob/catalogo/208094-0-reserva-paradas-taxis.csv",
+      "description": "Reservas de paradas de taxi con coordenadas"
+    },
+    {
+      "file": "alojamientos_turisticos.xml",
+      "url": "https://datos.madrid.es/egob/catalogo/300032-0-turismo-alojamientos.xml",
+      "description": "Alojamientos turísticos (esmadrid.com) con coordenadas"
+    },
+    {
+      "file": "restaurantes_turisticos.xml",
+      "url": "https://datos.madrid.es/egob/catalogo/300033-0-turismo-restauracion.xml",
+      "description": "Restaurantes con perfil turístico con coordenadas"
+    },
+    {
+      "file": "puntos_interes_turistico.xml",
+      "url": "https://datos.madrid.es/egob/catalogo/300030-0-puntos-interes-turistico.xml",
+      "description": "Puntos de interés turístico de Madrid con coordenadas"
+    },
+    {
+      "file": "ocio_nocturno_turistico.xml",
+      "url": "https://datos.madrid.es/egob/catalogo/300035-0-turismo-nocturno.xml",
+      "description": "Locales de ocio nocturno con perfil turístico con coordenadas"
+    },
+    {
+      "file": "barrios_madrid.csv",
+      "url": "https://datos.madrid.es/egob/catalogo/300496-0-barrios-madrid.csv",
+      "description": "Barrios municipales de Madrid (delimitación + códigos)"
+    },
+    {
+      "file": "inspecciones_urbanisticas.csv",
+      "url": "https://datos.madrid.es/egob/catalogo/300373-0-inspecciones-urbanisticas.csv",
+      "description": "Inspecciones urbanísticas"
+    },
+    {
+      "file": "inspecciones_lepar.csv",
+      "url": "https://datos.madrid.es/egob/catalogo/300160-0-inspecciones-industrias-lepar.csv",
+      "description": "Inspecciones de locales sujetos a Ley de espectáculos"
+    }
+  ]
+}

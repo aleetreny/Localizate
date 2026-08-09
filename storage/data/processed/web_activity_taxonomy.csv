@@ -1,0 +1,458 @@
+epigrafe_code,epigrafe_desc,web_supercategory,web_category,web_subcategory,display_label,investable,mapping_rule,source_rows,needs_manual_review
+472205,"COMERCIO AL POR MENOR DE AVES, HUEVOS Y CAZA CON OBRADOR",Alimentacion,Alimentacion fresca,Aves y huevos,Aves y huevos,True,exact_code,22167,False
+472206,"COMERCIO AL POR MENOR DE AVES, HUEVOS Y CAZA SIN OBRADOR",Alimentacion,Alimentacion fresca,Aves y huevos,Aves y huevos,True,exact_code,104719,False
+472201,COMERCIO AL POR MENOR DE CARNICERIA,Alimentacion,Alimentacion fresca,Carniceria,Carniceria,True,exact_code,145231,False
+472203,COMERCIO AL POR MENOR DE CARNICERIA-CHARCUTERIA,Alimentacion,Alimentacion fresca,Carniceria y charcuteria,Carniceria y charcuteria,True,exact_code,28842,False
+472204,COMERCIO AL POR MENOR DE CARNICERIA-SALCHICHERIA,Alimentacion,Alimentacion fresca,Carniceria y charcuteria,Carniceria y charcuteria,True,exact_code,58307,False
+472207,COMERCIO AL POR MENOR DE CASQUERIA,Alimentacion,Alimentacion fresca,Casqueria,Casqueria,True,exact_code,18958,False
+472202,COMERCIO AL POR MENOR DE CHARCUTERIA,Alimentacion,Alimentacion fresca,Charcuteria,Charcuteria,True,exact_code,137633,False
+472101,COMERCIO AL POR MENOR DE FRUTAS Y HORTALIZAS CON OBRADOR,Alimentacion,Alimentacion fresca,Fruteria,Fruteria,True,exact_code,22738,False
+472102,COMERCIO AL POR MENOR DE FRUTAS Y HORTALIZAS SIN OBRADOR,Alimentacion,Alimentacion fresca,Fruteria,Fruteria,True,exact_code,316109,False
+472301,COMERCIO AL POR MENOR DE PESCADOS Y MARISCOS CON OBRADOR (INCLUYE COCCION),Alimentacion,Alimentacion fresca,Pescaderia,Pescaderia,True,exact_code,10818,False
+472302,COMERCIO AL POR MENOR DE PESCADOS Y MARISCOS SIN OBRADOR,Alimentacion,Alimentacion fresca,Pescaderia,Pescaderia,True,exact_code,114162,False
+472406,ESTABLECIMIENTOS DE VENTA DE PLATOS PREPARADOS SIN OBRADOR,Alimentacion,Comida preparada,Comida preparada,Comida preparada,True,exact_code,20765,False
+472407,ESTABLECIMIENTOS DE VENTA DE PLATOS PREPARADOS CON OBRADOR,Alimentacion,Comida preparada,Comida preparada,Comida preparada,True,exact_code,111533,False
+472502,COMERCIO AL POR MENOR DE VINOS Y ALCOHOLES (BODEGA) SIN CONSUMO,Alimentacion,Especialistas alimentacion,Bodega,Bodega,True,exact_code,21191,False
+472910,"COMERCIO AL POR MENOR DE CAFE, INFUSIONES Y CHOCOLATE",Alimentacion,Especialistas alimentacion,Cafe e infusiones,Cafe e infusiones,True,exact_code,14473,False
+472905,COMERCIO AL POR MENOR DE CONGELADOS,Alimentacion,Especialistas alimentacion,Congelados,Congelados,True,exact_code,39534,False
+472907,COMERCIO AL POR MENOR DE FRUTOS SECOS Y VARIANTES,Alimentacion,Especialistas alimentacion,Frutos secos y encurtidos,Frutos secos y encurtidos,True,exact_code,64106,False
+472906,COMERCIO AL POR MENOR DE GOLOSINAS,Alimentacion,Especialistas alimentacion,Golosinas,Golosinas,True,exact_code,10469,False
+472904,COMERCIO AL POR MENOR DE HELADOS SIN OBRADOR,Alimentacion,Especialistas alimentacion,Heladeria,Heladeria,True,exact_code,22394,False
+472501,"COMERCIO AL POR MENOR DE LECHE, PRODUCTOS LACTEOS Y BEBIDAS REFRESCANTES",Alimentacion,Especialistas alimentacion,Lacteos y bebidas,Lacteos y bebidas,True,exact_code,10769,False
+472401,COMERCIO AL POR MENOR DE PAN Y PRODUCTOS DE PANADERIA Y BOLLERIA CON OBRADOR,Alimentacion,Panaderia y pasteleria,Panaderia,Panaderia,True,exact_code,134260,False
+472402,COMERCIO AL POR MENOR DE PAN Y PRODUCTOS DE PANADERIA Y BOLLERIA SIN OBRADOR,Alimentacion,Panaderia y pasteleria,Panaderia,Panaderia,True,exact_code,100915,False
+47800107,SITUADOS: CONFITERIA Y FRUTOS SECOS Y PATATAS FRITAS,Alimentacion,Panaderia y pasteleria,Panaderia y pasteleria,Panaderia y pasteleria,True,keyword_bakery,271,False
+472403,"COMERCIO AL POR MENOR DE PASTELERIA, CONFITERIA, REPOSTERIA CON OBRADOR-BARRA DEGUSTACION",Alimentacion,Panaderia y pasteleria,Pasteleria y reposteria,Pasteleria y reposteria,True,exact_code,41458,False
+472404,"COMERCIO AL POR MENOR DE PASTELERIA, CONFITERIA, REPOSTERIA CON OBRADOR-SIN BARRA DEGUSTACION",Alimentacion,Panaderia y pasteleria,Pasteleria y reposteria,Pasteleria y reposteria,True,exact_code,51966,False
+472405,"COMERCIO AL POR MENOR DE PASTELERIA, CONFITERIA, REPOSTERIA SIN OBRADOR",Alimentacion,Panaderia y pasteleria,Pasteleria y reposteria,Pasteleria y reposteria,True,exact_code,45753,False
+471104,COMERCIO AL POR MENOR DE PRODUCTOS ALIMENTICIOS NO PERECEDEROS ENVASADOS,Alimentacion,Supermercado y conveniencia,Alimentacion envasada,Alimentacion envasada,True,exact_code,117344,False
+471102,"COMERCIO AL POR MENOR EN ESTABLECIMIENTOS NO ESPECIALIZADOS, CON PREDOMINIO EN PRODUCTOS ALIMENTICIOS, BEBIDAS Y TABACO (GRANDES SUPERFICIES)",Alimentacion,Supermercado y conveniencia,Gran superficie alimentacion,Gran superficie alimentacion,True,exact_code,14598,False
+471101,"COMERCIO AL POR MENOR EN ESTABLECIMIENTOS NO ESPECIALIZADOS, CON PREDOMINIO EN PRODUCTOS ALIMENTICIOS, BEBIDAS Y TABACO (AUTOSERVICIO)",Alimentacion,Supermercado y conveniencia,Supermercado,Supermercado,True,exact_code,294889,False
+472911,OTRO COMERCIO AL POR MENOR DE PRODUCTOS ALIMENTICIOS (PERECEDEROS Y NO PERECEDEROS) CON VENDEDOR N.C.O.P.,Alimentacion,Supermercado y conveniencia,Tienda de alimentacion,Tienda de alimentacion,True,exact_code,337657,False
+552001,ALBERGUES JUVENILES Y OTROS ALOJAMIENTOS TURISTICOS DE CORTA ESTANCIA,Alojamiento,Alojamiento turistico,Albergue,Albergue,True,exact_code,15449,False
+551002,HOTELES Y MOTELES SIN RESTAURANTE,Alojamiento,Alojamiento turistico,Alojamiento turistico,Alojamiento turistico,True,prefix_55,6315,False
+551004,APART-HOTELES,Alojamiento,Alojamiento turistico,Alojamiento turistico,Alojamiento turistico,True,prefix_55,8327,False
+553001,CAMPINGS Y APARCAMIENTOS PARA CARAVANAS,Alojamiento,Alojamiento turistico,Alojamiento turistico,Alojamiento turistico,True,prefix_55,141,False
+559001,COLEGIOS MAYORES Y RESIDENCIAS DE ESTUDIANTES,Alojamiento,Alojamiento turistico,Alojamiento turistico,Alojamiento turistico,True,prefix_55,13599,False
+559002,PENSIONES,Alojamiento,Alojamiento turistico,Alojamiento turistico,Alojamiento turistico,True,prefix_55,3496,False
+559003,CASAS DE HUESPEDES,Alojamiento,Alojamiento turistico,Alojamiento turistico,Alojamiento turistico,True,prefix_55,7030,False
+551003,HOSTALES,Alojamiento,Alojamiento turistico,Hostal,Hostal,True,exact_code,15592,False
+551001,HOTELES Y MOTELES CON RESTAURANTE,Alojamiento,Alojamiento turistico,Hotel,Hotel,True,exact_code,42775,False
+551005,VIVIENDAS TURÍSTICAS,Alojamiento,Alojamiento turistico,Vivienda turistica,Vivienda turistica,True,exact_code,81674,False
+473001,COMERCIO AL POR MENOR DE COMBUSTIBLE PARA LA AUTOMOCION EN ESTABLECIMIENTOS ESPECIALIZADOS,Automocion,Servicios automocion,Gasolinera,Gasolinera,True,exact_code,22020,False
+452003,TALLER DE MONTAJE DE ACCESORIOS PARA EL AUTOMOVIL,Automocion,Taller y reparacion,Accesorios automovil,Accesorios automovil,True,exact_code,12047,False
+452004,MANTENIMIENTO Y REPARACION DE VEHICULOS DE MOTOR N.C.O.P.,Automocion,Taller y reparacion,Taller automovil,Taller automovil,True,exact_code,48718,False
+452001,TALLER DE REPARACION DE AUTOMOVILES ESPECIALIZADO EN CHAPA Y PINTURA,Automocion,Taller y reparacion,Taller chapa y pintura,Taller chapa y pintura,True,exact_code,82800,False
+452002,TALLER DE REPARACION DE AUTOMOVILES ESPECIALIZADO EN MECANICA Y ELECTRICIDAD,Automocion,Taller y reparacion,Taller mecanica,Taller mecanica,True,exact_code,202373,False
+454001,MANTENIMIENTO Y REPARACION DE MOTOCICLETAS Y VENTA DE SUS REPUESTOS Y ACCESORIOS,Automocion,Venta y recambios,Motos y reparacion,Motos y reparacion,True,exact_code,22783,False
+453001,COMERCIO DE RESPUESTOS Y ACCESORIOS DE VEHICULOS DE MOTOR,Automocion,Venta y recambios,Recambios automovil,Recambios automovil,True,exact_code,38792,False
+451001,COMERCIO DE VEHICULOS DE MOTOR NUEVOS,Automocion,Venta y recambios,Venta de coches nuevos,Venta de coches nuevos,True,exact_code,39057,False
+451002,COMERCIO DE VEHICULOS DE MOTOR USADOS,Automocion,Venta y recambios,Venta de coches usados,Venta de coches usados,True,exact_code,21131,False
+454002,VENTA DE MOTOCICLETAS,Automocion,Venta y recambios,Venta de motos,Venta de motos,True,exact_code,10353,False
+477501,COMERCIO AL POR MENOR DE ARTICULOS DE PERFUMERIA Y COSMETICA,Belleza y cuidado personal,Cosmetica y perfumeria,Perfumeria y cosmetica,Perfumeria y cosmetica,True,exact_code,98947,False
+960205,CENTROS DE BRONCEADO,Belleza y cuidado personal,Peluqueria y estetica,Bronceado,Bronceado,True,exact_code,30029,False
+960203,CENTRO DE ESTETICA,Belleza y cuidado personal,Peluqueria y estetica,Centro de estetica,Centro de estetica,True,exact_code,258695,False
+960206,CENTROS DE FOTODEPILACION,Belleza y cuidado personal,Peluqueria y estetica,Fotodepilacion,Fotodepilacion,True,exact_code,41300,False
+960202,INSTITUTO DE BELLEZA,Belleza y cuidado personal,Peluqueria y estetica,Instituto de belleza,Instituto de belleza,True,exact_code,59553,False
+960201,SERVICIO DE PELUQUERIA,Belleza y cuidado personal,Peluqueria y estetica,Peluqueria,Peluqueria,True,exact_code,670144,False
+960204,INSTITUTOS O CENTROS CAPILARES,Belleza y cuidado personal,Servicios personales,Belleza y cuidado personal,Belleza y cuidado personal,True,prefix_96,1879,False
+960301,POMPAS FUNEBRES Y ACTIVIDADES RELACIONADAS,Belleza y cuidado personal,Servicios personales,Belleza y cuidado personal,Belleza y cuidado personal,True,prefix_96,4608,False
+960401,BALNEARIOS Y SPA URBANOS,Belleza y cuidado personal,Servicios personales,Belleza y cuidado personal,Belleza y cuidado personal,True,prefix_96,9593,False
+960402,DESPACHO DE DIESTISTAS,Belleza y cuidado personal,Servicios personales,Belleza y cuidado personal,Belleza y cuidado personal,True,prefix_96,235,False
+960403,"SAUNAS, BAÑOS TURCOS Y SIMILARES",Belleza y cuidado personal,Servicios personales,Belleza y cuidado personal,Belleza y cuidado personal,True,prefix_96,2831,False
+960902,TRATAMIENTO HIGIENICO DE ANIMALES (PELUQUERIAS),Belleza y cuidado personal,Servicios personales,Belleza y cuidado personal,Belleza y cuidado personal,True,prefix_96,30044,False
+960903,"ADIESTRAMIENTO, CUIDADO DE ANIMALES, RESIDENCIAS CANINAS Y CENTROS DE ANIMALES ABANDONADOS",Belleza y cuidado personal,Servicios personales,Belleza y cuidado personal,Belleza y cuidado personal,True,prefix_96,3888,False
+960904,"OTRAS SERVICIOS PERSONALES (ASTROLOGIA, AGENCIAS DE CONTACTOS) N.C.O.P.",Belleza y cuidado personal,Servicios personales,Belleza y cuidado personal,Belleza y cuidado personal,True,prefix_96,6862,False
+960901,CENTROS DE TATUAJE Y/O ANILLADO,Belleza y cuidado personal,Servicios personales,Tattoo y piercing,Tattoo y piercing,True,exact_code,35902,False
+931009,ACTIVIDADES DE CLUBES DEPORTIVOS Y OTRAS ACTIVIDADES DEPORTIVAS,Deporte y ocio,Fitness y deporte,Club deportivo,Club deportivo,True,exact_code,24022,False
+931008,ACTIVIDADES DE LOS GIMNASIOS,Deporte y ocio,Fitness y deporte,Gimnasio,Gimnasio,True,exact_code,91750,False
+931001,GESTION DE INSTALACIONES DEPORTIVAS,Deporte y ocio,Fitness y deporte,Instalacion deportiva,Instalacion deportiva,True,exact_code,14232,False
+932002,CENTROS DE JUEGOS O CELEBRACIONES INFANTILES SIN COCINA,Deporte y ocio,Ocio y entretenimiento,Celebraciones infantiles,Celebraciones infantiles,True,exact_code,13199,False
+920001,JUEGOS DE AZAR Y APUESTAS DE GESTION PUBLICA O O AUTORIZACION ESPECIAL (ESTADO Y ONCE),Deporte y ocio,Ocio y entretenimiento,Ocio y entretenimiento,Ocio y entretenimiento,True,prefix_92_93,62108,False
+920002,"JUEGOS DE AZAR Y APUESTAS DE GESTION PRIVADA (BINGOS, CASINOS, MAQUINAS TRAGAPERRAS)",Deporte y ocio,Ocio y entretenimiento,Ocio y entretenimiento,Ocio y entretenimiento,True,prefix_92_93,45317,False
+931002,PISCINAS DE USO PUBLICO DE TEMPORADA,Deporte y ocio,Ocio y entretenimiento,Ocio y entretenimiento,Ocio y entretenimiento,True,prefix_92_93,16043,False
+931003,PISCINAS DE USO PUBLLICO CLIMATIZADAS,Deporte y ocio,Ocio y entretenimiento,Ocio y entretenimiento,Ocio y entretenimiento,True,prefix_92_93,18923,False
+931004,PISCINAS PUBLICAS CLIMATIZADAS/TEMPORADA,Deporte y ocio,Ocio y entretenimiento,Ocio y entretenimiento,Ocio y entretenimiento,True,prefix_92_93,311,False
+931005,PISCINA PRIVADA DE TEMPORADA,Deporte y ocio,Ocio y entretenimiento,Ocio y entretenimiento,Ocio y entretenimiento,True,prefix_92_93,1042,False
+931006,PISCINA PRIVADA CLIMATIZADA,Deporte y ocio,Ocio y entretenimiento,Ocio y entretenimiento,Ocio y entretenimiento,True,prefix_92_93,997,False
+931007,PISCINA PRIVADA CLIMATIZADA/TEMPORADA,Deporte y ocio,Ocio y entretenimiento,Ocio y entretenimiento,Ocio y entretenimiento,True,prefix_92_93,98,False
+931010,PISCINAS DE COMUNIDADES DE VECINOS DE TEMPORADA,Deporte y ocio,Ocio y entretenimiento,Ocio y entretenimiento,Ocio y entretenimiento,True,prefix_92_93,2663,False
+931011,PISCINAS DE COMUNIDADES DE VECINOS CLIMATIZADAS,Deporte y ocio,Ocio y entretenimiento,Ocio y entretenimiento,Ocio y entretenimiento,True,prefix_92_93,74,False
+931012,ESTABLECIMIENTOS DE EQUITACION,Deporte y ocio,Ocio y entretenimiento,Ocio y entretenimiento,Ocio y entretenimiento,True,prefix_92_93,238,False
+932001,CENTROS DE JUEGOS O CELEBRACIONES INFANTILES CON COCINA,Deporte y ocio,Ocio y entretenimiento,Ocio y entretenimiento,Ocio y entretenimiento,True,prefix_92_93,5931,False
+932004,SALAS DE FIESTA CON RESTAURACION,Deporte y ocio,Ocio y entretenimiento,Ocio y entretenimiento,Ocio y entretenimiento,True,prefix_92_93,2525,False
+932005,SALAS DE FIESTA SIN RESTAURACION,Deporte y ocio,Ocio y entretenimiento,Ocio y entretenimiento,Ocio y entretenimiento,True,prefix_92_93,5896,False
+932007,SALONES DE RECREO Y DIVERSION Y OTRAS ACTIVIDADES RECREATIVAS,Deporte y ocio,Ocio y entretenimiento,Salon recreativo,Salon recreativo,True,exact_code,17267,False
+851003,CENTROS DE CUIDADO INFANTIL,Educacion,Educacion infantil,Centro de cuidado infantil,Centro de cuidado infantil,True,exact_code,11232,False
+851001,ESCUELAS INFANTILES DE PRIMER CICLO,Educacion,Educacion infantil,Escuela infantil,Escuela infantil,True,exact_code,79816,False
+851002,ESCUELAS INFANTILES DE SEGUNDO CICLO,Educacion,Educacion infantil,Escuela infantil,Escuela infantil,True,exact_code,25416,False
+855001,AUTOESCUELA,Educacion,Formacion,Autoescuela,Autoescuela,True,exact_code,57166,False
+851004,CENTROS DE CUIDADO INFANTIL DE ASISTENCIA ESPORADICA,Educacion,Formacion,Educacion y formacion,Educacion y formacion,True,prefix_85,137,False
+851007,CENTROS PUBLICOS DE EDUCACION PRIMARIA,Educacion,Formacion,Educacion y formacion,Educacion y formacion,True,prefix_85,5271,False
+851008,CENTROS PRIVADOS DE EDUCACION PRIMARIA,Educacion,Formacion,Educacion y formacion,Educacion y formacion,True,prefix_85,4576,False
+851009,CENTROS PRIVADOS CONCERTADOS DE EDUCACION PRIMARIA,Educacion,Formacion,Educacion y formacion,Educacion y formacion,True,prefix_85,2785,False
+852001,CENTRO DE INFANTIL Y PRIMARIA PUBLICO,Educacion,Formacion,Educacion y formacion,Educacion y formacion,True,prefix_85,33033,False
+852002,CENTRO DE INFANTIL Y PRIMARIA PRIVADO,Educacion,Formacion,Educacion y formacion,Educacion y formacion,True,prefix_85,15155,False
+852003,CENTRO DE EDUCACION DE PERSONAS ADULTAS (CEPA),Educacion,Formacion,Educacion y formacion,Educacion y formacion,True,prefix_85,6748,False
+852004,CENTROS PRIVADOS CONCERTADOS EDUC INFANTIL Y EDUC PRIMARIA,Educacion,Formacion,Educacion y formacion,Educacion y formacion,True,prefix_85,15456,False
+853001,"CENTRO PUBLICO DE SECUNDARIA, BACHILLERATO Y/O FP",Educacion,Formacion,Educacion y formacion,Educacion y formacion,True,prefix_85,17532,False
+853002,"CENTRO DE PRIMARIA, SECUNDARIA, BACHILLERATO Y/O FP PRIVADO",Educacion,Formacion,Educacion y formacion,Educacion y formacion,True,prefix_85,20637,False
+853003,"CENTRO PRIV.CONCERTADO DE PRIMARIA, SECUND., BACHILL. Y/O FP",Educacion,Formacion,Educacion y formacion,Educacion y formacion,True,prefix_85,17697,False
+854001,EDUCACION UNIVERSITARIA PUBLICA,Educacion,Formacion,Educacion y formacion,Educacion y formacion,True,prefix_85,14141,False
+854002,EDUCACION UNIVERSITARIA PRIVADA,Educacion,Formacion,Educacion y formacion,Educacion y formacion,True,prefix_85,9665,False
+854003,EDUCACION TERCIARIA NO UNIVERSITARIA,Educacion,Formacion,Educacion y formacion,Educacion y formacion,True,prefix_85,11397,False
+855002,"ENSEÑANZA NO REGLADA (DEPORTIVA Y RECREATIVA, CULTURAL, CLASES DE RECUPERACION, INFORMATICA)",Educacion,Formacion,Formacion no reglada,Formacion no reglada,True,exact_code,251805,False
+855003,ENSEÑANZA DE IDIOMAS,Educacion,Formacion,Idiomas,Idiomas,True,exact_code,40715,False
+641001,"INTERMEDIACION MONETARIA: BANCOS, CAJAS DE AHORRO",Finanzas,Finanzas y seguros,Banco y caja,Banco y caja,True,exact_code,259420,False
+661002,CAMBIO Y ENVIO DE MONEDA,Finanzas,Finanzas y seguros,Cambio y envio de moneda,Cambio y envio de moneda,True,exact_code,19000,False
+642001,ACTIVIDADES DE LAS SOCIEDADES HOLDING,Finanzas,Finanzas y seguros,Finanzas y seguros,Finanzas y seguros,True,prefix_finance,1522,False
+643001,"INVERSION COLECTIVA, FONDOS Y ENTIDADES FINANCIERAS SIMILARES",Finanzas,Finanzas y seguros,Finanzas y seguros,Finanzas y seguros,True,prefix_finance,2083,False
+649001,"OTROS SERVICIOS FINANCIEROS(ARRENDAMIENTO FINANCIERO, PRESTAMOS POR ENTIDADES NO FINANCIERAS), EXCEPTO SEGUROS Y FONDOS DE PENSIONES",Finanzas,Finanzas y seguros,Finanzas y seguros,Finanzas y seguros,True,prefix_finance,7367,False
+652001,REASEGUROS,Finanzas,Finanzas y seguros,Finanzas y seguros,Finanzas y seguros,True,prefix_finance,1061,False
+653001,FONDOS DE PENSIONES,Finanzas,Finanzas y seguros,Finanzas y seguros,Finanzas y seguros,True,prefix_finance,16,False
+661001,"ADMINISTRACION DE MERCADOS FINANCIEROS, INTERMEDIACION EN OPERACIONES CON VALORES Y OTROS ACTIVOS",Finanzas,Finanzas y seguros,Finanzas y seguros,Finanzas y seguros,True,prefix_finance,5259,False
+663001,ACTIVIDADES DE GESTION DE FONDOS,Finanzas,Finanzas y seguros,Finanzas y seguros,Finanzas y seguros,True,prefix_finance,1264,False
+651001,SEGUROS,Finanzas,Finanzas y seguros,Seguros,Seguros,True,exact_code,42727,False
+662001,ACTIVIDADES AUXILIARES A SEGUROS Y FONDOS DE PENSIONES,Finanzas,Finanzas y seguros,Servicios auxiliares seguros,Servicios auxiliares seguros,True,exact_code,17228,False
+561005,BAR CON COCINA,Hosteleria,Bar y cafeteria,Bar con cocina,Bar con cocina,True,exact_code,572319,False
+563002,BAR ESPECIAL SIN ACTUACIONES,Hosteleria,Bar y cafeteria,Bar especial,Bar especial,True,exact_code,123978,False
+563003,BAR ESPECIAL CON ACTUACIONES,Hosteleria,Bar y cafeteria,Bar especial con actuaciones,Bar especial con actuaciones,True,exact_code,10607,False
+561004,BAR RESTAURANTE,Hosteleria,Bar y cafeteria,Bar restaurante,Bar restaurante,True,exact_code,544326,False
+563005,BAR SIN COCINA,Hosteleria,Bar y cafeteria,Bar sin cocina,Bar sin cocina,True,exact_code,215083,False
+563001,COMERCIO AL POR MENOR DE VINOS Y ALCOHOLES (BODEGA) CON CONSUMO,Hosteleria,Bar y cafeteria,Bodega con consumo,Bodega con consumo,True,exact_code,12582,False
+561006,CAFETERIA,Hosteleria,Bar y cafeteria,Cafeteria,Cafeteria,True,exact_code,408293,False
+472908,"COMERCIO AL POR MENOR DE MASAS Y PATATAS FRITAS, CHURRERIA CON OBRADOR",Hosteleria,Bar y cafeteria,Churreria,Churreria,True,exact_code,18194,False
+472902,COMERCIO AL POR MENOR DE HELADOS CON OBRADOR CON BARRA DE DEGUSTACION,Hosteleria,Bar y cafeteria,Heladeria,Heladeria,True,keyword_icecream,7889,False
+472903,COMERCIO AL POR MENOR DE HELADOS CON OBRADOR SIN BARRA DE DEGUSTACION,Hosteleria,Bar y cafeteria,Heladeria,Heladeria,True,keyword_icecream,4341,False
+47800101,SITUADOS: HELADOS Y/O BEBIDAS REFRESCANTES,Hosteleria,Bar y cafeteria,Heladeria,Heladeria,True,keyword_icecream,3203,False
+561007,CHOCOLATERIA/SALON DE TE Y HELADERIA,Hosteleria,Bar y cafeteria,Heladeria y salon de te,Heladeria y salon de te,True,exact_code,12683,False
+563004,TABERNA,Hosteleria,Bar y cafeteria,Taberna,Taberna,True,exact_code,22098,False
+562901,"OTROS SERVICIOS DE COMIDAS EN INSTALACIONES DEPORTIVAS, OFICINAS, EMPRESAS O SIMILARES",Hosteleria,Catering y colectividades,Comedor colectivo,Comedor colectivo,True,exact_code,28109,False
+562902,SERVICIOS DE COMEDOR EN CENTROS EDUCATIVOS Y CENTROS DE CUIDADO INFANTIL,Hosteleria,Catering y colectividades,Comedor colectivo,Comedor colectivo,True,exact_code,155805,False
+562903,SERVICIOS DE COMEDOR EN CENTROS PARA MAYORES,Hosteleria,Catering y colectividades,Comedor colectivo,Comedor colectivo,True,exact_code,31790,False
+562101,SALONES DE BANQUETES Y PROVISION COMIDAS PARA EVENTOS,Hosteleria,Catering y colectividades,Eventos y banquetes,Eventos y banquetes,True,exact_code,10952,False
+563007,CAFE ESPECTACULO,Hosteleria,Ocio nocturno,Cafe espectaculo,Cafe espectaculo,True,exact_code,15746,False
+932006,DISCOTECAS Y SALAS DE BAILE,Hosteleria,Ocio nocturno,Discoteca,Discoteca,True,exact_code,24040,False
+561002,RESTAURANTES DE COMIDA RAPIDA,Hosteleria,Restauracion,Comida rapida,Comida rapida,True,exact_code,72198,False
+561003,AUTOSERVICIO DE RESTAURACION,Hosteleria,Restauracion,Hosteleria especializada,Hosteleria especializada,True,prefix_56,4921,False
+561008,VENDEDOR AMBULANTE DE ALIMENTOS PREPARADOS PARA SU CONSUMO INMEDIATO,Hosteleria,Restauracion,Hosteleria especializada,Hosteleria especializada,True,prefix_56,743,False
+562904,SERVICIOS DE COMEDOR EN CENTROS DE ACTIVIDADES DE SERVICIOS SOCIALES,Hosteleria,Restauracion,Hosteleria especializada,Hosteleria especializada,True,prefix_56,8593,False
+562905,SERVICIOS DE PREPARACIÓN DE COMIDAS EN HOSPITALES,Hosteleria,Restauracion,Hosteleria especializada,Hosteleria especializada,True,prefix_56,1144,False
+563006,CIBER-CAFE,Hosteleria,Restauracion,Hosteleria especializada,Hosteleria especializada,True,prefix_56,1042,False
+561001,RESTAURANTE,Hosteleria,Restauracion,Restaurante,Restaurante,True,exact_code,346007,False
+471902,"COMERCIO AL POR MENOR DE PRODUCTOS DE PRECIO UNICO, BAZARES Y ASIMILABLES",Retail especializado,Conveniencia,Bazar y precio unico,Bazar y precio unico,True,exact_code,176870,False
+472601,COMERCIO AL POR MENOR DE TABACOS Y ARTICULOS DE FUMADOR,Retail especializado,Conveniencia,Estanco,Estanco,True,exact_code,85824,False
+471901,"COMERCIO AL POR MENOR EN ESTABLECIMIENTOS NO ESPECIALIZADOS, SIN PREDOMINIO EN PRODUCTOS ALIMENTICIOS, BEBIDAS Y TABACO",Retail especializado,Conveniencia,Tienda multiproducto,Tienda multiproducto,True,exact_code,44071,False
+476401,COMERCIO AL POR MENOR DE BICICLETAS,Retail especializado,Cultura y ocio,Bicicletas,Bicicletas,True,exact_code,13004,False
+476403,COMERCIO AL POR MENOR DE ARTICULOS DEPORTIVOS,Retail especializado,Cultura y ocio,Deporte,Deporte,True,exact_code,39574,False
+476501,COMERCIO AL POR MENOR DE JUEGOS Y JUGUETES,Retail especializado,Cultura y ocio,Jugueteria,Jugueteria,True,exact_code,32169,False
+476101,COMERCIO AL POR MENOR DE LIBROS,Retail especializado,Cultura y ocio,Libreria,Libreria,True,exact_code,61068,False
+476201,"COMERCIO AL POR MENOR DE PERIODICOS, REVISTAS Y ARTICULOS DE PAPELERIA",Retail especializado,Cultura y ocio,Papeleria y prensa,Papeleria y prensa,True,exact_code,91734,False
+475401,COMERCIO AL POR MENOR DE ELECTRODOMESTICOS,Retail especializado,Electronica y telecom,Electrodomesticos,Electrodomesticos,True,exact_code,32050,False
+474302,COMERCIO AL POR MENOR DE MATERIAL ELECTRONICO,Retail especializado,Electronica y telecom,Electronica,Electronica,True,exact_code,31684,False
+477805,COMERCIO AL POR MENOR DE MATERIAL FOTOGRAFICO Y FOTOGRAFIA,Retail especializado,Electronica y telecom,Electronica y telecom,Electronica y telecom,True,keyword_tech_retail,29254,False
+474102,"COMERCIO AL POR MENOR DE PRODUCTOS INFORMATICOS (ORDENADORES, PROGRAMAS, EQUIPOS PERIFERICOS Y CONSUMIBLES)",Retail especializado,Electronica y telecom,Informatica,Informatica,True,exact_code,30196,False
+474201,COMERCIO AL POR MENOR DE PRODUCTOS DE TELEFONIA Y TELECOMUNICACIONES,Retail especializado,Electronica y telecom,Telefonia,Telefonia,True,exact_code,89568,False
+475905,COMERCIO AL POR MENOR DE COLCHONERIA,Retail especializado,Hogar y decoracion,Colchoneria,Colchoneria,True,exact_code,22709,False
+475907,COMERCIO AL POR MENOR DE ARTICULOS DE USO DOMESTICO EN ESTABLECIMIENTO ESPECIALIZADO,Retail especializado,Hogar y decoracion,Hogar y menaje,Hogar y menaje,True,exact_code,37091,False
+475906,COMERCIO AL POR MENOR DE APARATOS DE ILUMINACION,Retail especializado,Hogar y decoracion,Iluminacion,Iluminacion,True,exact_code,12520,False
+475902,COMERCIO AL POR MENOR DE MENAJE DEL HOGAR,Retail especializado,Hogar y decoracion,Menaje del hogar,Menaje del hogar,True,exact_code,20931,False
+475901,COMERCIO AL POR MENOR DE MUEBLES,Retail especializado,Hogar y decoracion,Muebles,Muebles,True,exact_code,95303,False
+475903,COMERCIO AL POR MENOR DE MUEBLES DE COCINA,Retail especializado,Hogar y decoracion,Muebles de cocina,Muebles de cocina,True,exact_code,35600,False
+475101,COMERCIO AL POR MENOR DE TEXTILES PARA EL HOGAR,Retail especializado,Hogar y decoracion,Textil hogar,Textil hogar,True,exact_code,79320,False
+475204,COMERCIO AL POR MENOR EN TIENDAS DE BRICOLAJE,Retail especializado,Hogar y reformas,Bricolaje,Bricolaje,True,exact_code,12163,False
+475201,COMERCIO AL POR MENOR DE ARTICULOS DE FERRETERIA,Retail especializado,Hogar y reformas,Ferreteria,Ferreteria,True,exact_code,75528,False
+475206,COMERCIO AL POR MENOR DE MATERIAL ELECTRICO,Retail especializado,Hogar y reformas,Material electrico,Material electrico,True,exact_code,31386,False
+475202,COMERCIO AL POR MENOR DE MATERIALES DE CONSTRUCCION,Retail especializado,Hogar y reformas,Materiales de construccion,Materiales de construccion,True,exact_code,27809,False
+475203,"COMERCIO AL POR MENOR DE PUERTAS, VENTANAS Y PERSIANAS",Retail especializado,Hogar y reformas,Puertas y ventanas,Puertas y ventanas,True,exact_code,38263,False
+475205,COMERCIO AL POR MENOR DE SANEAMIENTOS,Retail especializado,Hogar y reformas,Saneamientos,Saneamientos,True,exact_code,26575,False
+477601,"COMERCIO AL POR MENOR DE SEMILLAS, ABONOS, PLANTAS Y FLOR CORTADA",Retail especializado,Hogar y regalos,Floristeria,Floristeria,True,exact_code,55635,False
+477602,COMERCIO AL POR MENOR DE COMPLEMENTOS Y ALIMENTOS PARA ANIMALES DE COMPAÑIA,Retail especializado,Mascotas,Mascotas,Mascotas,True,exact_code,27964,False
+477201,COMERCIO AL POR MENOR DE CALZADO Y ARTICULOS DE CUERO EN ESTABLECIMIENTOS ESPECIALIZADOS,Retail especializado,Moda y complementos,Calzado,Calzado,True,exact_code,140390,False
+477701,"COMERCIO AL POR MENOR DE JOYAS, RELOJERIA Y BISUTERIA",Retail especializado,Moda y complementos,Joyeria y relojeria,Joyeria y relojeria,True,exact_code,141966,False
+477101,COMERCIO AL POR MENOR DE PRENDAS DE VESTIR EN ESTABLECIMIENTOS ESPECIALIZADOS,Retail especializado,Moda y complementos,Moda,Moda,True,exact_code,548449,False
+47800108,"SITUADOS: COMPLEMENTOS, BISUTERIA Y ARTESANIA",Retail especializado,Moda y complementos,Moda y complementos,Moda y complementos,True,keyword_fashion,9864,False
+471103,TIENDA DE CONVENIENCIA (24H),Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,6455,False
+472303,COMERCIO AL POR MENOR DE BACALAO Y SALAZONES,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,1178,False
+472909,"COMERCIO AL POR MENOR DE MASAS Y PATATAS FRITAS, CHURRERIA SIN OBRADOR",Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,1123,False
+474101,COMERCIO AL POR MENOR DE MAQUINARIA Y EQUIPOS DE OFICINA,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,7470,False
+474301,COMERCIO AL POR MENOR DE EQUIPOS O APARATOS AUDIOVISUALES,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,5552,False
+475301,"COMERCIO AL POR MENOR DE ALFOMBRAS, MOQUETAS Y REVESTIMIENTOS DE PAREDES Y SUELOS EN ESTABLECIMIENTOS ESPECIALIZADOS",Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,13322,False
+475904,COMERCIO AL POR MENOR DE INSTRUMENTOS MUSICALES,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,6383,False
+476301,"COMERCIO AL POR MENOR DE PRODUCTOS AUDIOVISUALES EN ESTABLECIMIENTOS ESPECIALIZADOS (CD,DVD,â€¦)",Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,2772,False
+476402,COMERCIO AL POR MENOR DE EMBARCACIONES DE RECREO,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,396,False
+477401,COMERCIO AL POR MENOR DE PRODUCTOS PARAFARMACEUTICOS,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,8774,False
+477603,COMERCIO AL POR MENOR DE ANIMALES DE COMPAÑIA,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,9136,False
+477802,"COMERCIO AL POR MENOR DE SELLOS, MONEDAS Y MEDALLAS",Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,6702,False
+477803,COMERCIO AL POR MENOR DE ARMAS,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,2080,False
+477804,SEX-SHOP,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,2311,False
+477807,SALA DE EXPOSICIONES Y GALERIAS DE ARTE CON VENTA,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,23664,False
+477808,OTRO COMERCIO AL POR MENOR DEL ARTICULOS NUEVOS N.C.O.P.,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,keyword_other_retail,97723,False
+477901,COMERCIO AL POR MENOR DE ARTICULOS DE SEGUNDA MANO,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,keyword_other_retail,60599,False
+478001,COMERCIO AL POR MENOR EN PUESTOS DE VENTA Y EN MERCADILLOS,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,2478,False
+47800103,SITUADOS: MELONES Y SANDIAS,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,48,False
+47800104,SITUADOS: CHURROS Y FREIDURIAS SIN NINGIN TIPO DE RELLENO,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,255,False
+47800105,SITUADOS: FLORES Y PLANTAS,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,keyword_other_retail,1870,False
+47800106,SITUADOS: ARTICULOS NAVIDEÑOS NO ALIMENTICIOS,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,1,False
+47800109,SITUADOS DE OBJETOS Y PUBLICACIONES POLITICO-SOCIAL-ECONOMICO-DEPORTIVA. QUIOSCOS DE PRENSA,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,103,False
+47800111,SITUADOS: SIN DETERMINAR,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,1140,False
+47800112,SITUADOS DE ALIMENTOS ENVASADOS SOMETIDOS A TRANSFORMACION,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,62,False
+479001,"COMERCIO AL POR MENOR POR CORRESPONDENCIA, INTERNET, A DOMICILIO",Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,20069,False
+479002,COMERCIO AL POR MENOR CON MAQUINAS EXPENDEDORAS,Retail especializado,Otros comercios,Otros comercios,Otros comercios,True,fallback_retail,5692,False
+862003,CONSULTA DE ESTOMATOLOGOS Y ODONTOLOGOS,Salud y bienestar,Clinicas y consultas,Clinica dental,Clinica dental,True,exact_code,137106,False
+861002,CLINICAS MEDICAS,Salud y bienestar,Clinicas y consultas,Clinica medica,Clinica medica,True,exact_code,75784,False
+750001,HOSPITALES VETERINARIOS,Salud y bienestar,Clinicas y consultas,Clinicas y consultas,Clinicas y consultas,True,prefix_health,2959,False
+750004,CONSULTORIO VETERINARIO CON TRATAMIENTO HIGIENICO ANIMAL,Salud y bienestar,Clinicas y consultas,Clinicas y consultas,Clinicas y consultas,True,prefix_health,6576,False
+750005,CONSULTORIO VETERINARIO SIN TRATAMIENTO HIGIENICO ANIMAL,Salud y bienestar,Clinicas y consultas,Clinicas y consultas,Clinicas y consultas,True,prefix_health,2892,False
+861001,ACTIVIDADES HOSPITALARIAS,Salud y bienestar,Clinicas y consultas,Clinicas y consultas,Clinicas y consultas,True,prefix_health,9910,False
+862004,DESPACHO DE ESTOMATOLOGO Y ODONTOLOGO,Salud y bienestar,Clinicas y consultas,Clinicas y consultas,Clinicas y consultas,True,prefix_health,5118,False
+869001,CONSULTA DE PROTESICOS E HIGIENISTAS DENTALES,Salud y bienestar,Clinicas y consultas,Clinicas y consultas,Clinicas y consultas,True,prefix_health,20869,False
+869002,DESPACHO DE PROTESICOS E HIGIENISTAS DENTALES,Salud y bienestar,Clinicas y consultas,Clinicas y consultas,Clinicas y consultas,True,prefix_health,3930,False
+869004,DESPACHO DE PODOLOGOS,Salud y bienestar,Clinicas y consultas,Clinicas y consultas,Clinicas y consultas,True,prefix_health,996,False
+869006,DESPACHO DE OPTICOS-OPTOMETRISTAS,Salud y bienestar,Clinicas y consultas,Clinicas y consultas,Clinicas y consultas,True,prefix_health,1152,False
+869010,DESPACHO DE DIETISTAS,Salud y bienestar,Clinicas y consultas,Clinicas y consultas,Clinicas y consultas,True,prefix_health,2211,False
+870001,"ASISTENCIA EN ESTABLECIMIENTOS RESIDENCIALES PARA MAYORES, DISCAPACITADOS, DROGODEPENDIENTES, CENTROS DE CONVALECENCIA, PERSONAS SIN HOGAR",Salud y bienestar,Clinicas y consultas,Clinicas y consultas,Clinicas y consultas,True,prefix_health,46364,False
+862001,CONSULTA DE MEDICINA GENERAL Y ESPECIALIDADES,Salud y bienestar,Clinicas y consultas,Consulta medica,Consulta medica,True,exact_code,73353,False
+862002,DESPACHO MEDICO DE MEDICINA GENERAL Y ESPECIALISTAS,Salud y bienestar,Clinicas y consultas,Consulta medica,Consulta medica,True,exact_code,11400,False
+869007,FISIOTERAPEUTAS Y OTRAS ACTIVIDADES SANITARIAS,Salud y bienestar,Clinicas y consultas,Fisioterapia,Fisioterapia,True,exact_code,121643,False
+869008,DESPACHO DE FISIOTERAPEUTAS,Salud y bienestar,Clinicas y consultas,Fisioterapia,Fisioterapia,True,exact_code,12256,False
+869005,CONSULTA DE OPTICOS-OPTOMETRISTAS,Salud y bienestar,Clinicas y consultas,Optometria,Optometria,True,exact_code,13115,False
+869009,"SERVICIOS PARASANITARIOS (NATUROPATIA, ACUPUNTURA, HOMEOPATIA)",Salud y bienestar,Clinicas y consultas,Parasanitario,Parasanitario,True,exact_code,22450,False
+869003,CONSULTA DE PODOLOGIA,Salud y bienestar,Clinicas y consultas,Podologia,Podologia,True,exact_code,23070,False
+750002,CLINICA VETERINARIA CON TRATAMIENTO HIGIENICO,Salud y bienestar,Clinicas y consultas,Veterinaria,Veterinaria,True,exact_code,25348,False
+750003,CLINICA VETERINARIA SIN TRATAMIENTO HIGIENICO,Salud y bienestar,Clinicas y consultas,Veterinaria,Veterinaria,True,exact_code,13576,False
+477301,FARMACIA,Salud y bienestar,Salud retail,Farmacia,Farmacia,True,exact_code,237855,False
+472901,COMERCIO AL POR MENOR DE PRODUCTOS DE HERBOLARIO,Salud y bienestar,Salud retail,Herbolario,Herbolario,True,exact_code,72298,False
+477806,COMERCIO AL POR MENOR DE MATERIAL DE OPTICA,Salud y bienestar,Salud retail,Optica,Optica,True,exact_code,79599,False
+477402,COMERCIO AL POR MENOR DE ARTICULOS ORTOPEDICOS,Salud y bienestar,Salud retail,Salud retail,Salud retail,True,keyword_health_retail,16376,False
+477403,COMERCIO AL POR MENOR DE INSTRUMENTOS MEDICOS Y ORTOPEDICOS,Salud y bienestar,Salud retail,Salud retail,Salud retail,True,keyword_health_retail,12576,False
+477801,COMERCIO AL POR MENOR DE PRODUCTOS DE DROGUERIA,Salud y bienestar,Salud retail,Salud retail,Salud retail,True,keyword_health_retail,40008,False
+491001,TRANSPORTE INTERURBANO DE PASAJEROS POR FERROCARRIL,Servicios,Logistica y movilidad,Logistica y movilidad,Logistica y movilidad,True,prefix_logistics,1399,False
+492001,TRANSPORTE DE MERCANCIAS POR FERROCARRIL,Servicios,Logistica y movilidad,Logistica y movilidad,Logistica y movilidad,True,prefix_logistics,99,False
+493001,"TRANSPORTE TERRESTRE URBANO (AUTOBUS, METRO, TAXI) O INTERURBANO (EXCEPTO POR FERROCARRIL)",Servicios,Logistica y movilidad,Logistica y movilidad,Logistica y movilidad,True,prefix_logistics,14218,False
+494001,TRANSPORTE DE MERCANCIAS POR CARRETERA Y SERVICIOS DE MUDANZAS,Servicios,Logistica y movilidad,Logistica y movilidad,Logistica y movilidad,True,prefix_logistics,15591,False
+521001,DEPOSITO Y ALMACENAMIENTO,Servicios,Logistica y movilidad,Logistica y movilidad,Logistica y movilidad,True,prefix_logistics,203212,False
+521002,DEPOSITO O ALMACEN DE APOYO MINORISTA PARA ALIMENTOS,Servicios,Logistica y movilidad,Logistica y movilidad,Logistica y movilidad,True,prefix_logistics,190,False
+522001,APARCAMIENTOS MIXTOS,Servicios,Logistica y movilidad,Logistica y movilidad,Logistica y movilidad,True,prefix_logistics,4618,False
+522002,APARCAMIENTOS PUBLICOS,Servicios,Logistica y movilidad,Logistica y movilidad,Logistica y movilidad,True,prefix_logistics,50416,False
+522003,APARCAMIENTOS PRIVADOS,Servicios,Logistica y movilidad,Logistica y movilidad,Logistica y movilidad,True,prefix_logistics,43154,False
+522004,ACTIVIDADES ANEXAS AL TRANSPORTE,Servicios,Logistica y movilidad,Logistica y movilidad,Logistica y movilidad,True,prefix_logistics,19175,False
+532001,"SERVICIOS DE MENSAJERIA, ACTIVIDADES POSTALES Y DE CORREOS",Servicios,Logistica y movilidad,Logistica y movilidad,Logistica y movilidad,True,prefix_logistics,54577,False
+790001,"AGENCIAS DE VIAJES, OPERADORES TURISTICOS Y SERVICIOS DE RESERVAS",Servicios,Servicios al consumidor,Agencia de viajes,Agencia de viajes,True,exact_code,77970,False
+610002,LOCUTORIOS,Servicios,Servicios al consumidor,Locutorio,Locutorio,True,exact_code,134665,False
+952004,ARREGLO DE ROPA,Servicios,Servicios personales,Arreglo de ropa,Arreglo de ropa,True,exact_code,81801,False
+960101,LAVADO Y LIMPIEZA DE PRENDAS TEXTILES Y DE PIEL,Servicios,Servicios personales,Lavanderia y tintoreria,Lavanderia y tintoreria,True,exact_code,83022,False
+952002,REPARACION DE CALZADO,Servicios,Servicios personales,Reparacion de calzado,Reparacion de calzado,True,exact_code,47463,False
+951001,REPARACION DE ORDENADORES Y EQUIPOS DE COMUNICACION,Servicios,Servicios personales,Reparacion especializada,Reparacion especializada,True,prefix_95,30658,False
+952001,REPARACION DE BICICLETAS,Servicios,Servicios personales,Reparacion especializada,Reparacion especializada,True,prefix_95,3569,False
+952003,TAPICERIA,Servicios,Servicios personales,Reparacion especializada,Reparacion especializada,True,prefix_95,31767,False
+952005,REPARACION DE OTROS EFECTOS PERSONALES Y ARTICULOS DE USO DOMESTICO N.C.O.P.,Servicios,Servicios personales,Reparacion especializada,Reparacion especializada,True,prefix_95,55604,False
+710001,SERVICIOS TECNICOS DE ARQUITECTURA E INGENIERIA. ENSAYOS Y ANALISIS TECNICOS,Servicios,Servicios profesionales,Arquitectura e ingenieria,Arquitectura e ingenieria,True,exact_code,59572,False
+710002,DESPACHO PROFESIONAL DE ARQUITECTURA E INGENIERIA,Servicios,Servicios profesionales,Arquitectura e ingenieria,Arquitectura e ingenieria,True,exact_code,16923,False
+692001,"ACTIVIDADES DE CONTABILIDAD, TENEDURIA, AUDITORIA Y ASESORIA FISCAL",Servicios,Servicios profesionales,Asesoria y contabilidad,Asesoria y contabilidad,True,exact_code,111636,False
+702001,ACTIVIDADES DE CONSULTORIA DE GESTION EMPRESARIAL,Servicios,Servicios profesionales,Consultoria empresarial,Consultoria empresarial,True,exact_code,28931,False
+691001,ACTIVIDADES JURIDICAS,Servicios,Servicios profesionales,Despacho juridico,Despacho juridico,True,exact_code,41815,False
+691002,DESPACHO PROFESIONAL DE ACTIVIDADES JURIDICAS,Servicios,Servicios profesionales,Despacho juridico,Despacho juridico,True,exact_code,19326,False
+741001,ACTIVIDADES DE DISEÑO ESPECIALIZADO,Servicios,Servicios profesionales,Diseno,Diseno,True,exact_code,25131,False
+742001,SERVICIOS FOTOGRAFICOS,Servicios,Servicios profesionales,Fotografia,Fotografia,True,exact_code,22682,False
+683001,"ACTIVIDADES INMOBILIARIAS (COMPRAVENTA, ALQUILER, AGENTES PROPIEDAD)",Servicios,Servicios profesionales,Inmobiliaria,Inmobiliaria,True,exact_code,139222,False
+821001,ACTIVIDADES ADMINISTRATIVAS Y AUXILIARES DE OFICINA Y SERVICIOS DE REPROGRAFIA,Servicios,Servicios profesionales,Oficina y administracion,Oficina y administracion,True,exact_code,353507,False
+730001,"PUBLICIDAD, RELACIONES PUBLICAS Y ESTUDIOS DE MERCADO",Servicios,Servicios profesionales,Publicidad y marketing,Publicidad y marketing,True,exact_code,46021,False
+631001,"SERVICIOS DE INFORMACION: PROCESO DE DATOS, PORTALES WEB",Servicios,Servicios profesionales,Servicios digitales,Servicios digitales,True,exact_code,11650,False
+639001,OTROS SERVICIOS DE INFORMACION: AGENCIAS DE NOTICIAS,Servicios,Servicios profesionales,Servicios profesionales,Servicios profesionales,True,prefix_services,1218,False
+692002,"DESPACHO PROFESIONAL DE ACTIVIDADES ECONOMICAS (CONTABILIDAD, AUDITORIA Y ASESORIA FISCAL)",Servicios,Servicios profesionales,Servicios profesionales,Servicios profesionales,True,prefix_services,9447,False
+70001,EXTRACCION DE MINERALES METALICOS,Servicios,Servicios profesionales,Servicios profesionales,Servicios profesionales,True,prefix_services,16,False
+701001,ACTIVIDADES DE LAS SEDES CENTRALES,Servicios,Servicios profesionales,Servicios profesionales,Servicios profesionales,True,prefix_services,26032,False
+743001,ACTIVIDADES DE TRADUCCION E INTERPRETACION,Servicios,Servicios profesionales,Servicios profesionales,Servicios profesionales,True,prefix_services,3046,False
+743002,DESPACHO PROFESIONAL DE TRADUCTOR E INTERPRETE,Servicios,Servicios profesionales,Servicios profesionales,Servicios profesionales,True,prefix_services,82,False
+749001,"OTRAS ACTIVIDADES PROFESIONALES, CIENTIFICAS Y TECNICAS N.C.O.P.",Servicios,Servicios profesionales,Servicios profesionales,Servicios profesionales,True,prefix_services,36926,False
+822001,ACTIVIDADES DE LOS CENTROS DE LLAMADAS,Servicios,Servicios profesionales,Servicios profesionales,Servicios profesionales,True,prefix_services,2058,False
+823001,ORGANIZACION DE CONVENCIONES Y FERIAS DE MUESTRAS,Servicios,Servicios profesionales,Servicios profesionales,Servicios profesionales,True,prefix_services,7450,False
+829001,"ACTIVIDADES DE APOYO A LAS EMPRESAS N.C.O.P. (AGENCIAS DE COBROS, ENVASADO Y EMPAQUETADO)",Servicios,Servicios profesionales,Servicios profesionales,Servicios profesionales,True,prefix_services,7583,False
+620001,PROGRAMACION Y CONSULTORIA INFORMATICA Y TECNOLOGIAS DE LA INFORMACION,Servicios,Servicios profesionales,Tecnologia y software,Tecnologia y software,True,exact_code,40507,False
+610001,TELECOMUNICACIONES,Servicios,Servicios profesionales,Telecomunicaciones,Telecomunicaciones,True,exact_code,24972,False
+10001,EXPLOTACIONES AGRICOLAS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,831,False
+10002,EXPLOTACIONES GANADERAS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,836,False
+101001,"PROCESADO Y CONSERVACION DE CARNE Y ELABORACION DE PRODUCTOS CARNICOS, AVES Y CAZA",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,5367,False
+101002,SALAS DE DESPIECE,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,7556,False
+101003,ENVASADO DE CARNE Y DERIVADOS DE CARNE,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1414,False
+102001,"ELABORACION, ENVASADO Y CONSERVACION DE PRODUCTOS PESQUEROS Y MARISCOS",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2143,False
+102002,PUESTO DEL MERCADO CENTRAL DE PESCADOS DE FABRICACION Y/0 ELABORACION Y/O TRANSFORMACION DE PRODUCTOS DE LA PESCA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,3342,False
+102003,PUESTO DEL MERCADO CENTRAL DE PESCADOS DE ENVASADO DE PRODUCTOS DE LA PESCA: ENVASADO Y REENVASADO DE PRODUCTOS DE LA PESCA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,7977,False
+103001,"ELABORACION, ENVASADO Y CONSERVACION DE FRUTAS, VERDURAS Y DERIVADOS",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,3595,False
+103002,PUESTO DEL MERCADO CENTRAL DE FRUTAS DE ENVASADO DE FRUTAS Y HORTALIZAS FRESCAS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,346,False
+104001,FABRICACION DE ACEITES Y GRASAS VEGETALES Y ANIMALES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,307,False
+105001,PROCESADO Y CONSERVACION DE LECHE Y DERIVADOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,415,False
+105002,ELABORACION DE HELADOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1282,False
+106001,"FABRICACION DE PRODUCTOS DE MOLINERIA (HARINAS), ALMIDONES Y DERIVADOS",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,169,False
+107001,FABRICACION DE PRODUCTOS DE PANADERIA Y PASTELERIA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,11323,False
+107002,"FABRICACION DE PASTAS ALIMENTICIAS,CUSCUS Y SIMILARES",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,873,False
+108001,PROCESADO Y CONSERVACION DE PLATOS PREPARADOS O PRECOCINADOS Y DIETETICOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,3459,False
+108002,PROCESADO Y CONSERVACION DE CONGELADOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,150,False
+108003,ELABORACION/ENVASADO DE OVOPRODUCTOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,226,False
+108004,ELABORACION Y ENVASADO DE HUEVOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,120,False
+108005,FABRICACION O ELABORACION DE OTROS PRODUCTOS ALIMENTICIOS N.C.O.P.,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,5390,False
+109001,FABRICACION DE PRODUCTOS PARA LA ALIMENTACION ANIMAL,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,365,False
+110001,FABRICACION DE BEBIDAS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1231,False
+120001,INDUSTRIA DEL TABACO,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,191,False
+130001,"FABRICACION DE TEJIDOS TEXTILES, ALFOMBRAS, CUERDAS Y OTROS PRODUCTOS TEXTILES (EXCEPTO PRENDAS DE VESTIR)",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,9948,False
+141001,CONFECCION PRENDAS DE VESTIR (INCLUIDO CUERO Y EXCLUIDA LA PELETERIA Y LAS PRENDAS DE PUNTO),No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,36750,False
+142001,FABRICACION DE ARTICULOS DE PELETERIA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1953,False
+143001,CONFECCION DE PRENDAS DE VESTIR DE PUNTO,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,3419,False
+151001,"PREPARACION, CURTIDO Y ACABADO DEL CUERO. FABRICACION DE ARTICULOS DE MARROQUINERIA, VIAJE, GUARNICIONERIA Y TALABARTERIA. PREPARACION Y TEÑIDO DE PIELES",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,4351,False
+152001,FABRICACION DE CALZADO,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1297,False
+160001,"INDUSTRIA DE LA MADERA Y CORCHO (EXCEPTO MUEBLES), CESTERIA Y ESPARTERIA",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,15800,False
+170001,INDUSTRIA DEL PAPEL,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2101,False
+181001,IMPRENTA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,53604,False
+181002,SERIGRAFIA Y SERVICIOS DE PREIMPRESION Y PREPARACION DE SOPORTES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,18785,False
+181003,ENCUADERNACION Y SERVICIOS RELACIONADOS CON LA MISMA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,8898,False
+182001,REPRODUCCION DE SOPORTES GRABADOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1548,False
+190001,COQUERIAS Y REFINO DE PETROLEO,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,16,False
+20001,SILVICULTURA Y EXPLOTACION FORESTAL,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,174,False
+201001,"FABRICACION DE PRODUCTOS QUIMICOS BASICOS, COMPUESTOS NITROGENADOS, FERTILIZANTES, PLASTICOS Y CAUCHO SINTETICO EN FORMAS PRIMARIAS",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,679,False
+202001,FABRICACION DE PESTICIDAS Y OTROS PRODUCTOS AGROQUIMICOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,115,False
+203001,"FABRICACION DE PINTURAS, BARNICES, LACAS Y REVESTIMIENTOS SIMILARES",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1280,False
+203002,FABRICACION DE TINTAS DE IMPRENTA Y MASILLAS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,44,False
+204001,"FABRICACION DE JABONES, DETERGENTES Y OTROS ARTICULOS DE LIMPIEZA. PERFUMES Y COSMETICOS",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1674,False
+205001,FABRICACION DE OTROS PRODUCTOS QUIMICOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,534,False
+206001,FABRICACION DE FIBRAS ARTIFICIALES Y SINTETICAS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,31,False
+210001,FABRICACION PRODUCTOS FARMACEUTICOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1737,False
+220001,FABRICACION DE PRODUCTOS DE CAUCHO Y PLASTICOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,4884,False
+230001,"FABRICACION DE PRODUCTOS MINERALES NO METALICOS (HORMIGON, CEMENTO, MORTERO, CAL, YESO, LADRILLOS, CERAMICA)",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,3974,False
+230002,FABRICACION DE ARTICULOS DERIVADOS DEL YESO Y/O ESCAYOLA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,634,False
+230003,"CORTE, TALLADO Y ACABADO DE LA PIEDRA",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2411,False
+230004,FABRICACION DE VIDRIO Y PRODUCTOS DERIVADOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1785,False
+230005,FABRICACION DE VAJILLAS Y ARTICULOS PARA EL HOGAR,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,918,False
+230006,FABRICACION DE PRODUCTOS ABRASIVOS Y PRODUCTOS MINERALES NO METALICOS N.C.O.P.,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,445,False
+240001,"METALURGIA. FABRICACION DE PRODUCTOS DE HIERRO, ACERO Y FERROALEACIONES",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1079,False
+250001,FABRICACION ARTICULOS DE FERRETERIA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2648,False
+250002,RECUBRIMIENTOS METALICOS (TRATAMIENTO Y REVESTIMIENTO DE METALES),No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,3045,False
+250003,"FABRICACION DE PRODUCTOS METALICOS, EXCEPTO MAQUINARIA Y EQUIPO",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,57747,False
+261001,FABRICACION DE COMPONENTES ELECTRONICOS Y CIRCUITOS IMPRESOS ENSAMBLADOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1646,False
+262001,FABRICACION DE ORDENADORES Y EQUIPOS INFORMATICOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,669,False
+263001,FABRICACION DE EQUIPOS DE TELECOMUNICACIONES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,514,False
+264001,FABRICACION DE PRODUCTOS ELECTRONICOS DE CONSUMO,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,565,False
+265001,"FABRICACION DE INSTRUMENTOS DE PRECISION, MEDIDA Y CONTROL. FABRICACION DE RELOJES",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2023,False
+266001,"FABRICACION DE EQUIPOS DE RADIACION, ELECTROMEDICOS Y ELECTROTERAPEUTICOS",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,256,False
+267001,FABRICACION DE INSTRUMENTOS DE OPTICA Y EQUIPO FOTOGRAFICO,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1099,False
+268001,FABRICACION DE SOPORTES MAGNETICOS Y OPTICOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,318,False
+270001,"FABRICACION DE APARATOS ELECTRICOS, ELECTRODOMESTICOS (EXCEPTO ORDENADORES)",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1547,False
+270002,FABRICACION DE MATERIAL Y EQUIPO ELECTRICO (EXCEPTO ORDENADORES),No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,6615,False
+280001,FABRICACION DE MAQUINARIA DE USO GENERAL Y EQUIPO N.C.O.P.,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,4710,False
+290001,"FABRICACION DE VEHICULOS DE MOTOR, REMOLQUES Y SEMIRREMOLQUES",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1732,False
+300001,FABRICACION DE OTRO MATERIAL DE TRANSPORTE,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,739,False
+310001,FABRICACION DE MUEBLES (INCLUIDOS COLCHONES),No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,10476,False
+310002,CARPINTERIA Y EBANISTERIA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,25267,False
+321001,"FABRICACION DE ARTICULOS DE JOYERIA, BISUTERIA Y SIMILARES",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,7931,False
+322001,FABRICACION DE INSTRUMENTOS MUSICALES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2193,False
+323001,FABRICACION DE ARTICULOS DE DEPORTE,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,78,False
+324001,FABRICACION DE JUEGOS Y JUGUETES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,518,False
+325001,FABRICACION DE INSTRUMENTOS Y SUMINISTROS MEDICOS Y ODONTOLOGICOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,26224,False
+329001,INDUSTRIAS MANUFACTURERAS N.C.O.P.,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,7494,False
+331001,"MANTENIMIENTO Y REPARACION DE MAQUINARIA Y EQUIPO, INCLUIDO EL FERROVIARIO",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,19191,False
+332001,INSTALACION DE MAQUINAS Y EQUIPOS INDUSTRIALES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,5855,False
+350001,"PRODUCCION, TRANSPORTE Y DISTRIBUCION DE ENERGIA ELECTRICA Y GAS",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,29017,False
+350002,FABRICACION DE HIELO Y SUMINISTRO DE VAPOR Y AIRE ACONDICIONADO,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,846,False
+360001,"CAPTACION, DEPURACION Y DISTRIBUCION DE AGUA",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2480,False
+370001,RECOGIDA Y TRATAMIENTO DE AGUAS RESIDUALES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,799,False
+380001,"RECOGIDA, TRATAMIENTO Y ELIMINACION DE RESIDUOS. VALORIZACION (PROCESOS DE RECUPERACION)",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,5115,False
+390001,ACTIVIDADES DE DESCONTAMINACION Y OTROS SERVICIOS DE GESTION DE RESIDUOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1232,False
+411001,PROMOCION INMOBILIARIA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,43438,False
+412001,CONSTRUCCION DE EDIFICIOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,55015,False
+420001,INGENIERIA CIVIL,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,7476,False
+431001,DEMOLICION Y PREPARACION DE TERRENOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2572,False
+432001,"INSTALACIONES ELECTRICAS, DE FONTANERIA Y OTRAS EN OBRAS DE CONSTRUCCION",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,197231,False
+433001,"ACABADO DE EDIFICIOS (CARPINTERIA, REVOCAMIENTO, REVESTIMIENTO DE SUELOS Y PAREDES, PINTURA, ACRISTALAMIENTO)",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,42163,False
+439001,"OTRAS ACTIVIDADES DE CONSTRUCCION ESPECIALIZADA (CONSTRUCCION DE CUBIERTAS, CIMENTACION, PISCINAS)",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,48961,False
+461101,"INTERMEDIARIOS DEL COMERCIO DE MATERIAS PRIMAS AGRARIAS, ANIMALES VIVOS, MATERIAS PRIMAS TEXTILES Y PRODUCTOS SEMIELABORADOS",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,280,False
+461201,"INTERMEDIARIOS DEL COMERCIO DE COMBUSTIBLES, MINERALES, METALES Y PRODUCTOS QUIMICOS INDUSTRIALES",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1167,False
+461301,INTERMEDIARIOS DEL COMERCIO DE LA MADERA Y MATERIALES DE CONSTRUCCION,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1547,False
+461401,"INTERMEDIARIOS DEL COMERCIO DE MAQUINARIA, EQUIPO INDUSTRIAL, EMBARCACIONES Y AERONAVES",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1821,False
+461501,INTERMEDIARIOS DEL COMERCIO DE MUEBLES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1760,False
+461601,"INTERMEDIARIOS DEL COMERCIO DE TEXTILES, PRENDAS DE VESTIR, PELETERIA, CALZADO Y ARTICULOS DE CUERO",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,13451,False
+461701,"INTERMEDIARIO DEL COMERCIO DE PRODUCTOS ALIMENTICIOS, BEBIDAS Y TABACO",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,6459,False
+461801,INTERMEDIARIOS DEL COMERCIO ESPECIALIZADOS EN LA VENTA DE OTROS PRODUCTOS ESPECIFICOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,8292,False
+461802,INTERMEDIARIOS DEL COMERCIO DE PRODUCTOS FARMACEUTICOS Y DISTRIBUCION DE MEDICAMENTOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1089,False
+461901,INTERMEDIARIOS DEL COMERCIO DE ACCESORIOS DE VEHICULOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,122,False
+462001,"COMERCIO AL POR MAYOR DE MATERIAS PRIMAS AGRARIAS, DE ANIMALES VIVOS Y ALIMENTOS PARA ANIMALES",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2229,False
+463101,"COMERCIO AL POR MAYOR FRUTAS, VERDURAS Y DERIVADOS",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,30373,False
+463102,ALMACEN Y DISTRIBUCION DE FRUTAS Y HORTALIZAS FRESCAS Y OTROS PRODUCTOS VEGETALES TRANSFORMADOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,6480,False
+463201,"COMERCIO AL POR MAYOR CARNES Y DERIVADOS, AVES Y CAZA",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,4803,False
+463202,ALMACEN DE DISTRIBUCION A TEMPERATURA DE REFRIGERACION Y CONGELACION DE CARNE Y DERIVADOS DE CARNE,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,5019,False
+463301,COMERCIO AL POR MAYOR DE HUEVOS Y DERIVADOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2914,False
+463302,COMERCIO AL POR MAYOR DE ACEITES Y GRASAS COMESTIBLES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,450,False
+463303,COMERCIO AL POR MAYOR DE LECHE Y DERIVADOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,896,False
+463401,COMERCIO AL POR MAYOR DE BEBIDAS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,6133,False
+463501,COMERCIO AL POR MAYOR DE TABACOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,681,False
+463601,"COMERCIO AL POR MAYOR DE AZUCAR, CHOCOLATE Y CONFITERIA",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1887,False
+463701,"COMERCIO AL POR MAYOR DE CAFE, TE, CACAO Y ESPECIAS",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1312,False
+463801,"COMERCIO AL POR MAYOR DE HARINAS, DERIVADOS Y CEREALES",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,49,False
+463802,COMERCIO AL POR MAYOR DE PRODUCTOS DE LA PESCA Y MARISCOS (EXCEPTO CONGELADOS),No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,12316,False
+463803,COMERCIO AL POR MAYOR DE PRODUCTOS DE LA PESCA Y MARISCOS CONGELADOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,4121,False
+463804,ALMACEN DISTRIBUCION A TEMPERATURA DE REFRIGERACION DE PRODUCTOS PESQUEROS Y DE MARISCOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2339,False
+463805,ALMACEN DE DISTRIBUCION A TEMPERATURA DE CONGELACION DE PRODUCTOS PESQUEROS Y DE MARISCOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2919,False
+463901,COMERCIO AL POR MAYOR DE PLATOS PREPARADOS Y COCINADOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,3252,False
+463902,ALMACEN DE DISTRIBUCION DE PRODUCTOS ALIMENTICIOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,13260,False
+463903,ALMACEN DE DISTRIBUCION POLIVALENTE A TEMPERATURA DE REFRIGERACION,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,3506,False
+463904,ALMACEN DE DISTRIBUCION POLIVALENTE A TEMPERATURA DE CONGELACION,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,3723,False
+463905,ALMACEN DE DISTRIBUCION POLIVALENTE A TEMPERATURA NO REGULADA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,7039,False
+463906,COMERCIO AL POR MAYOR DE OTROS PRODUCTOS ALIMENTICIOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,10339,False
+464101,COMERCIO AL POR MAYOR DE TEXTILES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,9899,False
+464201,"COMERCIO AL POR MAYOR DE PRENDAS DE VESTIR, CALZADO Y ARTICULOS DE CUERO",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,32256,False
+464301,COMERCIO AL POR MAYOR DE APARATOS ELECTRODOMESTICOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,4832,False
+464401,"COMERCIO AL POR MAYOR DE PORCELANA, CRISTALERIA Y ARTICULOS DE LIMPIEZA",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2656,False
+464501,"COMERCIO AL POR MAYOR DE PERFUMERIA,COSMETICA, DROGUERIA Y LIMPIEZA",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,11503,False
+464601,COMERCIO AL POR MAYOR DE PRODUCTOS FARMACEUTICOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,6438,False
+464602,COMERCIO AL POR MAYOR DE INSTRUMENTOS MEDICOS Y ORTOPEDICOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,10535,False
+464701,COMERCIO AL POR MAYOR DE MUEBLES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2935,False
+464801,"COMERCIO AL POR MAYOR DE METALES PRECIOSOS, JOYERIA Y RELOJERIA",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,9263,False
+464901,COMERCIO AL POR MAYOR DE JUGUETES Y ARTICULOS DE DEPORTE,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2873,False
+464902,"COMERCIO AL POR MAYOR DE LIBROS, PERIODICOS, REVISTAS, PAPELERIA Y ESCRITORIO",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,9045,False
+464903,COMERCIO AL POR MAYOR DE OTROS ARTICULOS DE USO DOMESTICO N.C.O.P.,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,14200,False
+465001,COMERCIO AL POR MAYOR DE MATERIAL Y APARATOS ELECTRONICOS PARA LAS TECNOLOGIAS DE LA INFORMACION Y LAS COMUNICACIONES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,22196,False
+466001,COMERCIO AL POR MAYOR DE ENVASES Y EMBALAJES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,3431,False
+466002,"COMERCIO AL POR MAYOR DE MAQUINARIA, EQUIPO DE OFICINA Y SUMINISTROS",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,50845,False
+467001,"COMERCIO AL POR MAYOR DE METALES FERREOS Y NO FERREOS, MATERIAL DE CONSTRUCCION, PAPEL Y CARTON",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,31375,False
+467002,"COMERCIO AL POR MAYOR DE COMBUSTIBLES, QUIMICOS Y PRODUCTOS SEMIELABORADOS",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,6224,False
+469001,COMERCIO AL MAYOR CON ALMACEN,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,6835,False
+500001,TRANSPORTE MARITIMO Y POR VIAS NAVEGABLES INTERIORES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,180,False
+510001,TRANSPORTE AEREO,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2894,False
+581001,"EDICION DE LIBROS, PERIODICOS Y OTRAS ACTIVIDADES EDITORIALES",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,18066,False
+582001,EDICION DE PROGRAMAS INFORMATICOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,1274,False
+591001,"ACTIVIDADES CINEMATOGRAFICAS, DE VIDEO Y DE TELEVISION (PRODUCCION, DISTRIBUCION Y EXHIBICION)",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,25057,False
+592001,ACTIVIDADES DE GRABACION DE SONIDO Y EDICION MUSICAL,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,12072,False
+600001,ACTIVIDADES DE PROGRAMACION Y EMISION DE RADIO Y TELEVISION,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,4451,False
+60001,EXTRACCION DE CRUDO DE PETROLEO Y GAS NATURAL,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,241,False
+681001,COMPRAVENTA DE BIENES INMOBILIARIOS POR CUENTA PROPIA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,4811,False
+682001,ALQUILER DE BIENES INMOBILIARIOS POR CUENTA PROPIA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,18328,False
+720001,INVESTIGACION Y DESARROLLO,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,9616,False
+771001,ALQUILER DE VEHICULOS DE MOTOR,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,14122,False
+772001,ALQUILER DE EFECTOS PERSONALES Y ARTICULOS DE USO DOMESTICO,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,4219,False
+772002,VIDEOCLUB,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,5701,False
+773001,ALQUILER MAQUINARIA Y EQUIPO DE CONSTRUCCION,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,9395,False
+774001,"ARRENDAMIENTO DE LA PROPIEDAD INTELECTUAL (USO DE MARCAS, PATENTES, FRANQUICIAS)",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,155,False
+781001,ACTIVIDADES DE LAS AGENCIAS DE COLOCACION,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,2855,False
+782001,ACTIVIDADES DE LAS EMPRESAS DE TRABAJO TEMPORAL,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,3649,False
+80001,OTRAS INDUSTRIAS EXTRACTIVAS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,206,False
+801001,ACTIVIDADES DE SEGURIDAD PRIVADA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,4176,False
+802001,SERVICIOS DE SISTEMAS DE SEGURIDAD: VIGILANCIA MEDIANTE SISTEMAS ELECTRONICOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,3609,False
+803001,ACTIVIDADES DE INVESTIGACION (DETECTIVES Y VIGILANCIA),No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,490,False
+803002,DESPACHO PROFESIONAL DE DETECTIVES E INVESTIGADORES PRIVADOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,99,False
+811001,SERVICIOS INTEGRALES A EDIFICIOS E INSTALACIONES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,7932,False
+812001,ACTIVIDADES DE LIMPIEZA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,42584,False
+813001,ACTIVIDADES DE JARDINERIA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,3414,False
+840001,ADMINISTRACION PUBLICA Y DEFENSA. SEGURIDAD SOCIAL OBLIGATORIA,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,93998,False
+881001,ACTIVIDADES DE SERVICIOS SOCIALES SIN ALOJAMIENTO PARA PERSONAS MAYORES Y DISCAPACITADOS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,51585,False
+889002,OTROS ACTIVIDADES DE SERVICIOS SOCIALES (LABORES DE ASESORAMIENTO Y ORIENTACION) SIN ALOJAMIENTO N.C.O.P.,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,40055,False
+900001,"ACTIVIDADES DE CREACION, ARTISTICAS Y ESPECTACULOS",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,24092,False
+900002,LOCALES DE EXHIBICIONES EROTICAS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,627,False
+900003,TEATRO Y ACTIVIDADES ESCENICAS REALIZADAS EN DIRECTO,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,12769,False
+90001,ACTIVIDADES DE APOYO A LAS INDUSTRIAS EXTRACTIVAS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,216,False
+910001,"ACTIVIDADES DE BIBLIOTECAS, ARCHIVOS, MUSEOS Y DE GALERIAS Y SALAS DE EXPOSICIONES SIN VENTA",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,32692,False
+910002,"PARQUES ZOOLOGICOS, JARDINES BOTANICOS Y RESERVAS NATURALES",No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,706,False
+949101,ACTIVIDADES DE ORGANIZACIONES RELIGIOSAS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,126809,False
+949201,ACTIVIDADES DE ORGANIZACIONES POLITICAS,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,8790,False
+949901,SOCIEDADES PROTECTORAS DE ANIMALES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,353,False
+949902,OTRAS ACTIVIDADES ASOCIATIVAS N.C.O.P.,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,115069,False
+990001,ACTIVIDADES DE ORGANIZACIONES Y ORGANISMOS EXTRATERRITORIALES,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,12044,False
+999,SIN ASIGNAR,No priorizable,Industrial o institucional,Industrial o institucional,Industrial o institucional,False,non_investable_prefix,12597,False

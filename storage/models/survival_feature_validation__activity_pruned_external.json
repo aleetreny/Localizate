@@ -1,0 +1,977 @@
+{
+  "policy": {
+    "transition_policy": "exclude_transition",
+    "transition_rows_blocked": 42,
+    "renta_max_year": 2023,
+    "renta_city_median": 13366.0,
+    "renta_imputation_counts": {
+      "observed": 156375,
+      "district_median": 46298,
+      "city_median": 1155
+    }
+  },
+  "feature_profile": "activity_survival_pruned_with_external",
+  "rows": 203828,
+  "event_rate": 0.09266145966206801,
+  "feature_count": 91,
+  "features_with_p_lt_0_05": 66,
+  "features_with_missing_rate_le_0_20": 8,
+  "top_features_by_signal": [
+    {
+      "feature": "metro_access_count_1000m_start",
+      "missing_rate": 0.0,
+      "mean_event": 18.5842113623127,
+      "mean_non_event": 11.442806084102498,
+      "standardized_mean_diff": 0.5424514328148573,
+      "mann_whitney_p": 0.0,
+      "point_biserial": 0.16429850923157968
+    },
+    {
+      "feature": "metro_access_count_500m_start",
+      "missing_rate": 0.0,
+      "mean_event": 5.400010589294223,
+      "mean_non_event": 3.2462028430688705,
+      "standardized_mean_diff": 0.48118966455284695,
+      "mann_whitney_p": 0.0,
+      "point_biserial": 0.14936543052793583
+    },
+    {
+      "feature": "macro_category__fashion_accessories",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.11563509292105681,
+      "mean_non_event": 0.029614850141396445,
+      "standardized_mean_diff": 0.33610706791792616,
+      "mann_whitney_p": 0.0,
+      "point_biserial": 0.13114237621046454
+    },
+    {
+      "feature": "metro_distance_m_start",
+      "missing_rate": 0.19358478717349922,
+      "mean_event": 5.43636452960965,
+      "mean_non_event": 5.682296302106504,
+      "standardized_mean_diff": -0.29818827990836827,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.09062429206691068
+    },
+    {
+      "feature": "missing_h3",
+      "missing_rate": 0.0,
+      "mean_event": 0.023508233176258803,
+      "mean_non_event": 0.21079695686732525,
+      "standardized_mean_diff": -0.6087396583308607,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.1374840300246241
+    },
+    {
+      "feature": "missing_metro_distance_start",
+      "missing_rate": 0.0,
+      "mean_event": 0.0235611796473765,
+      "mean_non_event": 0.2109483565028847,
+      "standardized_mean_diff": -0.6088377938175408,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.13751787329008003
+    },
+    {
+      "feature": "renta_carry_forward_years",
+      "missing_rate": 0.0,
+      "mean_event": 0.013289564250542701,
+      "mean_non_event": 0.2908062571306525,
+      "standardized_mean_diff": -0.7915729082193721,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.17248955182922984
+    },
+    {
+      "feature": "macro_category__electronics_telecom",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.033673955630857205,
+      "mean_non_event": 0.0067156552630298315,
+      "standardized_mean_diff": 0.192533318771613,
+      "mann_whitney_p": 1.2149870286128908e-298,
+      "point_biserial": 0.08181272835998454
+    },
+    {
+      "feature": "macro_category__bazaar_gifts",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.06051781648753111,
+      "mean_non_event": 0.01967113836304551,
+      "standardized_mean_diff": 0.20934686400137184,
+      "mann_whitney_p": 2.00567014454097e-273,
+      "point_biserial": 0.07825599973791399
+    },
+    {
+      "feature": "macro_category__finance_insurance",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.055434955260231907,
+      "mean_non_event": 0.017378515310288147,
+      "standardized_mean_diff": 0.20424114229534174,
+      "mann_whitney_p": 1.1198933666651548e-265,
+      "point_biserial": 0.0771304949973945
+    },
+    {
+      "feature": "macro_category__home_decor",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0389156562715095,
+      "mean_non_event": 0.010014004466289248,
+      "standardized_mean_diff": 0.18790505333926485,
+      "mann_whitney_p": 2.0872728708008016e-250,
+      "point_biserial": 0.07486249683971241
+    },
+    {
+      "feature": "macro_category__books_leisure_retail",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.030179488537089003,
+      "mean_non_event": 0.007229332597963675,
+      "standardized_mean_diff": 0.17001105204882186,
+      "mann_whitney_p": 8.630041729127946e-214,
+      "point_biserial": 0.0691222141230359
+    },
+    {
+      "feature": "share_age_00_14_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.11735693934877761,
+      "mean_non_event": 0.12095769425611216,
+      "standardized_mean_diff": -0.09076941764156918,
+      "mann_whitney_p": 1.6301354209135485e-207,
+      "point_biserial": -0.02830562888430358
+    },
+    {
+      "feature": "renta_best_eur_delta_12m_start",
+      "missing_rate": 0.23281884726337893,
+      "mean_event": 2432.4838777995446,
+      "mean_non_event": 1275.0352707079555,
+      "standardized_mean_diff": 0.14063465750297108,
+      "mann_whitney_p": 2.236875012551602e-154,
+      "point_biserial": 0.046875999170969115
+    },
+    {
+      "feature": "macro_category__consumer_services",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.020437337851432202,
+      "mean_non_event": 0.0047042029620257275,
+      "standardized_mean_diff": 0.14156849314635972,
+      "mann_whitney_p": 1.1806156330222468e-152,
+      "point_biserial": 0.058294667487687635
+    }
+  ],
+  "all_features": [
+    {
+      "feature": "metro_access_count_1000m_start",
+      "missing_rate": 0.0,
+      "mean_event": 18.5842113623127,
+      "mean_non_event": 11.442806084102498,
+      "standardized_mean_diff": 0.5424514328148573,
+      "mann_whitney_p": 0.0,
+      "point_biserial": 0.16429850923157968
+    },
+    {
+      "feature": "metro_access_count_500m_start",
+      "missing_rate": 0.0,
+      "mean_event": 5.400010589294223,
+      "mean_non_event": 3.2462028430688705,
+      "standardized_mean_diff": 0.48118966455284695,
+      "mann_whitney_p": 0.0,
+      "point_biserial": 0.14936543052793583
+    },
+    {
+      "feature": "macro_category__fashion_accessories",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.11563509292105681,
+      "mean_non_event": 0.029614850141396445,
+      "standardized_mean_diff": 0.33610706791792616,
+      "mann_whitney_p": 0.0,
+      "point_biserial": 0.13114237621046454
+    },
+    {
+      "feature": "metro_distance_m_start",
+      "missing_rate": 0.19358478717349922,
+      "mean_event": 5.43636452960965,
+      "mean_non_event": 5.682296302106504,
+      "standardized_mean_diff": -0.29818827990836827,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.09062429206691068
+    },
+    {
+      "feature": "missing_h3",
+      "missing_rate": 0.0,
+      "mean_event": 0.023508233176258803,
+      "mean_non_event": 0.21079695686732525,
+      "standardized_mean_diff": -0.6087396583308607,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.1374840300246241
+    },
+    {
+      "feature": "missing_metro_distance_start",
+      "missing_rate": 0.0,
+      "mean_event": 0.0235611796473765,
+      "mean_non_event": 0.2109483565028847,
+      "standardized_mean_diff": -0.6088377938175408,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.13751787329008003
+    },
+    {
+      "feature": "renta_carry_forward_years",
+      "missing_rate": 0.0,
+      "mean_event": 0.013289564250542701,
+      "mean_non_event": 0.2908062571306525,
+      "standardized_mean_diff": -0.7915729082193721,
+      "mann_whitney_p": 0.0,
+      "point_biserial": -0.17248955182922984
+    },
+    {
+      "feature": "macro_category__electronics_telecom",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.033673955630857205,
+      "mean_non_event": 0.0067156552630298315,
+      "standardized_mean_diff": 0.192533318771613,
+      "mann_whitney_p": 1.2149870286128908e-298,
+      "point_biserial": 0.08181272835998454
+    },
+    {
+      "feature": "macro_category__bazaar_gifts",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.06051781648753111,
+      "mean_non_event": 0.01967113836304551,
+      "standardized_mean_diff": 0.20934686400137184,
+      "mann_whitney_p": 2.00567014454097e-273,
+      "point_biserial": 0.07825599973791399
+    },
+    {
+      "feature": "macro_category__finance_insurance",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.055434955260231907,
+      "mean_non_event": 0.017378515310288147,
+      "standardized_mean_diff": 0.20424114229534174,
+      "mann_whitney_p": 1.1198933666651548e-265,
+      "point_biserial": 0.0771304949973945
+    },
+    {
+      "feature": "macro_category__home_decor",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0389156562715095,
+      "mean_non_event": 0.010014004466289248,
+      "standardized_mean_diff": 0.18790505333926485,
+      "mann_whitney_p": 2.0872728708008016e-250,
+      "point_biserial": 0.07486249683971241
+    },
+    {
+      "feature": "macro_category__books_leisure_retail",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.030179488537089003,
+      "mean_non_event": 0.007229332597963675,
+      "standardized_mean_diff": 0.17001105204882186,
+      "mann_whitney_p": 8.630041729127946e-214,
+      "point_biserial": 0.0691222141230359
+    },
+    {
+      "feature": "share_age_00_14_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.11735693934877761,
+      "mean_non_event": 0.12095769425611216,
+      "standardized_mean_diff": -0.09076941764156918,
+      "mann_whitney_p": 1.6301354209135485e-207,
+      "point_biserial": -0.02830562888430358
+    },
+    {
+      "feature": "renta_best_eur_delta_12m_start",
+      "missing_rate": 0.23281884726337893,
+      "mean_event": 2432.4838777995446,
+      "mean_non_event": 1275.0352707079555,
+      "standardized_mean_diff": 0.14063465750297108,
+      "mann_whitney_p": 2.236875012551602e-154,
+      "point_biserial": 0.046875999170969115
+    },
+    {
+      "feature": "macro_category__consumer_services",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.020437337851432202,
+      "mean_non_event": 0.0047042029620257275,
+      "standardized_mean_diff": 0.14156849314635972,
+      "mann_whitney_p": 1.1806156330222468e-152,
+      "point_biserial": 0.058294667487687635
+    },
+    {
+      "feature": "macro_category__restaurant",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.039021549213744906,
+      "mean_non_event": 0.014680357519425114,
+      "standardized_mean_diff": 0.15101036199088097,
+      "mann_whitney_p": 1.20434681004477e-134,
+      "point_biserial": 0.05469928917109794
+    },
+    {
+      "feature": "macro_category__tourist_accommodation",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0038650923915921004,
+      "mean_non_event": 0.03672522588284913,
+      "standardized_mean_diff": -0.2346355331868724,
+      "mann_whitney_p": 1.1586942374678629e-125,
+      "point_biserial": -0.0528147001291187
+    },
+    {
+      "feature": "macro_category__food_specialty",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0166251919309578,
+      "mean_non_event": 0.004131047198836385,
+      "standardized_mean_diff": 0.12352055921372389,
+      "mann_whitney_p": 1.3442539966692017e-112,
+      "point_biserial": 0.049947621452741994
+    },
+    {
+      "feature": "macro_category__food_convenience",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.031238417959443,
+      "mean_non_event": 0.012355291687619294,
+      "standardized_mean_diff": 0.12959021724031294,
+      "mann_whitney_p": 1.452463637557744e-97,
+      "point_biserial": 0.04643076258896376
+    },
+    {
+      "feature": "macro_category__beauty_personal_care",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0711071107110711,
+      "mean_non_event": 0.03950449062133329,
+      "standardized_mean_diff": 0.13859013811921436,
+      "mann_whitney_p": 1.326549810039822e-93,
+      "point_biserial": 0.04545918950965472
+    },
+    {
+      "feature": "macro_category__home_improvement",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.021549213744903904,
+      "mean_non_event": 0.007618645946545114,
+      "standardized_mean_diff": 0.116400812536995,
+      "mann_whitney_p": 6.776645744319608e-84,
+      "point_biserial": 0.042985343635928625
+    },
+    {
+      "feature": "macro_category__business_services",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0435749457298671,
+      "mean_non_event": 0.08378888402247203,
+      "standardized_mean_diff": -0.1652472337558906,
+      "mann_whitney_p": 8.087872366925089e-84,
+      "point_biserial": -0.04296520299987255
+    },
+    {
+      "feature": "macro_category__supermarket",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.022184571398316304,
+      "mean_non_event": 0.008272908657355589,
+      "standardized_mean_diff": 0.11378396840616536,
+      "mann_whitney_p": 3.838337095404141e-78,
+      "point_biserial": 0.041450105432157956
+    },
+    {
+      "feature": "share_foreign_delta_12m_start",
+      "missing_rate": 0.23281884726337893,
+      "mean_event": 0.007716453131608251,
+      "mean_non_event": 0.008988782530905662,
+      "standardized_mean_diff": -0.1090090228755412,
+      "mann_whitney_p": 7.391282955428437e-74,
+      "point_biserial": -0.03196009458797295
+    },
+    {
+      "feature": "share_male_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.46376935923420765,
+      "mean_non_event": 0.465844668926946,
+      "standardized_mean_diff": -0.08279879257511624,
+      "mann_whitney_p": 2.902671024267555e-73,
+      "point_biserial": -0.026131178017375235
+    },
+    {
+      "feature": "renta_effective_eur",
+      "missing_rate": 0.0,
+      "mean_event": 16261.400010589294,
+      "mean_non_event": 15310.050616142446,
+      "standardized_mean_diff": 0.12436016002600653,
+      "mann_whitney_p": 5.832677511946325e-62,
+      "point_biserial": 0.037605835697080515
+    },
+    {
+      "feature": "share_age_30_44_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.2445422285546232,
+      "mean_non_event": 0.23678489108009726,
+      "standardized_mean_diff": 0.15398576791456528,
+      "mann_whitney_p": 2.5134117714460866e-61,
+      "point_biserial": 0.048856147614232744
+    },
+    {
+      "feature": "age_mean_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 44.224848440699425,
+      "mean_non_event": 43.98211040879612,
+      "standardized_mean_diff": 0.06726098876920003,
+      "mann_whitney_p": 6.212329041300592e-56,
+      "point_biserial": 0.020386824730883456
+    },
+    {
+      "feature": "macro_category__bakery_pastry",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.013977868375072802,
+      "mean_non_event": 0.00507729492108294,
+      "standardized_mean_diff": 0.0917194965692522,
+      "mann_whitney_p": 2.9737369589996955e-52,
+      "point_biserial": 0.03369277269180406
+    },
+    {
+      "feature": "macro_category__fresh_produce",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.020013766082490603,
+      "mean_non_event": 0.008824435901179295,
+      "standardized_mean_diff": 0.0939653324956316,
+      "mann_whitney_p": 1.030359363529707e-49,
+      "point_biserial": 0.032834030908615905
+    },
+    {
+      "feature": "share_age_15_29_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.15530841959857705,
+      "mean_non_event": 0.1580193288604736,
+      "standardized_mean_diff": -0.1048299899898608,
+      "mann_whitney_p": 3.088854777898511e-45,
+      "point_biserial": -0.03176468544907402
+    },
+    {
+      "feature": "macro_category__training_languages",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0050828612272992004,
+      "mean_non_event": 0.018703262121433323,
+      "standardized_mean_diff": -0.12589247380394403,
+      "mann_whitney_p": 3.031693159341195e-42,
+      "point_biserial": -0.03016872645543533
+    },
+    {
+      "feature": "macro_category__bar_cafe",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0989040080478636,
+      "mean_non_event": 0.07168772743739896,
+      "standardized_mean_diff": 0.09755296389467435,
+      "mann_whitney_p": 4.4213329453039995e-42,
+      "point_biserial": 0.030107629662887547
+    },
+    {
+      "feature": "district_panel_density_start",
+      "missing_rate": 0.9079468964028494,
+      "mean_event": 95.32617783084501,
+      "mean_non_event": 98.92993280490361,
+      "standardized_mean_diff": -0.19387168397839488,
+      "mann_whitney_p": 6.957167828559979e-41,
+      "point_biserial": -0.043526990271707054
+    },
+    {
+      "feature": "macro_category__ready_meals",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0088950071477736,
+      "mean_non_event": 0.0031361353080171512,
+      "standardized_mean_diff": 0.07452646067854411,
+      "mann_whitney_p": 1.1218947266419383e-35,
+      "point_biserial": 0.02761538665374333
+    },
+    {
+      "feature": "share_age_45_64_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.2741706446334906,
+      "mean_non_event": 0.27657693380990755,
+      "standardized_mean_diff": -0.07068989946351323,
+      "mann_whitney_p": 1.381860430186145e-35,
+      "point_biserial": -0.0214030384749261
+    },
+    {
+      "feature": "total_population_delta_12m_start",
+      "missing_rate": 0.23281884726337893,
+      "mean_event": 4.882352941176471,
+      "mean_non_event": 5.703927198403815,
+      "standardized_mean_diff": -0.004800038266179088,
+      "mann_whitney_p": 1.4269068533333982e-35,
+      "point_biserial": -0.0014059527996401493
+    },
+    {
+      "feature": "macro_category__pet_retail",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0032826812092974,
+      "mean_non_event": 0.0005731557631893415,
+      "standardized_mean_diff": 0.06179810659575746,
+      "mann_whitney_p": 4.307428561500488e-35,
+      "point_biserial": 0.027376871301388894
+    },
+    {
+      "feature": "district_panel_locales_open_start",
+      "missing_rate": 0.9006613419157329,
+      "mean_event": 8.602846579132908,
+      "mean_non_event": 8.606748181426587,
+      "standardized_mean_diff": -0.0409318258070559,
+      "mann_whitney_p": 2.965404277252196e-32,
+      "point_biserial": -0.009334465974234504
+    },
+    {
+      "feature": "share_age_65_plus_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.2079595609529997,
+      "mean_non_event": 0.20397541238066214,
+      "standardized_mean_diff": 0.06048644492510935,
+      "mann_whitney_p": 1.2252508363791894e-31,
+      "point_biserial": 0.018327356237242055
+    },
+    {
+      "feature": "share_foreign_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.1541815777647599,
+      "mean_non_event": 0.15798284006935925,
+      "standardized_mean_diff": -0.0506560539920226,
+      "mann_whitney_p": 1.0534086966959688e-30,
+      "point_biserial": -0.015350465893349152
+    },
+    {
+      "feature": "macro_category__auto_repair",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0030708953248266,
+      "mean_non_event": 0.012490469933654517,
+      "standardized_mean_diff": -0.10736022739662048,
+      "mann_whitney_p": 1.2115740970921621e-30,
+      "point_biserial": -0.02548849058087389
+    },
+    {
+      "feature": "district_iguala_bienestar_start",
+      "missing_rate": 0.9006613419157329,
+      "mean_event": 4.539491422284177,
+      "mean_non_event": 4.558639787599693,
+      "standardized_mean_diff": -0.12429706354562967,
+      "mann_whitney_p": 5.047896816289767e-30,
+      "point_biserial": -0.0284824866551759
+    },
+    {
+      "feature": "district_iguala_vulnerability_global_start",
+      "missing_rate": 0.9006613419157329,
+      "mean_event": 4.863843179319636,
+      "mean_non_event": 4.8777620157430235,
+      "standardized_mean_diff": -0.11053503662621994,
+      "mann_whitney_p": 1.3500060804726538e-28,
+      "point_biserial": -0.025466915662214654
+    },
+    {
+      "feature": "population_density_km2_start",
+      "missing_rate": 0.23484015935004024,
+      "mean_event": 33107.77796324379,
+      "mean_non_event": 31743.30804134611,
+      "standardized_mean_diff": 0.07922922714021899,
+      "mann_whitney_p": 9.588232248226764e-27,
+      "point_biserial": 0.024055294497076017
+    },
+    {
+      "feature": "macro_category__entertainment",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.011860009530364802,
+      "mean_non_event": 0.006034356903012312,
+      "standardized_mean_diff": 0.06189575962914375,
+      "mann_whitney_p": 3.845994773345759e-21,
+      "point_biserial": 0.020902134176445875
+    },
+    {
+      "feature": "total_population_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 7.19717471548647,
+      "mean_non_event": 7.218786109704022,
+      "standardized_mean_diff": -0.0742453709983396,
+      "mann_whitney_p": 7.295112240630871e-20,
+      "point_biserial": -0.022660807898122283
+    },
+    {
+      "feature": "district_iguala_medio_ambiente_start",
+      "missing_rate": 0.9006613419157329,
+      "mean_event": 3.9602883991650097,
+      "mean_non_event": 3.9902766121488034,
+      "standardized_mean_diff": -0.11723995058215401,
+      "mann_whitney_p": 8.567635582089566e-18,
+      "point_biserial": -0.026765840779068774
+    },
+    {
+      "feature": "macro_category__nightlife",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0041827712182983005,
+      "mean_non_event": 0.0015356248749601223,
+      "standardized_mean_diff": 0.04959193545111941,
+      "mann_whitney_p": 2.0554073392256808e-16,
+      "point_biserial": 0.018204463032913863
+    },
+    {
+      "feature": "macro_category__pharmacy_optics",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.024778948483083603,
+      "mean_non_event": 0.01667558843090499,
+      "standardized_mean_diff": 0.056900746255146795,
+      "mann_whitney_p": 5.202079323684158e-16,
+      "point_biserial": 0.017956111521974683
+    },
+    {
+      "feature": "share_age_15_29_delta_12m_start",
+      "missing_rate": 0.23281884726337893,
+      "mean_event": 0.003934422427802458,
+      "mean_non_event": 0.004389654263859758,
+      "standardized_mean_diff": -0.0549103743072606,
+      "mann_whitney_p": 2.3666207640236427e-15,
+      "point_biserial": -0.016903353047708698
+    },
+    {
+      "feature": "population_density_km2_delta_12m_start",
+      "missing_rate": 0.23484997154463566,
+      "mean_event": 398.6726088023329,
+      "mean_non_event": 408.2659228862386,
+      "standardized_mean_diff": -0.004084337811308222,
+      "mann_whitney_p": 2.9060757815810464e-14,
+      "point_biserial": -0.0013388792064025145
+    },
+    {
+      "feature": "macro_category__creative_tech_services",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.016572245459840103,
+      "mean_non_event": 0.023829221211088943,
+      "standardized_mean_diff": -0.0515998027839639,
+      "mann_whitney_p": 2.6773604975935096e-10,
+      "point_biserial": -0.013990666637293907
+    },
+    {
+      "feature": "macro_category__clinic_health",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.027214486154497803,
+      "mean_non_event": 0.035584321486311854,
+      "standardized_mean_diff": -0.0480074818529667,
+      "mann_whitney_p": 2.26368820972626e-09,
+      "point_biserial": -0.013240372315745501
+    },
+    {
+      "feature": "n_divisions_start",
+      "missing_rate": 0.27378475969935434,
+      "mean_event": 1.0076772383120665,
+      "mean_non_event": 1.0132204324622447,
+      "standardized_mean_diff": -0.050036855804235426,
+      "mann_whitney_p": 2.5292591404219857e-09,
+      "point_biserial": -0.013034945103869832
+    },
+    {
+      "feature": "macro_category__catering_collective",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0066183088897125006,
+      "mean_non_event": 0.011198165901557795,
+      "standardized_mean_diff": -0.04875600402511178,
+      "mann_whitney_p": 6.343420588813786e-09,
+      "point_biserial": -0.012863350788072492
+    },
+    {
+      "feature": "macro_category__vehicle_sales_parts",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0014825011912956002,
+      "mean_non_event": 0.004001276082642572,
+      "standardized_mean_diff": -0.04818220292601172,
+      "mann_whitney_p": 7.37553493946255e-08,
+      "point_biserial": -0.011920504756316024
+    },
+    {
+      "feature": "n_epigrafes_start",
+      "missing_rate": 0.27378475969935434,
+      "mean_event": 1.0541112934822894,
+      "mean_non_event": 1.046495909506275,
+      "standardized_mean_diff": 0.020438285477096814,
+      "mann_whitney_p": 8.778406001730932e-06,
+      "point_biserial": 0.005893759560668179
+    },
+    {
+      "feature": "macro_category__fish_shop",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.005294647111770001,
+      "mean_non_event": 0.0035038201372329554,
+      "standardized_mean_diff": 0.027062147514630368,
+      "mann_whitney_p": 0.0001057433297834751,
+      "point_biserial": 0.008587511705050633
+    },
+    {
+      "feature": "district_panel_locales_closed_start",
+      "missing_rate": 0.9006613419157329,
+      "mean_event": 7.981474115738001,
+      "mean_non_event": 7.965704456733086,
+      "standardized_mean_diff": 0.1117475375528525,
+      "mann_whitney_p": 0.00023248605640794248,
+      "point_biserial": 0.02574187424613439
+    },
+    {
+      "feature": "district_panel_mean_age_start",
+      "missing_rate": 0.9082461683380105,
+      "mean_event": 44.019283424308774,
+      "mean_non_event": 44.112627130700325,
+      "standardized_mean_diff": -0.22745494174011704,
+      "mann_whitney_p": 0.0002638937773403162,
+      "point_biserial": -0.05017430473025434
+    },
+    {
+      "feature": "macro_category__fitness_sports",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.006883041245301,
+      "mean_non_event": 0.005023223622668851,
+      "standardized_mean_diff": 0.024178307086302336,
+      "mann_whitney_p": 0.0007079148523814135,
+      "point_biserial": 0.007501009055512151
+    },
+    {
+      "feature": "district_panel_migrant_share_start",
+      "missing_rate": 0.9782856133602842,
+      "mean_event": 0.09992454863133372,
+      "mean_non_event": 0.10020951519673842,
+      "standardized_mean_diff": -0.05268274615242832,
+      "mann_whitney_p": 0.003850698379294476,
+      "point_biserial": -0.012394979421763225
+    },
+    {
+      "feature": "district_panel_dependency_index_start",
+      "missing_rate": 0.9782856133602842,
+      "mean_event": 46.792911711759416,
+      "mean_non_event": 46.5386988461185,
+      "standardized_mean_diff": 0.07935507844469568,
+      "mann_whitney_p": 0.009049268341338549,
+      "point_biserial": 0.01842268107513874
+    },
+    {
+      "feature": "geometry_available_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.9923227616879335,
+      "mean_non_event": 0.9937763935525383,
+      "standardized_mean_diff": -0.017497660682439964,
+      "mann_whitney_p": 0.016663288409429555,
+      "point_biserial": -0.005302774985392132
+    },
+    {
+      "feature": "macro_category__butcher",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.013607243077248901,
+      "mean_non_event": 0.01190109278094095,
+      "standardized_mean_diff": 0.015205164275669971,
+      "mann_whitney_p": 0.040732177138969226,
+      "point_biserial": 0.004532387702744908
+    },
+    {
+      "feature": "macro_category__logistics_mobility",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0192195690157251,
+      "mean_non_event": 0.0213689771332479,
+      "standardized_mean_diff": -0.015243929306976172,
+      "mann_whitney_p": 0.050622922570330825,
+      "point_biserial": -0.004329532221718273
+    },
+    {
+      "feature": "section_local_count_delta_12m_start",
+      "missing_rate": 0.0033410522597484152,
+      "mean_event": 4.208026685021443,
+      "mean_non_event": 7.829313132296246,
+      "standardized_mean_diff": -0.08648564853256455,
+      "mann_whitney_p": 0.0589513979768551,
+      "point_biserial": -0.019142140723256273
+    },
+    {
+      "feature": "macro_category__early_childhood",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.00026473235558850005,
+      "mean_non_event": 0.0006001914123963858,
+      "standardized_mean_diff": -0.016135174424473757,
+      "mann_whitney_p": 0.06557373049441466,
+      "point_biserial": -0.004078498543958814
+    },
+    {
+      "feature": "district_panel_unemployment_rate_start",
+      "missing_rate": 0.9011961065211845,
+      "mean_event": 7.6555456133848665,
+      "mean_non_event": 7.639380018492382,
+      "standardized_mean_diff": 0.05849604304309301,
+      "mann_whitney_p": 0.09335961214548968,
+      "point_biserial": 0.013787325656555188
+    },
+    {
+      "feature": "macro_category__personal_services_repair",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.009689204214539102,
+      "mean_non_event": 0.010668267177099724,
+      "standardized_mean_diff": -0.00975417354516383,
+      "mann_whitney_p": 0.21026745874479835,
+      "point_biserial": -0.0027749906989144404
+    },
+    {
+      "feature": "district_iguala_salud_start",
+      "missing_rate": 0.9006613419157329,
+      "mean_event": 4.445192744153876,
+      "mean_non_event": 4.470406272076654,
+      "standardized_mean_diff": -0.11424610256638765,
+      "mann_whitney_p": 0.37776410858593423,
+      "point_biserial": -0.02585413163521564
+    },
+    {
+      "feature": "district_iguala_economia_start",
+      "missing_rate": 0.9006613419157329,
+      "mean_event": 5.599670258511989,
+      "mean_non_event": 5.598350832123784,
+      "standardized_mean_diff": 0.005502963568167767,
+      "mann_whitney_p": 0.406881166572426,
+      "point_biserial": 0.001281254440387767
+    },
+    {
+      "feature": "n_activity_categories_start",
+      "missing_rate": 0.27378475969935434,
+      "mean_event": 1.0228728755228464,
+      "mean_non_event": 1.0241644632612563,
+      "standardized_mean_diff": -0.004975835654980981,
+      "mann_whitney_p": 0.4432782063471813,
+      "point_biserial": -0.0013877067231384149
+    },
+    {
+      "feature": "padron_lag_months_start",
+      "missing_rate": 0.23280903506878348,
+      "mean_event": 0.0,
+      "mean_non_event": 5.407129841408882e-06,
+      "standardized_mean_diff": -0.003288513061740851,
+      "mann_whitney_p": 0.7493077685560496,
+      "point_biserial": -0.000707838259642508
+    },
+    {
+      "feature": "macro_category__fuel_station",
+      "missing_rate": 0.2952930902525659,
+      "mean_event": 0.0008471435378832001,
+      "mean_non_event": 0.0008975835536738744,
+      "standardized_mean_diff": -0.0017085045188727243,
+      "mann_whitney_p": 0.8250386229941326,
+      "point_biserial": -0.0004896656831361386
+    },
+    {
+      "feature": "district_iguala_educacion_start",
+      "missing_rate": 0.9006613419157329,
+      "mean_event": 5.695065388780263,
+      "mean_non_event": 5.683991766497044,
+      "standardized_mean_diff": 0.03312028558298597,
+      "mann_whitney_p": 0.9812285465111342,
+      "point_biserial": 0.007589460197546188
+    },
+    {
+      "feature": "section_entry_count_3m_start",
+      "missing_rate": 1.0,
+      "mean_event": 0.0,
+      "mean_non_event": 0.0,
+      "standardized_mean_diff": NaN,
+      "mann_whitney_p": NaN,
+      "point_biserial": NaN
+    },
+    {
+      "feature": "section_entry_count_6m_start",
+      "missing_rate": 1.0,
+      "mean_event": 0.0,
+      "mean_non_event": 0.0,
+      "standardized_mean_diff": NaN,
+      "mann_whitney_p": NaN,
+      "point_biserial": NaN
+    },
+    {
+      "feature": "section_entry_count_12m_start",
+      "missing_rate": 1.0,
+      "mean_event": 0.0,
+      "mean_non_event": 0.0,
+      "standardized_mean_diff": NaN,
+      "mann_whitney_p": NaN,
+      "point_biserial": NaN
+    },
+    {
+      "feature": "section_exit_count_3m_start",
+      "missing_rate": 1.0,
+      "mean_event": 0.0,
+      "mean_non_event": 0.0,
+      "standardized_mean_diff": NaN,
+      "mann_whitney_p": NaN,
+      "point_biserial": NaN
+    },
+    {
+      "feature": "section_exit_count_6m_start",
+      "missing_rate": 1.0,
+      "mean_event": 0.0,
+      "mean_non_event": 0.0,
+      "standardized_mean_diff": NaN,
+      "mann_whitney_p": NaN,
+      "point_biserial": NaN
+    },
+    {
+      "feature": "section_exit_count_12m_start",
+      "missing_rate": 1.0,
+      "mean_event": 0.0,
+      "mean_non_event": 0.0,
+      "standardized_mean_diff": NaN,
+      "mann_whitney_p": NaN,
+      "point_biserial": NaN
+    },
+    {
+      "feature": "section_entry_rate_12m_start",
+      "missing_rate": 1.0,
+      "mean_event": 0.0,
+      "mean_non_event": 0.0,
+      "standardized_mean_diff": NaN,
+      "mann_whitney_p": NaN,
+      "point_biserial": NaN
+    },
+    {
+      "feature": "section_exit_rate_12m_start",
+      "missing_rate": 1.0,
+      "mean_event": 0.0,
+      "mean_non_event": 0.0,
+      "standardized_mean_diff": NaN,
+      "mann_whitney_p": NaN,
+      "point_biserial": NaN
+    },
+    {
+      "feature": "section_net_flow_12m_start",
+      "missing_rate": 1.0,
+      "mean_event": 0.0,
+      "mean_non_event": 0.0,
+      "standardized_mean_diff": NaN,
+      "mann_whitney_p": NaN,
+      "point_biserial": NaN
+    },
+    {
+      "feature": "section_turnover_rate_12m_start",
+      "missing_rate": 1.0,
+      "mean_event": 0.0,
+      "mean_non_event": 0.0,
+      "standardized_mean_diff": NaN,
+      "mann_whitney_p": NaN,
+      "point_biserial": NaN
+    },
+    {
+      "feature": "section_division_hhi_start",
+      "missing_rate": 1.0,
+      "mean_event": 0.0,
+      "mean_non_event": 0.0,
+      "standardized_mean_diff": NaN,
+      "mann_whitney_p": NaN,
+      "point_biserial": NaN
+    },
+    {
+      "feature": "section_division_top_share_start",
+      "missing_rate": 1.0,
+      "mean_event": 0.0,
+      "mean_non_event": 0.0,
+      "standardized_mean_diff": NaN,
+      "mann_whitney_p": NaN,
+      "point_biserial": NaN
+    },
+    {
+      "feature": "section_activity_category_hhi_start",
+      "missing_rate": 1.0,
+      "mean_event": 0.0,
+      "mean_non_event": 0.0,
+      "standardized_mean_diff": NaN,
+      "mann_whitney_p": NaN,
+      "point_biserial": NaN
+    },
+    {
+      "feature": "section_activity_category_top_share_start",
+      "missing_rate": 1.0,
+      "mean_event": 0.0,
+      "mean_non_event": 0.0,
+      "standardized_mean_diff": NaN,
+      "mann_whitney_p": NaN,
+      "point_biserial": NaN
+    }
+  ]
+}

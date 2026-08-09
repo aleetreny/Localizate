@@ -1,0 +1,20 @@
+{
+  "selected_listings": 207,
+  "selected_unique_sections": 68,
+  "section_level": {
+    "top1_same_rate": 0.8970588235294118,
+    "exact_top5_same_rate": 0.5294117647058824,
+    "mean_top5_overlap": 0.9588235294117647,
+    "unique_first_labels_current": 16,
+    "unique_first_labels_candidate": 15,
+    "unique_top5_labels_current": 29,
+    "unique_top5_labels_candidate": 29
+  },
+  "listing_level": {
+    "top1_same_rate": 0.3285024154589372,
+    "exact_top5_same_rate": 0.8260869565217391,
+    "mean_top5_overlap": 0.3468599033816424,
+    "changed_top1_listings": 139,
+    "changed_exact_top5_listings": 36
+  }
+}

@@ -1,0 +1,3083 @@
+{
+  "taxonomy_summary": {
+    "epigrafes_validos_unicos": 457,
+    "categorias_web": 146,
+    "investable_epigrafes": 272,
+    "needs_manual_review": 0
+  },
+  "dataset_summary": {
+    "abt_rows": 203870,
+    "start_epigrafes_matched": 89270,
+    "investable_rows": 76172,
+    "investable_rows_with_district": 74955,
+    "investable_rows_with_barrio": 74955,
+    "investable_categories": 143,
+    "district_rows": 2722,
+    "barrio_rows": 11350
+  },
+  "district_level_tests": {
+    "1.0": {
+      "zone_level": "district",
+      "zone_name": "Centro",
+      "supported_categories": 20,
+      "n_locales_supported": 5346,
+      "n_events_supported": 656,
+      "chisq": 393.15276065422205,
+      "pvalue": 1.162679342455148e-71,
+      "significant": true,
+      "leader_category": "Cafeteria",
+      "leader_survival_24m": 0.9922879177377892,
+      "leader_significantly_better_all": false,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Cafeteria",
+          "other": "Libreria",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9912280701754386,
+          "chisq": 0.7450712131098108,
+          "pvalue": 0.3880412146351373,
+          "pvalue_adj": 0.5266273627191149,
+          "significant": false
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Bazar y precio unico",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9911504424778761,
+          "chisq": 2.9569921496293503,
+          "pvalue": 0.08550686922615608,
+          "pvalue_adj": 0.16246305152969656,
+          "significant": false
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Bar con cocina",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9872340425531915,
+          "chisq": 0.01865220131307001,
+          "pvalue": 0.8913682702168562,
+          "pvalue_adj": 0.9195161104389984,
+          "significant": false
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Restaurante",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9855072463768115,
+          "chisq": 2.117682362877022,
+          "pvalue": 0.14560673832228443,
+          "pvalue_adj": 0.23054400234361702,
+          "significant": false
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Bar restaurante",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9853862212943633,
+          "chisq": 6.168652238771283,
+          "pvalue": 0.013003363546791723,
+          "pvalue_adj": 0.030882988423630343,
+          "significant": true
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Joyeria y relojeria",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9842931937172774,
+          "chisq": 7.2438772609447915,
+          "pvalue": 0.007114318540546083,
+          "pvalue_adj": 0.019310293181482224,
+          "significant": true
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Otros comercios",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9831460674157303,
+          "chisq": 0.02961262346035178,
+          "pvalue": 0.863372129931363,
+          "pvalue_adj": 0.9195161104389984,
+          "significant": false
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Calzado",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9822485207100591,
+          "chisq": 4.162571698325649,
+          "pvalue": 0.04132661196496666,
+          "pvalue_adj": 0.08724506970381851,
+          "significant": false
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Tienda de alimentacion",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.981981981981982,
+          "chisq": 2.2937492881983026,
+          "pvalue": 0.12989580755833446,
+          "pvalue_adj": 0.2243654857825777,
+          "significant": false
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Supermercado",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9805194805194807,
+          "chisq": 1.3082171242413796,
+          "pvalue": 0.25271770857168324,
+          "pvalue_adj": 0.3693566509893832,
+          "significant": false
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Fruteria",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9791666666666667,
+          "chisq": 0.4699595792073484,
+          "pvalue": 0.49300576458595113,
+          "pvalue_adj": 0.624473968475538,
+          "significant": false
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Bar sin cocina",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9774774774774776,
+          "chisq": 0.29180101454529916,
+          "pvalue": 0.5890687027828008,
+          "pvalue_adj": 0.6995190845545759,
+          "significant": false
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Moda",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9714285714285713,
+          "chisq": 15.274106473574363,
+          "pvalue": 9.298241714744324e-05,
+          "pvalue_adj": 0.0003533331851602843,
+          "significant": true
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Bar especial",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9674796747967481,
+          "chisq": 0.010209742664847683,
+          "pvalue": 0.9195161104389984,
+          "pvalue_adj": 0.9195161104389984,
+          "significant": false
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Peluqueria",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9545454545454546,
+          "chisq": 34.590011739775484,
+          "pvalue": 4.06989262113746e-09,
+          "pvalue_adj": 2.5775986600537245e-08,
+          "significant": true
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Comida preparada",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9438202247191011,
+          "chisq": 17.572041096181923,
+          "pvalue": 2.7662567973255447e-05,
+          "pvalue_adj": 0.00013139719787296338,
+          "significant": true
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Logistica y movilidad",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9318181818181819,
+          "chisq": 12.670006113929333,
+          "pvalue": 0.0003715683171691045,
+          "pvalue_adj": 0.0011766330043688309,
+          "significant": true
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Locutorio",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.9230769230769231,
+          "chisq": 75.02608950737631,
+          "pvalue": 4.645348198150772e-18,
+          "pvalue_adj": 4.413080788243233e-17,
+          "significant": true
+        },
+        {
+          "leader": "Cafeteria",
+          "other": "Banco y caja",
+          "leader_survival_24m": 0.9922879177377892,
+          "other_survival_24m": 0.8735632183908044,
+          "chisq": 96.92553235986429,
+          "pvalue": 7.198440465177898e-23,
+          "pvalue_adj": 1.3677036883838007e-21,
+          "significant": true
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Cafeteria",
+          "n_locales": 389,
+          "n_events": 31,
+          "survival_24m": 0.9922879177377892
+        },
+        {
+          "display_label": "Libreria",
+          "n_locales": 114,
+          "n_events": 12,
+          "survival_24m": 0.9912280701754386
+        },
+        {
+          "display_label": "Bazar y precio unico",
+          "n_locales": 113,
+          "n_events": 15,
+          "survival_24m": 0.9911504424778761
+        },
+        {
+          "display_label": "Bar con cocina",
+          "n_locales": 235,
+          "n_events": 18,
+          "survival_24m": 0.9872340425531915
+        },
+        {
+          "display_label": "Restaurante",
+          "n_locales": 690,
+          "n_events": 39,
+          "survival_24m": 0.9855072463768115
+        },
+        {
+          "display_label": "Bar restaurante",
+          "n_locales": 479,
+          "n_events": 19,
+          "survival_24m": 0.9853862212943633
+        },
+        {
+          "display_label": "Joyeria y relojeria",
+          "n_locales": 191,
+          "n_events": 29,
+          "survival_24m": 0.9842931937172774
+        },
+        {
+          "display_label": "Otros comercios",
+          "n_locales": 534,
+          "n_events": 44,
+          "survival_24m": 0.9831460674157303
+        },
+        {
+          "display_label": "Calzado",
+          "n_locales": 169,
+          "n_events": 23,
+          "survival_24m": 0.9822485207100591
+        },
+        {
+          "display_label": "Tienda de alimentacion",
+          "n_locales": 111,
+          "n_events": 14,
+          "survival_24m": 0.981981981981982
+        },
+        {
+          "display_label": "Supermercado",
+          "n_locales": 154,
+          "n_events": 17,
+          "survival_24m": 0.9805194805194807
+        },
+        {
+          "display_label": "Fruteria",
+          "n_locales": 144,
+          "n_events": 14,
+          "survival_24m": 0.9791666666666667
+        },
+        {
+          "display_label": "Bar sin cocina",
+          "n_locales": 222,
+          "n_events": 15,
+          "survival_24m": 0.9774774774774776
+        },
+        {
+          "display_label": "Moda",
+          "n_locales": 805,
+          "n_events": 131,
+          "survival_24m": 0.9714285714285713
+        },
+        {
+          "display_label": "Bar especial",
+          "n_locales": 246,
+          "n_events": 20,
+          "survival_24m": 0.9674796747967481
+        },
+        {
+          "display_label": "Peluqueria",
+          "n_locales": 264,
+          "n_events": 64,
+          "survival_24m": 0.9545454545454546
+        },
+        {
+          "display_label": "Comida preparada",
+          "n_locales": 89,
+          "n_events": 20,
+          "survival_24m": 0.9438202247191011
+        },
+        {
+          "display_label": "Logistica y movilidad",
+          "n_locales": 132,
+          "n_events": 24,
+          "survival_24m": 0.9318181818181819
+        },
+        {
+          "display_label": "Locutorio",
+          "n_locales": 91,
+          "n_events": 37,
+          "survival_24m": 0.9230769230769231
+        },
+        {
+          "display_label": "Banco y caja",
+          "n_locales": 174,
+          "n_events": 70,
+          "survival_24m": 0.8735632183908044
+        }
+      ]
+    },
+    "10.0": {
+      "zone_level": "district",
+      "zone_name": "Latina",
+      "supported_categories": 7,
+      "n_locales_supported": 1329,
+      "n_events_supported": 174,
+      "chisq": 82.25838683191228,
+      "pvalue": 1.2195487618415363e-15,
+      "significant": true,
+      "leader_category": "Fruteria",
+      "leader_survival_24m": 1.0,
+      "leader_significantly_better_all": false,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Fruteria",
+          "other": "Moda",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9937106918238994,
+          "chisq": 6.860987593997377,
+          "pvalue": 0.008809784404458336,
+          "pvalue_adj": 0.017619568808916672,
+          "significant": true
+        },
+        {
+          "leader": "Fruteria",
+          "other": "Bar con cocina",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9866220735785953,
+          "chisq": 0.27527303518179114,
+          "pvalue": 0.5998163089000212,
+          "pvalue_adj": 0.5998163089000212,
+          "significant": false
+        },
+        {
+          "leader": "Fruteria",
+          "other": "Peluqueria",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9862068965517241,
+          "chisq": 0.6335283846343097,
+          "pvalue": 0.4260640253745569,
+          "pvalue_adj": 0.5112768304494683,
+          "significant": false
+        },
+        {
+          "leader": "Fruteria",
+          "other": "Tienda de alimentacion",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.976878612716763,
+          "chisq": 1.4944690473912976,
+          "pvalue": 0.221524354492017,
+          "pvalue_adj": 0.33228653173802547,
+          "significant": false
+        },
+        {
+          "leader": "Fruteria",
+          "other": "Locutorio",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9523809523809523,
+          "chisq": 16.52124123320335,
+          "pvalue": 4.8108104879171714e-05,
+          "pvalue_adj": 0.00014432431463751513,
+          "significant": true
+        },
+        {
+          "leader": "Fruteria",
+          "other": "Banco y caja",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9274193548387097,
+          "chisq": 36.0286335090802,
+          "pvalue": 1.944391932288054e-09,
+          "pvalue_adj": 1.1666351593728323e-08,
+          "significant": true
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Fruteria",
+          "n_locales": 200,
+          "n_events": 16,
+          "survival_24m": 1.0
+        },
+        {
+          "display_label": "Moda",
+          "n_locales": 159,
+          "n_events": 27,
+          "survival_24m": 0.9937106918238994
+        },
+        {
+          "display_label": "Bar con cocina",
+          "n_locales": 299,
+          "n_events": 20,
+          "survival_24m": 0.9866220735785953
+        },
+        {
+          "display_label": "Peluqueria",
+          "n_locales": 290,
+          "n_events": 29,
+          "survival_24m": 0.9862068965517241
+        },
+        {
+          "display_label": "Tienda de alimentacion",
+          "n_locales": 173,
+          "n_events": 20,
+          "survival_24m": 0.976878612716763
+        },
+        {
+          "display_label": "Locutorio",
+          "n_locales": 84,
+          "n_events": 21,
+          "survival_24m": 0.9523809523809523
+        },
+        {
+          "display_label": "Banco y caja",
+          "n_locales": 124,
+          "n_events": 41,
+          "survival_24m": 0.9274193548387097
+        }
+      ]
+    },
+    "11.0": {
+      "zone_level": "district",
+      "zone_name": "Carabanchel",
+      "supported_categories": 13,
+      "n_locales_supported": 2363,
+      "n_events_supported": 360,
+      "chisq": 147.0458075615797,
+      "pvalue": 2.251536931710645e-25,
+      "significant": true,
+      "leader_category": "Tienda de alimentacion",
+      "leader_survival_24m": 1.0,
+      "leader_significantly_better_all": false,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Supermercado",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9912280701754386,
+          "chisq": 0.0003057553479808064,
+          "pvalue": 0.9860490121127216,
+          "pvalue_adj": 0.9893730958219642,
+          "significant": false
+        },
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Bar especial",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9880952380952381,
+          "chisq": 0.35469942398258864,
+          "pvalue": 0.5514648796621542,
+          "pvalue_adj": 0.7399009318090574,
+          "significant": false
+        },
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Bar con cocina",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9824120603015077,
+          "chisq": 3.9965266651913574,
+          "pvalue": 0.04559413010105109,
+          "pvalue_adj": 0.1094259122425226,
+          "significant": false
+        },
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Logistica y movilidad",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9815668202764978,
+          "chisq": 0.014790762618717295,
+          "pvalue": 0.9032021281902672,
+          "pvalue_adj": 0.9893730958219642,
+          "significant": false
+        },
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Peluqueria",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9786585365853658,
+          "chisq": 0.7236663342672884,
+          "pvalue": 0.3949439120262157,
+          "pvalue_adj": 0.7399009318090574,
+          "significant": false
+        },
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Moda",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9702602230483273,
+          "chisq": 9.148794082327857,
+          "pvalue": 0.0024888203659528905,
+          "pvalue_adj": 0.009955281463811562,
+          "significant": true
+        },
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Otros comercios",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9651162790697676,
+          "chisq": 7.363325679418177,
+          "pvalue": 0.006656755563041406,
+          "pvalue_adj": 0.01997026668912422,
+          "significant": true
+        },
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Fruteria",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9627329192546584,
+          "chisq": 0.00017740223522069235,
+          "pvalue": 0.9893730958219642,
+          "pvalue_adj": 0.9893730958219642,
+          "significant": false
+        },
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Bar sin cocina",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.962686567164179,
+          "chisq": 0.34856654332586745,
+          "pvalue": 0.554925698856793,
+          "pvalue_adj": 0.7399009318090574,
+          "significant": false
+        },
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Locutorio",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9477611940298506,
+          "chisq": 21.789606774851315,
+          "pvalue": 3.0424376048287674e-06,
+          "pvalue_adj": 1.8254625628972604e-05,
+          "significant": true
+        },
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Joyeria y relojeria",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9382716049382717,
+          "chisq": 0.6152700315487987,
+          "pvalue": 0.43281042207152465,
+          "pvalue_adj": 0.7399009318090574,
+          "significant": false
+        },
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Banco y caja",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9240506329113924,
+          "chisq": 30.872882919343258,
+          "pvalue": 2.7549445000852688e-08,
+          "pvalue_adj": 3.3059334001023225e-07,
+          "significant": true
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Tienda de alimentacion",
+          "n_locales": 199,
+          "n_events": 24,
+          "survival_24m": 1.0
+        },
+        {
+          "display_label": "Supermercado",
+          "n_locales": 114,
+          "n_events": 14,
+          "survival_24m": 0.9912280701754386
+        },
+        {
+          "display_label": "Bar especial",
+          "n_locales": 84,
+          "n_events": 12,
+          "survival_24m": 0.9880952380952381
+        },
+        {
+          "display_label": "Bar con cocina",
+          "n_locales": 398,
+          "n_events": 28,
+          "survival_24m": 0.9824120603015077
+        },
+        {
+          "display_label": "Logistica y movilidad",
+          "n_locales": 217,
+          "n_events": 25,
+          "survival_24m": 0.9815668202764978
+        },
+        {
+          "display_label": "Peluqueria",
+          "n_locales": 328,
+          "n_events": 31,
+          "survival_24m": 0.9786585365853658
+        },
+        {
+          "display_label": "Moda",
+          "n_locales": 269,
+          "n_events": 61,
+          "survival_24m": 0.9702602230483273
+        },
+        {
+          "display_label": "Otros comercios",
+          "n_locales": 86,
+          "n_events": 21,
+          "survival_24m": 0.9651162790697676
+        },
+        {
+          "display_label": "Fruteria",
+          "n_locales": 161,
+          "n_events": 19,
+          "survival_24m": 0.9627329192546584
+        },
+        {
+          "display_label": "Bar sin cocina",
+          "n_locales": 134,
+          "n_events": 13,
+          "survival_24m": 0.962686567164179
+        },
+        {
+          "display_label": "Locutorio",
+          "n_locales": 134,
+          "n_events": 43,
+          "survival_24m": 0.9477611940298506
+        },
+        {
+          "display_label": "Joyeria y relojeria",
+          "n_locales": 81,
+          "n_events": 12,
+          "survival_24m": 0.9382716049382717
+        },
+        {
+          "display_label": "Banco y caja",
+          "n_locales": 158,
+          "n_events": 57,
+          "survival_24m": 0.9240506329113924
+        }
+      ]
+    },
+    "12.0": {
+      "zone_level": "district",
+      "zone_name": "Usera",
+      "supported_categories": 5,
+      "n_locales_supported": 681,
+      "n_events_supported": 87,
+      "chisq": 24.232201589510886,
+      "pvalue": 7.175448109905326e-05,
+      "significant": true,
+      "leader_category": "Tienda de alimentacion",
+      "leader_survival_24m": 0.992,
+      "leader_significantly_better_all": false,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Bar con cocina",
+          "leader_survival_24m": 0.992,
+          "other_survival_24m": 0.9902912621359223,
+          "chisq": 3.1013003972249407,
+          "pvalue": 0.07822978233378428,
+          "pvalue_adj": 0.15645956466756855,
+          "significant": false
+        },
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Logistica y movilidad",
+          "leader_survival_24m": 0.992,
+          "other_survival_24m": 0.9885057471264368,
+          "chisq": 1.5793475146659488,
+          "pvalue": 0.20885470377113122,
+          "pvalue_adj": 0.27847293836150827,
+          "significant": false
+        },
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Peluqueria",
+          "leader_survival_24m": 0.992,
+          "other_survival_24m": 0.9819277108433735,
+          "chisq": 0.23089544635849693,
+          "pvalue": 0.6308606619863774,
+          "pvalue_adj": 0.6308606619863774,
+          "significant": false
+        },
+        {
+          "leader": "Tienda de alimentacion",
+          "other": "Moda",
+          "leader_survival_24m": 0.992,
+          "other_survival_24m": 0.9587628865979382,
+          "chisq": 7.207673127964093,
+          "pvalue": 0.007259254703199877,
+          "pvalue_adj": 0.02903701881279951,
+          "significant": true
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Tienda de alimentacion",
+          "n_locales": 125,
+          "n_events": 14,
+          "survival_24m": 0.992
+        },
+        {
+          "display_label": "Bar con cocina",
+          "n_locales": 206,
+          "n_events": 12,
+          "survival_24m": 0.9902912621359223
+        },
+        {
+          "display_label": "Logistica y movilidad",
+          "n_locales": 87,
+          "n_events": 15,
+          "survival_24m": 0.9885057471264368
+        },
+        {
+          "display_label": "Peluqueria",
+          "n_locales": 166,
+          "n_events": 22,
+          "survival_24m": 0.9819277108433735
+        },
+        {
+          "display_label": "Moda",
+          "n_locales": 97,
+          "n_events": 24,
+          "survival_24m": 0.9587628865979382
+        }
+      ]
+    },
+    "13.0": {
+      "zone_level": "district",
+      "zone_name": "Puente de Vallecas",
+      "supported_categories": 8,
+      "n_locales_supported": 1559,
+      "n_events_supported": 176,
+      "chisq": 104.23785568117805,
+      "pvalue": 1.435074899097293e-19,
+      "significant": true,
+      "leader_category": "Bar con cocina",
+      "leader_survival_24m": 0.9906542056074766,
+      "leader_significantly_better_all": false,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Bar con cocina",
+          "other": "Tienda de alimentacion",
+          "leader_survival_24m": 0.9906542056074766,
+          "other_survival_24m": 0.985981308411215,
+          "chisq": 2.980190189639562,
+          "pvalue": 0.08428936722187896,
+          "pvalue_adj": 0.08428936722187896,
+          "significant": false
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Bar restaurante",
+          "leader_survival_24m": 0.9906542056074766,
+          "other_survival_24m": 0.9831932773109244,
+          "chisq": 10.73985575636921,
+          "pvalue": 0.0010485250711130226,
+          "pvalue_adj": 0.0014679350995582317,
+          "significant": true
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Peluqueria",
+          "leader_survival_24m": 0.9906542056074766,
+          "other_survival_24m": 0.971830985915493,
+          "chisq": 14.46796814600829,
+          "pvalue": 0.00014256333134632848,
+          "pvalue_adj": 0.00024948582985607484,
+          "significant": true
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Moda",
+          "leader_survival_24m": 0.9906542056074766,
+          "other_survival_24m": 0.9710982658959537,
+          "chisq": 43.82591597360599,
+          "pvalue": 3.5892075176494946e-11,
+          "pvalue_adj": 8.374817541182153e-11,
+          "significant": true
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Fruteria",
+          "leader_survival_24m": 0.9906542056074766,
+          "other_survival_24m": 0.9647887323943662,
+          "chisq": 8.984303794111685,
+          "pvalue": 0.0027230851985879266,
+          "pvalue_adj": 0.003176932731685914,
+          "significant": true
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Banco y caja",
+          "leader_survival_24m": 0.9906542056074766,
+          "other_survival_24m": 0.9514563106796117,
+          "chisq": 83.9148983298273,
+          "pvalue": 5.165380062289285e-20,
+          "pvalue_adj": 3.6157660436024994e-19,
+          "significant": true
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Locutorio",
+          "leader_survival_24m": 0.9906542056074766,
+          "other_survival_24m": 0.9479166666666666,
+          "chisq": 54.49057967414259,
+          "pvalue": 1.5619478165497483e-13,
+          "pvalue_adj": 5.466817357924119e-13,
+          "significant": true
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Bar con cocina",
+          "n_locales": 428,
+          "n_events": 15,
+          "survival_24m": 0.9906542056074766
+        },
+        {
+          "display_label": "Tienda de alimentacion",
+          "n_locales": 214,
+          "n_events": 14,
+          "survival_24m": 0.985981308411215
+        },
+        {
+          "display_label": "Bar restaurante",
+          "n_locales": 119,
+          "n_events": 13,
+          "survival_24m": 0.9831932773109244
+        },
+        {
+          "display_label": "Peluqueria",
+          "n_locales": 284,
+          "n_events": 30,
+          "survival_24m": 0.971830985915493
+        },
+        {
+          "display_label": "Moda",
+          "n_locales": 173,
+          "n_events": 34,
+          "survival_24m": 0.9710982658959537
+        },
+        {
+          "display_label": "Fruteria",
+          "n_locales": 142,
+          "n_events": 14,
+          "survival_24m": 0.9647887323943662
+        },
+        {
+          "display_label": "Banco y caja",
+          "n_locales": 103,
+          "n_events": 32,
+          "survival_24m": 0.9514563106796117
+        },
+        {
+          "display_label": "Locutorio",
+          "n_locales": 96,
+          "n_events": 24,
+          "survival_24m": 0.9479166666666666
+        }
+      ]
+    },
+    "15.0": {
+      "zone_level": "district",
+      "zone_name": "Ciudad Lineal",
+      "supported_categories": 8,
+      "n_locales_supported": 1578,
+      "n_events_supported": 245,
+      "chisq": 129.25068367403608,
+      "pvalue": 9.012875596894813e-25,
+      "significant": true,
+      "leader_category": "Bar con cocina",
+      "leader_survival_24m": 0.9972144846796658,
+      "leader_significantly_better_all": true,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Bar con cocina",
+          "other": "Fruteria",
+          "leader_survival_24m": 0.9972144846796658,
+          "other_survival_24m": 0.9847328244274809,
+          "chisq": 6.091980776215819,
+          "pvalue": 0.013579676580419742,
+          "pvalue_adj": 0.013579676580419742,
+          "significant": true
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Peluqueria",
+          "leader_survival_24m": 0.9972144846796658,
+          "other_survival_24m": 0.9738372093023255,
+          "chisq": 9.005225657621517,
+          "pvalue": 0.0026920874838685513,
+          "pvalue_adj": 0.0031407687311799763,
+          "significant": true
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Logistica y movilidad",
+          "leader_survival_24m": 0.9972144846796658,
+          "other_survival_24m": 0.9733333333333332,
+          "chisq": 20.561879072470365,
+          "pvalue": 5.77344069726688e-06,
+          "pvalue_adj": 8.082816976173632e-06,
+          "significant": true
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Banco y caja",
+          "leader_survival_24m": 0.9972144846796658,
+          "other_survival_24m": 0.9509202453987731,
+          "chisq": 108.83072916548429,
+          "pvalue": 1.767538728235545e-25,
+          "pvalue_adj": 1.2372771097648814e-24,
+          "significant": true
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Moda",
+          "leader_survival_24m": 0.9972144846796658,
+          "other_survival_24m": 0.9369747899159665,
+          "chisq": 48.47783455246942,
+          "pvalue": 3.340432150889119e-12,
+          "pvalue_adj": 1.1691512528111917e-11,
+          "significant": true
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Locutorio",
+          "leader_survival_24m": 0.9972144846796658,
+          "other_survival_24m": 0.9333333333333333,
+          "chisq": 47.654024555159864,
+          "pvalue": 5.084774488847496e-12,
+          "pvalue_adj": 1.1864473807310825e-11,
+          "significant": true
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Otros comercios",
+          "leader_survival_24m": 0.9972144846796658,
+          "other_survival_24m": 0.9320388349514563,
+          "chisq": 37.93977278614988,
+          "pvalue": 7.296254359059009e-10,
+          "pvalue_adj": 1.2768445128353267e-09,
+          "significant": true
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Bar con cocina",
+          "n_locales": 359,
+          "n_events": 15,
+          "survival_24m": 0.9972144846796658
+        },
+        {
+          "display_label": "Fruteria",
+          "n_locales": 131,
+          "n_events": 13,
+          "survival_24m": 0.9847328244274809
+        },
+        {
+          "display_label": "Peluqueria",
+          "n_locales": 344,
+          "n_events": 34,
+          "survival_24m": 0.9738372093023255
+        },
+        {
+          "display_label": "Logistica y movilidad",
+          "n_locales": 150,
+          "n_events": 23,
+          "survival_24m": 0.9733333333333332
+        },
+        {
+          "display_label": "Banco y caja",
+          "n_locales": 163,
+          "n_events": 61,
+          "survival_24m": 0.9509202453987731
+        },
+        {
+          "display_label": "Moda",
+          "n_locales": 238,
+          "n_events": 53,
+          "survival_24m": 0.9369747899159665
+        },
+        {
+          "display_label": "Locutorio",
+          "n_locales": 90,
+          "n_events": 23,
+          "survival_24m": 0.9333333333333333
+        },
+        {
+          "display_label": "Otros comercios",
+          "n_locales": 103,
+          "n_events": 23,
+          "survival_24m": 0.9320388349514563
+        }
+      ]
+    },
+    "16.0": {
+      "zone_level": "district",
+      "zone_name": "Hortaleza",
+      "supported_categories": 2,
+      "n_locales_supported": 184,
+      "n_events_supported": 47,
+      "chisq": 2.455865331832289,
+      "pvalue": 0.11708662746653113,
+      "significant": false,
+      "leader_category": "Moda",
+      "leader_survival_24m": 0.9529411764705883,
+      "leader_significantly_better_all": false,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Moda",
+          "other": "Banco y caja",
+          "leader_survival_24m": 0.9529411764705883,
+          "other_survival_24m": 0.9292929292929294,
+          "chisq": 2.455865331832289,
+          "pvalue": 0.11708662746653113,
+          "pvalue_adj": 0.11708662746653113,
+          "significant": false
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Moda",
+          "n_locales": 85,
+          "n_events": 17,
+          "survival_24m": 0.9529411764705883
+        },
+        {
+          "display_label": "Banco y caja",
+          "n_locales": 99,
+          "n_events": 30,
+          "survival_24m": 0.9292929292929294
+        }
+      ]
+    },
+    "2.0": {
+      "zone_level": "district",
+      "zone_name": "Arganzuela",
+      "supported_categories": 7,
+      "n_locales_supported": 972,
+      "n_events_supported": 162,
+      "chisq": 72.22792531219612,
+      "pvalue": 1.4264781744390214e-13,
+      "significant": true,
+      "leader_category": "Fruteria",
+      "leader_survival_24m": 1.0,
+      "leader_significantly_better_all": false,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Fruteria",
+          "other": "Logistica y movilidad",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9875776397515528,
+          "chisq": 3.9443189010343005,
+          "pvalue": 0.047029888345605175,
+          "pvalue_adj": 0.09405977669121035,
+          "significant": false
+        },
+        {
+          "leader": "Fruteria",
+          "other": "Bar con cocina",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9786096256684492,
+          "chisq": 10.968590248209114,
+          "pvalue": 0.0009266923145220991,
+          "pvalue_adj": 0.005560153887132595,
+          "significant": true
+        },
+        {
+          "leader": "Fruteria",
+          "other": "Moda",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9784946236559139,
+          "chisq": 0.0402532845724314,
+          "pvalue": 0.8409861684887321,
+          "pvalue_adj": 0.840986168488732,
+          "significant": false
+        },
+        {
+          "leader": "Fruteria",
+          "other": "Peluqueria",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9587628865979382,
+          "chisq": 0.4843853928394029,
+          "pvalue": 0.48644260008146845,
+          "pvalue_adj": 0.5837311200977622,
+          "significant": false
+        },
+        {
+          "leader": "Fruteria",
+          "other": "Cafeteria",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9565217391304347,
+          "chisq": 2.250100547118642,
+          "pvalue": 0.13360572110555796,
+          "pvalue_adj": 0.20040858165833694,
+          "significant": false
+        },
+        {
+          "leader": "Fruteria",
+          "other": "Banco y caja",
+          "leader_survival_24m": 1.0,
+          "other_survival_24m": 0.9136690647482013,
+          "chisq": 8.785160278112668,
+          "pvalue": 0.003036908809734817,
+          "pvalue_adj": 0.009110726429204451,
+          "significant": true
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Fruteria",
+          "n_locales": 83,
+          "n_events": 17,
+          "survival_24m": 1.0
+        },
+        {
+          "display_label": "Logistica y movilidad",
+          "n_locales": 161,
+          "n_events": 17,
+          "survival_24m": 0.9875776397515528
+        },
+        {
+          "display_label": "Bar con cocina",
+          "n_locales": 187,
+          "n_events": 12,
+          "survival_24m": 0.9786096256684492
+        },
+        {
+          "display_label": "Moda",
+          "n_locales": 93,
+          "n_events": 19,
+          "survival_24m": 0.9784946236559139
+        },
+        {
+          "display_label": "Peluqueria",
+          "n_locales": 194,
+          "n_events": 31,
+          "survival_24m": 0.9587628865979382
+        },
+        {
+          "display_label": "Cafeteria",
+          "n_locales": 115,
+          "n_events": 13,
+          "survival_24m": 0.9565217391304347
+        },
+        {
+          "display_label": "Banco y caja",
+          "n_locales": 139,
+          "n_events": 53,
+          "survival_24m": 0.9136690647482013
+        }
+      ]
+    },
+    "20.0": {
+      "zone_level": "district",
+      "zone_name": "San Blas - Canillejas",
+      "supported_categories": 4,
+      "n_locales_supported": 472,
+      "n_events_supported": 88,
+      "chisq": 31.291238134984525,
+      "pvalue": 7.380965028725865e-07,
+      "significant": true,
+      "leader_category": "Logistica y movilidad",
+      "leader_survival_24m": 0.9902912621359223,
+      "leader_significantly_better_all": false,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Logistica y movilidad",
+          "other": "Peluqueria",
+          "leader_survival_24m": 0.9902912621359223,
+          "other_survival_24m": 0.9801324503311257,
+          "chisq": 0.38548163294682636,
+          "pvalue": 0.5346840612498691,
+          "pvalue_adj": 0.5346840612498691,
+          "significant": false
+        },
+        {
+          "leader": "Logistica y movilidad",
+          "other": "Moda",
+          "leader_survival_24m": 0.9902912621359223,
+          "other_survival_24m": 0.9593495934959351,
+          "chisq": 0.4922326280211815,
+          "pvalue": 0.48293306703933303,
+          "pvalue_adj": 0.5346840612498691,
+          "significant": false
+        },
+        {
+          "leader": "Logistica y movilidad",
+          "other": "Banco y caja",
+          "leader_survival_24m": 0.9902912621359223,
+          "other_survival_24m": 0.9578947368421052,
+          "chisq": 14.397199947183537,
+          "pvalue": 0.0001480222481661649,
+          "pvalue_adj": 0.0004440667444984947,
+          "significant": true
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Logistica y movilidad",
+          "n_locales": 103,
+          "n_events": 14,
+          "survival_24m": 0.9902912621359223
+        },
+        {
+          "display_label": "Peluqueria",
+          "n_locales": 151,
+          "n_events": 17,
+          "survival_24m": 0.9801324503311257
+        },
+        {
+          "display_label": "Moda",
+          "n_locales": 123,
+          "n_events": 21,
+          "survival_24m": 0.9593495934959351
+        },
+        {
+          "display_label": "Banco y caja",
+          "n_locales": 95,
+          "n_events": 36,
+          "survival_24m": 0.9578947368421052
+        }
+      ]
+    },
+    "3.0": {
+      "zone_level": "district",
+      "zone_name": "Retiro",
+      "supported_categories": 3,
+      "n_locales_supported": 384,
+      "n_events_supported": 97,
+      "chisq": 14.228472292327616,
+      "pvalue": 0.0008134418247427298,
+      "significant": true,
+      "leader_category": "Peluqueria",
+      "leader_survival_24m": 0.9807692307692308,
+      "leader_significantly_better_all": false,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Peluqueria",
+          "other": "Moda",
+          "leader_survival_24m": 0.9807692307692308,
+          "other_survival_24m": 0.9444444444444443,
+          "chisq": 2.6861245643346074,
+          "pvalue": 0.10122574081274464,
+          "pvalue_adj": 0.10122574081274464,
+          "significant": false
+        },
+        {
+          "leader": "Peluqueria",
+          "other": "Banco y caja",
+          "leader_survival_24m": 0.9807692307692308,
+          "other_survival_24m": 0.9416666666666667,
+          "chisq": 14.118697956518886,
+          "pvalue": 0.00017162924718010393,
+          "pvalue_adj": 0.00034325849436020787,
+          "significant": true
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Peluqueria",
+          "n_locales": 156,
+          "n_events": 26,
+          "survival_24m": 0.9807692307692308
+        },
+        {
+          "display_label": "Moda",
+          "n_locales": 108,
+          "n_events": 27,
+          "survival_24m": 0.9444444444444443
+        },
+        {
+          "display_label": "Banco y caja",
+          "n_locales": 120,
+          "n_events": 44,
+          "survival_24m": 0.9416666666666667
+        }
+      ]
+    },
+    "4.0": {
+      "zone_level": "district",
+      "zone_name": "Salamanca",
+      "supported_categories": 12,
+      "n_locales_supported": 2909,
+      "n_events_supported": 504,
+      "chisq": 194.16810874871942,
+      "pvalue": 1.2040055078823082e-35,
+      "significant": true,
+      "leader_category": "Restaurante",
+      "leader_survival_24m": 0.984732824427481,
+      "leader_significantly_better_all": false,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Restaurante",
+          "other": "Muebles",
+          "leader_survival_24m": 0.984732824427481,
+          "other_survival_24m": 0.9834710743801653,
+          "chisq": 25.84183618881492,
+          "pvalue": 3.7056869952629435e-07,
+          "pvalue_adj": 1.3587518982630793e-06,
+          "significant": true
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Cafeteria",
+          "leader_survival_24m": 0.984732824427481,
+          "other_survival_24m": 0.9809160305343513,
+          "chisq": 2.919012156187696,
+          "pvalue": 0.08754144126109217,
+          "pvalue_adj": 0.12036948173400173,
+          "significant": false
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Otros comercios",
+          "leader_survival_24m": 0.984732824427481,
+          "other_survival_24m": 0.9786096256684492,
+          "chisq": 6.282716705794597,
+          "pvalue": 0.01219210552632288,
+          "pvalue_adj": 0.019159022969935956,
+          "significant": true
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Bar restaurante",
+          "leader_survival_24m": 0.984732824427481,
+          "other_survival_24m": 0.9767441860465116,
+          "chisq": 0.6225986926186297,
+          "pvalue": 0.4300832317455432,
+          "pvalue_adj": 0.4300832317455432,
+          "significant": false
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Moda",
+          "leader_survival_24m": 0.984732824427481,
+          "other_survival_24m": 0.9745308310991957,
+          "chisq": 6.437690321673361,
+          "pvalue": 0.011172381746995926,
+          "pvalue_adj": 0.019159022969935956,
+          "significant": true
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Joyeria y relojeria",
+          "leader_survival_24m": 0.984732824427481,
+          "other_survival_24m": 0.9662921348314607,
+          "chisq": 1.7599622856409023,
+          "pvalue": 0.18462921984466477,
+          "pvalue_adj": 0.20309214182913124,
+          "significant": false
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Calzado",
+          "leader_survival_24m": 0.984732824427481,
+          "other_survival_24m": 0.9613259668508287,
+          "chisq": 2.0908260996943047,
+          "pvalue": 0.14818592109764425,
+          "pvalue_adj": 0.18111612578600964,
+          "significant": false
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Supermercado",
+          "leader_survival_24m": 0.984732824427481,
+          "other_survival_24m": 0.96,
+          "chisq": 10.478454798484837,
+          "pvalue": 0.0012077472698307874,
+          "pvalue_adj": 0.002657043993627732,
+          "significant": true
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Peluqueria",
+          "leader_survival_24m": 0.984732824427481,
+          "other_survival_24m": 0.953125,
+          "chisq": 16.996756434148555,
+          "pvalue": 3.7443729777186185e-05,
+          "pvalue_adj": 0.000102970256887262,
+          "significant": true
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Oficina y administracion",
+          "leader_survival_24m": 0.984732824427481,
+          "other_survival_24m": 0.9302325581395349,
+          "chisq": 38.89774891928054,
+          "pvalue": 4.465953003943858e-10,
+          "pvalue_adj": 2.456274152169122e-09,
+          "significant": true
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Banco y caja",
+          "leader_survival_24m": 0.984732824427481,
+          "other_survival_24m": 0.922794117647059,
+          "chisq": 78.10721796197278,
+          "pvalue": 9.759667304708162e-19,
+          "pvalue_adj": 1.0735634035178978e-17,
+          "significant": true
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Restaurante",
+          "n_locales": 262,
+          "n_events": 21,
+          "survival_24m": 0.984732824427481
+        },
+        {
+          "display_label": "Muebles",
+          "n_locales": 121,
+          "n_events": 33,
+          "survival_24m": 0.9834710743801653
+        },
+        {
+          "display_label": "Cafeteria",
+          "n_locales": 262,
+          "n_events": 33,
+          "survival_24m": 0.9809160305343513
+        },
+        {
+          "display_label": "Otros comercios",
+          "n_locales": 187,
+          "n_events": 29,
+          "survival_24m": 0.9786096256684492
+        },
+        {
+          "display_label": "Bar restaurante",
+          "n_locales": 258,
+          "n_events": 26,
+          "survival_24m": 0.9767441860465116
+        },
+        {
+          "display_label": "Moda",
+          "n_locales": 746,
+          "n_events": 105,
+          "survival_24m": 0.9745308310991957
+        },
+        {
+          "display_label": "Joyeria y relojeria",
+          "n_locales": 178,
+          "n_events": 21,
+          "survival_24m": 0.9662921348314607
+        },
+        {
+          "display_label": "Calzado",
+          "n_locales": 181,
+          "n_events": 22,
+          "survival_24m": 0.9613259668508287
+        },
+        {
+          "display_label": "Supermercado",
+          "n_locales": 100,
+          "n_events": 20,
+          "survival_24m": 0.96
+        },
+        {
+          "display_label": "Peluqueria",
+          "n_locales": 256,
+          "n_events": 53,
+          "survival_24m": 0.953125
+        },
+        {
+          "display_label": "Oficina y administracion",
+          "n_locales": 86,
+          "n_events": 29,
+          "survival_24m": 0.9302325581395349
+        },
+        {
+          "display_label": "Banco y caja",
+          "n_locales": 272,
+          "n_events": 112,
+          "survival_24m": 0.922794117647059
+        }
+      ]
+    },
+    "5.0": {
+      "zone_level": "district",
+      "zone_name": "Chamartín",
+      "supported_categories": 6,
+      "n_locales_supported": 1117,
+      "n_events_supported": 233,
+      "chisq": 61.9834267729059,
+      "pvalue": 4.726584896780817e-12,
+      "significant": true,
+      "leader_category": "Logistica y movilidad",
+      "leader_survival_24m": 0.9925373134328358,
+      "leader_significantly_better_all": false,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Logistica y movilidad",
+          "other": "Bar restaurante",
+          "leader_survival_24m": 0.9925373134328358,
+          "other_survival_24m": 0.9810426540284359,
+          "chisq": 7.905469873446571,
+          "pvalue": 0.004928553795074961,
+          "pvalue_adj": 0.012321384487687402,
+          "significant": true
+        },
+        {
+          "leader": "Logistica y movilidad",
+          "other": "Peluqueria",
+          "leader_survival_24m": 0.9925373134328358,
+          "other_survival_24m": 0.9710144927536231,
+          "chisq": 0.022662056374449093,
+          "pvalue": 0.8803392112002946,
+          "pvalue_adj": 0.8803392112002946,
+          "significant": false
+        },
+        {
+          "leader": "Logistica y movilidad",
+          "other": "Moda",
+          "leader_survival_24m": 0.9925373134328358,
+          "other_survival_24m": 0.9469387755102042,
+          "chisq": 0.9168370573280614,
+          "pvalue": 0.33830683050664323,
+          "pvalue_adj": 0.42288353813330404,
+          "significant": false
+        },
+        {
+          "leader": "Logistica y movilidad",
+          "other": "Oficina y administracion",
+          "leader_survival_24m": 0.9925373134328358,
+          "other_survival_24m": 0.9294117647058824,
+          "chisq": 7.098203608626777,
+          "pvalue": 0.007716124819196075,
+          "pvalue_adj": 0.01286020803199346,
+          "significant": true
+        },
+        {
+          "leader": "Logistica y movilidad",
+          "other": "Banco y caja",
+          "leader_survival_24m": 0.9925373134328358,
+          "other_survival_24m": 0.9276595744680851,
+          "chisq": 14.005013583711518,
+          "pvalue": 0.000182323833781673,
+          "pvalue_adj": 0.0009116191689083651,
+          "significant": true
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Logistica y movilidad",
+          "n_locales": 134,
+          "n_events": 23,
+          "survival_24m": 0.9925373134328358
+        },
+        {
+          "display_label": "Bar restaurante",
+          "n_locales": 211,
+          "n_events": 15,
+          "survival_24m": 0.9810426540284359
+        },
+        {
+          "display_label": "Peluqueria",
+          "n_locales": 207,
+          "n_events": 36,
+          "survival_24m": 0.9710144927536231
+        },
+        {
+          "display_label": "Moda",
+          "n_locales": 245,
+          "n_events": 51,
+          "survival_24m": 0.9469387755102042
+        },
+        {
+          "display_label": "Oficina y administracion",
+          "n_locales": 85,
+          "n_events": 26,
+          "survival_24m": 0.9294117647058824
+        },
+        {
+          "display_label": "Banco y caja",
+          "n_locales": 235,
+          "n_events": 82,
+          "survival_24m": 0.9276595744680851
+        }
+      ]
+    },
+    "6.0": {
+      "zone_level": "district",
+      "zone_name": "Tetuán",
+      "supported_categories": 8,
+      "n_locales_supported": 1457,
+      "n_events_supported": 226,
+      "chisq": 94.60662589568231,
+      "pvalue": 1.39684926272019e-17,
+      "significant": true,
+      "leader_category": "Bar con cocina",
+      "leader_survival_24m": 0.9903381642512077,
+      "leader_significantly_better_all": false,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Bar con cocina",
+          "other": "Bar restaurante",
+          "leader_survival_24m": 0.9903381642512077,
+          "other_survival_24m": 0.9873949579831933,
+          "chisq": 0.8212526974256833,
+          "pvalue": 0.3648141609901583,
+          "pvalue_adj": 0.36481416099015834,
+          "significant": false
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Peluqueria",
+          "leader_survival_24m": 0.9903381642512077,
+          "other_survival_24m": 0.9807692307692308,
+          "chisq": 2.892107247552882,
+          "pvalue": 0.08901442891083787,
+          "pvalue_adj": 0.13325379534337578,
+          "significant": false
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Locutorio",
+          "leader_survival_24m": 0.9903381642512077,
+          "other_survival_24m": 0.9761904761904762,
+          "chisq": 17.8514348585506,
+          "pvalue": 2.3883910968816066e-05,
+          "pvalue_adj": 8.359368839085622e-05,
+          "significant": true
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Logistica y movilidad",
+          "leader_survival_24m": 0.9903381642512077,
+          "other_survival_24m": 0.9740259740259741,
+          "chisq": 2.7844850731277133,
+          "pvalue": 0.09518128238812555,
+          "pvalue_adj": 0.13325379534337578,
+          "significant": false
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Moda",
+          "leader_survival_24m": 0.9903381642512077,
+          "other_survival_24m": 0.97196261682243,
+          "chisq": 10.00968392025105,
+          "pvalue": 0.0015571924528919418,
+          "pvalue_adj": 0.003633449056747864,
+          "significant": true
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Tienda de alimentacion",
+          "leader_survival_24m": 0.9903381642512077,
+          "other_survival_24m": 0.9557522123893807,
+          "chisq": 1.1958479016406725,
+          "pvalue": 0.2741531310253552,
+          "pvalue_adj": 0.3198453195295811,
+          "significant": false
+        },
+        {
+          "leader": "Bar con cocina",
+          "other": "Banco y caja",
+          "leader_survival_24m": 0.9903381642512077,
+          "other_survival_24m": 0.93048128342246,
+          "chisq": 49.99026638164334,
+          "pvalue": 1.5451054675742977e-12,
+          "pvalue_adj": 1.0815738273020084e-11,
+          "significant": true
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Bar con cocina",
+          "n_locales": 207,
+          "n_events": 15,
+          "survival_24m": 0.9903381642512077
+        },
+        {
+          "display_label": "Bar restaurante",
+          "n_locales": 238,
+          "n_events": 23,
+          "survival_24m": 0.9873949579831933
+        },
+        {
+          "display_label": "Peluqueria",
+          "n_locales": 260,
+          "n_events": 31,
+          "survival_24m": 0.9807692307692308
+        },
+        {
+          "display_label": "Locutorio",
+          "n_locales": 84,
+          "n_events": 21,
+          "survival_24m": 0.9761904761904762
+        },
+        {
+          "display_label": "Logistica y movilidad",
+          "n_locales": 154,
+          "n_events": 19,
+          "survival_24m": 0.9740259740259741
+        },
+        {
+          "display_label": "Moda",
+          "n_locales": 214,
+          "n_events": 37,
+          "survival_24m": 0.97196261682243
+        },
+        {
+          "display_label": "Tienda de alimentacion",
+          "n_locales": 113,
+          "n_events": 12,
+          "survival_24m": 0.9557522123893807
+        },
+        {
+          "display_label": "Banco y caja",
+          "n_locales": 187,
+          "n_events": 68,
+          "survival_24m": 0.93048128342246
+        }
+      ]
+    },
+    "7.0": {
+      "zone_level": "district",
+      "zone_name": "Chamberí",
+      "supported_categories": 11,
+      "n_locales_supported": 2012,
+      "n_events_supported": 376,
+      "chisq": 117.47445261847534,
+      "pvalue": 1.6453635604544324e-20,
+      "significant": true,
+      "leader_category": "Restaurante",
+      "leader_survival_24m": 0.988950276243094,
+      "leader_significantly_better_all": false,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Restaurante",
+          "other": "Cafeteria",
+          "leader_survival_24m": 0.988950276243094,
+          "other_survival_24m": 0.988826815642458,
+          "chisq": 1.779182409370636,
+          "pvalue": 0.18224975391058185,
+          "pvalue_adj": 0.20249972656731316,
+          "significant": false
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Bar con cocina",
+          "leader_survival_24m": 0.988950276243094,
+          "other_survival_24m": 0.9847908745247148,
+          "chisq": 0.05266536259818188,
+          "pvalue": 0.818488595832642,
+          "pvalue_adj": 0.818488595832642,
+          "significant": false
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Otros comercios",
+          "leader_survival_24m": 0.988950276243094,
+          "other_survival_24m": 0.9729729729729729,
+          "chisq": 13.98089744206479,
+          "pvalue": 0.00018467744394192752,
+          "pvalue_adj": 0.00036935488788385505,
+          "significant": true
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Fruteria",
+          "leader_survival_24m": 0.988950276243094,
+          "other_survival_24m": 0.968421052631579,
+          "chisq": 2.8441028404289064,
+          "pvalue": 0.09170977196825675,
+          "pvalue_adj": 0.11463721496032094,
+          "significant": false
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Tienda de alimentacion",
+          "leader_survival_24m": 0.988950276243094,
+          "other_survival_24m": 0.9634146341463414,
+          "chisq": 9.89077082785221,
+          "pvalue": 0.0016610977237256754,
+          "pvalue_adj": 0.0027684962062094593,
+          "significant": true
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Peluqueria",
+          "leader_survival_24m": 0.988950276243094,
+          "other_survival_24m": 0.9581589958158997,
+          "chisq": 15.755131304596892,
+          "pvalue": 7.209212823509492e-05,
+          "pvalue_adj": 0.0001802303205877373,
+          "significant": true
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Bar especial",
+          "leader_survival_24m": 0.988950276243094,
+          "other_survival_24m": 0.944,
+          "chisq": 17.561506848580724,
+          "pvalue": 2.781623887673836e-05,
+          "pvalue_adj": 9.272079625579454e-05,
+          "significant": true
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Logistica y movilidad",
+          "leader_survival_24m": 0.988950276243094,
+          "other_survival_24m": 0.9318181818181818,
+          "chisq": 4.53944009134276,
+          "pvalue": 0.03312242437105582,
+          "pvalue_adj": 0.04731774910150832,
+          "significant": true
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Moda",
+          "leader_survival_24m": 0.988950276243094,
+          "other_survival_24m": 0.9293680297397768,
+          "chisq": 40.029451158483724,
+          "pvalue": 2.5016254568228443e-10,
+          "pvalue_adj": 1.3131733873728174e-09,
+          "significant": true
+        },
+        {
+          "leader": "Restaurante",
+          "other": "Banco y caja",
+          "leader_survival_24m": 0.988950276243094,
+          "other_survival_24m": 0.9216589861751152,
+          "chisq": 39.9344156143843,
+          "pvalue": 2.626346774745635e-10,
+          "pvalue_adj": 1.3131733873728174e-09,
+          "significant": true
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Restaurante",
+          "n_locales": 181,
+          "n_events": 12,
+          "survival_24m": 0.988950276243094
+        },
+        {
+          "display_label": "Cafeteria",
+          "n_locales": 179,
+          "n_events": 19,
+          "survival_24m": 0.988826815642458
+        },
+        {
+          "display_label": "Bar con cocina",
+          "n_locales": 263,
+          "n_events": 19,
+          "survival_24m": 0.9847908745247148
+        },
+        {
+          "display_label": "Otros comercios",
+          "n_locales": 148,
+          "n_events": 31,
+          "survival_24m": 0.9729729729729729
+        },
+        {
+          "display_label": "Fruteria",
+          "n_locales": 95,
+          "n_events": 12,
+          "survival_24m": 0.968421052631579
+        },
+        {
+          "display_label": "Tienda de alimentacion",
+          "n_locales": 164,
+          "n_events": 29,
+          "survival_24m": 0.9634146341463414
+        },
+        {
+          "display_label": "Peluqueria",
+          "n_locales": 239,
+          "n_events": 49,
+          "survival_24m": 0.9581589958158997
+        },
+        {
+          "display_label": "Bar especial",
+          "n_locales": 125,
+          "n_events": 29,
+          "survival_24m": 0.944
+        },
+        {
+          "display_label": "Logistica y movilidad",
+          "n_locales": 132,
+          "n_events": 18,
+          "survival_24m": 0.9318181818181818
+        },
+        {
+          "display_label": "Moda",
+          "n_locales": 269,
+          "n_events": 87,
+          "survival_24m": 0.9293680297397768
+        },
+        {
+          "display_label": "Banco y caja",
+          "n_locales": 217,
+          "n_events": 71,
+          "survival_24m": 0.9216589861751152
+        }
+      ]
+    },
+    "8.0": {
+      "zone_level": "district",
+      "zone_name": "Fuencarral - El Pardo",
+      "supported_categories": 4,
+      "n_locales_supported": 720,
+      "n_events_supported": 115,
+      "chisq": 50.390691652449505,
+      "pvalue": 6.5961584304802e-11,
+      "significant": true,
+      "leader_category": "Peluqueria",
+      "leader_survival_24m": 0.9950738916256158,
+      "leader_significantly_better_all": false,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Peluqueria",
+          "other": "Bar con cocina",
+          "leader_survival_24m": 0.9950738916256158,
+          "other_survival_24m": 0.99,
+          "chisq": 0.11845316972013328,
+          "pvalue": 0.7307182446676362,
+          "pvalue_adj": 0.7307182446676362,
+          "significant": false
+        },
+        {
+          "leader": "Peluqueria",
+          "other": "Banco y caja",
+          "leader_survival_24m": 0.9950738916256158,
+          "other_survival_24m": 0.9397590361445783,
+          "chisq": 30.31291645729461,
+          "pvalue": 3.67669369435286e-08,
+          "pvalue_adj": 1.103008108305858e-07,
+          "significant": true
+        },
+        {
+          "leader": "Peluqueria",
+          "other": "Moda",
+          "leader_survival_24m": 0.9950738916256158,
+          "other_survival_24m": 0.933774834437086,
+          "chisq": 12.585587584622216,
+          "pvalue": 0.0003887328015126489,
+          "pvalue_adj": 0.0005830992022689734,
+          "significant": true
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Peluqueria",
+          "n_locales": 203,
+          "n_events": 17,
+          "survival_24m": 0.9950738916256158
+        },
+        {
+          "display_label": "Bar con cocina",
+          "n_locales": 200,
+          "n_events": 15,
+          "survival_24m": 0.99
+        },
+        {
+          "display_label": "Banco y caja",
+          "n_locales": 166,
+          "n_events": 51,
+          "survival_24m": 0.9397590361445783
+        },
+        {
+          "display_label": "Moda",
+          "n_locales": 151,
+          "n_events": 32,
+          "survival_24m": 0.933774834437086
+        }
+      ]
+    },
+    "9.0": {
+      "zone_level": "district",
+      "zone_name": "Moncloa - Aravaca",
+      "supported_categories": 3,
+      "n_locales_supported": 389,
+      "n_events_supported": 68,
+      "chisq": 9.605350052081803,
+      "pvalue": 0.008207761680181124,
+      "significant": true,
+      "leader_category": "Moda",
+      "leader_survival_24m": 0.9945652173913043,
+      "leader_significantly_better_all": false,
+      "pairwise_leader_vs_rest": [
+        {
+          "leader": "Moda",
+          "other": "Banco y caja",
+          "leader_survival_24m": 0.9945652173913043,
+          "other_survival_24m": 0.979381443298969,
+          "chisq": 4.696122610243267,
+          "pvalue": 0.030230744394685895,
+          "pvalue_adj": 0.06046148878937179,
+          "significant": false
+        },
+        {
+          "leader": "Moda",
+          "other": "Peluqueria",
+          "leader_survival_24m": 0.9945652173913043,
+          "other_survival_24m": 0.9722222222222221,
+          "chisq": 1.4831805840016026,
+          "pvalue": 0.2232775527291019,
+          "pvalue_adj": 0.2232775527291019,
+          "significant": false
+        }
+      ],
+      "categories": [
+        {
+          "display_label": "Moda",
+          "n_locales": 184,
+          "n_events": 30,
+          "survival_24m": 0.9945652173913043
+        },
+        {
+          "display_label": "Banco y caja",
+          "n_locales": 97,
+          "n_events": 26,
+          "survival_24m": 0.979381443298969
+        },
+        {
+          "display_label": "Peluqueria",
+          "n_locales": 108,
+          "n_events": 12,
+          "survival_24m": 0.9722222222222221
+        }
+      ]
+    }
+  },
+  "category_across_districts_tests": {
+    "Banco y caja": {
+      "districts_supported": 15,
+      "n_locales_supported": 2349,
+      "n_events_supported": 834,
+      "chisq": 15.477442092651977,
+      "pvalue": 0.34631542441587504,
+      "significant": false,
+      "districts": [
+        {
+          "zone_code": "9.0",
+          "zone_name": "Moncloa - Aravaca",
+          "survival_24m": 0.979381443298969,
+          "n_locales": 97,
+          "n_events": 26
+        },
+        {
+          "zone_code": "20.0",
+          "zone_name": "San Blas - Canillejas",
+          "survival_24m": 0.9578947368421052,
+          "n_locales": 95,
+          "n_events": 36
+        },
+        {
+          "zone_code": "13.0",
+          "zone_name": "Puente de Vallecas",
+          "survival_24m": 0.9514563106796117,
+          "n_locales": 103,
+          "n_events": 32
+        },
+        {
+          "zone_code": "15.0",
+          "zone_name": "Ciudad Lineal",
+          "survival_24m": 0.9509202453987731,
+          "n_locales": 163,
+          "n_events": 61
+        },
+        {
+          "zone_code": "3.0",
+          "zone_name": "Retiro",
+          "survival_24m": 0.9416666666666667,
+          "n_locales": 120,
+          "n_events": 44
+        },
+        {
+          "zone_code": "8.0",
+          "zone_name": "Fuencarral - El Pardo",
+          "survival_24m": 0.9397590361445783,
+          "n_locales": 166,
+          "n_events": 51
+        },
+        {
+          "zone_code": "6.0",
+          "zone_name": "Tetuán",
+          "survival_24m": 0.93048128342246,
+          "n_locales": 187,
+          "n_events": 68
+        },
+        {
+          "zone_code": "16.0",
+          "zone_name": "Hortaleza",
+          "survival_24m": 0.9292929292929294,
+          "n_locales": 99,
+          "n_events": 30
+        },
+        {
+          "zone_code": "5.0",
+          "zone_name": "Chamartín",
+          "survival_24m": 0.9276595744680851,
+          "n_locales": 235,
+          "n_events": 82
+        },
+        {
+          "zone_code": "10.0",
+          "zone_name": "Latina",
+          "survival_24m": 0.9274193548387097,
+          "n_locales": 124,
+          "n_events": 41
+        },
+        {
+          "zone_code": "11.0",
+          "zone_name": "Carabanchel",
+          "survival_24m": 0.9240506329113924,
+          "n_locales": 158,
+          "n_events": 57
+        },
+        {
+          "zone_code": "4.0",
+          "zone_name": "Salamanca",
+          "survival_24m": 0.922794117647059,
+          "n_locales": 272,
+          "n_events": 112
+        },
+        {
+          "zone_code": "7.0",
+          "zone_name": "Chamberí",
+          "survival_24m": 0.9216589861751152,
+          "n_locales": 217,
+          "n_events": 71
+        },
+        {
+          "zone_code": "2.0",
+          "zone_name": "Arganzuela",
+          "survival_24m": 0.9136690647482013,
+          "n_locales": 139,
+          "n_events": 53
+        },
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.8735632183908044,
+          "n_locales": 174,
+          "n_events": 70
+        }
+      ]
+    },
+    "Bar con cocina": {
+      "districts_supported": 10,
+      "n_locales_supported": 2782,
+      "n_events_supported": 169,
+      "chisq": 10.930578717078049,
+      "pvalue": 0.28049746136398135,
+      "significant": false,
+      "districts": [
+        {
+          "zone_code": "15.0",
+          "zone_name": "Ciudad Lineal",
+          "survival_24m": 0.9972144846796658,
+          "n_locales": 359,
+          "n_events": 15
+        },
+        {
+          "zone_code": "13.0",
+          "zone_name": "Puente de Vallecas",
+          "survival_24m": 0.9906542056074766,
+          "n_locales": 428,
+          "n_events": 15
+        },
+        {
+          "zone_code": "6.0",
+          "zone_name": "Tetuán",
+          "survival_24m": 0.9903381642512077,
+          "n_locales": 207,
+          "n_events": 15
+        },
+        {
+          "zone_code": "12.0",
+          "zone_name": "Usera",
+          "survival_24m": 0.9902912621359223,
+          "n_locales": 206,
+          "n_events": 12
+        },
+        {
+          "zone_code": "8.0",
+          "zone_name": "Fuencarral - El Pardo",
+          "survival_24m": 0.99,
+          "n_locales": 200,
+          "n_events": 15
+        },
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.9872340425531915,
+          "n_locales": 235,
+          "n_events": 18
+        },
+        {
+          "zone_code": "10.0",
+          "zone_name": "Latina",
+          "survival_24m": 0.9866220735785953,
+          "n_locales": 299,
+          "n_events": 20
+        },
+        {
+          "zone_code": "7.0",
+          "zone_name": "Chamberí",
+          "survival_24m": 0.9847908745247148,
+          "n_locales": 263,
+          "n_events": 19
+        },
+        {
+          "zone_code": "11.0",
+          "zone_name": "Carabanchel",
+          "survival_24m": 0.9824120603015077,
+          "n_locales": 398,
+          "n_events": 28
+        },
+        {
+          "zone_code": "2.0",
+          "zone_name": "Arganzuela",
+          "survival_24m": 0.9786096256684492,
+          "n_locales": 187,
+          "n_events": 12
+        }
+      ]
+    },
+    "Bar especial": {
+      "districts_supported": 3,
+      "n_locales_supported": 455,
+      "n_events_supported": 61,
+      "chisq": 16.17381617521766,
+      "pvalue": 0.00030753917280090164,
+      "significant": true,
+      "districts": [
+        {
+          "zone_code": "11.0",
+          "zone_name": "Carabanchel",
+          "survival_24m": 0.9880952380952381,
+          "n_locales": 84,
+          "n_events": 12
+        },
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.9674796747967481,
+          "n_locales": 246,
+          "n_events": 20
+        },
+        {
+          "zone_code": "7.0",
+          "zone_name": "Chamberí",
+          "survival_24m": 0.944,
+          "n_locales": 125,
+          "n_events": 29
+        }
+      ]
+    },
+    "Bar restaurante": {
+      "districts_supported": 5,
+      "n_locales_supported": 1305,
+      "n_events_supported": 96,
+      "chisq": 14.580991414548881,
+      "pvalue": 0.0056540343515860715,
+      "significant": true,
+      "districts": [
+        {
+          "zone_code": "6.0",
+          "zone_name": "Tetuán",
+          "survival_24m": 0.9873949579831933,
+          "n_locales": 238,
+          "n_events": 23
+        },
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.9853862212943633,
+          "n_locales": 479,
+          "n_events": 19
+        },
+        {
+          "zone_code": "13.0",
+          "zone_name": "Puente de Vallecas",
+          "survival_24m": 0.9831932773109244,
+          "n_locales": 119,
+          "n_events": 13
+        },
+        {
+          "zone_code": "5.0",
+          "zone_name": "Chamartín",
+          "survival_24m": 0.9810426540284359,
+          "n_locales": 211,
+          "n_events": 15
+        },
+        {
+          "zone_code": "4.0",
+          "zone_name": "Salamanca",
+          "survival_24m": 0.9767441860465116,
+          "n_locales": 258,
+          "n_events": 26
+        }
+      ]
+    },
+    "Bar sin cocina": {
+      "districts_supported": 2,
+      "n_locales_supported": 356,
+      "n_events_supported": 28,
+      "chisq": 1.0341238469992866,
+      "pvalue": 0.30919205880177686,
+      "significant": false,
+      "districts": [
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.9774774774774776,
+          "n_locales": 222,
+          "n_events": 15
+        },
+        {
+          "zone_code": "11.0",
+          "zone_name": "Carabanchel",
+          "survival_24m": 0.962686567164179,
+          "n_locales": 134,
+          "n_events": 13
+        }
+      ]
+    },
+    "Cafeteria": {
+      "districts_supported": 4,
+      "n_locales_supported": 945,
+      "n_events_supported": 96,
+      "chisq": 4.046440053445687,
+      "pvalue": 0.25649291154191756,
+      "significant": false,
+      "districts": [
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.9922879177377892,
+          "n_locales": 389,
+          "n_events": 31
+        },
+        {
+          "zone_code": "7.0",
+          "zone_name": "Chamberí",
+          "survival_24m": 0.988826815642458,
+          "n_locales": 179,
+          "n_events": 19
+        },
+        {
+          "zone_code": "4.0",
+          "zone_name": "Salamanca",
+          "survival_24m": 0.9809160305343513,
+          "n_locales": 262,
+          "n_events": 33
+        },
+        {
+          "zone_code": "2.0",
+          "zone_name": "Arganzuela",
+          "survival_24m": 0.9565217391304347,
+          "n_locales": 115,
+          "n_events": 13
+        }
+      ]
+    },
+    "Calzado": {
+      "districts_supported": 2,
+      "n_locales_supported": 350,
+      "n_events_supported": 45,
+      "chisq": 0.12293308645054496,
+      "pvalue": 0.7258748389227887,
+      "significant": false,
+      "districts": [
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.9822485207100591,
+          "n_locales": 169,
+          "n_events": 23
+        },
+        {
+          "zone_code": "4.0",
+          "zone_name": "Salamanca",
+          "survival_24m": 0.9613259668508287,
+          "n_locales": 181,
+          "n_events": 22
+        }
+      ]
+    },
+    "Fruteria": {
+      "districts_supported": 7,
+      "n_locales_supported": 956,
+      "n_events_supported": 105,
+      "chisq": 9.867690651468521,
+      "pvalue": 0.1303355744834606,
+      "significant": false,
+      "districts": [
+        {
+          "zone_code": "10.0",
+          "zone_name": "Latina",
+          "survival_24m": 1.0,
+          "n_locales": 200,
+          "n_events": 16
+        },
+        {
+          "zone_code": "2.0",
+          "zone_name": "Arganzuela",
+          "survival_24m": 1.0,
+          "n_locales": 83,
+          "n_events": 17
+        },
+        {
+          "zone_code": "15.0",
+          "zone_name": "Ciudad Lineal",
+          "survival_24m": 0.9847328244274809,
+          "n_locales": 131,
+          "n_events": 13
+        },
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.9791666666666667,
+          "n_locales": 144,
+          "n_events": 14
+        },
+        {
+          "zone_code": "7.0",
+          "zone_name": "Chamberí",
+          "survival_24m": 0.968421052631579,
+          "n_locales": 95,
+          "n_events": 12
+        },
+        {
+          "zone_code": "13.0",
+          "zone_name": "Puente de Vallecas",
+          "survival_24m": 0.9647887323943662,
+          "n_locales": 142,
+          "n_events": 14
+        },
+        {
+          "zone_code": "11.0",
+          "zone_name": "Carabanchel",
+          "survival_24m": 0.9627329192546584,
+          "n_locales": 161,
+          "n_events": 19
+        }
+      ]
+    },
+    "Joyeria y relojeria": {
+      "districts_supported": 3,
+      "n_locales_supported": 450,
+      "n_events_supported": 62,
+      "chisq": 0.959397526008436,
+      "pvalue": 0.6189698203343035,
+      "significant": false,
+      "districts": [
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.9842931937172774,
+          "n_locales": 191,
+          "n_events": 29
+        },
+        {
+          "zone_code": "4.0",
+          "zone_name": "Salamanca",
+          "survival_24m": 0.9662921348314607,
+          "n_locales": 178,
+          "n_events": 21
+        },
+        {
+          "zone_code": "11.0",
+          "zone_name": "Carabanchel",
+          "survival_24m": 0.9382716049382717,
+          "n_locales": 81,
+          "n_events": 12
+        }
+      ]
+    },
+    "Locutorio": {
+      "districts_supported": 6,
+      "n_locales_supported": 579,
+      "n_events_supported": 169,
+      "chisq": 9.665383128730667,
+      "pvalue": 0.08529104388080341,
+      "significant": false,
+      "districts": [
+        {
+          "zone_code": "6.0",
+          "zone_name": "Tetuán",
+          "survival_24m": 0.9761904761904762,
+          "n_locales": 84,
+          "n_events": 21
+        },
+        {
+          "zone_code": "10.0",
+          "zone_name": "Latina",
+          "survival_24m": 0.9523809523809523,
+          "n_locales": 84,
+          "n_events": 21
+        },
+        {
+          "zone_code": "13.0",
+          "zone_name": "Puente de Vallecas",
+          "survival_24m": 0.9479166666666666,
+          "n_locales": 96,
+          "n_events": 24
+        },
+        {
+          "zone_code": "11.0",
+          "zone_name": "Carabanchel",
+          "survival_24m": 0.9477611940298506,
+          "n_locales": 134,
+          "n_events": 43
+        },
+        {
+          "zone_code": "15.0",
+          "zone_name": "Ciudad Lineal",
+          "survival_24m": 0.9333333333333333,
+          "n_locales": 90,
+          "n_events": 23
+        },
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.9230769230769231,
+          "n_locales": 91,
+          "n_events": 37
+        }
+      ]
+    },
+    "Logistica y movilidad": {
+      "districts_supported": 9,
+      "n_locales_supported": 1270,
+      "n_events_supported": 178,
+      "chisq": 7.508005413210935,
+      "pvalue": 0.48294035789689826,
+      "significant": false,
+      "districts": [
+        {
+          "zone_code": "5.0",
+          "zone_name": "Chamartín",
+          "survival_24m": 0.9925373134328358,
+          "n_locales": 134,
+          "n_events": 23
+        },
+        {
+          "zone_code": "20.0",
+          "zone_name": "San Blas - Canillejas",
+          "survival_24m": 0.9902912621359223,
+          "n_locales": 103,
+          "n_events": 14
+        },
+        {
+          "zone_code": "12.0",
+          "zone_name": "Usera",
+          "survival_24m": 0.9885057471264368,
+          "n_locales": 87,
+          "n_events": 15
+        },
+        {
+          "zone_code": "2.0",
+          "zone_name": "Arganzuela",
+          "survival_24m": 0.9875776397515528,
+          "n_locales": 161,
+          "n_events": 17
+        },
+        {
+          "zone_code": "11.0",
+          "zone_name": "Carabanchel",
+          "survival_24m": 0.9815668202764978,
+          "n_locales": 217,
+          "n_events": 25
+        },
+        {
+          "zone_code": "6.0",
+          "zone_name": "Tetuán",
+          "survival_24m": 0.9740259740259741,
+          "n_locales": 154,
+          "n_events": 19
+        },
+        {
+          "zone_code": "15.0",
+          "zone_name": "Ciudad Lineal",
+          "survival_24m": 0.9733333333333332,
+          "n_locales": 150,
+          "n_events": 23
+        },
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.9318181818181819,
+          "n_locales": 132,
+          "n_events": 24
+        },
+        {
+          "zone_code": "7.0",
+          "zone_name": "Chamberí",
+          "survival_24m": 0.9318181818181818,
+          "n_locales": 132,
+          "n_events": 18
+        }
+      ]
+    },
+    "Moda": {
+      "districts_supported": 17,
+      "n_locales_supported": 4055,
+      "n_events_supported": 769,
+      "chisq": 62.27280251700467,
+      "pvalue": 2.1575443050814524e-07,
+      "significant": true,
+      "districts": [
+        {
+          "zone_code": "9.0",
+          "zone_name": "Moncloa - Aravaca",
+          "survival_24m": 0.9945652173913043,
+          "n_locales": 184,
+          "n_events": 30
+        },
+        {
+          "zone_code": "10.0",
+          "zone_name": "Latina",
+          "survival_24m": 0.9937106918238994,
+          "n_locales": 159,
+          "n_events": 27
+        },
+        {
+          "zone_code": "2.0",
+          "zone_name": "Arganzuela",
+          "survival_24m": 0.9784946236559139,
+          "n_locales": 93,
+          "n_events": 19
+        },
+        {
+          "zone_code": "4.0",
+          "zone_name": "Salamanca",
+          "survival_24m": 0.9745308310991957,
+          "n_locales": 746,
+          "n_events": 105
+        },
+        {
+          "zone_code": "6.0",
+          "zone_name": "Tetuán",
+          "survival_24m": 0.97196261682243,
+          "n_locales": 214,
+          "n_events": 37
+        },
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.9714285714285713,
+          "n_locales": 805,
+          "n_events": 131
+        },
+        {
+          "zone_code": "13.0",
+          "zone_name": "Puente de Vallecas",
+          "survival_24m": 0.9710982658959537,
+          "n_locales": 173,
+          "n_events": 34
+        },
+        {
+          "zone_code": "11.0",
+          "zone_name": "Carabanchel",
+          "survival_24m": 0.9702602230483273,
+          "n_locales": 269,
+          "n_events": 61
+        },
+        {
+          "zone_code": "18.0",
+          "zone_name": "Villa de Vallecas",
+          "survival_24m": 0.96875,
+          "n_locales": 96,
+          "n_events": 13
+        },
+        {
+          "zone_code": "20.0",
+          "zone_name": "San Blas - Canillejas",
+          "survival_24m": 0.9593495934959351,
+          "n_locales": 123,
+          "n_events": 21
+        },
+        {
+          "zone_code": "12.0",
+          "zone_name": "Usera",
+          "survival_24m": 0.9587628865979382,
+          "n_locales": 97,
+          "n_events": 24
+        },
+        {
+          "zone_code": "16.0",
+          "zone_name": "Hortaleza",
+          "survival_24m": 0.9529411764705883,
+          "n_locales": 85,
+          "n_events": 17
+        },
+        {
+          "zone_code": "5.0",
+          "zone_name": "Chamartín",
+          "survival_24m": 0.9469387755102042,
+          "n_locales": 245,
+          "n_events": 51
+        },
+        {
+          "zone_code": "3.0",
+          "zone_name": "Retiro",
+          "survival_24m": 0.9444444444444443,
+          "n_locales": 108,
+          "n_events": 27
+        },
+        {
+          "zone_code": "15.0",
+          "zone_name": "Ciudad Lineal",
+          "survival_24m": 0.9369747899159665,
+          "n_locales": 238,
+          "n_events": 53
+        },
+        {
+          "zone_code": "8.0",
+          "zone_name": "Fuencarral - El Pardo",
+          "survival_24m": 0.933774834437086,
+          "n_locales": 151,
+          "n_events": 32
+        },
+        {
+          "zone_code": "7.0",
+          "zone_name": "Chamberí",
+          "survival_24m": 0.9293680297397768,
+          "n_locales": 269,
+          "n_events": 87
+        }
+      ]
+    },
+    "Oficina y administracion": {
+      "districts_supported": 2,
+      "n_locales_supported": 171,
+      "n_events_supported": 55,
+      "chisq": 0.17995662996958273,
+      "pvalue": 0.6714105147045697,
+      "significant": false,
+      "districts": [
+        {
+          "zone_code": "4.0",
+          "zone_name": "Salamanca",
+          "survival_24m": 0.9302325581395349,
+          "n_locales": 86,
+          "n_events": 29
+        },
+        {
+          "zone_code": "5.0",
+          "zone_name": "Chamartín",
+          "survival_24m": 0.9294117647058824,
+          "n_locales": 85,
+          "n_events": 26
+        }
+      ]
+    },
+    "Otros comercios": {
+      "districts_supported": 5,
+      "n_locales_supported": 1058,
+      "n_events_supported": 148,
+      "chisq": 34.2499214114278,
+      "pvalue": 6.62218236508792e-07,
+      "significant": true,
+      "districts": [
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.9831460674157303,
+          "n_locales": 534,
+          "n_events": 44
+        },
+        {
+          "zone_code": "4.0",
+          "zone_name": "Salamanca",
+          "survival_24m": 0.9786096256684492,
+          "n_locales": 187,
+          "n_events": 29
+        },
+        {
+          "zone_code": "7.0",
+          "zone_name": "Chamberí",
+          "survival_24m": 0.9729729729729729,
+          "n_locales": 148,
+          "n_events": 31
+        },
+        {
+          "zone_code": "11.0",
+          "zone_name": "Carabanchel",
+          "survival_24m": 0.9651162790697676,
+          "n_locales": 86,
+          "n_events": 21
+        },
+        {
+          "zone_code": "15.0",
+          "zone_name": "Ciudad Lineal",
+          "survival_24m": 0.9320388349514563,
+          "n_locales": 103,
+          "n_events": 23
+        }
+      ]
+    },
+    "Peluqueria": {
+      "districts_supported": 16,
+      "n_locales_supported": 3567,
+      "n_events_supported": 494,
+      "chisq": 72.90356596608535,
+      "pvalue": 1.3508790787982485e-09,
+      "significant": true,
+      "districts": [
+        {
+          "zone_code": "8.0",
+          "zone_name": "Fuencarral - El Pardo",
+          "survival_24m": 0.9950738916256158,
+          "n_locales": 203,
+          "n_events": 17
+        },
+        {
+          "zone_code": "14.0",
+          "zone_name": "Moratalaz",
+          "survival_24m": 0.9914529914529915,
+          "n_locales": 117,
+          "n_events": 12
+        },
+        {
+          "zone_code": "10.0",
+          "zone_name": "Latina",
+          "survival_24m": 0.9862068965517241,
+          "n_locales": 290,
+          "n_events": 29
+        },
+        {
+          "zone_code": "12.0",
+          "zone_name": "Usera",
+          "survival_24m": 0.9819277108433735,
+          "n_locales": 166,
+          "n_events": 22
+        },
+        {
+          "zone_code": "3.0",
+          "zone_name": "Retiro",
+          "survival_24m": 0.9807692307692308,
+          "n_locales": 156,
+          "n_events": 26
+        },
+        {
+          "zone_code": "6.0",
+          "zone_name": "Tetuán",
+          "survival_24m": 0.9807692307692308,
+          "n_locales": 260,
+          "n_events": 31
+        },
+        {
+          "zone_code": "20.0",
+          "zone_name": "San Blas - Canillejas",
+          "survival_24m": 0.9801324503311257,
+          "n_locales": 151,
+          "n_events": 17
+        },
+        {
+          "zone_code": "11.0",
+          "zone_name": "Carabanchel",
+          "survival_24m": 0.9786585365853658,
+          "n_locales": 328,
+          "n_events": 31
+        },
+        {
+          "zone_code": "15.0",
+          "zone_name": "Ciudad Lineal",
+          "survival_24m": 0.9738372093023255,
+          "n_locales": 344,
+          "n_events": 34
+        },
+        {
+          "zone_code": "9.0",
+          "zone_name": "Moncloa - Aravaca",
+          "survival_24m": 0.9722222222222221,
+          "n_locales": 108,
+          "n_events": 12
+        },
+        {
+          "zone_code": "13.0",
+          "zone_name": "Puente de Vallecas",
+          "survival_24m": 0.971830985915493,
+          "n_locales": 284,
+          "n_events": 30
+        },
+        {
+          "zone_code": "5.0",
+          "zone_name": "Chamartín",
+          "survival_24m": 0.9710144927536231,
+          "n_locales": 207,
+          "n_events": 36
+        },
+        {
+          "zone_code": "2.0",
+          "zone_name": "Arganzuela",
+          "survival_24m": 0.9587628865979382,
+          "n_locales": 194,
+          "n_events": 31
+        },
+        {
+          "zone_code": "7.0",
+          "zone_name": "Chamberí",
+          "survival_24m": 0.9581589958158997,
+          "n_locales": 239,
+          "n_events": 49
+        },
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.9545454545454546,
+          "n_locales": 264,
+          "n_events": 64
+        },
+        {
+          "zone_code": "4.0",
+          "zone_name": "Salamanca",
+          "survival_24m": 0.953125,
+          "n_locales": 256,
+          "n_events": 53
+        }
+      ]
+    },
+    "Restaurante": {
+      "districts_supported": 3,
+      "n_locales_supported": 1133,
+      "n_events_supported": 72,
+      "chisq": 1.761381547909897,
+      "pvalue": 0.41449648938715367,
+      "significant": false,
+      "districts": [
+        {
+          "zone_code": "7.0",
+          "zone_name": "Chamberí",
+          "survival_24m": 0.988950276243094,
+          "n_locales": 181,
+          "n_events": 12
+        },
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.9855072463768115,
+          "n_locales": 690,
+          "n_events": 39
+        },
+        {
+          "zone_code": "4.0",
+          "zone_name": "Salamanca",
+          "survival_24m": 0.984732824427481,
+          "n_locales": 262,
+          "n_events": 21
+        }
+      ]
+    },
+    "Supermercado": {
+      "districts_supported": 3,
+      "n_locales_supported": 368,
+      "n_events_supported": 51,
+      "chisq": 4.730203539790275,
+      "pvalue": 0.09393973964453767,
+      "significant": false,
+      "districts": [
+        {
+          "zone_code": "11.0",
+          "zone_name": "Carabanchel",
+          "survival_24m": 0.9912280701754386,
+          "n_locales": 114,
+          "n_events": 14
+        },
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.9805194805194807,
+          "n_locales": 154,
+          "n_events": 17
+        },
+        {
+          "zone_code": "4.0",
+          "zone_name": "Salamanca",
+          "survival_24m": 0.96,
+          "n_locales": 100,
+          "n_events": 20
+        }
+      ]
+    },
+    "Tienda de alimentacion": {
+      "districts_supported": 7,
+      "n_locales_supported": 1099,
+      "n_events_supported": 127,
+      "chisq": 11.637213538098163,
+      "pvalue": 0.07056907708958232,
+      "significant": false,
+      "districts": [
+        {
+          "zone_code": "11.0",
+          "zone_name": "Carabanchel",
+          "survival_24m": 1.0,
+          "n_locales": 199,
+          "n_events": 24
+        },
+        {
+          "zone_code": "12.0",
+          "zone_name": "Usera",
+          "survival_24m": 0.992,
+          "n_locales": 125,
+          "n_events": 14
+        },
+        {
+          "zone_code": "13.0",
+          "zone_name": "Puente de Vallecas",
+          "survival_24m": 0.985981308411215,
+          "n_locales": 214,
+          "n_events": 14
+        },
+        {
+          "zone_code": "1.0",
+          "zone_name": "Centro",
+          "survival_24m": 0.981981981981982,
+          "n_locales": 111,
+          "n_events": 14
+        },
+        {
+          "zone_code": "10.0",
+          "zone_name": "Latina",
+          "survival_24m": 0.976878612716763,
+          "n_locales": 173,
+          "n_events": 20
+        },
+        {
+          "zone_code": "7.0",
+          "zone_name": "Chamberí",
+          "survival_24m": 0.9634146341463414,
+          "n_locales": 164,
+          "n_events": 29
+        },
+        {
+          "zone_code": "6.0",
+          "zone_name": "Tetuán",
+          "survival_24m": 0.9557522123893807,
+          "n_locales": 113,
+          "n_events": 12
+        }
+      ]
+    }
+  }
+}

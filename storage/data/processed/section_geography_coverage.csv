@@ -1,0 +1,2 @@
+censo_period,padron_period,geometry_unique_sections,censo_unique_sections,padron_unique_sections,renta_unique_sections,geometry_censo_intersection,geometry_padron_intersection,geometry_renta_intersection,geometry_only_sections,censo_only_vs_geometry,padron_only_vs_geometry,renta_only_vs_geometry,geometry_area_m2_min,geometry_area_m2_median,geometry_area_m2_max
+2026-03,2026-02,2461,2499,2462,2492,2426,2461,2442,35,73,1,50,8420.43211074,40473.5085323,94649027.8028

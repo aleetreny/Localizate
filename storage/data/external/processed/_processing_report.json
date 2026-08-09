@@ -1,0 +1,131 @@
+{
+  "geo_mercados": {
+    "status": "OK",
+    "records": 44,
+    "with_coords": 44,
+    "output": "equipamiento_mercados.csv"
+  },
+  "geo_parques": {
+    "status": "OK",
+    "records": 207,
+    "with_coords": 203,
+    "output": "equipamiento_parques.csv"
+  },
+  "geo_centros_culturales": {
+    "status": "OK",
+    "records": 127,
+    "with_coords": 127,
+    "output": "equipamiento_centros_culturales.csv"
+  },
+  "geo_instalaciones_deportivas": {
+    "status": "OK",
+    "records": 569,
+    "with_coords": 569,
+    "output": "equipamiento_instalaciones_deportivas.csv"
+  },
+  "geo_polideportivos": {
+    "status": "OK",
+    "records": 84,
+    "with_coords": 84,
+    "output": "equipamiento_polideportivos.csv"
+  },
+  "geo_colegios": {
+    "status": "OK",
+    "records": 249,
+    "with_coords": 249,
+    "output": "equipamiento_colegios.csv"
+  },
+  "geo_bibliotecas": {
+    "status": "OK",
+    "records": 50,
+    "with_coords": 50,
+    "output": "equipamiento_bibliotecas.csv"
+  },
+  "geo_centros_mayores": {
+    "status": "OK",
+    "records": 94,
+    "with_coords": 94,
+    "output": "equipamiento_centros_mayores.csv"
+  },
+  "geo_servicios_sociales": {
+    "status": "OK",
+    "records": 40,
+    "with_coords": 40,
+    "output": "equipamiento_servicios_sociales.csv"
+  },
+  "geo_aparcamientos": {
+    "status": "OK",
+    "records": 5,
+    "with_coords": 5,
+    "output": "equipamiento_aparcamientos.csv"
+  },
+  "geo_mercadillos": {
+    "status": "OK",
+    "records": 33,
+    "with_coords": 33,
+    "output": "equipamiento_mercadillos.csv"
+  },
+  "bicimad": {
+    "status": "OK",
+    "records": 631,
+    "output": "equipamiento_bicimad.csv"
+  },
+  "iae": {
+    "status": "OK",
+    "records": 544,
+    "columns": [
+      "ANUALIDAD",
+      "EPIGRAFE",
+      "DESCRIPCION_EPIGRAFE",
+      "CONTADOR_EMITIDOS"
+    ],
+    "output": "iae_empresas_2025.csv"
+  },
+  "poblacion": {
+    "status": "OK",
+    "records": 1071,
+    "columns": [
+      "fecha",
+      "cod_municipio",
+      "municipio",
+      "cod_distrito",
+      "distrito",
+      "cod_barrio",
+      "barrio",
+      "num_personas",
+      "num_personas_hombres",
+      "num_personas_mujeres"
+    ],
+    "years": 0,
+    "output": "poblacion_distrito_barrio.csv"
+  },
+  "inspecciones_consumo": {
+    "status": "OK",
+    "records": 4219,
+    "columns": [
+      "FECHA_DE_INSPECCION",
+      "DISTRITO",
+      "TIPO_VIAL_ACCESO_PRINCIPAL",
+      "NOMBRE_VIA_ACCESO_PRINCIPAL",
+      "NUMERO_VIA_ACCESO_PRINCIPAL",
+      "ACTIVIDAD_INSPECTORA",
+      "AMBITO",
+      "EPIGRAFE",
+      ""
+    ],
+    "output": "inspecciones_consumo.csv"
+  },
+  "panel_indicadores": {
+    "status": "OK",
+    "size_mb": 30.0,
+    "total_lines": 116931,
+    "columns": 1,
+    "column_names_sample": [
+      "Orden;Periodo panel;ciudad;cod_distrito;distrito;cod_barrio;barrio;año;fecha_indicador;fuente_indicador;categoría_1;categoría_2;indicador_nivel1;indicador_nivel2;indicador_nivel3;unidad_indicador;indicador_completo;valor_indicador"
+    ],
+    "note": "Large file - kept as-is in data/external/ for selective loading"
+  },
+  "unified_equipamientos": {
+    "total_points": 2129
+  }
+}
