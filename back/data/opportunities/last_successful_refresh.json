@@ -1,0 +1,24 @@
+{
+  "status": "updated",
+  "refreshed_at_utc": "2026-08-31T11:19:30.415889Z",
+  "city_slug": "madrid",
+  "operations": [
+    "venta",
+    "alquiler"
+  ],
+  "attempts": [
+    {
+      "transport": "direct_http",
+      "status": "success",
+      "listing_count": 624
+    }
+  ],
+  "request_count": 0,
+  "browser_ms_used_total": 0,
+  "listing_count": 624,
+  "reused_context_count": 624,
+  "new_or_relocated_count": 0,
+  "removed_count": 0,
+  "street_precision_count": 367,
+  "section_key_count": 359
+}

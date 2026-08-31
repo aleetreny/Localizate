@@ -31,3 +31,5 @@ Los artefactos públicos que consume la web se generan aquí y se sirven despué
 ## Snapshot versionado de oportunidades
 
 El refresco mensual de oportunidades ya no depende de un scrape completo efímero dentro de GitHub Actions. Ahora parte de un snapshot versionado en `back/data/opportunities/manual_available_locales_madrid_snapshot.csv`, reutiliza coordenadas y secciones ya conocidas, y solo geocodifica listings nuevos o relocalizados dentro de un presupuesto conservador.
+
+La ejecución programada falla de forma visible si el crawl queda incompleto, falta una operación, el volumen de bajas supera los límites de seguridad o el frontend contiene un enlace que no aparece en el snapshot recién obtenido. Un resultado fallido conserva el último snapshot verificado. Cada éxito actualiza `back/data/opportunities/last_successful_refresh.json`, vuelve a publicar el payload aunque no cambie su selección y comprueba por SHA-256 que R2 sirve exactamente el JSON generado.

@@ -3,7 +3,8 @@ name: Refresh Opportunity Listings Monthly
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 5 1 * *"
+    - cron: "17 7 1 * *"
+      timezone: "Europe/Madrid"
 
 permissions:
   contents: write
@@ -15,7 +16,7 @@ concurrency:
 jobs:
   refresh-opportunities:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       PYTHONUTF8: "1"
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -24,13 +25,14 @@ jobs:
       R2_SYNC_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       R2_SYNC_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       R2_SYNC_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME }}
+      R2_PUBLIC_BASE_URL: ${{ vars.NEXT_PUBLIC_DATA_BASE_URL }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
           cache: "pip"
@@ -38,7 +40,7 @@ jobs:
 
       - name: Restore geocode cache
         id: geocode-cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: storage/data/intermediate/manual_available_locales_madrid_geocode_cache.csv
           key: manual-available-locales-geocode-${{ runner.os }}-${{ github.run_id }}
@@ -50,30 +52,37 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r back/requirements-opportunity-weekly.txt
 
-      - name: Detect optional R2 sync configuration
-        id: r2-sync
+      - name: Validate required refresh and publish configuration
         run: |
-          if [ -n "$R2_SYNC_ACCOUNT_ID" ] && [ -n "$R2_SYNC_ACCESS_KEY_ID" ] && [ -n "$R2_SYNC_SECRET_ACCESS_KEY" ] && [ -n "$R2_SYNC_BUCKET_NAME" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          missing=()
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || missing+=("CLOUDFLARE_ACCOUNT_ID")
+          [ -n "$CLOUDFLARE_BROWSER_RUN_API_TOKEN" ] || missing+=("CLOUDFLARE_BROWSER_RUN_API_TOKEN")
+          [ -n "$R2_SYNC_ACCESS_KEY_ID" ] || missing+=("R2_ACCESS_KEY_ID")
+          [ -n "$R2_SYNC_SECRET_ACCESS_KEY" ] || missing+=("R2_SECRET_ACCESS_KEY")
+          [ -n "$R2_SYNC_BUCKET_NAME" ] || missing+=("R2_BUCKET_NAME")
+          [ -n "$R2_PUBLIC_BASE_URL" ] || missing+=("NEXT_PUBLIC_DATA_BASE_URL")
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Missing required refresh configuration: ${missing[*]}"
+            exit 1
           fi
 
-      - name: Install optional R2 sync dependency
-        if: steps.r2-sync.outputs.enabled == 'true'
+      - name: Install R2 sync dependency
         run: python -m pip install boto3
 
       - name: Refresh snapshot with Cloudflare Browser Run
         run: |
           python back/scripts/refresh_opportunity_listings_cloudflare.py \
-            --max-pages 24 \
-            --max-browser-requests 24 \
+            --max-pages 30 \
+            --max-browser-requests 40 \
             --min-browser-interval-seconds 15 \
-            --max-browser-ms-per-run 240000 \
-            --max-new-geocodes 40 \
+            --max-browser-ms-per-run 360000 \
+            --max-new-geocodes 250 \
+            --max-removed-listings 100 \
+            --max-removal-ratio 0.25 \
             --geocode-delay-seconds 1.2
 
       - name: Report refresh outcome
+        if: always()
         run: |
           python - <<'PY'
           import json
@@ -81,7 +90,9 @@ jobs:
 
           summary_path = Path("storage/data/processed/manual_available_locales_madrid_refresh_summary.json")
           if not summary_path.exists():
-              raise SystemExit(f"Refresh summary missing: {summary_path}")
+              message = f"Refresh summary missing: {summary_path}"
+              print(f"::error::{message}")
+              raise SystemExit(message)
 
           summary = json.loads(summary_path.read_text(encoding="utf-8"))
           status = summary.get("status", "unknown")
@@ -99,7 +110,8 @@ jobs:
                       print(f"- {transport}: {attempt_status}")
           if status != "updated":
               message = reason or "Opportunity refresh completed without a new crawl result."
-              print(f"::warning::{message}")
+              print(f"::error::{message}")
+              raise SystemExit(message)
           PY
 
       - name: Rebuild frontend listings payload
@@ -108,37 +120,12 @@ jobs:
             --input-listings-csv back/data/opportunities/manual_available_locales_madrid_snapshot.csv
 
       - name: Validate frontend payload
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          payload = json.loads(Path("front/public/data/opportunities/listings.json").read_text(encoding="utf-8"))
-          points = payload.get("points")
-          if not isinstance(points, list) or not points:
-              raise SystemExit("No opportunity points generated.")
-          stats = payload.get("stats") or {}
-          if stats.get("selected_listings") != len(points):
-              raise SystemExit("selected_listings does not match the number of points.")
-          print(f"Validated {len(points)} opportunity points.")
-          PY
+        run: python back/scripts/validate_opportunity_refresh_outputs.py
 
       - name: Detect opportunity refresh changes
         id: changes
         run: |
-          if git diff --quiet -- back/data/opportunities/manual_available_locales_madrid_snapshot.csv; then
-            echo "snapshot_changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "snapshot_changed=true" >> "$GITHUB_OUTPUT"
-          fi
-
-          if git diff --quiet -- front/public/data/opportunities/listings.json; then
-            echo "frontend_changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "frontend_changed=true" >> "$GITHUB_OUTPUT"
-          fi
-
-          if git diff --quiet -- back/data/opportunities/manual_available_locales_madrid_snapshot.csv front/public/data/opportunities/listings.json; then
+          if [ -z "$(git status --porcelain -- back/data/opportunities/manual_available_locales_madrid_snapshot.csv back/data/opportunities/last_successful_refresh.json front/public/data/opportunities/listings.json)" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -146,7 +133,7 @@ jobs:
 
       - name: Save geocode cache
         if: success() && hashFiles('storage/data/intermediate/manual_available_locales_madrid_geocode_cache.csv') != ''
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: storage/data/intermediate/manual_available_locales_madrid_geocode_cache.csv
           key: ${{ steps.geocode-cache.outputs.cache-primary-key }}
@@ -157,12 +144,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add back/data/opportunities/manual_available_locales_madrid_snapshot.csv
+          git add back/data/opportunities/last_successful_refresh.json
           git add front/public/data/opportunities/listings.json
           git commit -m "chore: refresh opportunity listings"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
           git push
 
       - name: Publish refreshed opportunity data to R2
-        if: steps.changes.outputs.frontend_changed == 'true' && steps.r2-sync.outputs.enabled == 'true'
         env:
           R2_ACCOUNT_ID: ${{ env.R2_SYNC_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ env.R2_SYNC_ACCESS_KEY_ID }}
@@ -170,6 +158,45 @@ jobs:
         run: |
           python back/scripts/sync_public_data_to_r2.py \
             --source front/public/data/opportunities \
-            --bucket "${{ env.R2_SYNC_BUCKET_NAME }}" \
+            --bucket "$R2_SYNC_BUCKET_NAME" \
             --prefix "data/opportunities" \
+            --cache-control "public, max-age=0, s-maxage=300, stale-while-revalidate=3600" \
             --delete-missing
+
+      - name: Verify published opportunity payload
+        run: |
+          python - <<'PY'
+          import hashlib
+          import os
+          from pathlib import Path
+          import time
+
+          import requests
+
+          local_path = Path("front/public/data/opportunities/listings.json")
+          expected_sha256 = hashlib.sha256(local_path.read_bytes()).hexdigest()
+          public_base = os.environ["R2_PUBLIC_BASE_URL"].rstrip("/")
+          run_id = os.environ["GITHUB_RUN_ID"]
+          url = f"{public_base}/data/opportunities/listings.json?refresh_run={run_id}"
+
+          last_error = None
+          for attempt in range(1, 6):
+              try:
+                  response = requests.get(url, timeout=60)
+                  response.raise_for_status()
+                  published_sha256 = hashlib.sha256(response.content).hexdigest()
+                  if published_sha256 == expected_sha256:
+                      print(f"Verified published listings.json on attempt {attempt}: {published_sha256}")
+                      break
+                  last_error = RuntimeError(
+                      f"Published SHA-256 {published_sha256} does not match local {expected_sha256}."
+                  )
+              except Exception as exc:
+                  last_error = exc
+              if attempt < 5:
+                  time.sleep(5)
+          else:
+              message = f"R2 publication verification failed: {last_error}"
+              print(f"::error::{message}")
+              raise SystemExit(message)
+          PY

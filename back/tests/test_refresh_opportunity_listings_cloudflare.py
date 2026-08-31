@@ -23,6 +23,7 @@ if str(SRC_DIR) not in sys.path:
 from scripts.refresh_opportunity_listings_cloudflare import (  # noqa: E402
     ListingCardsUnavailable,
     _crawl_listing_cards,
+    build_refresh_safety_failure_reason,
     build_snapshot_refresh_plan,
     normalize_match_text,
 )
@@ -174,6 +175,96 @@ class RefreshOpportunityListingsCloudflareTests(unittest.TestCase):
         self.assertTrue(pd.isna(plan.frame.loc[0, "section_key"]))
         self.assertTrue(pd.isna(plan.frame.loc[0, "geocode_status"]))
 
+    def test_refresh_safety_rejects_missing_operation(self) -> None:
+        previous = pd.concat(
+            [
+                _previous_snapshot("Calle de Alcalá, Madrid"),
+                _previous_snapshot("Calle de Serrano, Madrid").assign(
+                    operation="alquiler",
+                    listing_id="456",
+                    listing_key="alquiler:456",
+                    listing_url="https://www.locales.es/madrid/alquiler/local456",
+                ),
+            ],
+            ignore_index=True,
+        )
+
+        reason = build_refresh_safety_failure_reason(
+            _current_card("Calle de Alcalá, Madrid"),
+            previous,
+            operations=("venta", "alquiler"),
+            max_removed_listings=100,
+            max_removal_ratio=0.25,
+        )
+
+        self.assertIsNotNone(reason)
+        self.assertIn("missing operations: alquiler", reason or "")
+
+    def test_refresh_safety_rejects_large_per_operation_drop(self) -> None:
+        previous = pd.concat(
+            [
+                _previous_snapshot(f"Calle {index}, Madrid").assign(
+                    listing_id=str(index),
+                    listing_key=f"venta:{index}",
+                    listing_url=f"https://www.locales.es/madrid/venta/local{index}",
+                )
+                for index in range(10)
+            ],
+            ignore_index=True,
+        )
+        current = previous.head(7).copy()
+
+        reason = build_refresh_safety_failure_reason(
+            current,
+            previous,
+            operations=("venta",),
+            max_removed_listings=100,
+            max_removal_ratio=0.25,
+        )
+
+        self.assertIsNotNone(reason)
+        self.assertIn("venta removal ratio 30.0%", reason or "")
+
+    def test_refresh_safety_detects_removed_ids_even_when_new_ids_keep_count_stable(self) -> None:
+        previous = pd.concat(
+            [
+                _previous_snapshot(f"Calle {index}, Madrid").assign(
+                    listing_id=str(index),
+                    listing_key=f"venta:{index}",
+                    listing_url=f"https://www.locales.es/madrid/venta/local{index}",
+                )
+                for index in range(4)
+            ],
+            ignore_index=True,
+        )
+        current = pd.concat(
+            [
+                previous.head(2),
+                _current_card("Calle 10, Madrid").assign(
+                    listing_id="10",
+                    listing_key="venta:10",
+                    listing_url="https://www.locales.es/madrid/venta/local10",
+                ),
+                _current_card("Calle 11, Madrid").assign(
+                    listing_id="11",
+                    listing_key="venta:11",
+                    listing_url="https://www.locales.es/madrid/venta/local11",
+                ),
+            ],
+            ignore_index=True,
+        )
+
+        reason = build_refresh_safety_failure_reason(
+            current,
+            previous,
+            operations=("venta",),
+            max_removed_listings=100,
+            max_removal_ratio=0.25,
+        )
+
+        self.assertIsNotNone(reason)
+        self.assertIn("venta removal ratio 50.0%", reason or "")
+
 
     def test_crawl_listing_cards_raises_diagnostics_when_transport_returns_empty_pages(self) -> None:
         config = refresh_script.ManualAvailableLocalesConfig(max_pages=2)
@@ -196,6 +287,7 @@ class RefreshOpportunityListingsCloudflareTests(unittest.TestCase):
             snapshot_csv = temp_root / "snapshot.csv"
             summary_json = temp_root / "summary.json"
             geocode_cache_path = temp_root / "geocode-cache.csv"
+            successful_refresh_json = temp_root / "last-success.json"
             _previous_snapshot("Calle de AlcalÃ¡, Madrid").to_csv(snapshot_csv, index=False)
 
             args = argparse.Namespace(
@@ -213,6 +305,9 @@ class RefreshOpportunityListingsCloudflareTests(unittest.TestCase):
                 snapshot_csv=snapshot_csv,
                 summary_json=summary_json,
                 geocode_cache_path=geocode_cache_path,
+                successful_refresh_json=successful_refresh_json,
+                max_removed_listings=100,
+                max_removal_ratio=0.25,
             )
 
             browser_client = mock.Mock()
@@ -252,7 +347,7 @@ class RefreshOpportunityListingsCloudflareTests(unittest.TestCase):
             ):
                 exit_code = refresh_script.main()
 
-            self.assertEqual(exit_code, 0)
+            self.assertEqual(exit_code, refresh_script.SKIPPED_EXIT_CODE)
             summary = json.loads(summary_json.read_text(encoding="utf-8"))
             self.assertEqual(summary["status"], "skipped")
             self.assertEqual(summary["snapshot_listing_count"], 1)
@@ -261,6 +356,7 @@ class RefreshOpportunityListingsCloudflareTests(unittest.TestCase):
             self.assertEqual(len(summary["attempts"]), 2)
             self.assertIn("direct_http", summary["reason"])
             self.assertIn("browser_run", summary["reason"])
+            self.assertFalse(successful_refresh_json.exists())
 
     def test_main_prefers_direct_http_when_available(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -268,6 +364,7 @@ class RefreshOpportunityListingsCloudflareTests(unittest.TestCase):
             snapshot_csv = temp_root / "snapshot.csv"
             summary_json = temp_root / "summary.json"
             geocode_cache_path = temp_root / "geocode-cache.csv"
+            successful_refresh_json = temp_root / "last-success.json"
             _previous_snapshot("Calle de AlcalÃ¡, Madrid").to_csv(snapshot_csv, index=False)
 
             args = argparse.Namespace(
@@ -285,6 +382,9 @@ class RefreshOpportunityListingsCloudflareTests(unittest.TestCase):
                 snapshot_csv=snapshot_csv,
                 summary_json=summary_json,
                 geocode_cache_path=geocode_cache_path,
+                successful_refresh_json=successful_refresh_json,
+                max_removed_listings=100,
+                max_removal_ratio=0.25,
             )
 
             browser_client = mock.Mock()
@@ -307,6 +407,10 @@ class RefreshOpportunityListingsCloudflareTests(unittest.TestCase):
             self.assertEqual(summary["status"], "updated")
             self.assertEqual(summary["attempts"][0]["transport"], "direct_http")
             self.assertEqual(summary["attempts"][0]["status"], "success")
+            self.assertTrue(successful_refresh_json.exists())
+            successful_summary = json.loads(successful_refresh_json.read_text(encoding="utf-8"))
+            self.assertEqual(successful_summary["status"], "updated")
+            self.assertIn("refreshed_at_utc", successful_summary)
 
 if __name__ == "__main__":
     unittest.main()

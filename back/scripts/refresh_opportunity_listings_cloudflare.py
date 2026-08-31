@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 from bs4 import BeautifulSoup
 from dataclasses import dataclass
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -52,6 +53,9 @@ VERSIONED_OPPORTUNITY_DIR = BACKEND_ROOT / "data" / "opportunities"
 SNAPSHOT_CSV = VERSIONED_OPPORTUNITY_DIR / "manual_available_locales_madrid_snapshot.csv"
 SUMMARY_JSON = DATA_DIR / "processed" / "manual_available_locales_madrid_refresh_summary.json"
 GEOCODE_CACHE_CSV = DATA_DIR / "intermediate" / "manual_available_locales_madrid_geocode_cache.csv"
+SUCCESSFUL_REFRESH_JSON = VERSIONED_OPPORTUNITY_DIR / "last_successful_refresh.json"
+
+SKIPPED_EXIT_CODE = 2
 
 SNAPSHOT_CONTEXT_COLUMNS = [
     "detail_title",
@@ -150,6 +154,18 @@ def parse_args() -> argparse.Namespace:
         help="Numero maximo de listings nuevos o reubicados a geocodificar en una ejecucion.",
     )
     parser.add_argument(
+        "--max-removed-listings",
+        type=int,
+        default=100,
+        help="Frena el refresco si desaparecen mas listings que este limite absoluto.",
+    )
+    parser.add_argument(
+        "--max-removal-ratio",
+        type=float,
+        default=0.25,
+        help="Frena el refresco si desaparece mas de esta proporcion total o por operacion.",
+    )
+    parser.add_argument(
         "--geocode-delay-seconds",
         type=float,
         default=1.2,
@@ -164,6 +180,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--snapshot-csv", type=Path, default=SNAPSHOT_CSV)
     parser.add_argument("--summary-json", type=Path, default=SUMMARY_JSON)
     parser.add_argument("--geocode-cache-path", type=Path, default=GEOCODE_CACHE_CSV)
+    parser.add_argument("--successful-refresh-json", type=Path, default=SUCCESSFUL_REFRESH_JSON)
     return parser.parse_args()
 
 
@@ -237,7 +254,7 @@ def main() -> int:
                 "snapshot_listing_count": int(len(previous_snapshot)),
             },
         )
-        return 0
+        return SKIPPED_EXIT_CODE
 
     if listing_cards is None:
         reason = _compose_skip_reason(fetch_attempts)
@@ -253,7 +270,7 @@ def main() -> int:
                 "snapshot_listing_count": int(len(previous_snapshot)),
             },
         )
-        return 0
+        return SKIPPED_EXIT_CODE
 
     plan = build_snapshot_refresh_plan(listing_cards, previous_snapshot)
     pending_geocodes = len(plan.geocode_row_indexes)
@@ -264,6 +281,30 @@ def main() -> int:
         f"{pending_geocodes} new or relocated listings, "
         f"{plan.removed_count} removed."
     )
+
+    safety_reason = build_refresh_safety_failure_reason(
+        listing_cards,
+        previous_snapshot,
+        operations=refresh_config.operations,
+        max_removed_listings=args.max_removed_listings,
+        max_removal_ratio=args.max_removal_ratio,
+    )
+    if safety_reason:
+        print(safety_reason)
+        write_refresh_summary(
+            args.summary_json,
+            {
+                "status": "skipped",
+                "reason": safety_reason,
+                "attempts": fetch_attempts,
+                "request_count": int(browser_client.request_count) if browser_client is not None else 0,
+                "browser_ms_used_total": int(browser_client.browser_ms_used_total) if browser_client is not None else 0,
+                "snapshot_listing_count": int(len(previous_snapshot)),
+                "crawled_listing_count": int(len(listing_cards)),
+                "removed_count": int(plan.removed_count),
+            },
+        )
+        return SKIPPED_EXIT_CODE
 
     if pending_geocodes > args.max_new_geocodes:
         reason = (
@@ -277,6 +318,7 @@ def main() -> int:
             {
                 "status": "skipped",
                 "reason": reason,
+                "attempts": fetch_attempts,
                 "request_count": int(browser_client.request_count) if browser_client is not None else 0,
                 "browser_ms_used_total": int(browser_client.browser_ms_used_total) if browser_client is not None else 0,
                 "snapshot_listing_count": int(len(previous_snapshot)),
@@ -284,7 +326,7 @@ def main() -> int:
                 "pending_geocodes": int(pending_geocodes),
             },
         )
-        return 0
+        return SKIPPED_EXIT_CODE
 
     refreshed_snapshot = apply_geocode_refresh_plan(
         plan.frame,
@@ -299,8 +341,10 @@ def main() -> int:
     args.snapshot_csv.parent.mkdir(parents=True, exist_ok=True)
     refreshed_snapshot.to_csv(args.snapshot_csv, index=False)
 
+    refreshed_at_utc = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     summary = {
         "status": "updated",
+        "refreshed_at_utc": refreshed_at_utc,
         "city_slug": refresh_config.city_slug,
         "operations": list(_normalize_operations(refresh_config.operations)),
         "attempts": fetch_attempts,
@@ -314,6 +358,7 @@ def main() -> int:
         "section_key_count": int(refreshed_snapshot["section_key"].notna().sum()),
     }
     write_refresh_summary(args.summary_json, summary)
+    write_refresh_summary(args.successful_refresh_json, summary)
 
     print(f"Updated snapshot CSV: {args.snapshot_csv}")
     print(
@@ -323,6 +368,73 @@ def main() -> int:
         f"{summary['section_key_count']} with section_key."
     )
     return 0
+
+
+def build_refresh_safety_failure_reason(
+    current_cards: pd.DataFrame,
+    previous_snapshot: pd.DataFrame,
+    *,
+    operations: tuple[str, ...] | list[str],
+    max_removed_listings: int,
+    max_removal_ratio: float,
+) -> str | None:
+    if max_removed_listings < 0:
+        raise ValueError("max_removed_listings must be non-negative")
+    if not 0 <= max_removal_ratio <= 1:
+        raise ValueError("max_removal_ratio must be between 0 and 1")
+
+    normalized_operations = _normalize_operations(tuple(operations))
+    current_counts = current_cards["operation"].astype("string").value_counts().to_dict()
+    failures: list[str] = []
+
+    missing_operations = [operation for operation in normalized_operations if int(current_counts.get(operation, 0)) <= 0]
+    if missing_operations:
+        failures.append(f"missing operations: {', '.join(missing_operations)}")
+
+    previous_keys = set(previous_snapshot["listing_key"].astype("string").dropna().tolist())
+    current_keys = set(current_cards["listing_key"].astype("string").dropna().tolist())
+    removed_count = len(previous_keys - current_keys)
+    total_removal_ratio = removed_count / len(previous_keys) if previous_keys else 0.0
+    if removed_count > max_removed_listings:
+        failures.append(f"{removed_count} removals exceed the absolute limit of {max_removed_listings}")
+    if total_removal_ratio > max_removal_ratio:
+        failures.append(
+            f"total removal ratio {total_removal_ratio:.1%} exceeds the limit of {max_removal_ratio:.1%}"
+        )
+
+    for operation in normalized_operations:
+        previous_operation_keys = set(
+            previous_snapshot.loc[
+                previous_snapshot["operation"].astype("string").eq(operation),
+                "listing_key",
+            ]
+            .astype("string")
+            .dropna()
+            .tolist()
+        )
+        current_operation_keys = set(
+            current_cards.loc[
+                current_cards["operation"].astype("string").eq(operation),
+                "listing_key",
+            ]
+            .astype("string")
+            .dropna()
+            .tolist()
+        )
+        previous_count = len(previous_operation_keys)
+        if previous_count <= 0:
+            continue
+        operation_removed = len(previous_operation_keys - current_operation_keys)
+        operation_removal_ratio = operation_removed / previous_count
+        if operation_removal_ratio > max_removal_ratio:
+            failures.append(
+                f"{operation} removal ratio {operation_removal_ratio:.1%} "
+                f"({operation_removed}/{previous_count}) exceeds the limit of {max_removal_ratio:.1%}"
+            )
+
+    if not failures:
+        return None
+    return "Skipped unsafe refresh to preserve the last verified snapshot: " + "; ".join(failures) + "."
 
 
 def build_browser_run_client_from_env(args: argparse.Namespace) -> CloudflareBrowserRunClient:
