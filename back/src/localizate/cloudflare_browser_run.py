@@ -22,6 +22,7 @@ class CloudflareBrowserRunConfig:
     max_browser_ms_per_run: int = 240_000
     max_rate_limit_retries: int = 2
     rate_limit_buffer_seconds: float = 5.0
+    max_transient_422_retries: int = 1
     wait_until: str = "networkidle2"
     reject_resource_types: tuple[str, ...] = ("image", "media", "font")
 
@@ -60,6 +61,7 @@ class CloudflareBrowserRunClient:
 
     def fetch_html(self, url: str) -> str:
         rate_limit_attempt = 0
+        transient_422_attempt = 0
         while True:
             self._enforce_budget()
             self._respect_min_interval()
@@ -93,6 +95,14 @@ class CloudflareBrowserRunClient:
                 )
                 self._sleep(wait_seconds)
                 continue
+
+            # The content endpoint can return 422 after successfully rendering
+            # prior pages in the same run. Retry it once: the next iteration
+            # still enforces the configured request interval and budget.
+            if response.status_code == 422:
+                transient_422_attempt += 1
+                if transient_422_attempt <= self.config.max_transient_422_retries:
+                    continue
 
             response.raise_for_status()
             self._record_browser_ms(response)

@@ -117,6 +117,45 @@ class CloudflareBrowserRunClientTests(unittest.TestCase):
         self.assertEqual(client.browser_ms_used_total, 800)
         self.assertEqual(clock["now"], 20.0)
 
+    def test_fetch_html_retries_a_transient_422_once(self) -> None:
+        session = mock.Mock()
+        transient_failure = mock.Mock()
+        transient_failure.status_code = 422
+        transient_failure.headers = {}
+
+        success = mock.Mock()
+        success.status_code = 200
+        success.headers = {"X-Browser-Ms-Used": "800"}
+        success.json.return_value = {"success": True, "result": "<html>ok</html>"}
+
+        session.post.side_effect = [transient_failure, success]
+        clock = {"now": 0.0}
+
+        def monotonic() -> float:
+            return clock["now"]
+
+        def sleep(seconds: float) -> None:
+            clock["now"] += seconds
+
+        client = CloudflareBrowserRunClient(
+            CloudflareBrowserRunConfig(
+                account_id="acc",
+                api_token="token",
+                min_interval_seconds=15.0,
+                max_transient_422_retries=1,
+            ),
+            session=session,
+            sleep=sleep,
+            monotonic=monotonic,
+        )
+
+        html = client.fetch_html("https://example.com/one")
+
+        self.assertEqual(html, "<html>ok</html>")
+        self.assertEqual(client.request_count, 2)
+        self.assertEqual(client.browser_ms_used_total, 800)
+        self.assertEqual(clock["now"], 15.0)
+
     def test_fetch_html_raises_budget_exceeded_after_repeated_429(self) -> None:
         session = mock.Mock()
         rate_limited = mock.Mock()
