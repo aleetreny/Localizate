@@ -8,7 +8,7 @@
 - `scripts/`: builders y utilidades de operación.
 - `tests/`: pruebas unitarias y de integración ligera.
 - `requirements.txt`: dependencias del pipeline completo.
-- `requirements-opportunity-weekly.txt`: dependencias minimizadas para el refresco semanal de oportunidades.
+- `requirements-opportunity-weekly.txt`: dependencias minimizadas para el refresco programado mensual de oportunidades.
 
 ## Uso habitual
 
@@ -30,4 +30,4 @@ Los artefactos públicos que consume la web se generan aquí y se sirven despué
 
 ## Snapshot versionado de oportunidades
 
-El refresco semanal de oportunidades ya no depende de un scrape completo efímero dentro de GitHub Actions. Ahora parte de un snapshot versionado en `back/data/opportunities/manual_available_locales_madrid_snapshot.csv`, reutiliza coordenadas y secciones ya conocidas, y solo geocodifica listings nuevos o relocalizados dentro de un presupuesto conservador.
+El refresco mensual de oportunidades ya no depende de un scrape completo efímero dentro de GitHub Actions. Ahora parte de un snapshot versionado en `back/data/opportunities/manual_available_locales_madrid_snapshot.csv`, reutiliza coordenadas y secciones ya conocidas, y solo geocodifica listings nuevos o relocalizados dentro de un presupuesto conservador.
