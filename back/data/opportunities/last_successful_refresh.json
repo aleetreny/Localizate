@@ -1,6 +1,6 @@
 {
   "status": "updated",
-  "refreshed_at_utc": "2026-08-31T12:47:16.065392Z",
+  "refreshed_at_utc": "2026-09-01T10:16:45.399786Z",
   "city_slug": "madrid",
   "operations": [
     "venta",
@@ -16,17 +16,17 @@
     {
       "transport": "browser_run",
       "status": "success",
-      "listing_count": 624,
+      "listing_count": 622,
       "request_count": 21,
-      "browser_ms_used_total": 45085
+      "browser_ms_used_total": 45556
     }
   ],
   "request_count": 21,
-  "browser_ms_used_total": 45085,
-  "listing_count": 624,
-  "reused_context_count": 624,
+  "browser_ms_used_total": 45556,
+  "listing_count": 622,
+  "reused_context_count": 622,
   "new_or_relocated_count": 0,
-  "removed_count": 0,
-  "street_precision_count": 367,
-  "section_key_count": 359
+  "removed_count": 2,
+  "street_precision_count": 366,
+  "section_key_count": 358
 }
