@@ -24,3 +24,19 @@ export function ViewTabs() {
     </nav>
   );
 }
+
+type MobileAppHeaderProps = {
+  title: string;
+};
+
+export function MobileAppHeader({ title }: MobileAppHeaderProps) {
+  return (
+    <header className="mobile-app-header panel">
+      <div className="mobile-app-identity">
+        <span className="mobile-app-brand">Localízate Madrid</span>
+        <h1 className="mobile-app-title">{title}</h1>
+      </div>
+      <ViewTabs />
+    </header>
+  );
+}

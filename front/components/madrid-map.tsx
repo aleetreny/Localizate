@@ -283,7 +283,7 @@ export function MadridMap({
         maxBounds={[
           [bounds.min_lng, bounds.min_lat],
           [bounds.max_lng, bounds.max_lat],
-        ]}
+        ] as never}
         dragPan
         scrollZoom
         doubleClickZoom

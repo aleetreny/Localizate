@@ -167,7 +167,7 @@ export function HexCategoryComposition({
       >
         <div className="hex-category-composition-header">
           <p className="hex-category-composition-copy">
-            Reparte los {formatInteger(totalLocales)} locales del {subjectLabel} en {selectedYear} entre las categorías históricas observadas. Pasa por cada color del círculo para abrir el detalle al lado.
+            Reparte los {formatInteger(totalLocales)} locales del {subjectLabel} en {selectedYear} entre las categorías históricas observadas. Toca o pasa por cada color para abrir su detalle.
           </p>
         </div>
 
@@ -207,7 +207,20 @@ export function HexCategoryComposition({
                       fill={segment.color}
                       fillRule="evenodd"
                       key={segment.categoryCode}
+                      onClick={() => {
+                        clearDismissTimer();
+                        setActiveCategoryCode((current) => current === segment.categoryCode ? null : segment.categoryCode);
+                      }}
+                      onFocus={() => activateCategory(segment.categoryCode)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setActiveCategoryCode((current) => current === segment.categoryCode ? null : segment.categoryCode);
+                        }
+                      }}
                       onMouseEnter={() => activateCategory(segment.categoryCode)}
+                      role="button"
+                      tabIndex={0}
                     />
                   );
                 })}
@@ -269,7 +282,20 @@ export function HexCategoryComposition({
               ref={hoverPanelRef}
               style={floatingPanelStyle}
             >
-              <span className="hex-category-composition-hover-kicker">Categoría resaltada</span>
+              <div className="hex-category-composition-hover-heading">
+                <span className="hex-category-composition-hover-kicker">Categoría resaltada</span>
+                <button
+                  aria-label="Cerrar detalle de categoría"
+                  className="hex-category-composition-hover-close"
+                  onClick={() => {
+                    setActiveCategoryCode(null);
+                    setFloatingPanelLayout(null);
+                  }}
+                  type="button"
+                >
+                  Cerrar
+                </button>
+              </div>
               <div className="hex-category-composition-hover-title-row">
                 <span aria-hidden="true" className="hex-category-composition-swatch" style={{ background: activeItem.color }} />
                 <strong className="hex-category-composition-hover-title">{activeItem.categoryDesc}</strong>

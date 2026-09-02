@@ -3,7 +3,7 @@
 import { type FormEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { OpportunityMap } from "@/components/opportunity-map";
-import { ViewTabs } from "@/components/view-tabs";
+import { MobileAppHeader, ViewTabs } from "@/components/view-tabs";
 import { isFiniteNumber } from "@/lib/horizon";
 import { buildOpportunityBenchmarkContext, type OpportunityBenchmarkContext } from "@/lib/opportunity-insights";
 import {
@@ -14,6 +14,7 @@ import {
   normalizeOpportunityArtifacts,
 } from "@/lib/public-data";
 import { buildOpportunityGeocodeUrl, HAS_EXTERNAL_PUBLIC_DATA_BASE_URL } from "@/lib/runtime-config";
+import { revealOnMobile } from "@/lib/mobile-ui";
 import type {
   FacilityCategory,
   IndicadorDistrito,
@@ -128,6 +129,7 @@ export function OpportunityShell({ initialArtifacts, initialSectionIndex }: Oppo
   const [resolvedAddressLabel, setResolvedAddressLabel] = useState<string | null>(null);
   const [manualSelectionSource, setManualSelectionSource] = useState<ManualSelectionSource>(null);
   const [addressSearchState, setAddressSearchState] = useState<AddressSearchState>({ status: "idle", message: null });
+  const detailCardRef = useRef<HTMLElement | null>(null);
   const artifactsSignature = getOpportunityArtifactSignature(artifacts);
 
   useEffect(() => {
@@ -571,6 +573,7 @@ export function OpportunityShell({ initialArtifacts, initialSectionIndex }: Oppo
           ? "Dirección localizada. Hemos marcado el punto y seleccionado su sección censal para abrir la ficha contextual."
           : "Dirección localizada a nivel de calle. No hemos podido confirmar el portal exacto, pero hemos marcado el tramo más probable y su sección censal.",
       });
+      revealOnMobile(detailCardRef.current);
     } catch {
       setAddressSearchState({
         status: "error",
@@ -581,14 +584,15 @@ export function OpportunityShell({ initialArtifacts, initialSectionIndex }: Oppo
 
   return (
     <main className="app-shell">
+      <MobileAppHeader title="Oportunidades" />
       <aside className="sidebar panel">
-        <div>
+        <div className="sidebar-intro">
           <ViewTabs />
           <div className="eyebrow">Localízate / Madrid</div>
           <h1>Mapa de oportunidades.</h1>
         </div>
 
-        <p className="lede">{artifacts.meta.subtitle}</p>
+        <p className="lede sidebar-lede">{artifacts.meta.subtitle}</p>
 
         <div className="control-group">
           <span className="control-label" id="operation-filter-label">
@@ -633,7 +637,7 @@ export function OpportunityShell({ initialArtifacts, initialSectionIndex }: Oppo
 
         <section className="address-search-card">
           <div className="eyebrow">Buscar tu local</div>
-          <h3>Ubica una dirección sin usar el puntero</h3>
+          <h2>Ubica una dirección sin usar el puntero</h2>
           <p className="address-search-copy">
             Los locales que aparecen en el mapa vienen de locales.es. Este buscador es para localizar rápidamente tu propio local en mente cuando conoces su calle y número.
           </p>
@@ -674,7 +678,7 @@ export function OpportunityShell({ initialArtifacts, initialSectionIndex }: Oppo
           ) : null}
         </section>
 
-        <section className="detail-card">
+        <section className="detail-card" ref={detailCardRef}>
           {manualSelection ? (
             <ManualPointDetail
               activeMetricId={activeMetricId}
@@ -727,6 +731,15 @@ export function OpportunityShell({ initialArtifacts, initialSectionIndex }: Oppo
 
       <section className="map-panel panel">
         {activeMetric ? (
+          <button
+            aria-label="Cerrar panel informativo"
+            className="mobile-map-overlay-backdrop"
+            onClick={() => setActiveMetricId(null)}
+            tabIndex={-1}
+            type="button"
+          />
+        ) : null}
+        {activeMetric ? (
           <div className="map-overlay panel metric-banner">
             <MetricExplainer metric={activeMetric} onClose={() => setActiveMetricId(null)} />
           </div>
@@ -740,12 +753,14 @@ export function OpportunityShell({ initialArtifacts, initialSectionIndex }: Oppo
             clearAddressSearchFeedback();
             setSelectedListingId(point.listing_id);
             setSelectedListingFocusNonce((current) => current + 1);
+            revealOnMobile(detailCardRef.current);
           }}
           onSelectManual={(selection) => {
             setSelectedListingId(null);
             clearAddressSearchFeedback();
             setManualSelection(selection);
             setManualSelectionSource("map");
+            revealOnMobile(detailCardRef.current);
           }}
           highlightAddressSelection={manualSelectionSource === "address"}
           points={filteredPoints}

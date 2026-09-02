@@ -5,10 +5,11 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { HexCategoryComposition, type HexCategoryCompositionItem } from "@/components/hex-category-composition";
 import { HistoricalEvolutionBanner } from "@/components/historical-evolution-banner";
 import { MadridMap } from "@/components/madrid-map";
-import { ViewTabs } from "@/components/view-tabs";
+import { MobileAppHeader, ViewTabs } from "@/components/view-tabs";
 import { ZoneComparisonBanner } from "@/components/zone-comparison-banner";
 import { DEFAULT_HEX_SIZE, formatHexSizeLabel, HEX_SIZE_OPTIONS, type HexSize } from "@/lib/hex-size";
 import { formatHorizonLongLabel, formatHorizonShortLabel, getHorizonSupport, getHorizonSurvival, isFiniteNumber, type Horizon } from "@/lib/horizon";
+import { revealOnMobile } from "@/lib/mobile-ui";
 import {
   FALLBACK_MAP_ARTIFACTS,
   loadHexCompositionHistoryFromPublic,
@@ -179,6 +180,7 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
   const hexCompositionHistoryRequestVersionRef = useRef(0);
   const zoneBoundariesRequestRef = useRef<Promise<ZoneBoundaryArtifacts> | null>(null);
   const mapPanelRef = useRef<HTMLElement | null>(null);
+  const detailCardRef = useRef<HTMLElement | null>(null);
 
   const ensureHistoricalRankingsLoaded = useCallback(async () => {
     if (historicalRankingArtifacts) {
@@ -203,6 +205,12 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
     historicalRankingsRequestRef.current = request;
     return request;
   }, [historicalRankingArtifacts]);
+
+  useEffect(() => {
+    if (window.matchMedia("(max-width: 720px), (max-width: 1080px) and (max-height: 600px) and (orientation: landscape)").matches) {
+      void ensureHistoricalRankingsLoaded();
+    }
+  }, [ensureHistoricalRankingsLoaded]);
 
   const ensureHexCompositionHistoryMetaLoaded = useCallback(async () => {
     if (hexCompositionHistoryMeta) {
@@ -815,14 +823,15 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
 
   return (
     <main className="app-shell">
+      <MobileAppHeader title="Histórico comercial" />
       <aside className="sidebar panel">
-        <div>
+        <div className="sidebar-intro">
           <ViewTabs />
           <div className="eyebrow">Localízate / Madrid</div>
           <h1>Mapa de supervivencia comercial.</h1>
         </div>
 
-        <p className="lede">Explora qué zonas sostienen mejor cada tipo de local en Madrid.</p>
+        <p className="lede sidebar-lede">Explora qué zonas sostienen mejor cada tipo de local en Madrid.</p>
 
         <div className="control-group">
           <span className="control-label" id="category-label">
@@ -1109,7 +1118,7 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
           </div>
         </section>
 
-        <section className="detail-card">
+        <section className="detail-card" ref={detailCardRef}>
           <div className="eyebrow">
             {mapViewMode === "hex" ? "Hexágono seleccionado" : `${capitalize(activeUnitLabelSingular)} seleccionado`}
           </div>
@@ -1182,6 +1191,21 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
       </aside>
 
       <section className="map-panel panel" ref={mapPanelRef}>
+        {isZoneComparisonOpen || isHistoricalEvolutionOpen || isRiskExplainerOpen || activeZoneInsight || activeMetric ? (
+          <button
+            aria-label="Cerrar panel informativo"
+            className="mobile-map-overlay-backdrop"
+            onClick={() => {
+              setIsZoneComparisonOpen(false);
+              setIsHistoricalEvolutionOpen(false);
+              setIsRiskExplainerOpen(false);
+              setActiveZoneInsight(null);
+              setActiveMetricId(null);
+            }}
+            tabIndex={-1}
+            type="button"
+          />
+        ) : null}
         {isZoneComparisonOpen && canCompareZones ? (
           <div className="map-overlay panel zone-comparison-overlay">
             <ZoneComparisonBanner
@@ -1234,12 +1258,14 @@ export function MapShell({ initialArtifacts, initialZoneBoundaries }: MapShellPr
             setIsHistoricalEvolutionOpen(false);
             setIsZoneComparisonOpen(false);
             setSelectedHex(hex);
+            revealOnMobile(detailCardRef.current);
           }}
           onSelectZone={(zone) => {
             setActiveZoneInsight(null);
             setIsHistoricalEvolutionOpen(false);
             setIsZoneComparisonOpen(false);
             setSelectedZone(zone);
+            revealOnMobile(detailCardRef.current);
           }}
           selectedHex={selectedHex}
           selectedZone={selectedZoneForView}
@@ -3054,4 +3080,3 @@ function compareHistoricalRowsByTime(left: HistoricalZoneRankingRecord, right: H
   }
   return left.period.localeCompare(right.period, "es");
 }
-

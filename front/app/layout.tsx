@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from "next";
 import { Manrope, Space_Grotesk } from "next/font/google";
+import type { Viewport } from "next";
 
 import { AboutProject } from "@/components/about-project";
 import "./globals.css";
@@ -67,6 +68,13 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     images: [PREVIEW_IMAGE_PATH]
   }
+};
+
+export const viewport: Viewport = {
+  initialScale: 1,
+  themeColor: "#f4f1ea",
+  viewportFit: "cover",
+  width: "device-width",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

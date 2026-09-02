@@ -319,7 +319,7 @@ export function OpportunityMap({
         maxBounds={[
           [bounds.min_lng, bounds.min_lat],
           [bounds.max_lng, bounds.max_lat]
-        ]}
+        ] as never}
         dragPan
         scrollZoom
         doubleClickZoom
@@ -840,4 +840,3 @@ function formatRiskPercentile(value: number) {
   }
   return `P${Math.round(value * 100)}`;
 }
-

@@ -13,6 +13,7 @@ export function AboutProject() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("intro");
   const contentRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     // Correct scroll position on tab change
@@ -21,16 +22,43 @@ export function AboutProject() {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    document.body.classList.add("about-project-open");
+    const frameId = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.classList.remove("about-project-open");
+      previouslyFocused?.focus();
+    };
+  }, [isOpen]);
+
   return (
     <>
       <button
         aria-expanded={isOpen}
         aria-haspopup="dialog"
+        aria-label="Abrir información sobre el proyecto"
         className="about-project-trigger"
         onClick={() => setIsOpen(true)}
         type="button"
       >
-        Sobre el proyecto
+        <span className="about-project-trigger-label">Sobre el proyecto</span>
+        <span aria-hidden="true" className="about-project-trigger-label-mobile">Proyecto</span>
       </button>
 
       {isOpen && (
@@ -42,28 +70,35 @@ export function AboutProject() {
           />
           
           <div 
+            aria-labelledby="about-project-title"
             aria-modal="true" 
             className="about-project-dialog"
             role="dialog"
           >
             <header className="about-project-header">
-              <h2>Sobre Localízate</h2>
+              <h2 id="about-project-title">Sobre Localízate</h2>
               <button 
                 aria-label="Cerrar vista" 
                 className="about-project-close explain-banner-close" 
                 onClick={() => setIsOpen(false)}
+                ref={closeButtonRef}
                 type="button"
               >
-                ✕ Cerrar
+                <svg aria-hidden="true" className="about-project-close-icon" viewBox="0 0 16 16">
+                  <path d="M3 3l10 10M13 3L3 13" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+                </svg>
+                Cerrar
               </button>
             </header>
 
-            <nav className="about-project-tabs toggle-row">
+            <nav aria-label="Secciones sobre el proyecto" className="about-project-tabs toggle-row" role="tablist">
               {TABS.map((tab) => (
                 <button
                   key={tab.id}
                   data-active={activeTab === tab.id}
                   onClick={() => setActiveTab(tab.id)}
+                  aria-selected={activeTab === tab.id}
+                  role="tab"
                   type="button"
                 >
                   {tab.label}
