@@ -207,15 +207,12 @@ export function HexCategoryComposition({
                       fill={segment.color}
                       fillRule="evenodd"
                       key={segment.categoryCode}
-                      onClick={() => {
-                        clearDismissTimer();
-                        setActiveCategoryCode((current) => current === segment.categoryCode ? null : segment.categoryCode);
-                      }}
+                      onClick={() => activateCategory(segment.categoryCode)}
                       onFocus={() => activateCategory(segment.categoryCode)}
                       onKeyDown={(event) => {
                         if (event.key === "Enter" || event.key === " ") {
                           event.preventDefault();
-                          setActiveCategoryCode((current) => current === segment.categoryCode ? null : segment.categoryCode);
+                          activateCategory(segment.categoryCode);
                         }
                       }}
                       onMouseEnter={() => activateCategory(segment.categoryCode)}

@@ -287,11 +287,12 @@ export function MadridMap({
         dragPan
         scrollZoom
         doubleClickZoom
-        touchZoomRotate={false}
+        touchZoomRotate
         dragRotate={false}
         pitchWithRotate={false}
         touchPitch={false}
         maxPitch={0}
+        onLoad={(event) => event.target.touchZoomRotate.disableRotation()}
         renderWorldCopies={false}
         reuseMaps
         style={{ width: "100%", height: "100%" }}
